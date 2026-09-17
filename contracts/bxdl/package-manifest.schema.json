@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BXDL development package manifest v1",
+  "description": "BXDL-owned development format; not an official NIGO supplier contract. Runtime verifier also enforces exact inventory, paths, limits and identity hashes.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "bxdl-package"
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "const": "BXDL"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            {
+              "const": "development"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "revision"
+      ]
+    },
+    "channel": {
+      "const": "development"
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "os": {
+          "enum": [
+            "darwin",
+            "linux"
+          ]
+        },
+        "arch": {
+          "enum": [
+            "arm64",
+            "amd64"
+          ]
+        },
+        "libc": {
+          "enum": [
+            "none",
+            "glibc"
+          ]
+        },
+        "minGlibc": {
+          "enum": [
+            "none",
+            "2.34"
+          ]
+        },
+        "javaMajor": {
+          "const": 21
+        },
+        "backend": {
+          "const": "rocksdb"
+        }
+      },
+      "required": [
+        "os",
+        "arch",
+        "libc",
+        "minGlibc",
+        "javaMajor",
+        "backend"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "os": {
+              "const": "darwin"
+            },
+            "arch": {
+              "const": "arm64"
+            },
+            "libc": {
+              "const": "none"
+            },
+            "minGlibc": {
+              "const": "none"
+            }
+          }
+        },
+        {
+          "properties": {
+            "os": {
+              "const": "linux"
+            },
+            "arch": {
+              "const": "amd64"
+            },
+            "libc": {
+              "const": "glibc"
+            },
+            "minGlibc": {
+              "const": "2.34"
+            }
+          }
+        }
+      ]
+    },
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "jarSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "contractStatus": {
+          "const": "proposed"
+        },
+        "contractRevision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "revision",
+        "jarSha256",
+        "contractStatus",
+        "contractRevision"
+      ]
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "vendor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "javaSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "vendor",
+        "version",
+        "javaSha256"
+      ]
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 536870912
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "mode": {
+            "enum": [
+              420,
+              493
+            ]
+          }
+        },
+        "required": [
+          "path",
+          "size",
+          "sha256",
+          "mode"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "kind",
+    "product",
+    "channel",
+    "platform",
+    "engine",
+    "runtime",
+    "files"
+  ]
+}

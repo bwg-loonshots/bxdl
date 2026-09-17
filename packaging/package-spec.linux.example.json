@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "kind": "bxdl-package",
+  "product": {
+    "name": "BXDL",
+    "version": "0.1.0-dev",
+    "revision": "development"
+  },
+  "channel": "development",
+  "platform": {
+    "os": "linux",
+    "arch": "amd64",
+    "libc": "glibc",
+    "minGlibc": "2.34",
+    "javaMajor": 21,
+    "backend": "rocksdb"
+  },
+  "engine": {
+    "revision": "REPLACE_WITH_ENGINE_SOURCE_COMMIT",
+    "jarSha256": "REPLACE_WITH_TRUSTED_EXPECTED_JAR_SHA256",
+    "contractStatus": "proposed",
+    "contractRevision": "proposed-bxdl-development-v1"
+  },
+  "runtime": {
+    "vendor": "REPLACE_WITH_SELECTED_VENDOR",
+    "version": "REPLACE_WITH_SELECTED_JAVA21_VERSION",
+    "javaSha256": "REPLACE_WITH_TRUSTED_EXPECTED_JAVA_EXECUTABLE_SHA256"
+  },
+  "files": []
+}

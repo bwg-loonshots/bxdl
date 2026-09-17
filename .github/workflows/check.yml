@@ -1,0 +1,29 @@
+name: BXDL Rust foundation checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.86.0 --profile minimal --component rustfmt --component clippy
+      - name: Format, Clippy, and tests
+        run: make check
+      - name: Build host CLI
+        run: make build
+      - name: Exercise CLI only (not engine or service acceptance)
+        run: ./bin/bxdl version --json

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "instanceId": "validator-one",
+  "role": "validator",
+  "nodeId": "replace-with-public-node-id",
+  "chainDescription": "./public-chain-description.json",
+  "storage": {
+    "backend": "rocksdb",
+    "dataDirectory": "./data"
+  },
+  "secrets": {
+    "validatorKeystore": "./secrets/validator-keystore.p12",
+    "validatorPasswordFile": "./secrets/validator-password.txt",
+    "tlsKeyStore": "./secrets/tls-keystore.p12",
+    "tlsKeyPasswordFile": "./secrets/tls-key-password.txt",
+    "tlsTrustStore": "./secrets/tls-truststore.p12",
+    "tlsTrustPasswordFile": "./secrets/tls-trust-password.txt"
+  },
+  "http": {"address": "127.0.0.1", "port": 18080},
+  "p2p": {"address": "192.0.2.10", "port": 19090}
+}
