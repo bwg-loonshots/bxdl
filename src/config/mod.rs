@@ -2,7 +2,7 @@
 //! NIGO rules nor persists an instance or establishes runtime readiness.
 
 mod preflight;
-pub use preflight::preflight;
+pub use preflight::{preflight, preflight_bytes};
 
 use crate::error::{BxdlError, Result};
 use serde::{Deserialize, Serialize};
@@ -45,10 +45,12 @@ impl Check {
     }
 }
 
-// Intentionally no Debug/Serialize: credential references are private input.
+// Intentionally no Debug or public fields: credential references are private
+// input. Serialize is used only to create normalized config bytes for storage,
+// never to embed configuration or credential paths in public reports.
 // Every field is required, including nested objects. Serde rejects duplicate
 // known fields as well as aliases, unknown names, nulls, and incorrect types.
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Instance {
     schema_version: i64,
@@ -62,14 +64,14 @@ struct Instance {
     p2p: Address,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Storage {
     backend: String,
     data_directory: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Secrets {
     validator_keystore: String,
@@ -80,7 +82,7 @@ struct Secrets {
     tls_trust_password_file: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Address {
     address: String,
@@ -92,6 +94,38 @@ struct Address {
 pub fn validate_file(path: &Path) -> Result<Report> {
     let (config, raw, _) = load(path)?;
     Ok(report(&config, &raw, "VALIDATED_PRODUCT_CONFIG"))
+}
+
+/// Validate unsaved product JSON and return a stable config document with
+/// absolute references. `source` is the intended config location, not a file to
+/// open. Neither it nor any referenced path is read, created, or changed.
+/// Returned bytes contain private path references and must not be put in reports.
+pub fn normalize_bytes(raw: &[u8], source: &Path) -> Result<Vec<u8>> {
+    let source = resolve_source(source)?;
+    let config = parse_bytes(raw, &source)?;
+    normalized(&config, &source)
+}
+
+/// Import a bounded regular config using the same guarded read as validation.
+/// Relative references retain the imported file's directory as their base.
+/// Only the config is read; referenced contents and metadata are not inspected.
+pub fn normalized_file(path: &Path) -> Result<Vec<u8>> {
+    let (config, _, source) = load(path)?;
+    normalized(&config, &source)
+}
+
+fn normalized(config: &Instance, source: &Path) -> Result<Vec<u8>> {
+    let mut bytes = serde_json::to_vec_pretty(config).map_err(|_| {
+        error(
+            "CONFIG_SCHEMA_INVALID",
+            "Config cannot be represented as normalized product JSON.",
+        )
+    })?;
+    bytes.push(b'\n');
+    // Absolutizing a bounded relative reference can make it longer. Do not
+    // return a document that the same product validator would reject on reload.
+    parse_bytes(&bytes, source)?;
+    Ok(bytes)
 }
 
 fn report(config: &Instance, raw: &[u8], outcome: &str) -> Report {
@@ -109,17 +143,21 @@ fn report(config: &Instance, raw: &[u8], outcome: &str) -> Report {
     }
 }
 
-fn load(path: &Path) -> Result<(Instance, Vec<u8>, PathBuf)> {
+fn resolve_source(path: &Path) -> Result<PathBuf> {
     if !path.to_str().is_some_and(valid_path_text) {
         return Err(error("CONFIG_PATH_INVALID", "Config path is invalid."));
     }
-    let source = if path.is_absolute() {
+    Ok(if path.is_absolute() {
         clean_absolute(path)
     } else {
         let base = std::env::current_dir()
             .map_err(|_| error("CONFIG_PATH_INVALID", "Config path cannot be resolved."))?;
         clean_absolute(&base.join(path))
-    };
+    })
+}
+
+fn load(path: &Path) -> Result<(Instance, Vec<u8>, PathBuf)> {
+    let source = resolve_source(path)?;
     let before = fs::symlink_metadata(&source)
         .map_err(|_| error("CONFIG_READ_FAILED", "Config file cannot be inspected."))?;
     if !before.is_file() {
@@ -156,13 +194,21 @@ fn load(path: &Path) -> Result<(Instance, Vec<u8>, PathBuf)> {
     if after.len() != opened.len() || after.modified().ok() != opened.modified().ok() {
         return Err(error("CONFIG_CHANGED", "Config changed while being read."));
     }
-    if std::str::from_utf8(&raw).is_err() || !strict_json_shape(&raw) {
+    let config = parse_bytes(&raw, &source)?;
+    Ok((config, raw, source))
+}
+
+fn parse_bytes(raw: &[u8], source: &Path) -> Result<Instance> {
+    if raw.len() > MAX_CONFIG_BYTES {
+        return Err(error("CONFIG_TOO_LARGE", "Config exceeds the size limit."));
+    }
+    if std::str::from_utf8(raw).is_err() || !strict_json_shape(raw) {
         return Err(error(
             "CONFIG_JSON_INVALID",
             "Config must be one valid JSON document without duplicate or unknown fields.",
         ));
     }
-    let mut config: Instance = serde_json::from_slice(&raw).map_err(|_| {
+    let mut config: Instance = serde_json::from_slice(raw).map_err(|_| {
         // Schema failures and strict-JSON failures retain their prior distinct
         // reason codes. Never expose the deserializer's input-bearing errors.
         error(
@@ -170,8 +216,8 @@ fn load(path: &Path) -> Result<(Instance, Vec<u8>, PathBuf)> {
             "Config contains missing, null, misplaced, or invalid field types.",
         )
     })?;
-    validate(&mut config, &source)?;
-    Ok((config, raw, source))
+    validate(&mut config, source)?;
+    Ok(config)
 }
 
 fn validate(config: &mut Instance, source: &Path) -> Result<()> {

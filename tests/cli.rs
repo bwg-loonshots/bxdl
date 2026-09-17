@@ -24,7 +24,7 @@ fn version_reports_rust_mac_priority_without_service_claims() {
     assert_eq!(r["data"]["primaryTarget"], "darwin-arm64");
     for (key, value) in [
         ("bundleInspection", "NOT_PERFORMED"),
-        ("engineContractStatus", "NOT_DELIVERED"),
+        ("engineContractStatus", "PROPOSED_DEVELOPMENT"),
         ("macosServiceAcceptance", "NOT_CHECKED"),
         ("linuxServiceAcceptance", "NOT_CHECKED"),
     ] {
@@ -34,7 +34,6 @@ fn version_reports_rust_mac_priority_without_service_claims() {
 #[test]
 fn operations_remain_explicitly_unavailable() {
     for command in [
-        "install",
         "init",
         "start",
         "stop",
@@ -160,4 +159,94 @@ fn binary_handles_non_utf8_without_panicking_or_leaking() {
     let value: Value = serde_json::from_slice(&r.stdout).unwrap();
     assert_eq!(value["reasonCode"], "INVALID_ARGUMENTS");
     assert!(!String::from_utf8_lossy(&r.stdout).contains("PRIVATE-CANARY"));
+}
+
+#[test]
+fn install_and_engine_require_explicit_inputs_and_development_consent() {
+    for args in [
+        vec!["install"],
+        vec!["install", "bundle.tar.gz", "--destination", "new"],
+        vec![
+            "install",
+            "bundle.tar.gz",
+            "--destination",
+            "new",
+            "--public-key",
+            "key",
+            "--allow-unsigned-development",
+        ],
+        vec!["engine", "run"],
+        vec![
+            "engine", "inspect", "--jar", "jar", "--java", "java", "--lock", "lock",
+        ],
+        vec![
+            "engine",
+            "preflight",
+            "--jar",
+            "jar",
+            "--java",
+            "java",
+            "--lock",
+            "lock",
+            "--allow-development",
+        ],
+        vec![
+            "engine",
+            "inspect",
+            "--jar",
+            "jar",
+            "--java",
+            "java",
+            "--lock",
+            "lock",
+            "--allow-development",
+            "--config",
+            "node.json",
+        ],
+        vec![
+            "engine",
+            "inspect",
+            "--jar",
+            "jar",
+            "--java",
+            "java",
+            "--lock",
+            "lock",
+            "--allow-development",
+            "--timeout-seconds",
+            "0",
+        ],
+        vec![
+            "engine",
+            "inspect",
+            "--jar",
+            "jar",
+            "--java",
+            "java",
+            "--lock",
+            "lock",
+            "--allow-development",
+            "--timeout-seconds",
+            "121",
+        ],
+        vec![
+            "engine",
+            "inspect",
+            "--jar",
+            "jar",
+            "--java",
+            "java",
+            "--lock",
+            "lock",
+            "--allow-development",
+            "--timeout-seconds",
+            "1",
+            "--timeout-seconds",
+            "2",
+        ],
+    ] {
+        let (result, exit) = run(&args);
+        assert_eq!(exit, 2, "{args:?}: {result}");
+        assert_eq!(result["reasonCode"], "INVALID_ARGUMENTS");
+    }
 }

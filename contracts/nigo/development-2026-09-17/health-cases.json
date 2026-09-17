@@ -1,0 +1,126 @@
+{
+  "contractStatus": "PROPOSED",
+  "mediaType": "application/vnd.nigo.console+json",
+  "endpoint": "/monitor/api/consensus/health",
+  "cases": [
+    {
+      "id": "validator-local-ready",
+      "protocol": "QBFT",
+      "autoStart": true,
+      "startupCompleted": true,
+      "health": {
+        "observedAtEpochMillis": "1789600000000",
+        "running": true,
+        "lifecycleRunning": true,
+        "runtimeInitialized": true,
+        "role": "VALIDATOR",
+        "engineAttached": true,
+        "engineRunning": true,
+        "failure": null,
+        "executionProgress": {
+          "status": "WAITING_TIMER", "kind": null, "phase": null,
+          "view": {"height": "9007199254740993", "round": "7"},
+          "operationElapsedMillis": null, "lastCompletedAgeMillis": "2",
+          "nextTimerDueInMillis": "998", "timerOverdueMillis": null,
+          "operationTimeoutMillis": "30000", "timerGraceMillis": "5000"
+        },
+        "readiness": {
+          "status": "READY", "reason": "VALIDATOR_RUNNING", "role": "VALIDATOR",
+          "startupMode": "AUTO_START", "startupCompleted": true, "syncStatus": "UNKNOWN"
+        }
+      }
+    },
+    {
+      "id": "observer-local-ready-without-validator",
+      "protocol": "QBFT",
+      "autoStart": true,
+      "startupCompleted": true,
+      "health": {
+        "observedAtEpochMillis": "1789600000000",
+        "running": false, "lifecycleRunning": false, "runtimeInitialized": true,
+        "role": "OBSERVER", "engineAttached": false, "engineRunning": null,
+        "failure": null, "executionProgress": null,
+        "readiness": {
+          "status": "READY", "reason": "OBSERVER_INITIALIZED", "role": "OBSERVER",
+          "startupMode": "AUTO_START", "startupCompleted": true, "syncStatus": "UNKNOWN"
+        }
+      }
+    },
+    {
+      "id": "manual-start-validator-not-running-is-not-failure",
+      "protocol": "QBFT",
+      "autoStart": false,
+      "startupCompleted": true,
+      "health": {
+        "observedAtEpochMillis": "1789600000000",
+        "running": false, "lifecycleRunning": false, "runtimeInitialized": true,
+        "role": "VALIDATOR", "engineAttached": true, "engineRunning": false,
+        "failure": null,
+        "executionProgress": {
+          "status": "NOT_STARTED", "kind": null, "phase": null, "view": null,
+          "operationElapsedMillis": null, "lastCompletedAgeMillis": null,
+          "nextTimerDueInMillis": null, "timerOverdueMillis": null,
+          "operationTimeoutMillis": "30000", "timerGraceMillis": "5000"
+        },
+        "readiness": {
+          "status": "READY", "reason": "MANUAL_START_INITIALIZED", "role": "VALIDATOR",
+          "startupMode": "MANUAL_START", "startupCompleted": true, "syncStatus": "UNKNOWN"
+        }
+      }
+    },
+    {
+      "id": "missing-qbft-runtime-is-unknown",
+      "protocol": "QBFT",
+      "autoStart": false,
+      "startupCompleted": true,
+      "health": {
+        "observedAtEpochMillis": "1789600000000",
+        "running": false, "lifecycleRunning": false, "runtimeInitialized": null,
+        "role": null, "engineAttached": null, "engineRunning": null,
+        "failure": null, "executionProgress": null,
+        "readiness": {
+          "status": "UNKNOWN", "reason": "ROLE_UNKNOWN", "role": "UNKNOWN",
+          "startupMode": "MANUAL_START", "startupCompleted": true, "syncStatus": "UNKNOWN"
+        }
+      }
+    },
+    {
+      "id": "startup-incomplete-is-not-terminal-failure",
+      "protocol": "QBFT",
+      "autoStart": true,
+      "startupCompleted": false,
+      "health": {
+        "observedAtEpochMillis": "1789600000000",
+        "running": false, "lifecycleRunning": false, "runtimeInitialized": true,
+        "role": "OBSERVER", "engineAttached": false, "engineRunning": null,
+        "failure": null, "executionProgress": null,
+        "readiness": {
+          "status": "NOT_READY", "reason": "STARTUP_INCOMPLETE", "role": "OBSERVER",
+          "startupMode": "AUTO_START", "startupCompleted": false, "syncStatus": "UNKNOWN"
+        }
+      }
+    },
+    {
+      "id": "terminal-failure-overrides-manual-start",
+      "protocol": "QBFT",
+      "autoStart": false,
+      "startupCompleted": false,
+      "health": {
+        "observedAtEpochMillis": "1789600000000",
+        "running": false, "lifecycleRunning": false, "runtimeInitialized": true,
+        "role": "VALIDATOR", "engineAttached": true, "engineRunning": false,
+        "failure": {
+          "kind": "START", "phase": "SUBSCRIBE", "startedAtEpochMillis": "1789600000000",
+          "startedAtNanos": "9007199254740993", "completedAtNanos": "9007199254740999",
+          "messageType": null, "inputView": null, "beforeView": null, "beforeStep": null,
+          "afterView": null, "afterStep": null, "causeCategory": "RUNTIME_FAILURE"
+        },
+        "executionProgress": null,
+        "readiness": {
+          "status": "FAILED", "reason": "TERMINAL_FAILURE", "role": "VALIDATOR",
+          "startupMode": "MANUAL_START", "startupCompleted": false, "syncStatus": "UNKNOWN"
+        }
+      }
+    }
+  ]
+}

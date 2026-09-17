@@ -1,0 +1,6 @@
+# Provider contract evidence is preserved byte-for-byte for SHA-256 verification.
+contracts/nigo/development-2026-09-17/ENGINE_CONTRACT.md -text
+contracts/nigo/development-2026-09-17/ENGINE_RUNTIME_CONTRACT.md -text
+contracts/nigo/development-2026-09-17/contract.json -text
+contracts/nigo/development-2026-09-17/health-cases.json -text
+contracts/nigo/development-2026-09-17/engine-manifest.json -text -whitespace

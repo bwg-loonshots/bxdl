@@ -1,4 +1,4 @@
-use super::{Check, Report, load, report, secret_paths};
+use super::{Check, Instance, Report, load, parse_bytes, report, resolve_source, secret_paths};
 use crate::error::Result;
 use std::fs::{self, Metadata};
 use std::io::ErrorKind;
@@ -8,10 +8,34 @@ use std::path::{Path, PathBuf};
 /// network probe, or filesystem mutation. Local failures remain report checks.
 pub fn preflight(path: &Path) -> Result<Report> {
     let (config, raw, source) = load(path)?;
-    let mut result = report(&config, &raw, "INCOMPLETE");
-    result
-        .checks
-        .push(file_check("configMetadata", &source, false));
+    Ok(inspect(
+        &config,
+        &raw,
+        file_check("configMetadata", &source, false),
+    ))
+}
+
+/// Inspect references in an unsaved candidate without opening or inspecting
+/// its intended config file. The report hashes the supplied raw bytes exactly.
+/// Existing-file collisions belong to the setup model, not this observation.
+pub fn preflight_bytes(raw: &[u8], source: &Path) -> Result<Report> {
+    let source = resolve_source(source)?;
+    let config = parse_bytes(raw, &source)?;
+    Ok(inspect(
+        &config,
+        raw,
+        Check::new(
+            "configMetadata",
+            "NOT_CHECKED",
+            "DRAFT_NOT_WRITTEN",
+            "Candidate config is not written; config file metadata was not inspected.",
+        ),
+    ))
+}
+
+fn inspect(config: &Instance, raw: &[u8], config_metadata: Check) -> Report {
+    let mut result = report(config, raw, "INCOMPLETE");
+    result.checks.push(config_metadata);
     result.checks.push(file_check(
         "chainDescriptionMetadata",
         Path::new(&config.chain_description),
@@ -26,7 +50,7 @@ pub fn preflight(path: &Path) -> Result<Report> {
         "tlsTrustPasswordMetadata",
     ]
     .into_iter()
-    .zip(secret_paths(&config))
+    .zip(secret_paths(config))
     {
         result.checks.push(file_check(name, Path::new(path), true));
     }
@@ -82,7 +106,7 @@ pub fn preflight(path: &Path) -> Result<Report> {
     if result.checks.iter().any(|check| check.status == "FAIL") {
         result.outcome = "FAIL".into();
     }
-    Ok(result)
+    result
 }
 
 fn file_check(name: &str, path: &Path, secret: bool) -> Check {

@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BXDL setup draft v1",
+  "description": "Private resumable product-config draft. Not an installed/initialized instance or a NIGO contract. Paths only; never put credential contents here. Checkpoints are immutable and must be written through setup.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "inputBase",
+    "answers"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "BXDL_SETUP_DRAFT"
+    },
+    "inputBase": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^/"
+    },
+    "answers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "instanceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "nodeId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "dataDirectory": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "httpAddress": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "httpPort": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "p2pAddress": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "p2pPort": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "chainDescription": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "validatorKeystore": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "validatorPasswordFile": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "tlsKeyStore": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "tlsKeyPasswordFile": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "tlsTrustStore": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "tlsTrustPasswordFile": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        }
+      }
+    }
+  }
+}

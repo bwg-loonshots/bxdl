@@ -17,7 +17,8 @@
         "SUCCEEDED",
         "FAILED",
         "INCOMPLETE",
-        "UNSUPPORTED"
+        "UNSUPPORTED",
+        "UNKNOWN"
       ]
     },
     "reasonCode": {

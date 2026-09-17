@@ -1,6 +1,6 @@
 # Development 패키지 v1
 
-이것은 BXDL 소유의 개발용 포맷이다. NIGO 공식 engine manifest와 공급자 release 계약은 미제공이며, 이 포맷이 그 계약을 대신하지 않는다. 입력 asset을 다운로드하거나 NIGO 소스를 빌드하지 않는다.
+이것은 BXDL 소유의 개발용 포맷이다. NIGO 개발 후보 manifest는 수신했으며 정식 release 공급은 대기 중이다. 이 포맷이 NIGO의 엔진 계약을 대신하지 않는다. 입력 asset을 다운로드하거나 NIGO 소스를 빌드하지 않는다.
 
 ## Build 입력
 
@@ -41,7 +41,7 @@ bxdl package build --root ./stage --spec ./package-spec.json \
 3. manifest inventory와 정확히 일치하는 payload regular entries. Builder는 경로를 정렬한다.
 4. 두 개의 zero EOF block. 추가 tar padding은 제한된 zero bytes만 허용한다.
 
-Manifest 자체와 signature는 payload inventory에 포함하지 않는다. 각 payload의 path/size/SHA-256/mode를 manifest가 묶는다. gzip CRC·추가 member·EOF 이후 데이터까지 검사한다. 검증은 스트리밍 읽기만 수행하고 파일 추출·JVM·systemd·네트워크 작업을 하지 않는다.
+Manifest 자체와 signature는 payload inventory에 포함하지 않는다. 각 payload의 path/size/SHA-256/mode를 manifest가 묶는다. gzip CRC·추가 member·EOF 이후 데이터까지 검사한다. `package verify`는 스트리밍 읽기만 수행한다. `install`은 같은 검증 parser의 payload bytes를 새 폴더에 쓰며 최종 gzip 검증 후에만 완료 receipt를 공개한다. 두 명령은 JVM·서비스·네트워크를 실행하지 않는다.
 
 허용 root는 `bin`, `engine`, `runtime`, `deploy`, `schemas`, `docs`, `licenses`다. 경로는 상대경로·정규형이어야 하며 절대경로·`..`·backslash·control character·중복 path·file/directory 충돌을 거부한다. 알려진 secret/data/developer 경로와 파일 확장자를 거부하지만 일반적인 모든 내용 유출을 탐지하는 DLP는 아니다. source·키·DB가 없는 staging은 별도 검토한다.
 
@@ -63,6 +63,6 @@ v1 platform은 `darwin/arm64/none/none` 또는 기존 `linux/amd64/glibc/2.34` �
 
 고정 입력·고정 key의 archive는 파일 정렬과 tar/gzip metadata 정규화로 재현 가능하게 만든다. CLI 바이너리·JRE·JAR 자체의 재현 빌드와는 별도 주장이다. 원본 input은 빌드 중 다른 작업이 수정하지 않는 전용 stage를 사용한다.
 
-## 공식 엔진 공급 이후
+## 개발 후보와 공식 공급
 
-NIGO artifact/manifest·JRE 공급자가 정해지면 실제 `engine.lock.json`과 `packaging/runtime.lock.json`을 공급 provenance에 연결한다. 현재는 가짜 release/tag/hash의 lock을 만들지 않았다. 호환된 공식 contract status·runtime provenance·실제 Linux native 인수를 추가한 별도 버전에서 고객 후보 채널을 열어야 한다.
+NIGO 개발 후보의 정확한 bytes와 계약을 수신해 [개발 snapshot](../contracts/nigo/development-2026-09-17/README.md)에 보존했다. `engine` 명령의 lock 형식은 `contracts/bxdl/engine-lock.schema.json`이다. 선택한 JAR 및 Java executable의 신뢰 hash와 실제 expected identity를 외부에서 제공한다. 현재 선택한 공식 JRE·정식 release lock은 없으며 개발 Mac Java를 배포 대상으로 자동 채택하지 않는다. 호환된 공식 contract status·runtime provenance·실제 Linux native 인수를 추가한 별도 버전에서 고객 후보 채널을 열어야 한다.

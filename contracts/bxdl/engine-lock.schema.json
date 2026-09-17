@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BXDL development engine lock v1",
+  "description": "External trusted inputs for engine-info and cold preflight only. Source commit must equal contract revision; runtime additionally validates this and exact DTO equality.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "jarSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "jarSizeBytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 536870912
+    },
+    "javaSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "buildInfoStatus": {
+          "const": "AVAILABLE"
+        },
+        "engine": {
+          "const": "NIGO"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9.+_-]{0,127}$"
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "commit": {
+              "type": "string",
+              "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$"
+            },
+            "dirty": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "commit",
+            "dirty"
+          ]
+        },
+        "java": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "requiredMajor": {
+              "const": 21
+            }
+          },
+          "required": [
+            "requiredMajor"
+          ]
+        },
+        "console": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "node": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9.+_-]{0,127}$"
+            },
+            "npm": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9.+_-]{0,127}$"
+            },
+            "sourceFingerprint": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "node",
+            "npm",
+            "sourceFingerprint"
+          ]
+        },
+        "contract": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "const": "PROPOSED"
+            },
+            "revision": {
+              "type": "string",
+              "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$"
+            },
+            "documentationSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "definitionSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "runtimeDocumentationSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "runtimeFixtureSha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "fingerprint": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "status",
+            "revision",
+            "documentationSha256",
+            "definitionSha256",
+            "runtimeDocumentationSha256",
+            "runtimeFixtureSha256",
+            "fingerprint"
+          ]
+        },
+        "distribution": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "channel": {
+              "const": "development"
+            },
+            "officialRelease": {
+              "const": false
+            }
+          },
+          "required": [
+            "channel",
+            "officialRelease"
+          ]
+        }
+      },
+      "required": [
+        "buildInfoStatus",
+        "engine",
+        "version",
+        "source",
+        "java",
+        "console",
+        "contract",
+        "distribution"
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "jarSha256",
+    "jarSizeBytes",
+    "javaSha256",
+    "expected"
+  ]
+}
