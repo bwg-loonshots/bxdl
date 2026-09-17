@@ -2,7 +2,7 @@
 
 NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구다. **Rust로 구현하며 macOS Apple Silicon에서 설치·운용 UX를 먼저 완성한다.** Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
 
-현재 구현은 개발용 패키지 조립·검증과 로컬 설정 검사 기반이다. 실제 installer·launchd·NIGO init/start/stop은 아직 구현하지 않았다. 엔진 JAR/JRE·고객 키·DB를 이 저장소에 동봉하지 않는다.
+현재 구현은 개발용 패키지 조립·검증, **Mac의 새 폴더 설치**, 재개 가능한 setup 설정 도우미와 **NIGO 개발 후보 정보·cold 검사**다. launchd·NIGO init/start/stop은 후속이다. 엔진 JAR/JRE·고객 키·DB를 이 저장소에 동봉하지 않는다.
 
 ## 구현한 명령
 
@@ -11,10 +11,25 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 | `bxdl version --json` | Rust CLI identity·Mac 우선 target·구현 capability·엔진/서비스 미인수 상태 |
 | `bxdl package build ...` | expected hash에 고정한 stage를 결정적인 development archive로 조립·선택 서명·자체 검증 |
 | `bxdl package verify <archive> ...` | 외부 신뢰 key의 Ed25519 서명, 모든 payload hash/size/mode, 경로·형식·한도 검증 |
+| `bxdl install <archive> --destination <new-dir> ...` | macOS arm64에서 검증한 payload를 새 폴더에 설치하고 완료 receipt 기록 |
+| `bxdl engine inspect ...` | 신뢰 lock의 JAR·Java hash와 실제 engine-info 식별 정보 대조 |
+| `bxdl engine preflight ... --config <node.json>` | NIGO native 설정의 cold 검사, INCOMPLETE 보존 |
 | `bxdl config validate --file <json>` | 제품 설정 schema·경로 기준·명시 endpoint 규칙 검사 |
 | `bxdl preflight --config <json>` | 파일/디렉터리 metadata만 검사, 엔진·서비스 검사는 NOT_CHECKED |
+| `bxdl setup [--workspace <dir>]` | 설정 입력·수정·저장·재개와 로컬 검사, 새 제품 JSON 내보내기 |
 
-`install/init/start/stop/status/logs/diagnose/upgrade/uninstall`은 exit 4와 CAPABILITY_NOT_IMPLEMENTED를 반환한다. 다음 구현의 대화형 `setup` 흐름은 [Mac 우선 설계](./design/2026-09-17-rust-macos-first.md)에 정의했다.
+`init/start/stop/status/logs/diagnose/upgrade/uninstall`은 exit 4와 CAPABILITY_NOT_IMPLEMENTED를 반환한다. setup 저장 성공은 설치·엔진 준비 완료가 아니다.
+
+## 설정 준비
+
+Mac 터미널에서 `bxdl setup`을 실행하면 이름·경로·포트·기존 체인/키 자료의 파일 경로를 묻는다. 각 답을 저장하며 `:back`으로 수정하고 `:cancel`로 나갈 수 있다. 기존 초안은 `bxdl setup --resume`으로 이어간다. 기본 작업 폴더는 `$HOME/Library/Application Support/BXDL/setup`이며 새 폴더만 생성한다.
+
+```bash
+./bin/bxdl setup
+./bin/bxdl setup --resume
+```
+
+입력 완료 후 `save`는 초안 저장, `export`는 확인 후 새 설정 JSON 저장이다. 참조 파일 누락이 있더라도 초안은 저장할 수 있으며 검사 결과에 실패가 남는다. 자동화의 `--from`/`--resume`·`--non-interactive`·`--json`과 경로·출력 규칙은 [setup 사용 가이드](./docs/setup.md)를 따른다.
 
 ## 개발과 실행
 
@@ -49,7 +64,10 @@ Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux targe
 
 - [Rust·macOS 우선 결정과 설치 UX](./design/2026-09-17-rust-macos-first.md)
 - [현재 구현·검증 상태](./docs/implementation-status.md)
+- [설정 도우미·초안 저장과 재개](./docs/setup.md)
 - [패키지 입력·서명·형식](./docs/package-format.md)
+- [Mac 패키지 설치와 실패 처리](./docs/install.md)
+- [엔진 lock·개발 후보 cold 검사](./docs/engine.md)
 - [CLI·설정·사전 검사](./docs/cli.md)
 - [지원 후보와 도구·의존성](./docs/support-matrix.md)
 - [전체 설계](./design/README.md), [제품 JSON 계약](./contracts/bxdl/README.md)

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "jarSha256": "37070fbddaf1350b81952b9f3bd718b76f246557d7cd5abe2ec580a13d8de5fe",
+  "jarSizeBytes": 159965726,
+  "javaSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "expected": {
+    "buildInfoStatus": "AVAILABLE",
+    "engine": "NIGO",
+    "version": "0.0.1-SNAPSHOT",
+    "source": {
+      "commit": "aee1cbe5e0383ea9eb4d3334d72e3ea23d1d8b27",
+      "dirty": true
+    },
+    "java": {
+      "requiredMajor": 21
+    },
+    "console": {
+      "node": "v24.21.0",
+      "npm": "11.19.0",
+      "sourceFingerprint": "aa813cd89e0455d3e049075d31fa74bf86e94a3e3d5b8fb6c4190a52e393f8d1"
+    },
+    "contract": {
+      "status": "PROPOSED",
+      "revision": "aee1cbe5e0383ea9eb4d3334d72e3ea23d1d8b27",
+      "documentationSha256": "c39b424aff032d219713174f5f84862cf6719502d99174f8f5d46eb2073d9534",
+      "definitionSha256": "6816bd9a45d4b4f739aad902946fd29f77f420ef79e70e20a3200ad3ba5ce451",
+      "runtimeDocumentationSha256": "7665c195987708143fce10e9a1eed609a8367068f8bacfdd7e89cb14d14b3383",
+      "runtimeFixtureSha256": "850105faa65199044e845e648f3c3dbb1e3833001b0eec825ac8ecdd36e3f132",
+      "fingerprint": "0ac719e0175e9d5fb2e732e297b496e5725bd17f18d84bb53c6b51c235fd71cc"
+    },
+    "distribution": {
+      "channel": "development",
+      "officialRelease": false
+    }
+  }
+}

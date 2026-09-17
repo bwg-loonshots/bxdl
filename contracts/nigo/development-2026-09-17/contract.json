@@ -1,0 +1,13 @@
+{
+  "engine": "NIGO",
+  "status": "PROPOSED",
+  "commands": ["engine-info", "preflight", "init", "resume-init", "run"],
+  "configuration": "explicit-node-and-public-chain-json",
+  "backends": ["h2", "rocksdb"],
+  "httpAccess": "LOOPBACK_ONLY",
+  "qbftTransport": "MTLS",
+  "preflight": {"opensDatabase": false, "startsNetwork": false, "signs": false, "generatesKeys": false, "successStatus": "INCOMPLETE", "exitCode": 3},
+  "processReport": {"format": "JSONL", "requiredIdentity": ["attemptId", "command", "sequence", "pid", "observedAt"], "missingTerminalResult": "UNKNOWN", "qbftShutdownConfirmation": "NOT_FULLY_OBSERVED", "qbftShutdownResult": "UNKNOWN"},
+  "exitCodes": {"0": "ONE_SHOT_SUCCESS", "3": "INCOMPLETE", "64": "INVALID_CONFIGURATION", "74": "PRECONDITION_IO_OR_STARTUP_FAILURE"},
+  "distribution": {"channel": "development", "officialRelease": false, "consumerAcceptance": "NOT_RUN"}
+}

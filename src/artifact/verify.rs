@@ -3,7 +3,8 @@ use super::types::{
     MAX_ARCHIVE_BYTES, MAX_FILE_BYTES, MAX_FILES, MAX_MANIFEST_BYTES, MAX_TOTAL_BYTES, fail,
 };
 use super::{
-    Manifest, Report, decode_strict_json, load_public_key, validate_manifest, validate_path,
+    FileEntry, Manifest, Report, decode_strict_json, load_public_key, validate_manifest,
+    validate_path,
 };
 use crate::error::Result;
 use base64::{Engine as _, engine::general_purpose::STANDARD};
@@ -30,13 +31,51 @@ pub fn verify(path: &Path, options: &VerifyOptions) -> Result<Report> {
         .as_deref()
         .map(load_public_key)
         .transpose()?;
-    verify_inner(path, key.as_ref(), options.allow_unsigned_development)
+    verify_inner(path, key.as_ref(), options.allow_unsigned_development, None)
 }
 pub(super) fn verify_with_key(path: &Path, key: &VerifyingKey) -> Result<Report> {
-    verify_inner(path, Some(key), false)
+    verify_inner(path, Some(key), false, None)
 }
 
-fn verify_inner(path: &Path, key: Option<&VerifyingKey>, allow_unsigned: bool) -> Result<Report> {
+/// Crate-internal consumer of the exact stream being verified. Consumers must
+/// keep output incomplete until this function returns successfully; a late hash,
+/// tar or gzip error can follow any payload callback.
+pub(crate) trait PayloadSink {
+    fn begin(
+        &mut self,
+        manifest: &Manifest,
+        manifest_bytes: &[u8],
+        signature: Option<&[u8]>,
+    ) -> Result<()>;
+    fn start_file(&mut self, entry: &FileEntry) -> Result<()>;
+    fn write_chunk(&mut self, bytes: &[u8]) -> Result<()>;
+    fn finish_file(&mut self) -> Result<()>;
+}
+
+pub(crate) fn verify_to_sink(
+    path: &Path,
+    options: &VerifyOptions,
+    sink: &mut dyn PayloadSink,
+) -> Result<Report> {
+    let key = options
+        .public_key_path
+        .as_deref()
+        .map(load_public_key)
+        .transpose()?;
+    verify_inner(
+        path,
+        key.as_ref(),
+        options.allow_unsigned_development,
+        Some(sink),
+    )
+}
+
+fn verify_inner(
+    path: &Path,
+    key: Option<&VerifyingKey>,
+    allow_unsigned: bool,
+    mut sink: Option<&mut dyn PayloadSink>,
+) -> Result<Report> {
     let before = fs::symlink_metadata(path)
         .map_err(|_| fail("ARCHIVE_INVALID", "cannot inspect archive"))?;
     if !before.is_file() {
@@ -81,6 +120,7 @@ fn verify_inner(path: &Path, key: Option<&VerifyingKey>, allow_unsigned: bool) -
     validate_manifest(&manifest, true)?;
     let mut next = read_header(&mut raw)?;
     let authenticity;
+    let mut signature_for_install = None;
     if next.as_ref().is_some_and(|h| h.name == "manifest.sig") {
         let signature_header = next.take().expect("signature header was checked");
         if signature_header.size == 0
@@ -111,6 +151,7 @@ fn verify_inner(path: &Path, key: Option<&VerifyingKey>, allow_unsigned: bool) -
                     "manifest signature does not match trusted key",
                 )
             })?;
+        signature_for_install = Some(signature_bytes);
         authenticity = "verified-external-ed25519";
         next = read_header(&mut raw)?;
     } else {
@@ -121,6 +162,9 @@ fn verify_inner(path: &Path, key: Option<&VerifyingKey>, allow_unsigned: bool) -
             ));
         }
         authenticity = "unsigned-development";
+    }
+    if let Some(consumer) = sink.as_mut() {
+        consumer.begin(&manifest, &manifest_bytes, signature_for_install.as_deref())?;
     }
     let mut inventory: HashMap<_, _> = manifest
         .files
@@ -143,6 +187,9 @@ fn verify_inner(path: &Path, key: Option<&VerifyingKey>, allow_unsigned: bool) -
                 "payload size or mode differs from inventory",
             ));
         }
+        if let Some(consumer) = sink.as_mut() {
+            consumer.start_file(expected)?;
+        }
         let mut digest = Sha256::new();
         let mut remaining = header.size;
         let mut buffer = [0_u8; 32768];
@@ -151,12 +198,18 @@ fn verify_inner(path: &Path, key: Option<&VerifyingKey>, allow_unsigned: bool) -
             raw.read_exact(&mut buffer[..amount])
                 .map_err(|_| fail("ARCHIVE_INVALID", "truncated or corrupt payload"))?;
             digest.update(&buffer[..amount]);
+            if let Some(consumer) = sink.as_mut() {
+                consumer.write_chunk(&buffer[..amount])?;
+            }
             remaining -= amount as u64;
         }
         if hex::encode(digest.finalize()) != expected.sha256 {
             return Err(fail("HASH_MISMATCH", "payload hash differs from inventory"));
         }
         read_padding(&mut raw, header.size)?;
+        if let Some(consumer) = sink.as_mut() {
+            consumer.finish_file()?;
+        }
         files_verified += 1;
         bytes_verified += header.size;
         next = read_header(&mut raw)?;

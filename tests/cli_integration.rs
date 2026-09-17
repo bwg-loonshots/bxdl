@@ -112,6 +112,37 @@ fn signed_mac_package_build_verify_wrong_key_tampering_and_output_conflict() {
         verified["data"]["archiveSha256"],
         built["data"]["archiveSha256"]
     );
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    {
+        let destination = root.join("installed package");
+        let command = vec![
+            "install".into(),
+            s(&output),
+            "--destination".into(),
+            s(&destination),
+            "--public-key".into(),
+            s(&public),
+        ];
+        let (installed, exit) = run(command.clone());
+        assert_eq!(exit, 0, "{installed}");
+        assert_eq!(installed["data"]["outcome"], "INSTALLED");
+        assert_eq!(installed["data"]["engineValidation"], "NOT_CHECKED");
+        assert_eq!(installed["data"]["lifecycle"], "NOT_PERFORMED");
+        assert_eq!(
+            installed["data"]["archiveSha256"],
+            built["data"]["archiveSha256"]
+        );
+        assert_eq!(
+            fs::read(destination.join("engine/nigo-node.jar")).unwrap(),
+            b"fake engine bytes"
+        );
+        let receipt = fs::read(destination.join(".bxdl-install.json")).unwrap();
+        assert_eq!(run(command).1, 3);
+        assert_eq!(
+            fs::read(destination.join(".bxdl-install.json")).unwrap(),
+            receipt
+        );
+    }
     let other = SigningKey::from_bytes(&[74; 32]);
     write(
         &public,

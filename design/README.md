@@ -1,9 +1,9 @@
 # BXDL 제품 구현 설계
 
 - 작성일: 2026-09-16 / 갱신: 2026-09-17
-- 상태: 기반 구현 진행. 개발용 package 조립·검증, CLI, 제품 설정·로컬 metadata 검사를 구현했다. 실제 설치·엔진 연동·Linux 인수는 미완료다.
+- 상태: Rust 기반의 개발용 package 조립·검증, CLI, 제품 설정·로컬 metadata 검사 이후 R1 setup 입력·검사·수정/재개 UX를 진행한다. 새 폴더 Mac installer와 NIGO 개발 후보 cold adapter를 추가했다. setup 설치 연결·launchd·전체 G1-M/G1-L 인수는 미완료다.
 - 사용자 확정: **Rust 구현 + macOS Apple Silicon 우선 설치·운용 UX**. Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
-- 현재 구현 범위와 근거: [구현 상태](../docs/implementation-status.md). NIGO requirements에는 수신 회신과 `REQ-0002` 초안을 기록했다. 해당 변경은 별도 세션에서 공유하며, 공급자 수락·엔진 수정·공식 릴리스·서버 변경은 수행하지 않았다.
+- 현재 구현 범위와 근거: [구현 상태](../docs/implementation-status.md). NIGO가 `REQ-0002`의 방향·범위를 수용했고 BXDL은 피드백의 안전·인수 의미와 교환 절차에 동의했다. [소비자 회신](./2026-09-17-nigo-feedback-response.md)에 기록하며 PROPOSED API·fixture·dirty 개발 JAR는 수신해 제한된 cold 소비를 진행했다. clean 공급과 전체 엔진 인수는 남아 있다. 요청 상태는 `OPEN`이고 이번에는 공유 중인 NIGO 원장을 변경하지 않는다.
 
 ## 목표
 
@@ -19,6 +19,7 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 | [제품·배포 아키텍처](./2026-09-16-product-architecture.md) | 책임 경계, 기술 선택, 배포 layout, CLI·설정·상태·보안 모델 |
 | [단계별 구현 계획](./2026-09-16-implementation-plan.md) | 작업 ID, 의존성, 산출물, 완료 기준, 구현 순서 |
 | [NIGO 연동 계약](./2026-09-16-engine-integration.md) | 현행/제안 구분, NIGO-01~06 요청안, 공급자·소비자 책임 |
+| [NIGO 피드백에 대한 소비자 회신](./2026-09-17-nigo-feedback-response.md) | 수신 revision·범위/안전 의미 수용·owner·상세 계약 및 공급 대기·결과 교환 |
 | [패키지 인수·릴리스 계획](./2026-09-16-acceptance-and-release.md) | 테스트 matrix, 실패 주입, evidence, 릴리스 절차 |
 
 ## 결정 수준
@@ -29,7 +30,8 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 | 기반 구현 선택 | Rust 1.86.0와 Cargo.lock, development `.tar.gz`, Ed25519 서명·외부 key 검증, JSON 제품 설정 |
 | 검증 대기 후보 | macOS arm64·Java 21·RocksDB·사용자 launchd 1차 인수, Linux/systemd 후속 |
 | M0 잔여 결정 | 지원 macOS 최소 버전·launchd profile·자원, JRE 공급자·patch·hash·재배포 자료; Linux 조합은 후속 |
-| NIGO와 합의 필요 | 공식 artifact/manifest, 명시 init/restart, cold preflight, 외부 DTO·시작/종료 report, 유지보수 도구 진입점 |
+| NIGO 범위·의미 수용 | 첫 Mac NIGO-01~04/06, Linux·NIGO-05 후속, 초기화/검사/관측/종료 안전 의미와 결과 교환. 제공·수신 owner 확인 |
+| NIGO 개발 후보 수신·잔여 | engine-info/preflight/init/resume-init/run과 runtime 계약/fixture·개발 JAR 수신. clean 후보·QBFT 종료 증명·live sync 장애 관측·공식 공급/유지보수 후속 |
 | 후속 범위 | 원격 관리·SSO/RBAC, 새 웹 콘솔, fleet, Docker/Helm, 백업/복원 자동화, 인증서 순차 교체 |
 
 추천안은 사용자가 기술 스택을 확정했거나 해당 플랫폼이 지원 검증을 통과했다는 뜻이 아니다. 구현자는 M0의 작은 검증으로 이 선택을 확정·수정하고 이유를 기록한다. 매 작업마다 같은 선택을 다시 논의하지 않는다.
@@ -39,10 +41,12 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 - NIGO 읽기 기준: `17b46c151aa2d848b34364ddc43df9c1a202ee41`.
 - NIGO 실행 코드 기준: `a48d1adef4e9c98dbbb675ec3ff73eee25d00dfb`.
 - NIGO 핸드오프 문서 커밋: `a827fd5e9f327c85ad5a15f29b54f2a29f60a224`.
-- 실제 소비할 engine release·hash: **미제공**. 위 source commit을 출시된 배포물로 취급하지 않는다.
+- 2026-09-17 NIGO 피드백 문서 commit: `87f473deb22dd32f482ffb8f0889d35647e7287e`; 수신 checkout HEAD: `aee1cbe5e0383ea9eb4d3334d72e3ea23d1d8b27`, `requirements/` clean. 위 최초 source 검토와 별도의 문서 수신 기록이다.
+- BXDL 공유 기반: `a3a18d531cc4f0368559a6f1090724fcd21cbf8c`(PR #1 병합). 새 소비자 회신의 공유 revision은 후속 제출 때 별도 기록한다.
+- 2026-09-17 추가 수신 HEAD `17c0bc3b63756915c18fa2942afdd73426bb2eac`(#117). 실제 JAR hash는 [후보 snapshot](../contracts/nigo/development-2026-09-17/README.md), 소비 결과는 [구현 상태](../docs/implementation-status.md)를 따른다. JAR는 source `aee1cbe5...`, dirty=true인 개발 후보이며 위 merge HEAD로 재빌드한 release가 아니다.
 - NIGO 근거는 각 문서의 `nigo-protocol` 저장소 상대경로로 기록한다. 개인 PC 절대경로 또는 sibling checkout을 고객 실행 의존성으로 만들지 않는다.
 
-과거 핸드오프는 설계 참고 자료다. 그 문서의 실행 지시나 상태 전환을 자동 수행하지 않았으며, `REQ-0001`을 수락·검증 완료로 변경하지 않았다. NIGO 측 작업 수락·일정도 이 계획으로 확정되지 않는다.
+과거 핸드오프와 제공자 문서는 설계·교환 자료다. 저장된 실행 지시나 상태 전환을 자동 수행하지 않는다. 이번 범위·안전 의미 수용을 실제 인터페이스 확정·엔진 구현 완료로 확대하지 않으며 NIGO 실행 일정·요청 원장 상태를 대신 변경하지 않는다.
 
 ## 첫 완료 기준
 

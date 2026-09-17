@@ -500,3 +500,216 @@ fn preflight_rejects_symlink_files_and_parent_directories() {
         );
     }
 }
+
+#[test]
+fn normalize_unsaved_config_resolves_references_without_creating_or_reading_them() {
+    let fixture = fixture(false);
+    let source = fixture
+        .root
+        .join("future location/not-created/../instance.json");
+    let before = snapshot(&fixture.root);
+    let raw = SAMPLE.replace("chain.json", "missing/../chain.json");
+    let normalized = normalize_bytes(raw.as_bytes(), &source).unwrap();
+    let value: serde_json::Value = serde_json::from_slice(&normalized).unwrap();
+    let base = fixture.root.join("future location");
+    for (actual, relative) in [
+        (&value["chainDescription"], "chain.json"),
+        (&value["storage"]["dataDirectory"], "data"),
+        (&value["secrets"]["validatorKeystore"], "secrets/v.p12"),
+        (&value["secrets"]["validatorPasswordFile"], "secrets/v.pass"),
+        (&value["secrets"]["tlsKeyStore"], "secrets/t.p12"),
+        (&value["secrets"]["tlsKeyPasswordFile"], "secrets/t.pass"),
+        (&value["secrets"]["tlsTrustStore"], "secrets/trust.p12"),
+        (
+            &value["secrets"]["tlsTrustPasswordFile"],
+            "secrets/trust.pass",
+        ),
+    ] {
+        assert_eq!(Path::new(actual.as_str().unwrap()), base.join(relative));
+    }
+    assert!(normalized.ends_with(b"\n"));
+    assert_eq!(normalize_bytes(&normalized, &source).unwrap(), normalized);
+    assert_eq!(snapshot(&fixture.root), before);
+    assert!(!source.exists());
+}
+
+#[test]
+fn unsaved_relative_source_uses_cwd_lexically_without_rebasing_absolute_references() {
+    let source = Path::new("future-config/../candidate folder/instance.json");
+    let expected_base = std::env::current_dir().unwrap().join("candidate folder");
+    let normalized = normalize_bytes(SAMPLE.as_bytes(), source).unwrap();
+    let value: serde_json::Value = serde_json::from_slice(&normalized).unwrap();
+    assert_eq!(
+        Path::new(value["chainDescription"].as_str().unwrap()),
+        expected_base.join("chain.json")
+    );
+    let fixture = fixture(false);
+    // Absolute references stay attached to their original source when the
+    // future destination changes. This is the import-to-draft boundary.
+    assert_eq!(
+        normalize_bytes(&normalized, &fixture.root.join("different.json")).unwrap(),
+        normalized
+    );
+}
+
+#[test]
+fn normalized_file_import_is_a_snapshot_not_a_later_reread() {
+    let fixture = fixture(true);
+    let imported = normalized_file(&fixture.path).unwrap();
+    let disk = validate_file(&fixture.path).unwrap();
+    assert_eq!(
+        disk.config_sha256,
+        hex::encode(Sha256::digest(SAMPLE.as_bytes()))
+    );
+    write(&fixture.path, "INVALID_SECRET_CONFIG_CONTENT_CANARY", 0o600);
+    let before = snapshot(&fixture.root);
+    let future = fixture.root.join("elsewhere/not-created/instance.json");
+    let candidate = normalize_bytes(&imported, &future).unwrap();
+    assert_eq!(candidate, imported);
+    let result = preflight_bytes(&candidate, &future).unwrap();
+    assert_eq!(result.outcome, "INCOMPLETE");
+    assert_eq!(result.instance_id, "node-one");
+    assert_eq!(
+        result.config_sha256,
+        hex::encode(Sha256::digest(&candidate))
+    );
+    assert_eq!(
+        check_by_name(&result, "chainDescriptionMetadata").status,
+        "PASS"
+    );
+    assert_eq!(
+        check_by_name(&result, "validatorKeystoreMetadata").status,
+        "PASS"
+    );
+    assert!(!serde_json::to_string(&result).unwrap().contains("CANARY"));
+    assert_eq!(snapshot(&fixture.root), before);
+    assert!(!future.exists());
+}
+
+#[test]
+fn draft_preflight_matches_reference_checks_but_never_checks_the_config_path() {
+    let fixture = fixture(true);
+    let saved = preflight(&fixture.path).unwrap();
+    // A dangling symlink at the future config location must not be followed,
+    // read, or interpreted as this candidate's file. The setup model handles
+    // collisions before persistence.
+    fs::remove_file(&fixture.path).unwrap();
+    symlink("PRIVATE_CONFIG_TARGET_CANARY", &fixture.path).unwrap();
+    let before = snapshot(&fixture.root);
+    let draft = preflight_bytes(SAMPLE.as_bytes(), &fixture.path).unwrap();
+    let config_check = check_by_name(&draft, "configMetadata");
+    assert_eq!(config_check.status, "NOT_CHECKED");
+    assert_eq!(config_check.reason_code, "DRAFT_NOT_WRITTEN");
+    assert_eq!(draft.outcome, "INCOMPLETE");
+    assert_eq!(draft.config_sha256, saved.config_sha256);
+    assert_eq!(draft.checks.len(), saved.checks.len());
+    for check in &saved.checks {
+        if check.name != "configMetadata" {
+            assert_eq!(
+                serde_json::to_value(check_by_name(&draft, &check.name)).unwrap(),
+                serde_json::to_value(check).unwrap()
+            );
+        }
+    }
+    let report = serde_json::to_string(&draft).unwrap();
+    for sensitive in ["CANARY", "secrets/v.pass", fixture.root.to_str().unwrap()] {
+        assert!(!report.contains(sensitive));
+    }
+    assert_eq!(snapshot(&fixture.root), before);
+}
+
+#[test]
+fn candidate_apis_preserve_strict_reason_codes_and_hide_invalid_input() {
+    let fixture = fixture(false);
+    let source = fixture.root.join("PRIVATE_CONFIG_CANARY.json");
+    let cases = [
+        (
+            SAMPLE
+                .replace(
+                    r#""schemaVersion":1"#,
+                    r#""PRIVATE_FIELD_CANARY":"SECRET_CANARY","schemaVersion":1"#,
+                )
+                .into_bytes(),
+            "CONFIG_JSON_INVALID",
+        ),
+        (
+            SAMPLE
+                .replace(
+                    r#""schemaVersion":1"#,
+                    r#""schemaVersion":1,"schemaVersion":1"#,
+                )
+                .into_bytes(),
+            "CONFIG_JSON_INVALID",
+        ),
+        (
+            SAMPLE
+                .replace(r#""schemaVersion":1"#, r#""schemaVersion":null"#)
+                .into_bytes(),
+            "CONFIG_SCHEMA_INVALID",
+        ),
+        (
+            SAMPLE.replace(r#""schemaVersion":1,"#, "").into_bytes(),
+            "CONFIG_SCHEMA_INVALID",
+        ),
+        (
+            SAMPLE
+                .replace("chain.json", "PRIVATE_CONFIG_CANARY.json")
+                .into_bytes(),
+            "REFERENCE_PATH_INVALID",
+        ),
+        (vec![b' '; MAX_CONFIG_BYTES + 1], "CONFIG_TOO_LARGE"),
+        ([SAMPLE.as_bytes(), &[0xff]].concat(), "CONFIG_JSON_INVALID"),
+    ];
+    for (raw, reason) in cases {
+        write(&source, &raw, 0o600);
+        for error in [
+            normalize_bytes(&raw, &source).unwrap_err(),
+            preflight_bytes(&raw, &source).unwrap_err(),
+            normalized_file(&source).unwrap_err(),
+            validate_file(&source).unwrap_err(),
+        ] {
+            assert_eq!(error.code, reason);
+            assert!(!error.message.contains("CANARY"));
+            assert!(!error.message.contains(fixture.root.to_str().unwrap()));
+        }
+    }
+    let invalid_source = Path::new("PRIVATE_PATH_CANARY\n.json");
+    for error in [
+        normalize_bytes(SAMPLE.as_bytes(), invalid_source).unwrap_err(),
+        preflight_bytes(SAMPLE.as_bytes(), invalid_source).unwrap_err(),
+    ] {
+        assert_eq!(error.code, "CONFIG_PATH_INVALID");
+        assert!(!error.message.contains("CANARY"));
+    }
+}
+
+#[test]
+fn imported_config_requires_a_bounded_regular_file_and_normalized_bytes_stay_valid() {
+    let fixture = fixture(false);
+    let alias = fixture.root.join("alias.json");
+    symlink(&fixture.path, &alias).unwrap();
+    assert_eq!(
+        normalized_file(&alias).unwrap_err().code,
+        "CONFIG_NOT_REGULAR"
+    );
+    assert_eq!(
+        normalized_file(&fixture.root).unwrap_err().code,
+        "CONFIG_NOT_REGULAR"
+    );
+    write(&fixture.path, vec![b' '; MAX_CONFIG_BYTES + 1], 0o600);
+    assert_eq!(
+        normalized_file(&fixture.path).unwrap_err().code,
+        "CONFIG_TOO_LARGE"
+    );
+
+    // A relative input can meet its path limit before absolutization while its
+    // absolute equivalent exceeds it. Reject instead of returning an unusable
+    // normalized document. No such reference is read or created.
+    let raw = SAMPLE.replace("chain.json", &"a".repeat(4096));
+    assert_eq!(
+        normalize_bytes(raw.as_bytes(), &fixture.path)
+            .unwrap_err()
+            .code,
+        "REFERENCE_PATH_INVALID"
+    );
+}
