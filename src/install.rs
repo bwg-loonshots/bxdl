@@ -515,9 +515,10 @@ fn parent_anchor(path: &Path) -> Result<(PathBuf, Dir, OsString)> {
     Ok((normalized, parent, name))
 }
 fn sync_dir(dir: &Dir) -> Result<()> {
-    dir.try_clone()
+    // Linux directory anchors may use O_PATH, which cannot be synced. Reopen
+    // this same anchored directory for reading instead of cloning its handle.
+    dir.open(".")
         .map_err(|_| io_error())?
-        .into_std_file()
         .sync_all()
         .map_err(|_| io_error())
 }
