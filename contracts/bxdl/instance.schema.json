@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:bxdl:instance:development:1",
+  "title": "BXDL proposed development product instance configuration",
+  "$comment": "Product input only, not a NIGO contract or runnable configuration. CLI additionally rejects duplicate keys, nonexact field spelling, conflicting ports, reference conflicts, unspecified/multicast P2P addresses, and excessive UTF-8 byte lengths. No engine YAML, key validation, or installed instance is produced.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "instanceId", "role", "nodeId", "chainDescription", "storage", "secrets", "http", "p2p"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "instanceId": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$"},
+    "role": {"const": "validator"},
+    "nodeId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "chainDescription": {"$ref": "#/$defs/path"},
+    "storage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["backend", "dataDirectory"],
+      "properties": {
+        "backend": {"const": "rocksdb"},
+        "dataDirectory": {"$ref": "#/$defs/path"}
+      }
+    },
+    "secrets": {
+      "type": "object", "additionalProperties": false,
+      "required": ["validatorKeystore", "validatorPasswordFile", "tlsKeyStore", "tlsKeyPasswordFile", "tlsTrustStore", "tlsTrustPasswordFile"],
+      "properties": {
+        "validatorKeystore": {"$ref": "#/$defs/path"},
+        "validatorPasswordFile": {"$ref": "#/$defs/path"},
+        "tlsKeyStore": {"$ref": "#/$defs/path"},
+        "tlsKeyPasswordFile": {"$ref": "#/$defs/path"},
+        "tlsTrustStore": {"$ref": "#/$defs/path"},
+        "tlsTrustPasswordFile": {"$ref": "#/$defs/path"}
+      }
+    },
+    "http": {
+      "type": "object", "additionalProperties": false,
+      "required": ["address", "port"],
+      "properties": {
+        "address": {"enum": ["127.0.0.1", "::1"]},
+        "port": {"$ref": "#/$defs/port"}
+      }
+    },
+    "p2p": {
+      "type": "object", "additionalProperties": false,
+      "required": ["address", "port"],
+      "properties": {
+        "address": {"type": "string", "maxLength": 45, "anyOf": [{"format": "ipv4"}, {"format": "ipv6"}]},
+        "port": {"$ref": "#/$defs/port"}
+      }
+    }
+  },
+  "$defs": {
+    "path": {
+      "type": "string", "minLength": 1, "maxLength": 4096,
+      "description": "Explicit absolute path or path relative to this config file; no environment or home expansion. Control characters and backslashes are rejected. Referenced contents are never read by product validation."
+    },
+    "port": {"type": "integer", "minimum": 1, "maximum": 65535}
+  }
+}
