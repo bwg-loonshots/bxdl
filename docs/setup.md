@@ -138,4 +138,4 @@ bxdl setup --workspace "$HOME/Library/Application Support/BXDL/setup-batch" \
 
 JSON의 `installation=NOT_PERFORMED`, `engineValidation=NOT_CHECKED`는 저장 성공 후에도 유지된다. 초안만 검사한 경우 설정 파일 metadata는 아직 쓰지 않았음을 나타내며, 내보내기 뒤에는 실제 출력 파일을 기준으로 metadata를 확인한다. 이 검사에도 엔진 실행은 포함되지 않는다.
 
-setup 초안은 [Mac 우선 계획](../design/2026-09-17-rust-macos-first.md)의 R1이다. 별도 파일 installer와 제품/native 결합 cold 검사가 이어지지만 instance 등록·journal·init·launchd는 후속이다. 전체 운영 설치 인수는 G1-M에서 따로 수행한다.
+setup 초안은 [Mac 우선 계획](../design/2026-09-17-rust-macos-first.md)의 R1이다. 별도 파일 installer·제품/native 결합 cold 검사에 이어 [instance 등록·journal·명시 init/resume-init](./instance.md)을 제공한다. setup에서 package 선택·등록을 자동 연결하는 흐름과 launchd는 후속이다. 전체 운영 설치 인수는 G1-M에서 따로 수행한다.

@@ -43,3 +43,5 @@ G1-M은 Mac 사용자 설치·launchd·동일 데이터 재시작·사용자 흐
 G1-L은 실제 Linux VM의 systemd·전용 UID·native·다중 host 네트워크 인수다. G1-D는 container 별도 인수다. 기존 사용자 node/data를 fixture로 사용하지 않는다. 개발 테스트와 과거 다른 revision의 evidence는 각 gate를 대신하지 않는다.
 
 GitHub Actions는 macOS/Ubuntu의 Rust CLI fast checks를 정의한다. 기반 PR #1의 CI 통과는 그 revision의 과거 이력이다. PR #2는 Mac·Ubuntu CI를 통과했지만, 2026-09-18 제품/native 결합 preflight 변경의 원격 CI는 아직 미실행이다. workflow 존재나 이전 CI를 이번 PASS 근거로 사용하지 않는다. 로컬 결과도 해당 revision과 연결된 results 기록을 따른다. OS runner architecture는 실행 evidence로 기록하며 CLI CI 통과를 engine/service 인수로 확대하지 않는다.
+
+2026-09-18 명시 초기화 시험에서는 기존 cold 전용 jlink 구성에 `jdk.management`가 빠진 점을 확인했다. NIGO `RuntimeMonitorReader`가 `com.sun.management.OperatingSystemMXBean`을 사용하므로 해당 모듈을 포함한 별도 로컬 시험 JRE로 검증한다. Java launcher hash만으로 runtime 모듈 구성을 구별할 수 없어 instance 등록/실행 시 전체 설치 inventory를 검증한다. 이 보완은 정식 JRE 선정·고객 재배포 승인·필요 모듈 전체 확정을 대신하지 않는다. [초기화 검증 기록](../results/2026-09-18-instance-initialization.md)을 따른다.

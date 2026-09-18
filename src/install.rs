@@ -544,6 +544,8 @@ fn exists_error() -> BxdlError {
     )
 }
 
+mod installed;
 #[cfg(test)]
 #[path = "install/tests.rs"]
 mod tests;
+pub use installed::verify_installed;

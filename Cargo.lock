@@ -50,6 +50,7 @@ dependencies = [
  "ed25519-dalek",
  "flate2",
  "hex",
+ "rustix",
  "serde",
  "serde_json",
  "sha2",

@@ -1,4 +1,4 @@
-//! Operator interface. Engine commands invoke only pinned, bounded cold JVM commands.
+//! Operator interface. Mutations require a registered instance and explicit intent.
 use crate::{artifact, config, engine, error::BxdlError, install, setup};
 use serde::Serialize;
 use serde_json::{Value, json};
@@ -14,7 +14,7 @@ pub const REVISION: &str = match option_env!("BXDL_REVISION") {
     Some(v) => v,
     None => "development",
 };
-pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\nsetup은 설정 초안·로컬 검사·파일 저장만 수행합니다. 설치·초기화·시작은 하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\ninit/start/stop/status/logs/diagnose/upgrade/uninstall은 아직 제공하지 않습니다.\n";
+pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\nsetup은 설정 초안·로컬 검사·파일 저장만 수행합니다. 설치·초기화·시작은 하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/stop/status/logs/diagnose/upgrade/uninstall은 아직 제공하지 않습니다.\n";
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -374,7 +374,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["package.build", "package.verify", "config.validate", "preflight.local", "setup.draft", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine"],
+                        "capabilities": ["package.build", "package.verify", "config.validate", "preflight.local", "setup.draft", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init"],
                         "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),
@@ -483,24 +483,33 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
             }
         }
         "preflight" => dispatch_preflight(&args[1..]),
-        command @ ("init" | "start" | "stop" | "status" | "logs" | "diagnose" | "upgrade"
-        | "uninstall") => (
-            result(
-                command,
-                "UNSUPPORTED",
-                "CAPABILITY_NOT_IMPLEMENTED",
-                "이 명령은 아직 제공하지 않습니다. 엔진·서비스·데이터에 작업을 수행하지 않았습니다.",
-                Some(
-                    json!({"required": ["NIGO 공급 계약", "macOS 설치·서비스 인수", "해당 운영 명령 구현"]}),
+        "instance" => dispatch_instance(&args[1..]),
+        command @ ("init" | "resume-init") => dispatch_initialization(command, &args[1..]),
+        command @ ("start" | "stop" | "status" | "logs" | "diagnose" | "upgrade" | "uninstall") => {
+            (
+                result(
+                    command,
+                    "UNSUPPORTED",
+                    "CAPABILITY_NOT_IMPLEMENTED",
+                    "이 명령은 아직 제공하지 않습니다. 엔진·서비스·데이터에 작업을 수행하지 않았습니다.",
+                    Some(
+                        json!({"required": ["NIGO 공급 계약", "macOS 설치·서비스 인수", "해당 운영 명령 구현"]}),
+                    ),
                 ),
-            ),
-            4,
-        ),
+                4,
+            )
+        }
         _ => invalid("unknown"),
     }
 }
 
 fn dispatch_preflight(args: &[String]) -> (ResultEnvelope, i32) {
+    if args
+        .iter()
+        .any(|arg| arg == "--instance" || arg.starts_with("--instance="))
+    {
+        return dispatch_registered_preflight(args);
+    }
     let Some((flags, positions)) = parse(
         args,
         &[
@@ -764,4 +773,178 @@ fn parse(
         flags.insert(name.into(), value);
     }
     Some((flags, positions))
+}
+
+fn timeout_flag(
+    flags: &BTreeMap<String, String>,
+    default: u64,
+    max: u64,
+) -> Option<std::time::Duration> {
+    let seconds = match flags.get("timeout-seconds") {
+        Some(value) => value.parse::<u64>().ok()?,
+        None => default,
+    };
+    (1..=max)
+        .contains(&seconds)
+        .then_some(std::time::Duration::from_secs(seconds))
+}
+fn instance_failure(command: &str, error: BxdlError) -> (ResultEnvelope, i32) {
+    if error.code == "INSTANCE_INITIALIZATION_UNKNOWN" || error.code == "ENGINE_TIMEOUT" {
+        (
+            result(command, "UNKNOWN", &error.code, &error.message, None),
+            6,
+        )
+    } else {
+        failure(command, error, 3)
+    }
+}
+fn dispatch_instance(args: &[String]) -> (ResultEnvelope, i32) {
+    match args.first().map(String::as_str) {
+        Some("show") => {
+            let Some((flags, pos)) = parse(&args[1..], &[("instance", true)]) else {
+                return invalid("instance show");
+            };
+            if !pos.is_empty() || !flags.contains_key("instance") {
+                return invalid("instance show");
+            }
+            match engine::instance::show(Path::new(&flags["instance"])) {
+                Ok(value) => report(
+                    "instance show",
+                    "SUCCEEDED",
+                    "INSTANCE_STATE_READ",
+                    "저장된 인스턴스 상태입니다. 실행 중 노드의 건강 상태는 검사하지 않았습니다.",
+                    value,
+                    0,
+                ),
+                Err(e) => instance_failure("instance show", e),
+            }
+        }
+        Some("register") => {
+            let Some((flags, pos)) = parse(
+                &args[1..],
+                &[
+                    ("instance", true),
+                    ("package", true),
+                    ("archive", true),
+                    ("public-key", true),
+                    ("allow-unsigned-development", false),
+                    ("config", true),
+                    ("engine-config", true),
+                    ("lock", true),
+                    ("allow-development", false),
+                    ("timeout-seconds", true),
+                ],
+            ) else {
+                return invalid("instance register");
+            };
+            if !pos.is_empty()
+                || [
+                    "instance",
+                    "package",
+                    "archive",
+                    "config",
+                    "engine-config",
+                    "lock",
+                    "allow-development",
+                ]
+                .iter()
+                .any(|key| !flags.contains_key(*key))
+                || flags.contains_key("public-key")
+                    == flags.contains_key("allow-unsigned-development")
+            {
+                return invalid("instance register");
+            }
+            let Some(timeout) = timeout_flag(&flags, 30, 120) else {
+                return invalid("instance register");
+            };
+            let options = engine::instance::RegisterOptions {
+                instance: (&flags["instance"]).into(),
+                package: (&flags["package"]).into(),
+                archive: (&flags["archive"]).into(),
+                public_key: flags.get("public-key").map(PathBuf::from),
+                allow_unsigned_development: flags.contains_key("allow-unsigned-development"),
+                product: (&flags["config"]).into(),
+                native: (&flags["engine-config"]).into(),
+                lock: (&flags["lock"]).into(),
+                timeout,
+            };
+            match engine::instance::register(&options) {
+                Ok(value) => report(
+                    "instance register",
+                    "SUCCEEDED",
+                    "INSTANCE_REGISTERED",
+                    "설치 패키지와 설정을 인스턴스로 등록했습니다. 다음 단계는 명시적 init입니다.",
+                    value,
+                    0,
+                ),
+                Err(e) => instance_failure("instance register", e),
+            }
+        }
+        _ => invalid("instance"),
+    }
+}
+fn dispatch_registered_preflight(args: &[String]) -> (ResultEnvelope, i32) {
+    let Some((flags, pos)) = parse(args, &[("instance", true), ("timeout-seconds", true)]) else {
+        return invalid("preflight");
+    };
+    if !pos.is_empty() || !flags.contains_key("instance") {
+        return invalid("preflight");
+    }
+    let Some(timeout) = timeout_flag(&flags, 30, 120) else {
+        return invalid("preflight");
+    };
+    match engine::instance::preflight(Path::new(&flags["instance"]), timeout) {
+        Ok(value) => report(
+            "preflight",
+            "INCOMPLETE",
+            "ENGINE_RUNTIME_CHECKS_REQUIRED",
+            "등록한 패키지·설정과 엔진 cold 검사를 확인했습니다. DB/WAL·네트워크·서비스 검사는 남아 있습니다.",
+            value,
+            5,
+        ),
+        Err(e) => instance_failure("preflight", e),
+    }
+}
+fn dispatch_initialization(command: &str, args: &[String]) -> (ResultEnvelope, i32) {
+    let resume = command == "resume-init";
+    let confirm = if resume {
+        "confirm-resume"
+    } else {
+        "confirm-initialize"
+    };
+    let Some((flags, pos)) = parse(
+        args,
+        &[
+            ("instance", true),
+            (confirm, false),
+            ("timeout-seconds", true),
+        ],
+    ) else {
+        return invalid(command);
+    };
+    if !pos.is_empty() || !flags.contains_key("instance") || !flags.contains_key(confirm) {
+        return invalid(command);
+    }
+    let Some(timeout) = timeout_flag(&flags, 120, 600) else {
+        return invalid(command);
+    };
+    match engine::instance::initialize(Path::new(&flags["instance"]), resume, timeout) {
+        Ok(value) if value.initialization == "INITIALIZED" => report(
+            command,
+            "SUCCEEDED",
+            "INSTANCE_INITIALIZED",
+            "저장소 초기화와 종료를 확인했습니다. 서비스 등록·노드 시작은 다음 단계입니다.",
+            value,
+            0,
+        ),
+        Ok(value) => report(
+            command,
+            "UNKNOWN",
+            "INSTANCE_INITIALIZATION_UNKNOWN",
+            "초기화 결과를 확정하지 못했습니다. 데이터와 작업 기록을 보존했습니다. instance show로 확인하세요.",
+            value,
+            6,
+        ),
+        Err(e) => instance_failure(command, e),
+    }
 }

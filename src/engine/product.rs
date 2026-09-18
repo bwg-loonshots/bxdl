@@ -48,7 +48,7 @@ pub(super) struct ProductInput {
     local: config::Report,
 }
 impl ProductInput {
-    fn load(path: &Path) -> Result<Self> {
+    pub(super) fn load(path: &Path) -> Result<Self> {
         let file = files::Input::read(path, 262_144, false)?;
         let normalized = config::normalize_bytes(&file.raw, &file.path)?;
         let document: Value = json::decode(&normalized).map_err(|_| mismatch())?;

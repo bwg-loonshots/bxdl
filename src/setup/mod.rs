@@ -1,7 +1,7 @@
 //! Resumable product configuration drafts. This is not an installed instance,
 //! an engine initialization journal, or a NIGO validation contract.
 pub(crate) mod paths;
-mod store;
+pub(crate) mod store;
 mod wizard;
 
 pub use wizard::{Finish, interact};
