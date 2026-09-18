@@ -42,7 +42,7 @@ impl Stamp {
 }
 
 pub struct Input {
-    path: PathBuf,
+    pub(super) path: PathBuf,
     stamp: Stamp,
     pub raw: Vec<u8>,
 }
@@ -222,17 +222,17 @@ impl Drop for Workspace {
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct NativeConfig {
+pub(super) struct NativeConfig {
     chain_file: String,
     data_directory: String,
-    backend: String,
-    node: BTreeMap<String, Value>,
+    pub(super) backend: String,
+    pub(super) node: BTreeMap<String, Value>,
 }
 pub struct NativeInput {
     pub config: Input,
     pub chain: Input,
-    value: NativeConfig,
-    data: PathBuf,
+    pub(super) value: NativeConfig,
+    pub(super) data: PathBuf,
     references: Vec<PathBuf>,
 }
 impl NativeInput {

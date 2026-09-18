@@ -2,7 +2,7 @@
 
 `bxdl setup`은 노드에 사용할 **제품 설정 초안**을 준비한다. 입력을 하나씩 저장하고 로컬 파일 상태를 확인한 뒤 새 JSON 설정으로 내보낼 수 있다. 현재는 validator·RocksDB 설정을 지원한다.
 
-패키지 선택·설치, 키 생성, DB 초기화, NIGO 검사·기동, launchd 등록은 아직 수행하지 않는다. 설정을 저장했다는 결과는 노드를 시작할 준비가 끝났다는 뜻이 아니다.
+setup 자체는 패키지 선택·설치, 키 생성, DB 초기화, NIGO 검사·기동, launchd 등록을 수행하지 않는다. 설정을 저장했다는 결과는 노드를 시작할 준비가 끝났다는 뜻이 아니다.
 
 ## 시작과 재개
 
@@ -34,14 +34,14 @@ bxdl setup --workspace "$HOME/Library/Application Support/BXDL/setup-validator-t
 | 항목 | 입력 내용 |
 | --- | --- |
 | 1. 인스턴스 이름 | 소문자로 시작하는 1~32자의 소문자·숫자·하이픈. 기본값 `validator-one` |
-| 2. 공개 노드 ID | 운영자가 준비한 공개 식별자. 실제 엔진 identity 검사는 후속 |
+| 2. 공개 노드 ID | 운영자가 준비한 공개 식별자. 엔진 결합 검사에는 `0x`로 시작하는 32-byte hex가 필요하며 validator ID와 다름 |
 | 3. 데이터 저장 위치 | 사용할 DB 경로. Mac 기본 제안은 `Library/Application Support/BXDL/instances/<이름>/data`; 이 디렉터리나 DB를 생성하지 않음 |
 | 4~5. 로컬 콘솔 IP·포트 | `127.0.0.1` 또는 `::1`, 1~65535. 기본 `127.0.0.1:18080` |
 | 6~7. P2P IP·포트 | 명시적인 unicast IP와 콘솔과 다른 포트. IP 기본값은 없으며 포트 기본값은 `19090`; Mac 로컬 시험에 `127.0.0.1` 사용 가능 |
 | 8. 공통 체인 자료 | 기존 파일 경로. 새 네트워크·validator membership을 생성하지 않음 |
-| 9~10. Validator 자료 | 기존 keystore와 비밀번호 파일 경로 |
-| 11~12. TLS 키 자료 | 기존 keystore와 비밀번호 파일 경로 |
-| 13~14. TLS 신뢰 자료 | 기존 truststore와 비밀번호 파일 경로 |
+| 9~10. Validator 자료 | 기존 NIGO NGVK keystore와 비밀번호 파일 경로. TLS용 PKCS12와 다른 형식 |
+| 11~12. TLS 키 자료 | 기존 PKCS12/JKS keystore와 비밀번호 파일 경로; 실제 type은 native 설정에 맞춤 |
+| 13~14. TLS 신뢰 자료 | 기존 PKCS12/JKS truststore와 비밀번호 파일 경로 |
 
 Enter는 저장된 답 또는 표시한 기본값을 유지한다. 필수 입력이 없거나 형식이 잘못되면 해당 항목을 다시 묻는다. 자료 파일이 아직 없으면 경로를 입력해 초안을 준비할 수 있지만 로컬 검사 결과에는 누락이 남는다. 파일의 존재와 권한을 확인할 뿐 내용·인증서·키의 유효성을 검증하지 않는다.
 
@@ -72,6 +72,26 @@ Enter는 저장된 답 또는 표시한 기본값을 유지한다. 필수 입력
 로컬 검사가 `FAIL`이어도 형식이 유효한 초안 저장·설정 내보내기는 가능하다. 결과의 검사 항목을 확인하고 누락된 자료를 준비하거나 경로를 수정한다. 로컬 항목이 모두 통과해도 NIGO·runtime·서비스 검사가 없어 preflight는 `INCOMPLETE`다.
 
 대화형 결과에는 저장한 입력 수, 다음 항목, 초안·설정 위치와 수정 필요·미검사 수를 한국어로 표시한다. 검사 실패에는 해당 자료와 수정 방법을 안내한다. 자동화에서 세부 검사 항목이 필요하면 비대화형 JSON 결과를 사용한다.
+
+## 내보낸 설정으로 엔진 검사하기
+
+제품 설정을 저장한 뒤에는 같은 노드의 NIGO `node.json`과 고정한 엔진 자료를 준비하여 따로 검사한다. setup의 `check` 선택은 계속 로컬 파일 검사만 수행한다.
+
+```bash
+bxdl preflight --config ./instance.json \
+  --engine-config /absolute/instance/node.json \
+  --jar /absolute/package/engine/nigo-node.jar \
+  --java /absolute/package/runtime/bin/java \
+  --lock ./trusted-engine.lock.json --allow-development --json
+```
+
+선택한 패키지는 [install](./install.md)로 새 폴더에 설치할 수 있다. setup이 패키지를 선택·설치하거나 설치 위치를 자동 탐색하지 않는다. 다섯 엔진 옵션은 모두 함께 지정하며, 생략하면 기존 로컬 검사만 수행한다. [엔진 가이드](./engine.md)에 신뢰 lock·native 자료 준비와 제한 시간이 있다.
+
+BXDL은 제품 설정과 native 설정의 node ID·경로·주소·포트·키 참조가 같은지 확인한다. 현재는 QBFT validator와 mTLS 구성을 명시해야 한다. native에만 있는 validator ID·peer 목록·인증 pin·동기화 설정은 별도 준비가 필요하며 setup이 생성하지 않는다. 기존 초안·제품 JSON 형식은 바꾸지 않는다.
+
+로컬 파일 문제는 exit 4로 엔진 실행 전에 멈추고, 제품/native 설정이 다르면 exit 3으로 알린다. 올바른 cold 검사도 exit 5/INCOMPLETE다. timeout은 exit 6/UNKNOWN이며 자동 재시도하지 않는다. JSON의 `data.product`, `data.configurationBinding`, 선택 `data.engine`에서 로컬 검사·설정 일치·엔진 검사를 구별할 수 있다.
+
+엔진 cold 검사는 준비된 keystore/password·TLS 자료를 읽어 확인한다. DB 초기화·노드 시작·launchd 등록은 수행하지 않으며, 두 설정이 일치하거나 키 검사가 통과해도 실제 peer 연결과 운영 인수는 남는다.
 
 ## 기존 설정 가져오기와 자동화
 
@@ -118,4 +138,4 @@ bxdl setup --workspace "$HOME/Library/Application Support/BXDL/setup-batch" \
 
 JSON의 `installation=NOT_PERFORMED`, `engineValidation=NOT_CHECKED`는 저장 성공 후에도 유지된다. 초안만 검사한 경우 설정 파일 metadata는 아직 쓰지 않았음을 나타내며, 내보내기 뒤에는 실제 출력 파일을 기준으로 metadata를 확인한다. 이 검사에도 엔진 실행은 포함되지 않는다.
 
-이 단계는 [Mac 우선 계획](../design/2026-09-17-rust-macos-first.md)의 R1이다. 검증된 Mac package·installer·instance journal은 R2, NIGO·launchd·로컬 콘솔 연결은 R3이며 전체 운영 설치 인수는 G1-M에서 따로 수행한다.
+setup 초안은 [Mac 우선 계획](../design/2026-09-17-rust-macos-first.md)의 R1이다. 별도 파일 installer와 제품/native 결합 cold 검사가 이어지지만 instance 등록·journal·init·launchd는 후속이다. 전체 운영 설치 인수는 G1-M에서 따로 수행한다.

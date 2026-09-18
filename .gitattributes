@@ -4,3 +4,11 @@ contracts/nigo/development-2026-09-17/ENGINE_RUNTIME_CONTRACT.md -text
 contracts/nigo/development-2026-09-17/contract.json -text
 contracts/nigo/development-2026-09-17/health-cases.json -text
 contracts/nigo/development-2026-09-17/engine-manifest.json -text -whitespace
+contracts/nigo/development-clean-2026-09-18/ENGINE_CONTRACT.md -text
+contracts/nigo/development-clean-2026-09-18/ENGINE_RUNTIME_CONTRACT.md -text
+contracts/nigo/development-clean-2026-09-18/contract.json -text
+contracts/nigo/development-clean-2026-09-18/health-cases.json -text
+contracts/nigo/development-clean-2026-09-18/engine-manifest.json -text -whitespace
+contracts/nigo/development-clean-2026-09-18/evidence/supplier-evidence.json -text
+contracts/nigo/development-clean-2026-09-18/evidence/test-summary.json -text
+contracts/nigo/development-clean-2026-09-18/evidence/engine-info.json -text
