@@ -1,0 +1,166 @@
+{
+  "recordType": "NIGO_ALLOWLISTED_TEST_SUMMARY",
+  "source": {
+    "commit": "303e163a9b3f293fa39e42d02b8daa1843973c14",
+    "dirty": false
+  },
+  "exactJar": {
+    "fileName": "nigo-node-0.0.1-SNAPSHOT.jar",
+    "sha256": "dd5a366ee990d58ff4fa7da89812f66ec9025443229027bffe1b648cab6d6455",
+    "sizeBytes": 159988739
+  },
+  "extraction": "JUnit suite counters and testcase name/class/time only; properties, hostname, system-out, system-err, raw configuration and process fixture directories excluded.",
+  "suites": [
+    {
+      "module": "nigo-block-sync",
+      "task": "test",
+      "tests": 136,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "rawReportCount": 17
+    },
+    {
+      "module": "nigo-transaction-gossip",
+      "task": "test",
+      "tests": 34,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "rawReportCount": 9
+    },
+    {
+      "module": "nigo-node",
+      "task": "test",
+      "tests": 728,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "rawReportCount": 125
+    },
+    {
+      "module": "nigo-node",
+      "task": "testEngineArtifact",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        {
+          "ordinal": 1,
+          "name": "unknownCommandCannotFallBackToSpring()",
+          "className": "org.nigo.node.engine.EngineCommandIntegrationTests",
+          "seconds": 0.157,
+          "result": "PASS"
+        },
+        {
+          "ordinal": 2,
+          "name": "[1] backend = \"h2\"",
+          "className": "org.nigo.node.engine.EngineCommandIntegrationTests",
+          "seconds": 6.858,
+          "result": "PASS"
+        },
+        {
+          "ordinal": 3,
+          "name": "[2] backend = \"rocksdb\"",
+          "className": "org.nigo.node.engine.EngineCommandIntegrationTests",
+          "seconds": 7.188,
+          "result": "PASS"
+        },
+        {
+          "ordinal": 4,
+          "name": "misplacedOrMissingManagedCommandCannotFallBackToSpring()",
+          "className": "org.nigo.node.engine.EngineCommandIntegrationTests",
+          "seconds": 0.408,
+          "result": "PASS"
+        },
+        {
+          "ordinal": 5,
+          "name": "[1] backend = \"h2\"",
+          "className": "org.nigo.node.engine.EngineCommandIntegrationTests",
+          "seconds": 11.152,
+          "result": "PASS"
+        },
+        {
+          "ordinal": 6,
+          "name": "[2] backend = \"rocksdb\"",
+          "className": "org.nigo.node.engine.EngineCommandIntegrationTests",
+          "seconds": 11.616,
+          "result": "PASS"
+        },
+        {
+          "ordinal": 7,
+          "name": "engineInfoUsesOnlyMachineJsonAndNamesUnavailableSourceExecution()",
+          "className": "org.nigo.node.engine.EngineCommandIntegrationTests",
+          "seconds": 0.26,
+          "result": "PASS"
+        },
+        {
+          "ordinal": 8,
+          "name": "[1] backend = \"h2\"",
+          "className": "org.nigo.node.engine.EngineCommandIntegrationTests",
+          "seconds": 54.968,
+          "result": "PASS"
+        },
+        {
+          "ordinal": 9,
+          "name": "[2] backend = \"rocksdb\"",
+          "className": "org.nigo.node.engine.EngineCommandIntegrationTests",
+          "seconds": 59.226,
+          "result": "PASS"
+        }
+      ],
+      "rawReportCount": 1
+    }
+  ],
+  "otherGates": {
+    "console": {
+      "files": 32,
+      "tests": 671,
+      "failed": 0,
+      "result": "PASS"
+    },
+    "i18nScriptTests": {
+      "tests": 5,
+      "failed": 0,
+      "result": "PASS"
+    },
+    "architecture": "PASS",
+    "artifactIdentityZip": {
+      "tests": 16,
+      "result": "PASS"
+    }
+  },
+  "exactJarScenarios": [
+    {
+      "backends": [
+        "h2",
+        "rocksdb"
+      ],
+      "scope": "INSTANT: explicit init, run, graceful stop, same-instance restart and reinitialization rejection"
+    },
+    {
+      "backends": [
+        "h2",
+        "rocksdb"
+      ],
+      "scope": "Interrupted INITIALIZING journal resumes only an already committed genesis"
+    },
+    {
+      "backends": [
+        "h2",
+        "rocksdb"
+      ],
+      "scope": "4 fresh mTLS validators plus genesis-only observer; observed source stop, authenticated source switch, later finality; same DB/key restart, manual follower and all owned processes STOPPED"
+    },
+    {
+      "scope": "engine-info AVAILABLE; unknown/missing/misplaced commands cannot fall back to Spring"
+    }
+  ],
+  "limits": [
+    "Parameterized JUnit display names can repeat; ordinal is report order, not a stable scenario identifier.",
+    "Source-classpath test results are separate from exact-JAR results.",
+    "Process report fields and matching finality are verified by integration-test assertions; raw per-process reports are not retained/exported in this bundle.",
+    "No BXDL selected JRE/package, launchd/offline acceptance or Linux acceptance performed."
+  ]
+}

@@ -22,7 +22,7 @@ Rust 이식은 serde/serde_json(JSON), flate2(Rust compression backend), sha2/he
 
 NIGO `ROCKSDB_OPERATIONS.md`와 `tasks/2026-09-07-rocksdb-storage-implementation.md`에 macOS/Darwin arm64·Java 21의 실제 RocksDB·Node 정상 재시작 근거가 있다. `PROVIDERS.md`는 macOS aarch64 native 경로·JVM os.arch·writable/loadable temp 조건을 명시한다. 이는 BXDL의 선택한 package/JRE/launchd 조합을 인수한 결과가 아니다.
 
-동봉 Java 21의 공급자·patch·archive hash·NOTICE와 최소 macOS 버전은 미선정이다. 개발 Mac의 Java를 재배포 대상으로 자동 채택하지 않는다. NIGO가 범위·안전 의미를 수용했지만 개발 후보 JAR/manifest·PROPOSED 계약/fixture는 수신했고 hash 고정 cold adapter를 구현했다. clean 후보·공식 JRE/배포 lock·전체 engine 인수는 남아 있다. REQ-0002는 `OPEN`이고 [소비자 회신](../design/2026-09-17-nigo-feedback-response.md)에 owner·수신 revision·대기 항목을 기록한다. source commit이나 fake JAR/Java fixture를 공식 공급물로 표기하지 않는다.
+동봉 Java 21의 공급자·patch·archive hash·NOTICE와 최소 macOS 버전은 미선정이다. 개발 Mac의 Java를 재배포 대상으로 자동 채택하지 않는다. NIGO가 범위·안전 의미를 수용했지만 개발 후보 JAR/manifest·PROPOSED 계약/fixture는 수신했고 hash 고정 cold adapter를 구현했다. clean 후보는 #119 인계로 수신·검증했고, 공식 JRE/배포 lock·전체 engine 인수는 남아 있다. REQ-0002는 `OPEN`이고 [소비자 회신](../design/2026-09-17-nigo-feedback-response.md)에 owner·수신 revision·대기 항목을 기록한다. source commit이나 fake JAR/Java fixture를 공식 공급물로 표기하지 않는다.
 
 Manifest v1의 Mac 값 `libc=none`, `minGlibc=none`은 Linux glibc 조건이 적용되지 않는다는 뜻이다. Mac에 libc가 없다는 뜻이 아니다. Linux의 `glibc/2.34`는 기존 development 후보 계약값을 유지하며 실제 지원 보장이 아니다.
 
@@ -42,4 +42,4 @@ G1-M은 Mac 사용자 설치·launchd·동일 데이터 재시작·사용자 흐
 
 G1-L은 실제 Linux VM의 systemd·전용 UID·native·다중 host 네트워크 인수다. G1-D는 container 별도 인수다. 기존 사용자 node/data를 fixture로 사용하지 않는다. 개발 테스트와 과거 다른 revision의 evidence는 각 gate를 대신하지 않는다.
 
-GitHub Actions는 macOS/Ubuntu의 Rust CLI fast checks를 정의한다. 기반 PR #1의 CI 통과는 그 revision의 과거 이력이다. 이번 setup·설치·엔진 adapter 변경의 원격 CI는 미실행이며 workflow 존재나 이전 CI를 이번 PASS 근거로 사용하지 않는다. 로컬 결과도 해당 revision과 연결된 results 기록을 따른다. OS runner architecture는 실행 evidence로 기록하며 CLI CI 통과를 engine/service 인수로 확대하지 않는다.
+GitHub Actions는 macOS/Ubuntu의 Rust CLI fast checks를 정의한다. 기반 PR #1의 CI 통과는 그 revision의 과거 이력이다. PR #2는 Mac·Ubuntu CI를 통과했지만, 2026-09-18 제품/native 결합 preflight 변경의 원격 CI는 아직 미실행이다. workflow 존재나 이전 CI를 이번 PASS 근거로 사용하지 않는다. 로컬 결과도 해당 revision과 연결된 results 기록을 따른다. OS runner architecture는 실행 evidence로 기록하며 CLI CI 통과를 engine/service 인수로 확대하지 않는다.

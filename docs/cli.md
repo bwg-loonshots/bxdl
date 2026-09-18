@@ -5,14 +5,14 @@
 | exit | 현재 의미 |
 | --- | --- |
 | 0 | 패키지 검증·파일 설치·개발 엔진 식별 확인·설정 저장 성공. 노드 정상 보장이 아님 |
-| 2 | 인자 오류, `config validate`/`preflight`의 설정 read/schema 오류 |
-| 3 | artifact·설치·engine lock/응답/입력 검증 실패 또는 setup 가져오기·저장·충돌 오류 |
+| 2 | 인자 오류, `config validate`/로컬 전용 `preflight`의 설정 read/schema 오류 |
+| 3 | artifact·설치·engine lock/응답/입력 검증 실패, 결합 preflight의 제품/native 입력 오류·불일치 또는 setup 가져오기·저장·충돌 오류 |
 | 4 | 로컬 preflight FAIL 또는 아직 제공하지 않는 운영 명령 |
 | 5 | preflight 미완료 또는 setup 취소/EOF·비대화형 미완성 초안 |
 | 6 | cold JVM timeout 또는 설치 receipt commit 결과 불명(UNKNOWN) |
 | 7 | 입력/안내·결과 출력 실패 또는 분류되지 않은 내부 오류 |
 
-engine 명령만 고정한 JVM의 cold 명령을 실행한다. timeout 때 해당 직접 child를 종료·회수하고 UNKNOWN/exit 6을 반환한다. 노드·서비스 종료의 정상성을 뜻하지 않으며 자동 재시도하지 않는다.
+engine 명령과 전체 엔진 옵션을 지정한 결합 preflight가 고정한 JVM의 cold 명령을 실행한다. timeout 때 해당 직접 child를 종료·회수하고 UNKNOWN/exit 6을 반환한다. 노드·서비스 종료의 정상성을 뜻하지 않으며 자동 재시도하지 않는다.
 
 ## JSON envelope
 
@@ -53,11 +53,37 @@ bxdl config validate --file ./instance.json --json
 bxdl preflight --config ./instance.json --json
 ```
 
-validate는 config 자체만 읽고 참조 파일을 열지 않는다. preflight는 파일/디렉터리의 type·기본 mode·symlink 등 metadata만 관측한다. secret 파일 내용·인증서·DB를 열지 않고 포트를 bind/connect하지 않으며 디렉터리를 생성하거나 프로그램을 실행하지 않는다. config 읽기에 따라 filesystem atime이 달라질 수 있다.
+validate는 config 자체만 읽고 참조 파일을 열지 않는다. 엔진 옵션 없는 preflight는 파일/디렉터리의 type·기본 mode·symlink 등 metadata만 관측한다. secret 파일 내용·인증서·DB를 열지 않고 포트를 bind/connect하지 않으며 디렉터리를 생성하거나 프로그램을 실행하지 않는다. config 읽기에 따라 filesystem atime이 달라질 수 있다.
 
 secret 파일의 기본 metadata 허용은 0600/0640 수준, parent는 0700/0750 수준이다. 서비스 UID·ACL·mount·effective access는 해당 Mac/Linux 설치 profile에서 검증할 항목이며 이 metadata 검사로 보증하지 않는다. setup이 새로 저장하는 초안·설정은 0600이다. 누락 data directory는 DATA_NOT_INITIALIZED/NOT_CHECKED로 표시한다.
 
-chain/genesis/profile·key identity·인증서 유효성·DB/WAL·네트워크·JRE/native·Mac launchd/Linux systemd·instance 등록은 현재 NOT_CHECKED다. 독립 `preflight` 명령은 모든 로컬 metadata가 PASS라도 INCOMPLETE와 exit 5이며 `ready`를 반환하지 않는다. 로컬 문제가 있으면 FAIL과 exit 4로 상세 checks를 유지한다. setup은 위에서 설명한 저장 요청의 exit 규칙을 사용한다.
+로컬 보고서에서 chain/genesis/profile·key identity·인증서 유효성·DB/WAL·네트워크·JRE/native·Mac launchd/Linux systemd·instance 등록은 NOT_CHECKED다. 엔진 옵션 없는 `preflight` 명령은 모든 로컬 metadata가 PASS라도 INCOMPLETE와 exit 5이며 `ready`를 반환하지 않는다. 로컬 문제가 있으면 FAIL과 exit 4로 상세 checks를 유지한다. setup은 위에서 설명한 저장 요청의 exit 규칙을 사용한다.
+
+## 제품·native 설정 결합 preflight
+
+```text
+bxdl preflight --config <instance.json> --engine-config <node.json>
+    --jar <jar> --java <absolute-java> --lock <trusted-engine.lock.json>
+    --allow-development [--timeout-seconds <1..120>] [--json]
+```
+
+`--config`는 제품 설정, `--engine-config`는 운영자가 준비한 NIGO native 설정이다. 다섯 엔진 옵션 `--engine-config/--jar/--java/--lock/--allow-development`는 전부 함께 요구한다. `--timeout-seconds`만 붙이거나 일부 옵션을 빠뜨리면 exit 2다. 엔진 옵션이 없으면 기존 로컬 metadata 검사와 결과 구조를 유지한다. 제한 시간은 기본 30초이며 engine-info와 preflight 각 JVM 호출에 적용한다.
+
+제품의 14개 입력 중 instanceId는 제품 전용이다. 나머지 입력 및 validator/RocksDB 고정값이 명시 native 값과 일치해야 한다. native는 QBFT·VALIDATOR·MTLS를 명시하며, 대응 값의 누락을 엔진 기본값으로 채우지 않는다. nodeId·경로·주소·포트·secret 참조를 비교한 뒤 pinned 엔진의 cold 검사를 수행한다. 제품에 없는 validator ID·peer/pin·sync 등의 내용은 native로 준비하며 NIGO가 검증한다. [상세 매핑](../design/2026-09-18-product-engine-preflight.md)과 [엔진 가이드](./engine.md)를 따른다.
+
+결합 보고서 `data`에는 `outcome=FAIL|INCOMPLETE`, `product`(기존 로컬 report), `configurationBinding=NOT_CHECKED|MATCHED`, 선택 `engine`(기존 engine report)이 있다. 로컬 전용 명령의 `data`는 기존 report 자체이며 이 새 구조로 감싸지 않는다.
+
+| 조건 | envelope / exit / 결과 |
+| --- | --- |
+| 제품 참조 metadata에 FAIL | FAILED / 4 / `data.product`에 실패 보존, binding NOT_CHECKED, engine 없음; JVM 미실행 |
+| 실행 전 제품/native 대응 불일치·필수 대응 값 누락 | FAILED / 3 / ENGINE_PRODUCT_MISMATCH; JVM 미실행 |
+| 결합 입력 read/schema·lock/pin·응답 검증 오류 | FAILED / 3 / 정제된 reasonCode; 성공 보고서 없음 |
+| 일치 확인 및 정상 cold 결과 | INCOMPLETE / 5 / binding MATCHED, engine 결과 포함 |
+| cold JVM timeout | UNKNOWN / 6 / ENGINE_TIMEOUT; READY로 해석하거나 자동 재시도하지 않음 |
+
+실행한 엔진 응답의 node identity/backend가 제품과 달라도 ENGINE_PRODUCT_MISMATCH로 결과를 거부한다. 따라서 reasonCode만으로 JVM 미실행 여부를 추론하지 않는다. 비교·실행한 product/native/chain bytes를 결속하고 원본 변경 시 결과를 폐기한다. `data.product`의 로컬 미검사는 엔진 결과로 덮어쓰지 않는다. NIGO cold는 key material을 읽지만 DB open·서명·network·서비스 시작을 수행하지 않는다. KEY_MATERIAL PASS도 peer handshake·expiry/revocation 인수가 아니다. 설정 원문·secret 참조 경로·child 원문 출력은 envelope에 넣지 않는다.
+
+이 명령은 설정 자동 렌더·v1 migration·PKI 생성·설치 등록·init·launchd를 추가하지 않는다. setup은 계속 초안과 제품 JSON만 저장하며, 설치 receipt나 cold 결과를 실행 준비 완료로 승격하지 않는다.
 
 ## 파일 설치와 엔진 cold 검사
 

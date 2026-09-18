@@ -1,0 +1,108 @@
+{
+  "recordType": "NIGO_LOCAL_SUPPLIER_EVIDENCE",
+  "recordedAt": "2026-09-17T06:03:44.710Z",
+  "source": {
+    "commit": "303e163a9b3f293fa39e42d02b8daa1843973c14",
+    "dirty": false
+  },
+  "artifact": {
+    "fileName": "nigo-node-0.0.1-SNAPSHOT.jar",
+    "sha256": "dd5a366ee990d58ff4fa7da89812f66ec9025443229027bffe1b648cab6d6455",
+    "sizeBytes": 159988739
+  },
+  "contract": {
+    "status": "PROPOSED",
+    "revision": "303e163a9b3f293fa39e42d02b8daa1843973c14",
+    "documentationSha256": "73785847368f341dcced20906ae92eb5f01c4fc493faa5768589786d293fe503",
+    "definitionSha256": "bffe91e25a3c58db7626fadbb8333b5216ab293b7760dee033f2fdf974841687",
+    "runtimeDocumentationSha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+    "runtimeFixtureSha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e",
+    "fingerprint": "671dc4052b750b13255804e8aa208f37044b7a0fc2800013ae139884edb3ca13"
+  },
+  "console": {
+    "node": "v24.21.0",
+    "npm": "11.19.0",
+    "sourceFingerprint": "aa813cd89e0455d3e049075d31fa74bf86e94a3e3d5b8fb6c4190a52e393f8d1"
+  },
+  "scope": "Local clean development candidate for BXDL NIGO-01..04/06 integration review. Not official release, complete G1-M kit, signed attestation or consumer acceptance.",
+  "environment": {
+    "os": "macOS 26.6.2",
+    "osBuild": "25G83",
+    "architecture": "arm64",
+    "javaVendor": "Oracle",
+    "javaRuntime": "21.0.7+8-LTS-245",
+    "requiredJavaMajor": 21,
+    "gradle": "9.4.1",
+    "node": "24.21.0",
+    "npm": "11.19.0",
+    "storageBackends": [
+      "file H2",
+      "RocksDB"
+    ],
+    "nativeTemp": "Supplier Java temp permitted native extraction/loading during tests; no JRE bundled and no general platform/minimum macOS certification."
+  },
+  "verification": {
+    "buildWorktreeBefore": "CLEAN",
+    "buildWorktreeAfter": "CLEAN",
+    "sourceIdentityCapturedBeforeTrackedHandoffEdits": true,
+    "result": "BUILD SUCCESSFUL in 6m 25s",
+    "executedGradleTasks": 103,
+    "upToDateOrCacheReusedTasks": 0,
+    "command": "LOGGING_LEVEL_ORG_NIGO_PROTOCOL_VM=INFO ./gradlew :nigo-block-sync:test :nigo-transaction-gossip:test :nigo-node:test verifyArchitectureBoundaries :nigo-node:testEngineArtifactIdentity :nigo-node:testEngineArtifact -PconsoleNode=/private/tmp/nigo-qbft-console.Dr96jr/runtime/bin/node --rerun-tasks --no-parallel --console=plain",
+    "commandWorkingDirectory": "nigo-java",
+    "actualJarManifestChecksumSize": "PASS",
+    "packagedBuildAndConsoleIdentity": "PASS",
+    "fourContractInputsAndFramedFingerprint": "PASS",
+    "contractBytesMatchCleanSource": "PASS",
+    "copiedCandidateBytes": "PASS",
+    "copiedJarEngineInfoFromNonSourceCwd": "AVAILABLE_AND_MATCHING",
+    "testOwnedProcessesAfterExecution": "NO_REMAINING_NODE_JVMS_OBSERVED",
+    "testSummary": "test-summary.json",
+    "engineInfo": "engine-info.json",
+    "localRawBuildLog": {
+      "path": "/private/tmp/nigo-bxdl-clean-candidate-303e163a.log",
+      "sha256": "4d1c68f65dc59bece6f090c3d4219b7ed43e437414caaed248d5a8a22803ec51",
+      "included": false,
+      "reason": "Raw test logs are not a sanitized delivery artifact."
+    }
+  },
+  "snapshots": {
+    "sourceRevision": "303e163a9b3f293fa39e42d02b8daa1843973c14",
+    "contractPaths": "See original engine-manifest.json contractInputs",
+    "requirementSnapshotsAreHistorical": true,
+    "currentHandoffRecord": "requirements/REQ-0002-clean-candidate-handoff.md (separate documentation revision after build)"
+  },
+  "manifestPreserved": true,
+  "acceptance": {
+    "contractStatus": "PROPOSED",
+    "requirementStatus": "OPEN",
+    "consumerReceipt": "NOT_ACKNOWLEDGED",
+    "bilateralAgreement": "PENDING",
+    "bxdlG1M": "NOT_RUN",
+    "linuxG1L": "NOT_RUN",
+    "nigo05A7": "NOT_RUN",
+    "officialRelease": false
+  },
+  "notIncluded": [
+    "JRE",
+    "BXDL binary/installer/launchd adapter",
+    "QBFT managed provisioning/transaction generator",
+    "PKI or private keys/passwords",
+    "User or test DB/WAL",
+    "Raw environment/configuration/heap dumps/process logs"
+  ],
+  "remainingOwners": [
+    {
+      "owner": "BXDL",
+      "action": "Acknowledge source/artifact/contract hashes; propose adapter/JRE/package identity and G1-M acceptance plan."
+    },
+    {
+      "owner": "NIGO + BXDL",
+      "action": "Agree exact contract and owner/input-output for source-free QBFT chain/node/PKI/pin/transaction fixtures before claiming a complete G1-M kit."
+    },
+    {
+      "owner": "NIGO",
+      "action": "NIGO-05 maintenance entrypoints and separately authorized release/license/NOTICE/SBOM gates remain follow-up."
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "results": {
+    "build": {
+      "exit": 0,
+      "outcome": "SUCCEEDED",
+      "reason": "DEVELOPMENT_PACKAGE_BUILT"
+    },
+    "install": {
+      "exit": 0,
+      "outcome": "SUCCEEDED",
+      "reason": "PACKAGE_INSTALLED"
+    },
+    "inspect": {
+      "exit": 0,
+      "outcome": "SUCCEEDED",
+      "reason": "ENGINE_DEVELOPMENT_INSPECTED"
+    },
+    "paired-qbft": {
+      "exit": 5,
+      "outcome": "INCOMPLETE",
+      "reason": "ENGINE_RUNTIME_CHECKS_REQUIRED"
+    },
+    "mismatched-product-native": {
+      "exit": 3,
+      "outcome": "FAILED",
+      "reason": "ENGINE_PRODUCT_MISMATCH"
+    },
+    "metadata-only": {
+      "exit": 5,
+      "outcome": "INCOMPLETE",
+      "reason": "ENGINE_PREFLIGHT_NOT_RUN"
+    }
+  },
+  "cliSha256": "9443d46a69a5d289a39ad35634efa92c9dc4cc7f9f1d959f9426c3bdd071178e",
+  "installedCliSha256": "9443d46a69a5d289a39ad35634efa92c9dc4cc7f9f1d959f9426c3bdd071178e",
+  "archiveSha256": "7f0af8e0788c58c537e1351dea31cd1e8d53a29ebc552f3d926d5382da96ac86",
+  "archiveSizeBytes": 180913160,
+  "jarSha256": "dd5a366ee990d58ff4fa7da89812f66ec9025443229027bffe1b648cab6d6455",
+  "javaSha256": "94b66f2cc8edfba9e0e8b25abe93e4c3617d2cc1af7e8eaec0f5b2afe0df5c12",
+  "filesInstalled": 138,
+  "bytesInstalled": 248203638,
+  "configurationBinding": "MATCHED",
+  "checks": {
+    "CONFIGURATION": "PASS",
+    "KEY_MATERIAL": "PASS",
+    "DATABASE_AND_WAL": "NOT_CHECKED",
+    "PORTS_AND_PEERS": "NOT_CHECKED",
+    "NATIVE_RUNTIME": "NOT_CHECKED"
+  },
+  "productAndNativeHashesMatch": true,
+  "inputBytesUnchanged": true,
+  "dataAbsent": true,
+  "pathEmpty": true,
+  "networkOrNodeStarted": false,
+  "fixture": "single-validator cold; four membership IDs, zero peers; not G1-M",
+  "runtime": "local Oracle 21.0.7 jlink test only; not redistribution approval",
+  "schemaVersion": 1,
+  "baseRevision": "cb97b2713719f1d5948016c27f5f96dfb77b959d",
+  "sourceState": "working changes; not a commit attestation",
+  "sourceTreeSha256": "722205161a8035685fdd56183fe6f5c84a48b8caa6cdc905a9e070f0cd513aca",
+  "rustTestsPassed": 116,
+  "linuxRuntimeAcceptance": "NOT_RUN",
+  "remoteCi": "NOT_RUN"
+}

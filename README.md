@@ -2,7 +2,7 @@
 
 NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구다. **Rust로 구현하며 macOS Apple Silicon에서 설치·운용 UX를 먼저 완성한다.** Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
 
-현재 구현은 개발용 패키지 조립·검증, **Mac의 새 폴더 설치**, 재개 가능한 setup 설정 도우미와 **NIGO 개발 후보 정보·cold 검사**다. launchd·NIGO init/start/stop은 후속이다. 엔진 JAR/JRE·고객 키·DB를 이 저장소에 동봉하지 않는다.
+현재 구현은 개발용 패키지 조립·검증, **Mac의 새 폴더 설치**, 재개 가능한 setup 설정 도우미와 **NIGO clean 개발 후보 정보·제품 설정과 연결한 cold 검사**다. launchd·NIGO init/start/stop은 후속이다. 엔진 JAR/JRE·고객 키·DB를 이 저장소에 동봉하지 않는다.
 
 ## 구현한 명령
 
@@ -16,6 +16,7 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 | `bxdl engine preflight ... --config <node.json>` | NIGO native 설정의 cold 검사, INCOMPLETE 보존 |
 | `bxdl config validate --file <json>` | 제품 설정 schema·경로 기준·명시 endpoint 규칙 검사 |
 | `bxdl preflight --config <json>` | 파일/디렉터리 metadata만 검사, 엔진·서비스 검사는 NOT_CHECKED |
+| `bxdl preflight --config <instance.json> --engine-config <node.json> ...` | 제품과 명시 QBFT 설정의 일치를 확인한 뒤 pinned 엔진 cold 검사 |
 | `bxdl setup [--workspace <dir>]` | 설정 입력·수정·저장·재개와 로컬 검사, 새 제품 JSON 내보내기 |
 
 `init/start/stop/status/logs/diagnose/upgrade/uninstall`은 exit 4와 CAPABILITY_NOT_IMPLEMENTED를 반환한다. setup 저장 성공은 설치·엔진 준비 완료가 아니다.
@@ -63,6 +64,7 @@ Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux targe
 ## 문서
 
 - [Rust·macOS 우선 결정과 설치 UX](./design/2026-09-17-rust-macos-first.md)
+- [제품·엔진 설정 연결 설계](./design/2026-09-18-product-engine-preflight.md)
 - [현재 구현·검증 상태](./docs/implementation-status.md)
 - [설정 도우미·초안 저장과 재개](./docs/setup.md)
 - [패키지 입력·서명·형식](./docs/package-format.md)

@@ -1,4 +1,6 @@
 use super::*;
+#[path = "product_tests.rs"]
+mod product_tests;
 use serde_json::{Value, json};
 use std::{
     fs,

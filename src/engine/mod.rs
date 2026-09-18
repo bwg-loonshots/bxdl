@@ -3,6 +3,9 @@
 mod files;
 mod json;
 mod process;
+mod product;
+
+pub use product::{ProductReport, preflight_product};
 
 use crate::error::{BxdlError, Result};
 use serde::{Deserialize, Serialize};
@@ -121,13 +124,17 @@ struct Failure {
 }
 
 pub fn inspect(options: &Options) -> Result<Report> {
-    execute(options, None)
+    execute(options, None, None)
 }
 pub fn preflight(options: &Options, native_config: &Path) -> Result<Report> {
-    execute(options, Some(native_config))
+    execute(options, Some(native_config), None)
 }
 
-fn execute(options: &Options, config: Option<&Path>) -> Result<Report> {
+fn execute(
+    options: &Options,
+    config: Option<&Path>,
+    product: Option<&product::ProductInput>,
+) -> Result<Report> {
     if options.timeout.is_zero()
         || options.timeout > Duration::from_secs(120)
         || !options.java.is_absolute()
@@ -146,9 +153,15 @@ fn execute(options: &Options, config: Option<&Path>) -> Result<Report> {
     })?;
     validate_lock(&lock)?;
     let native = config.map(files::NativeInput::load).transpose()?;
+    if let Some(product) = product {
+        product.check(native.as_ref().ok_or_else(response_invalid)?)?;
+    }
     let workspace = files::Workspace::create(native.as_ref())?;
     let jar = workspace.snapshot_jar(&options.jar, &lock.jar_sha256, lock.jar_size_bytes)?;
     let java = files::Binary::open(&options.java, &lock.java_sha256)?;
+    if let Some(product) = product {
+        product.recheck()?;
+    }
     let raw = process::run(
         &java,
         &jar,
@@ -181,6 +194,9 @@ fn execute(options: &Options, config: Option<&Path>) -> Result<Report> {
     if let Some(native) = native {
         let config = native.snapshot(&workspace)?;
         native.recheck()?;
+        if let Some(product) = product {
+            product.recheck()?;
+        }
         let output = process::run(
             &java,
             &jar,
@@ -191,6 +207,10 @@ fn execute(options: &Options, config: Option<&Path>) -> Result<Report> {
         )?;
         native.recheck()?;
         let cold = consume_cold(output.exit, &output.stdout)?;
+        if let Some(product) = product {
+            product.check(&native)?;
+            product.check_result(&cold)?;
+        }
         report.outcome = "INCOMPLETE";
         report.engine_exit_code = 3;
         report.config_sha256 = Some(files::digest(&native.config.raw));
@@ -198,6 +218,9 @@ fn execute(options: &Options, config: Option<&Path>) -> Result<Report> {
         report.preflight = Some(cold);
     }
     lock_bytes.recheck()?;
+    if let Some(product) = product {
+        product.recheck()?;
+    }
     Ok(report)
 }
 
