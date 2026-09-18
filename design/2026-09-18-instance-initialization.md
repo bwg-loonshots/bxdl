@@ -114,4 +114,4 @@ report의 INITIALIZED 행만으로는 실제 process exit/stdout과 storage clos
 
 이 문서는 구현 계약이다. 실제 테스트·JAR 실행·중단 주입 결과는 [이번 검증 기록](../results/2026-09-18-instance-initialization.md)에 별도로 남긴다. [이전 cold 결과](../results/2026-09-18-clean-engine-preflight.md)는 당시의 DB 미실행·peer 없는 단일 validator fixture 근거로 보존하며 초기화 인수로 소급하지 않는다. 로컬 빌드/type-check는 원격 CI·Linux 실행·Mac 서비스 인수가 아니다.
 
-다음은 clean 후보의 runtime/종료 계약에 연결하는 launchd start/status/stop, 동일 데이터 재시작과 G1-M 4-validator 회귀다. setup의 package 선택·등록 연결, native/PKI/거래 fixture 준비, 정식 Java 21 공급자·최소 macOS·patch/hash·NOTICE/SBOM 선정도 남아 있다. Linux/systemd와 Docker는 별도 후속 gate로 유지한다.
+이후 clean 후보의 runtime/종료 계약에 연결하는 수동 LaunchAgent start/status/stop을 [별도 설계](./2026-09-18-macos-launchagent.md)로 구현했다. 해당 구현과 단일 validator의 같은 데이터 재시작 근거는 [최신 상태](../docs/implementation-status.md)를 따른다. 전체 G1-M·4-validator 회귀, setup의 package 선택·등록 연결, native/PKI/거래 fixture 준비, 정식 Java 21 공급자·최소 macOS·patch/hash·NOTICE/SBOM 선정은 남아 있다. Linux/systemd와 Docker는 별도 후속 gate로 유지한다.

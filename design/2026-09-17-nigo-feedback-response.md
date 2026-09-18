@@ -61,7 +61,9 @@ Mac의 첫 사용자 profile은 CLI와 engine가 같은 UID다. 논리 디렉터
 
 `OPEN → ACCEPTED → IN_PROGRESS → DELIVERED → VERIFIED`의 기존 판정 주체와 의미를 유지한다. 후속 후보에는 실제 호출·field·fixture가 있지만 `PROPOSED`이며, 수신·정적 대조만으로 전체 인터페이스 합의나 제품 인수 완료를 선언하지 않는다. G1-M 공급/인수만 완료되면 그 범위를 명시하고 Linux/A7의 미완료를 가리지 않는다. REQ-0002 전체를 먼저 닫지 않으며 추후 범위 이관이 필요하면 양측 합의·원장 연결을 남긴다.
 
-## 5. 현재 대기 항목과 다음 담당
+## 5. 2026-09-17 후보 수신 당시 대기 항목과 담당
+
+아래 표는 dirty 개발 후보를 수신한 당시 기록이다. 이후 clean 공급·명시 초기화·단일 노드 LaunchAgent 수명주기 검증은 [최신 구현 상태](../docs/implementation-status.md)와 해당 결과 문서를 따르며, 아래의 clean 공급 대기를 현재 blocker로 해석하지 않는다.
 
 | 항목 | 현재 및 다음 담당 |
 | --- | --- |

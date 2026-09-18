@@ -1,5 +1,6 @@
 //! Registered development instances. Registration never initializes data;
 //! explicit one-shot init/resume-init preserves uncertain attempts for inspection.
+pub mod service;
 use super::{
     Identity, Lock, Options, ProductReport, fail,
     files::{self, Input, NativeInput, Workspace},
@@ -356,7 +357,11 @@ pub fn show(instance: &Path) -> Result<Summary> {
         Err(e) if e.code == "INSTANCE_BUSY" => true,
         Err(e) => return Err(e),
     };
-    Ok(state.summary(Some(busy)))
+    let mut summary = state.summary(Some(busy));
+    if fs::symlink_metadata(root.path().join("service-journal")).is_ok() {
+        summary.service_registration = "NOT_OBSERVED";
+    }
+    Ok(summary)
 }
 pub fn preflight(instance: &Path, timeout: Duration) -> Result<ProductReport> {
     host()?;

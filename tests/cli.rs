@@ -33,15 +33,7 @@ fn version_reports_rust_mac_priority_without_service_claims() {
 }
 #[test]
 fn operations_remain_explicitly_unavailable() {
-    for command in [
-        "start",
-        "stop",
-        "status",
-        "logs",
-        "diagnose",
-        "upgrade",
-        "uninstall",
-    ] {
+    for command in ["logs", "diagnose", "upgrade", "uninstall"] {
         let (r, code) = run(&[command, "--instance", "node-a"]);
         assert_eq!(code, 4);
         assert_eq!(r["outcome"], "UNSUPPORTED");
@@ -280,5 +272,26 @@ fn instance_mutations_require_exact_inputs_and_explicit_confirmation() {
     ] {
         let (response, exit) = run(&args);
         assert_eq!(exit, 2, "{args:?}: {response}");
+    }
+}
+
+#[test]
+fn service_commands_require_explicit_instance_and_bounded_wait() {
+    for args in [
+        vec!["start"],
+        vec!["stop"],
+        vec!["status"],
+        vec!["start", "--instance", "x", "--timeout-seconds", "601"],
+        vec!["status", "--instance", "x", "--timeout-seconds", "121"],
+        vec!["stop", "--instance", "x", "--timeout-seconds", "0"],
+        vec!["start", "--instance", "x", "--force"],
+        vec!["service-run", "--instance", "x"],
+    ] {
+        assert_eq!(run(&args).1, 2, "{args:?}");
+    }
+    for command in ["start", "status", "stop"] {
+        let (value, exit) = run(&[command, "--instance", "/missing-bxdl-service-test"]);
+        assert_eq!(exit, 3);
+        assert_ne!(value["reasonCode"], "CAPABILITY_NOT_IMPLEMENTED");
     }
 }
