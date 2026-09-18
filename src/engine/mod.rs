@@ -1,7 +1,11 @@
 //! Explicit development-candidate inspection and cold validation only.
 //! Never installs, initializes, starts a node, or infers production readiness.
 mod files;
+mod init_result;
+pub mod instance;
+mod instance_fs;
 mod json;
+mod managed;
 mod process;
 mod product;
 

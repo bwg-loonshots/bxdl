@@ -34,7 +34,6 @@ fn version_reports_rust_mac_priority_without_service_claims() {
 #[test]
 fn operations_remain_explicitly_unavailable() {
     for command in [
-        "init",
         "start",
         "stop",
         "status",
@@ -248,5 +247,38 @@ fn install_and_engine_require_explicit_inputs_and_development_consent() {
         let (result, exit) = run(&args);
         assert_eq!(exit, 2, "{args:?}: {result}");
         assert_eq!(result["reasonCode"], "INVALID_ARGUMENTS");
+    }
+}
+
+#[test]
+fn instance_mutations_require_exact_inputs_and_explicit_confirmation() {
+    for args in [
+        vec!["init", "--instance", "x"],
+        vec!["init", "--instance", "x", "--confirm-resume"],
+        vec!["resume-init", "--instance", "x"],
+        vec!["resume-init", "--instance", "x", "--confirm-initialize"],
+        vec![
+            "init",
+            "--instance",
+            "x",
+            "--confirm-initialize",
+            "--timeout-seconds",
+            "601",
+        ],
+        vec![
+            "init",
+            "--instance",
+            "x",
+            "--confirm-initialize",
+            "--timeout-seconds",
+            "0",
+        ],
+        vec!["instance", "register", "--instance", "x"],
+        vec!["instance", "show", "--instance", "x", "--instance", "y"],
+        vec!["preflight", "--instance", "x", "--config", "y"],
+        vec!["preflight", "--instance", "x", "--allow-development"],
+    ] {
+        let (response, exit) = run(&args);
+        assert_eq!(exit, 2, "{args:?}: {response}");
     }
 }

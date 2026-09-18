@@ -1,18 +1,18 @@
-# CLI·설치·설정·엔진 검사
+# CLI·설치·설정·엔진 검사와 초기화
 
 `--json`은 명령 인자 앞/뒤에서 받을 수 있으며 stdout에 JSON 문서 하나만 쓴다. setup에서는 `--non-interactive`와 함께 사용해야 한다. 사람용 결과도 같은 내부 결과를 표현한다. 대화형 setup 질문은 stderr에 출력하며, 비대화형 JSON 실행은 질문이나 로그 없이 결과만 stdout에 쓴다. 잘못된 인자나 parser 오류에 입력값·secret을 그대로 되돌려 쓰지 않는다.
 
 | exit | 현재 의미 |
 | --- | --- |
-| 0 | 패키지 검증·파일 설치·개발 엔진 식별 확인·설정 저장 성공. 노드 정상 보장이 아님 |
+| 0 | 패키지 검증·파일 설치·엔진 식별·설정 저장·인스턴스 등록/조회·초기화 성공. 노드 정상 보장이 아님 |
 | 2 | 인자 오류, `config validate`/로컬 전용 `preflight`의 설정 read/schema 오류 |
-| 3 | artifact·설치·engine lock/응답/입력 검증 실패, 결합 preflight의 제품/native 입력 오류·불일치 또는 setup 가져오기·저장·충돌 오류 |
+| 3 | artifact·설치·engine lock/응답/입력 검증 실패, 결합 preflight 불일치, setup 저장 오류 또는 등록 인스턴스의 잠금·입력 변경·초기화 사전 조건 거부 |
 | 4 | 로컬 preflight FAIL 또는 아직 제공하지 않는 운영 명령 |
 | 5 | preflight 미완료 또는 setup 취소/EOF·비대화형 미완성 초안 |
-| 6 | cold JVM timeout 또는 설치 receipt commit 결과 불명(UNKNOWN) |
+| 6 | cold JVM timeout, 설치 receipt commit 불명 또는 초기화 시도/결과 기록 불명(UNKNOWN) |
 | 7 | 입력/안내·결과 출력 실패 또는 분류되지 않은 내부 오류 |
 
-engine 명령과 전체 엔진 옵션을 지정한 결합 preflight가 고정한 JVM의 cold 명령을 실행한다. timeout 때 해당 직접 child를 종료·회수하고 UNKNOWN/exit 6을 반환한다. 노드·서비스 종료의 정상성을 뜻하지 않으며 자동 재시도하지 않는다.
+engine 명령과 결합/등록형 preflight는 고정한 JVM의 cold 명령을 실행한다. cold timeout은 직접 child를 종료·회수하고 UNKNOWN/exit 6을 반환한다. 쓰기 작업인 init/resume-init은 TERM 후 최대 5초를 더 기다리며 SIGKILL하지 않는다. child가 살아 있거나 잠금을 보유할 수 있으므로 UNKNOWN을 종료 완료로 해석하지 않는다. 두 경로 모두 자동 재시도하지 않는다.
 
 ## JSON envelope
 
@@ -89,6 +89,35 @@ bxdl preflight --config <instance.json> --engine-config <node.json>
 
 `install`은 명시한 새 폴더에만 설치한다. 외부 신뢰 key 또는 서명 없는 개발 자료 opt-in이 필요하다. `engine inspect`/`engine preflight`는 `--jar`, `--java`, `--lock`, `--allow-development`가 필수다. preflight에는 NIGO `--config`도 필요하다. 선택 `--timeout-seconds`는 1~120, 기본 30이며 각 JVM 호출에 적용한다. [설치](./install.md)와 [엔진](./engine.md) 가이드의 신뢰·실패 경계를 따른다.
 
+## 등록 인스턴스와 명시 초기화
+
+```text
+bxdl instance register --instance <new-control-dir> --package <installed-dir>
+    --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)
+    --config <instance.json> --engine-config <node.json> --lock <trusted-lock.json>
+    --allow-development [--timeout-seconds <1..120>] [--json]
+bxdl instance show --instance <control-dir> [--json]
+bxdl preflight --instance <control-dir> [--timeout-seconds <1..120>] [--json]
+bxdl init --instance <control-dir> --confirm-initialize
+    [--timeout-seconds <1..600>] [--json]
+bxdl resume-init --instance <control-dir> --confirm-resume
+    [--timeout-seconds <1..600>] [--json]
+```
+
+`--instance`는 instanceId가 아닌 제어 폴더 경로다. 절대경로를 사용하며 등록 대상은 새 폴더여야 한다. 등록/초기 운용은 macOS arm64 개발 profile을 대상으로 한다. package의 `engine/nigo-node.jar`와 `runtime/bin/java`를 사용하므로 후속 호출에는 JAR/Java를 지정하지 않는다. `--instance` 방식은 기존 preflight의 제품/native/engine 옵션과 섞지 않는다.
+
+register는 필수 옵션 전부와 `--public-key` 또는 `--allow-unsigned-development` 중 하나를 요구한다. 원본 archive·신뢰 key·engine lock은 설치 package 밖에 있어야 한다. 개발용 선택은 등록에 저장되며 init/resume에는 작업별 확인 flag만 추가한다. archive/key·설정·chain·참조 credential은 이후에도 원래 위치와 내용으로 필요하다. 등록은 private credential 내용의 hash도 private binding에 고정하며 원문/hash/secret 경로를 공개 Summary에 표시하지 않는다.
+
+등록 전과 등록 후 작업에서 archive 신뢰 검증·전체 설치 manifest 검증·제품/native 대응·고정 engine identity를 확인한다. 등록에는 없거나 빈 data와 존재하는 부모가 필요하며 기존/외부 DB를 채택하지 않는다. 등록 성공은 INSTANCE_REGISTERED/exit 0이며 데이터는 초기화하지 않는다. 등록 preflight는 정상 cold라도 INCOMPLETE/exit 5다. 이 경로의 입력 변경·local 조건 미충족·잠금 중은 exit 3이며 local 전용 `preflight --config`의 FAIL/exit 4와 구분한다.
+
+register/preflight timeout은 기본 30초, 최대 120초이며 각 cold JVM 호출에 적용한다. init/resume timeout은 기본 120초, 최대 600초다. 초기화 전 cold는 각각 최대 120초이며 전체 명령의 총 시간 제한이 아니다. 새 init은 등록 직후의 없거나 0700인 빈 data만 받는다. intent를 내구성 있게 기록한 뒤 데이터를 준비하고 NIGO를 호출한다. resume는 BXDL 미완료 상태 및 같은 identity의 INITIALIZING 엔진 journal과 기존 ledger가 있어야 한다.
+
+init/resume 성공은 child 종료·exit 0, stdout·동일 attempt/PID report·engine-instance.json과 genesis/identity 대조, 입력·설치본 재검사와 결과 저장까지 확인한 INSTANCE_INITIALIZED/exit 0이다. intent 후 불명 결과는 INSTANCE_INITIALIZATION_UNKNOWN/UNKNOWN/exit 6이며 시도와 데이터를 보존한다. timeout 시 TERM 후 5초 대기하고 SIGKILL하지 않는다. CLI crash 뒤 남은 INITIALIZED 엔진 기록을 자동 채택하지 않으며 이미 초기화된 인스턴스의 init/resume 반복은 거부한다.
+
+register/show/init/resume의 `data`는 `instanceId`, `initialization=NOT_STARTED|INITIALIZED|UNKNOWN`, 선택 `operationBusy`, `developmentOnly=true`, `serviceRegistration=NOT_REGISTERED`, `runtimeReadiness=NOT_CHECKED`, `reason`, 선택 `attemptId/genesisHash`를 포함한다. show의 exit 0은 조회 성공이며 operationBusy는 순간적인 advisory 관측이다. 노드 health나 정상 종료의 증명이 아니다. 불명 init 결과에는 busy를 추측해 넣지 않는다. 등록 preflight의 data는 기존 ProductReport다.
+
+[인스턴스 가이드](./instance.md)에 준비 자료, 중단 후 명시 재개 조건, 보존된 시도, 이동/복원 미지원 경계를 정리한다. 원문 설정·secret 경로·child 출력은 결과에 노출하지 않는다. 서비스 등록·시작은 수행하지 않는다.
+
 ## 미구현 명령
 
-init/start/stop/status/logs/diagnose/upgrade/uninstall은 명시적인 UNSUPPORTED 오류를 반환한다. no-op 성공이나 가짜 PID/engine 상태를 만들지 않는다. setup의 패키지 선택·설치 연결, launchd/systemd 설치·실행과 인증된 원격 관리는 아직 제공하지 않는다. macOS를 첫 UX 대상으로 구현할 순서는 [Mac 우선 설계](../design/2026-09-17-rust-macos-first.md)를 따른다.
+start/stop/status/logs/diagnose/upgrade/uninstall은 명시적인 UNSUPPORTED 오류를 반환한다. no-op 성공이나 가짜 PID/engine 상태를 만들지 않는다. setup의 패키지 선택·설치 연결, launchd/systemd 설치·실행과 인증된 원격 관리는 아직 제공하지 않는다. macOS를 첫 UX 대상으로 구현할 순서는 [Mac 우선 설계](../design/2026-09-17-rust-macos-first.md)를 따른다.

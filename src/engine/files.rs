@@ -102,6 +102,7 @@ pub struct Workspace {
     pub path: PathBuf,
     device: u64,
     inode: u64,
+    persistent: bool,
 }
 impl Workspace {
     pub fn create(native: Option<&NativeInput>) -> Result<Self> {
@@ -140,6 +141,7 @@ impl Workspace {
                         path,
                         device: m.dev(),
                         inode: m.ino(),
+                        persistent: false,
                     });
                 }
                 Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
@@ -147,6 +149,18 @@ impl Workspace {
             }
         }
         Err(io_error())
+    }
+    pub fn persistent(path: &Path) -> Result<Self> {
+        check_path(path, false)?;
+        let m = fs::symlink_metadata(path).map_err(|_| io_error())?;
+        let result = Self {
+            path: path.into(),
+            device: m.dev(),
+            inode: m.ino(),
+            persistent: true,
+        };
+        result.recheck()?;
+        Ok(result)
     }
     pub fn recheck(&self) -> Result<()> {
         let m = fs::symlink_metadata(&self.path).map_err(|_| changed())?;
@@ -172,6 +186,9 @@ impl Workspace {
             .and_then(|_| file.sync_all())
             .map_err(|_| io_error())?;
         self.recheck()?;
+        File::open(&self.path)
+            .and_then(|dir| dir.sync_all())
+            .map_err(|_| io_error())?;
         Ok(path)
     }
     pub fn snapshot_jar(&self, path: &Path, expected: &str, size: u64) -> Result<PathBuf> {
@@ -209,12 +226,15 @@ impl Workspace {
         if copied != size || hex::encode(hasher.finalize()) != expected {
             return Err(pin_mismatch());
         }
+        File::open(&self.path)
+            .and_then(|dir| dir.sync_all())
+            .map_err(|_| io_error())?;
         Ok(snapshot)
     }
 }
 impl Drop for Workspace {
     fn drop(&mut self) {
-        if self.recheck().is_ok() {
+        if !self.persistent && self.recheck().is_ok() {
             let _ = fs::remove_dir_all(&self.path);
         }
     }
@@ -233,7 +253,7 @@ pub struct NativeInput {
     pub chain: Input,
     pub(super) value: NativeConfig,
     pub(super) data: PathBuf,
-    references: Vec<PathBuf>,
+    pub(super) references: Vec<PathBuf>,
 }
 impl NativeInput {
     pub fn load(path: &Path) -> Result<Self> {
@@ -355,7 +375,7 @@ fn reference(base: &Path, text: &str) -> Result<PathBuf> {
 fn overlaps(a: &Path, b: &Path) -> Result<bool> {
     crate::setup::paths::overlaps(a, b).map_err(|_| config_invalid())
 }
-fn absolute(path: &Path) -> Result<PathBuf> {
+pub(super) fn absolute(path: &Path) -> Result<PathBuf> {
     let text = path_text(path)?;
     if text.is_empty()
         || text.len() > 4096
@@ -382,7 +402,7 @@ fn absolute(path: &Path) -> Result<PathBuf> {
     }
     Ok(normalized)
 }
-fn check_path(path: &Path, allow_missing: bool) -> Result<()> {
+pub(super) fn check_path(path: &Path, allow_missing: bool) -> Result<()> {
     let mut current = PathBuf::new();
     for component in path.components() {
         current.push(component.as_os_str());

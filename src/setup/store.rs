@@ -147,6 +147,14 @@ impl Store {
         &self.path
     }
 
+    pub(crate) fn require_capacity(&self, revisions: u32) -> Result<()> {
+        self.read()?;
+        if self.loaded.as_ref().map_or(0, |c| c.revision) + revisions > MAX_REVISIONS {
+            return Err(limit_error());
+        }
+        Ok(())
+    }
+
     fn current_for_save(&self) -> Result<Option<Checkpoint>> {
         match latest(&self.directory) {
             Err(_)

@@ -13,3 +13,5 @@
 NIGO의 PROPOSED 계약·개발 후보 manifest/fixture를 `contracts/nigo/development-2026-09-17/`에 원문 snapshot으로 수신했다. 정식 release 승인이나 모든 운영 API 인수 완료를 뜻하지 않는다. engine contractStatus는 `proposed`만 허용하고 향후 공급자 manifest와 mapping을 검증한 뒤 공식 소비 형식으로 확장한다.
 
 `setup-draft.schema.json`은 중간 입력을 저장하는 BXDL 내부 초안 계약이다. 필수 입력이 모두 채워져도 설치·초기화·엔진 검사 완료를 뜻하지 않는다. 완성된 설정 출력은 기존 `instance.schema.json`을 따르며 참조 경로는 절대 경로로 고정한다. 초안 파일을 직접 편집하지 않고 `setup --resume`으로 수정한다.
+
+등록 인스턴스의 `binding.json`·상태 journal은 [인스턴스 초기화 설계](../../design/2026-09-18-instance-initialization.md)에 정의한 private 내부 v1 기록이다. 외부에서 생성/편집/복원하는 interchange 계약이 아니다. 기존 제품 `instance.schema.json`·setup 초안 형식은 유지하며 CLI는 `instance register/show`, 등록형 preflight, 명시 init/resume-init을 추가한다. 공개 결과는 기존 CLI envelope를 사용한다.
