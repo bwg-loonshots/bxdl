@@ -8,7 +8,7 @@
 
 ## 1. 첫 구현 범위와 단계
 
-첫 제품은 **macOS arm64 오프라인 패키지 + Rust CLI/setup + 사용자 LaunchAgent + 기존 엔진 콘솔**이다. 하나의 validator instance를 설치·초기화·시작·종료·진단하고 동일 데이터로 재시작하는 로컬 UX를 먼저 검증한다. test-owned 4-validator mTLS 로컬 회귀를 포함하며 Linux 다중 호스트 인수와 구분한다. setup·설치·launchd·실제 엔진 연동은 아직 미구현이다.
+첫 제품은 **macOS arm64 오프라인 패키지 + Rust CLI/setup + 사용자 LaunchAgent + 기존 엔진 콘솔**이다. 하나의 validator instance를 설치·초기화·시작·종료·진단하고 동일 데이터로 재시작하는 로컬 UX를 먼저 검증한다. test-owned 4-validator mTLS 로컬 회귀를 포함하며 Linux 다중 호스트 인수와 구분한다. setup·파일 설치·등록/초기화·수동 LaunchAgent 연결까지 구현했으며 부분 검증과 전체 잔여 인수는 [현재 상태](../docs/implementation-status.md)를 따른다.
 
 단계는 작업 분해를 위한 것이다. 매 단계마다 사용자에게 새 승인을 요구하는 절차가 아니다. 실행 권한·외부 게시가 필요한 작업은 실제 구현 당시 사용자 요청 범위와 환경 권한에 따른다. 이 문서는 구현·외부 게시를 이미 수행했다는 기록이 아니다.
 
@@ -125,7 +125,7 @@ Mac 첫 profile은 sudo 없이 같은 사용자 UID의 CLI·engine로 운영한�
 
 PR은 위 묶음 안에서 리뷰 가능한 크기로 나누되 public DTO 변경과 소비 adapter/fixture를 같은 인수 단위로 묶는다. 무관한 engine source 이동·브랜딩 변경·schema 변경을 섞지 않는다.
 
-각 BX 작업 기록은 `상태(PLAN/IN_PROGRESS/BLOCKED/DONE)`, `담당`, `변경 revision`, `소비 engine/hash`, `인수 ID`, `결과 링크`, `잔여 제한`을 갖는다. BLOCKED에는 필요한 공급물과 다음 책임자를 적는다. 현재 담당은 BXDL 패키지 기반 구현 세션이며, NIGO 제공 담당·일정은 미합의다. 작업별 최신 상태·근거·제약은 [구현 상태](../docs/implementation-status.md)를 따른다.
+각 BX 작업 기록은 `상태(PLAN/IN_PROGRESS/BLOCKED/DONE)`, `담당`, `변경 revision`, `소비 engine/hash`, `인수 ID`, `결과 링크`, `잔여 제한`을 갖는다. BLOCKED에는 필요한 공급물과 다음 책임자를 적는다. 현재 담당은 BXDL 패키지 구현 세션이며 NIGO 제공 owner의 범위 수용과 clean 개발 후보 공급을 확인했다. 정식 공급·후속 유지보수 계약의 일정은 별도로 확인한다. 작업별 최신 상태·근거·제약은 [구현 상태](../docs/implementation-status.md)를 따른다.
 
 ## 10. 일정 산정과 주요 위험
 

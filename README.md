@@ -2,7 +2,7 @@
 
 NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구다. **Rust로 구현하며 macOS Apple Silicon에서 설치·운용 UX를 먼저 완성한다.** Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
 
-현재 구현은 개발용 패키지 조립·검증, **Mac의 새 폴더 설치**, 재개 가능한 setup 설정 도우미, **제품·NIGO 설정의 결합 cold 검사**, **설치본·설정의 인스턴스 등록과 명시적 init/resume-init**이다. launchd·노드 start/status/stop은 후속이다. 엔진 JAR/JRE·고객 키·DB를 이 저장소에 동봉하지 않는다.
+현재 구현은 개발용 패키지 조립·검증, **Mac의 새 폴더 설치**, 재개 가능한 setup 설정 도우미, **제품·NIGO 설정의 결합 cold 검사**, **인스턴스 등록과 명시적 init/resume-init**, **Mac 사용자 LaunchAgent의 start/status/stop**이다. 실제 새 package에서 단일 validator의 시작·정상 종료·같은 데이터 재시작을 확인했으며 전체 G1-M 인수는 남아 있다. 엔진 JAR/JRE·고객 키·DB를 이 저장소에 동봉하지 않는다.
 
 ## 구현한 명령
 
@@ -23,8 +23,13 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 | `bxdl preflight --instance <dir>` | 등록한 입력·설치본을 다시 검증하고 결합 cold 검사 |
 | `bxdl init --instance <dir> --confirm-initialize` | 새/빈 데이터에 명시 초기화, 프로세스 종료·출력·report·엔진 journal 대조 |
 | `bxdl resume-init --instance <dir> --confirm-resume` | 같은 identity의 INITIALIZING journal과 기존 ledger가 있는 미완료 시도만 명시 재개 |
+| `bxdl start --instance <dir>` | 초기화한 인스턴스를 시도별 LaunchAgent로 명시 시작. gate를 통과한 worker가 같은 PID로 Java 실행 |
+| `bxdl status --instance <dir>` | 해당 시도의 launchd·report·로컬 HTTP 상태 조회. 전역 quorum 검사가 아님 |
+| `bxdl stop --instance <dir>` | 소유 job에 TERM 요청 후 엔진 정상 종료 보고·프로세스 부재·잠금 해제를 함께 확인 |
 
-`start/stop/status/logs/diagnose/upgrade/uninstall`은 exit 4와 CAPABILITY_NOT_IMPLEMENTED를 반환한다. setup 저장 성공은 설치·엔진 준비 완료가 아니며, init 성공도 실행 중 노드·서비스 준비 완료가 아니다.
+`logs/diagnose/upgrade/uninstall`은 exit 4와 CAPABILITY_NOT_IMPLEMENTED를 반환한다. setup 저장 성공은 설치·엔진 준비 완료가 아니며, init 성공도 실행 중 노드·서비스 준비 완료가 아니다.
+
+start는 설치 package의 `bin/bxdl`과 같은 바이트의 CLI로 호출한다. 기존 설치본에 새 CLI만 덮어쓰는 업데이트는 지원하지 않는다. 로그인된 Mac 사용자 세션에서 수동 시작하며 로그인 자동 시작·자동 재시작은 제공하지 않는다. 정상 종료가 검증된 뒤에만 다음 명시 start를 허용한다. 실패·UNKNOWN 복구와 보존된 snapshot/private 로그의 자동 정리는 후속이다.
 
 ## 설정 준비
 
@@ -73,11 +78,12 @@ Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux targe
 - [Rust·macOS 우선 결정과 설치 UX](./design/2026-09-17-rust-macos-first.md)
 - [제품·엔진 설정 연결 설계](./design/2026-09-18-product-engine-preflight.md)
 - [인스턴스 등록·초기화 설계](./design/2026-09-18-instance-initialization.md)
+- [Mac LaunchAgent의 시작·관측·종료 설계](./design/2026-09-18-macos-launchagent.md)
 - [현재 구현·검증 상태](./docs/implementation-status.md)
 - [설정 도우미·초안 저장과 재개](./docs/setup.md)
 - [패키지 입력·서명·형식](./docs/package-format.md)
 - [Mac 패키지 설치와 실패 처리](./docs/install.md)
-- [인스턴스 등록·명시 초기화와 중단 처리](./docs/instance.md)
+- [인스턴스 등록·초기화·서비스 제어와 중단 처리](./docs/instance.md)
 - [엔진 lock·개발 후보 cold 검사](./docs/engine.md)
 - [CLI·설정·사전 검사](./docs/cli.md)
 - [지원 후보와 도구·의존성](./docs/support-matrix.md)

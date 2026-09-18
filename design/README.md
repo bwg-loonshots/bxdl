@@ -1,7 +1,7 @@
 # BXDL 제품 구현 설계
 
 - 작성일: 2026-09-16 / 갱신: 2026-09-18
-- 상태: Rust 기반의 개발용 package 조립·검증, CLI, 제품 설정·로컬 metadata 검사 이후 R1 setup 입력·검사·수정/재개 UX를 진행한다. 새 폴더 Mac installer·NIGO 개발 후보 cold adapter 이후, 설치본/설정의 instance 등록과 명시 init/resume-init을 연결했다. setup 설치 연결·launchd·전체 G1-M/G1-L 인수는 미완료다.
+- 상태: Rust 기반의 package·제품 설정·setup, Mac 새 폴더 installer·NIGO cold, instance 등록·명시 init/resume-init과 수동 LaunchAgent start/status/stop을 구현했다. 단일 validator의 실제 서비스 수명주기를 확인했으며 setup 설치 연결·전체 G1-M/G1-L 인수는 미완료다.
 - 사용자 확정: **Rust 구현 + macOS Apple Silicon 우선 설치·운용 UX**. Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
 - 현재 구현 범위와 근거: [구현 상태](../docs/implementation-status.md). NIGO가 `REQ-0002`의 방향·범위를 수용했고 BXDL은 피드백의 안전·인수 의미와 교환 절차에 동의했다. [소비자 회신](./2026-09-17-nigo-feedback-response.md)에 기록하며 PROPOSED API·fixture·dirty 개발 JAR는 수신해 제한된 cold 소비를 진행했다. 이후 #119의 clean 후보를 별도 수신·검증했고 전체 제품 인수는 남아 있다. 요청 상태는 `OPEN`이고 이번에는 공유 중인 NIGO 원장을 변경하지 않는다.
 
@@ -15,6 +15,7 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 
 | 문서 | 내용 |
 | --- | --- |
+| [macOS LaunchAgent](./2026-09-18-macos-launchagent.md) | 수동 bootstrap·일회 gate·start/status/stop·정상 종료 증명과 UNKNOWN 보존 설계 |
 | [인스턴스 등록·초기화](./2026-09-18-instance-initialization.md) | private 등록 journal·명시 init/resume·동일 시도 결과 판정·UNKNOWN 보존 |
 | [제품·엔진 설정 연결](./2026-09-18-product-engine-preflight.md) | clean 후보 수신 이후 v1 제품/native 설정 대조·cold 검사 UX |
 | [Rust·macOS 우선 결정](./2026-09-17-rust-macos-first.md) | 최신 결정, 첫 UX 흐름, Mac profile과 Linux/Docker 확장 |
@@ -33,7 +34,7 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 | 검증 대기 후보 | macOS arm64·Java 21·RocksDB·사용자 launchd 1차 인수, Linux/systemd 후속 |
 | M0 잔여 결정 | 지원 macOS 최소 버전·launchd profile·자원, JRE 공급자·patch·hash·재배포 자료; Linux 조합은 후속 |
 | NIGO 범위·의미 수용 | 첫 Mac NIGO-01~04/06, Linux·NIGO-05 후속, 초기화/검사/관측/종료 안전 의미와 결과 교환. 제공·수신 owner 확인 |
-| NIGO 개발 후보 수신·잔여 | engine-info/preflight/init/resume-init/run과 runtime 계약/fixture·개발 JAR 수신. clean 후보와 QBFT 종료·live sync 제공자 보완 수신. BXDL 등록·단발 초기화 연결 이후 runtime/launchd·전체 제품 인수·공식 공급/유지보수 후속 |
+| NIGO 개발 후보 수신·잔여 | engine-info/preflight/init/resume-init/run과 runtime 계약/fixture·개발 JAR 수신. clean 후보와 QBFT 종료·live sync 보완 수신. BXDL 등록·초기화·수동 LaunchAgent 연결 이후 전체 제품 인수·공식 공급/유지보수 후속 |
 | 후속 범위 | 원격 관리·SSO/RBAC, 새 웹 콘솔, fleet, Docker/Helm, 백업/복원 자동화, 인증서 순차 교체 |
 
 추천안은 사용자가 기술 스택을 확정했거나 해당 플랫폼이 지원 검증을 통과했다는 뜻이 아니다. 구현자는 M0의 작은 검증으로 이 선택을 확정·수정하고 이유를 기록한다. 매 작업마다 같은 선택을 다시 논의하지 않는다.

@@ -14,7 +14,7 @@ pub const REVISION: &str = match option_env!("BXDL_REVISION") {
     Some(v) => v,
     None => "development",
 };
-pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\nsetup은 설정 초안·로컬 검사·파일 저장만 수행합니다. 설치·초기화·시작은 하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/stop/status/logs/diagnose/upgrade/uninstall은 아직 제공하지 않습니다.\n";
+pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\nsetup은 설정 초안·로컬 검사·파일 저장만 수행합니다. 설치·초기화·시작은 하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nlogs/diagnose/upgrade/uninstall은 아직 제공하지 않습니다.\n";
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -374,7 +374,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["package.build", "package.verify", "config.validate", "preflight.local", "setup.draft", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init"],
+                        "capabilities": ["package.build", "package.verify", "config.validate", "preflight.local", "setup.draft", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "stop.macos-launchagent"],
                         "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),
@@ -485,20 +485,20 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
         "preflight" => dispatch_preflight(&args[1..]),
         "instance" => dispatch_instance(&args[1..]),
         command @ ("init" | "resume-init") => dispatch_initialization(command, &args[1..]),
-        command @ ("start" | "stop" | "status" | "logs" | "diagnose" | "upgrade" | "uninstall") => {
-            (
-                result(
-                    command,
-                    "UNSUPPORTED",
-                    "CAPABILITY_NOT_IMPLEMENTED",
-                    "이 명령은 아직 제공하지 않습니다. 엔진·서비스·데이터에 작업을 수행하지 않았습니다.",
-                    Some(
-                        json!({"required": ["NIGO 공급 계약", "macOS 설치·서비스 인수", "해당 운영 명령 구현"]}),
-                    ),
+        command @ ("start" | "stop" | "status") => dispatch_service(command, &args[1..]),
+        "service-run" => dispatch_service_gate(&args[1..]),
+        command @ ("logs" | "diagnose" | "upgrade" | "uninstall") => (
+            result(
+                command,
+                "UNSUPPORTED",
+                "CAPABILITY_NOT_IMPLEMENTED",
+                "이 명령은 아직 제공하지 않습니다. 엔진·서비스·데이터에 작업을 수행하지 않았습니다.",
+                Some(
+                    json!({"required": ["NIGO 공급 계약", "macOS 설치·서비스 인수", "해당 운영 명령 구현"]}),
                 ),
-                4,
-            )
-        }
+            ),
+            4,
+        ),
         _ => invalid("unknown"),
     }
 }
@@ -946,5 +946,79 @@ fn dispatch_initialization(command: &str, args: &[String]) -> (ResultEnvelope, i
             6,
         ),
         Err(e) => instance_failure(command, e),
+    }
+}
+
+fn service_failure(command: &str, error: BxdlError) -> (ResultEnvelope, i32) {
+    if error.code.contains("UNKNOWN") || error.code == "ENGINE_TIMEOUT" {
+        (
+            result(command, "UNKNOWN", &error.code, &error.message, None),
+            6,
+        )
+    } else {
+        failure(command, error, 3)
+    }
+}
+fn dispatch_service(command: &str, args: &[String]) -> (ResultEnvelope, i32) {
+    let Some((flags, positions)) = parse(args, &[("instance", true), ("timeout-seconds", true)])
+    else {
+        return invalid(command);
+    };
+    if !positions.is_empty() || !flags.contains_key("instance") {
+        return invalid(command);
+    }
+    let (default, maximum) = match command {
+        "start" => (120, 600),
+        "stop" => (60, 600),
+        _ => (10, 120),
+    };
+    let Some(timeout) = timeout_flag(&flags, default, maximum) else {
+        return invalid(command);
+    };
+    let instance = Path::new(&flags["instance"]);
+    let result_value = match command {
+        "start" => engine::instance::service::start(instance, timeout),
+        "stop" => engine::instance::service::stop(instance, timeout),
+        _ => engine::instance::service::status(instance, timeout),
+    };
+    match result_value {
+        Ok(value) => {
+            let exit = match value.outcome.as_str() {
+                "SUCCEEDED" => 0,
+                "INCOMPLETE" => 5,
+                "FAILED" => 4,
+                _ => 6,
+            };
+            let outcome = value.outcome.clone();
+            let reason = value.reason.clone();
+            report(
+                command,
+                &outcome,
+                &reason,
+                "Mac 서비스와 해당 실행 시도의 엔진 관측 결과입니다. 로컬 READY는 네트워크 quorum·거래 확정 보장이 아닙니다.",
+                value,
+                exit,
+            )
+        }
+        Err(error) => service_failure(command, error),
+    }
+}
+fn dispatch_service_gate(args: &[String]) -> (ResultEnvelope, i32) {
+    let Some((flags, positions)) = parse(args, &[("instance", true), ("attempt", true)]) else {
+        return invalid("service-run");
+    };
+    if !positions.is_empty() || !flags.contains_key("instance") || !flags.contains_key("attempt") {
+        return invalid("service-run");
+    }
+    match engine::instance::service::run_gate(Path::new(&flags["instance"]), &flags["attempt"]) {
+        // Successful service execution replaces this process and never returns.
+        Ok(()) => service_failure(
+            "service-run",
+            BxdlError::new(
+                "SERVICE_OPERATION_UNKNOWN",
+                "서비스 실행 전환을 확인하지 못했습니다.",
+            ),
+        ),
+        Err(error) => service_failure("service-run", error),
     }
 }

@@ -5,9 +5,12 @@ mod init_result;
 pub mod instance;
 mod instance_fs;
 mod json;
+mod launchd;
 mod managed;
 mod process;
 mod product;
+mod runtime_http;
+mod runtime_result;
 
 pub use product::{ProductReport, preflight_product};
 

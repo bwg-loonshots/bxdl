@@ -74,12 +74,25 @@ pub struct Binary {
     pub path: PathBuf,
     expected_hash: String,
     stamp: Stamp,
+    executable: bool,
+    maximum: u64,
 }
 impl Binary {
     pub fn open(path: &Path, expected_hash: &str) -> Result<Self> {
+        Self::open_checked(path, expected_hash, true, MAX_JAVA)
+    }
+    pub(super) fn open_data(path: &Path, expected_hash: &str) -> Result<Self> {
+        Self::open_checked(path, expected_hash, false, MAX_JAR)
+    }
+    fn open_checked(
+        path: &Path,
+        expected_hash: &str,
+        executable: bool,
+        maximum: u64,
+    ) -> Result<Self> {
         let path = absolute(path)?;
-        let (mut file, stamp) = open(&path, MAX_JAVA, true)?;
-        if hash_file(&mut file, MAX_JAVA)? != expected_hash {
+        let (mut file, stamp) = open(&path, maximum, executable)?;
+        if hash_file(&mut file, maximum)? != expected_hash {
             return Err(pin_mismatch());
         }
         recheck(&path, &file, &stamp)?;
@@ -87,10 +100,17 @@ impl Binary {
             path,
             expected_hash: expected_hash.into(),
             stamp,
+            executable,
+            maximum,
         })
     }
     pub fn recheck(&self) -> Result<()> {
-        let fresh = Self::open(&self.path, &self.expected_hash)?;
+        let fresh = Self::open_checked(
+            &self.path,
+            &self.expected_hash,
+            self.executable,
+            self.maximum,
+        )?;
         if self.stamp != fresh.stamp {
             return Err(changed());
         }

@@ -4,8 +4,8 @@
 
 | 조합 | 현재 상태 |
 | --- | --- |
-| Rust 1.86.0 / macOS arm64 | CLI 개발·로컬 테스트·native 빌드 대상. R1 setup·새 폴더 패키지 설치·개발 엔진 cold adapter. launchd 인수는 별도 |
-| macOS arm64 + Java 21 + RocksDB + launchd | 첫 실제 package/UX 인수 목표. 동봉 JRE·OS 최소 버전·서비스 인수 전 |
+| Rust 1.86.0 / macOS arm64 | CLI 개발·로컬 테스트·native 빌드 대상. setup·새 폴더 설치·cold·등록/명시 초기화·수동 LaunchAgent 명령 구현 |
+| macOS arm64 + Java 21 + RocksDB + 사용자 LaunchAgent | macOS 26.6.2에서 실제 새 package의 단일 validator 시작·정상 stop·같은 DB 재시작 확인. 정식 JRE·OS 최소 버전·전체 G1-M 인수 전 |
 | Linux amd64/glibc + Java 21 + RocksDB + systemd | 기존 development manifest 유지, 후속 서버 인수. Ubuntu 24.04 후보 |
 | Docker/Compose | 후속 이미지·volume·network·종료/재생성 인수 필요 |
 | Intel Mac·Linux ARM64·Windows·Alpine/musl·H2 제품 지원 | 별도 구현·인수 전 미지원 |
@@ -14,7 +14,7 @@
 
 현재 설치된 Rust 1.86.0을 `rust-toolchain.toml`/Cargo의 rust-version으로 고정하고 Cargo.lock으로 전이 의존성과 checksum을 고정했다. Cargo.toml의 직접 의존성은 정확한 버전이며 lock 변경은 테스트와 함께 검토한다. fmt·Clippy·테스트가 기본 gate다. BXDL crate는 unsafe code를 금지하지만 의존 crate 내부의 unsafe 부재를 주장하지 않는다.
 
-Rust 이식은 serde/serde_json(JSON), flate2(Rust compression backend), sha2/hex(hash), ed25519-dalek/base64(서명/PEM), cap-std(열린 directory 기준 staging·setup 저장), time(결과 시각)을 사용한다. 이번 setup에는 Mac의 유니코드 경로 별칭 충돌 검사를 위해 unicode-normalization 0.1.24를 추가했다. tempfile은 테스트에만 사용한다. 외부 의존성 0개라는 이전 Go 구현의 특성은 더 이상 해당하지 않는다. 실제 제품 배포 시 CLI 전이 의존성도 SBOM/NOTICE에 포함하고 별도 보안·license 검토를 해야 한다.
+Rust 이식은 serde/serde_json(JSON), flate2(Rust compression backend), sha2/hex(hash), ed25519-dalek/base64(서명/PEM), cap-std(열린 directory 기준 파일 작업), rustix(OS 파일·잠금·프로세스 API), time(결과 시각)을 사용한다. Mac의 유니코드 경로 별칭 충돌 검사는 unicode-normalization 0.1.24를 사용한다. tempfile은 테스트에만 사용한다. 외부 의존성 0개라는 이전 Go 구현의 특성은 더 이상 해당하지 않는다. 실제 제품 배포 시 CLI 전이 의존성도 SBOM/NOTICE에 포함하고 별도 보안·license 검토를 해야 한다.
 
 첫 개발 빌드는 compiler/linker 및 Cargo registry 다운로드를 필요로 한다. 고객 실행은 검증된 CLI/JRE/JAR만 소비하며 개발 도구나 registry 접근을 요구하지 않는 것이 제품 목표다. CPU/OS별 executable은 별도 빌드하며 Mac에서 Linux target type-check와 Linux linking/실행을 구분한다.
 
@@ -36,12 +36,18 @@ workspace·checkpoint·출력은 symlink 조상, 의도하지 않은 hard link·
 
 ## 인수 분리
 
+이번 서비스 profile은 로그인된 현재 사용자의 GUI 세션에 명시 start로 bootstrap하는 LaunchAgent다. plist는 private control 아래 시도별로 생성하고 `~/Library/LaunchAgents`에는 등록하지 않는다. 로그인 자동 시작·자동 재시작·장기 운영 LaunchDaemon은 제공하지 않는다. Application Support 아래에서 package/control/data/config를 분리해 두는 위치를 권장하며 선택한 OS의 파일 접근·GUI 세션·실행 조건을 실제 인수해야 한다.
+
+start는 설치본 `bin/bxdl`과 동일한 바이트의 CLI를 요구한다. 새 CLI를 기존 package에 덮어쓰는 업데이트와 기존 control/data의 migration은 아직 없다. `logs/diagnose`와 시도별 JAR·CLI snapshot/private 로그의 자동 정리도 후속이다. 로그아웃·OS 종료에서는 launchd가 자체 강제 종료할 수 있으므로 수동 stop의 SIGKILL 미사용을 OS 전체 보장으로 확대하지 않는다.
+
 이번 로컬 시험용 JRE는 개발 Mac의 Oracle Java21.0.7에서 jlink로 만든 실행 fixture다. 고객용 JRE 선정·재배포 승인 또는 완전한 NOTICE/SBOM이 아니며 저장소에 동봉하지 않는다.
 
-G1-M은 Mac 사용자 설치·launchd·동일 데이터 재시작·사용자 흐름 검증이다. 같은 사용자 권한으로 CLI와 engine가 실행되므로 Linux 전용 service UID와 같은 격리를 주장하지 않는다. 로그인/로그아웃·sleep·실패/재개 UX도 포함한다.
+G1-M은 Mac 사용자 설치·launchd·동일 데이터 재시작·사용자 흐름 검증이다. 같은 사용자 권한으로 CLI와 engine가 실행되므로 Linux 전용 service UID와 같은 격리를 주장하지 않는다. 로그인/로그아웃·sleep·실패/재개 UX와 같은 package의 4-validator 거래/순차 재시작도 필요하며 전체 인수는 아직 미완료다.
 
 G1-L은 실제 Linux VM의 systemd·전용 UID·native·다중 host 네트워크 인수다. G1-D는 container 별도 인수다. 기존 사용자 node/data를 fixture로 사용하지 않는다. 개발 테스트와 과거 다른 revision의 evidence는 각 gate를 대신하지 않는다.
 
-GitHub Actions는 macOS/Ubuntu의 Rust CLI fast checks를 정의한다. 기반 PR #1의 CI 통과는 그 revision의 과거 이력이다. PR #2는 Mac·Ubuntu CI를 통과했지만, 2026-09-18 제품/native 결합 preflight 변경의 원격 CI는 아직 미실행이다. workflow 존재나 이전 CI를 이번 PASS 근거로 사용하지 않는다. 로컬 결과도 해당 revision과 연결된 results 기록을 따른다. OS runner architecture는 실행 evidence로 기록하며 CLI CI 통과를 engine/service 인수로 확대하지 않는다.
+이번 서비스 시험은 [LaunchAgent 검증 기록](../results/2026-09-18-macos-launchagent.md)을 따른다. Documents 아래 worker 진입 전 exit 78과 임시 경로로 분리한 후의 동작 차이를 관측했지만 원인을 TCC로 확정하지 않는다. 같은 package로 기본 `Library/Application Support/BXDL` 아래의 고유 시험 경로에서도 등록·초기화·시작·상태·정지를 확인했다. 이 임시·기본 경로의 성공을 모든 사용자 경로·OS 버전의 지원으로 확대하지 않는다.
+
+GitHub Actions는 macOS/Ubuntu의 Rust CLI fast checks를 정의한다. 기반 PR #1·#2와 등록·초기화 PR #4의 CI 통과는 각 revision의 과거 이력이다. 이번 LaunchAgent 변경의 원격 CI는 아직 미실행이다. workflow 존재나 이전 CI를 이번 PASS 근거로 사용하지 않는다. 로컬 결과도 해당 revision과 연결된 results 기록을 따른다. OS runner architecture는 실행 evidence로 기록하며 CLI CI 통과를 engine/service 인수로 확대하지 않는다.
 
 2026-09-18 명시 초기화 시험에서는 기존 cold 전용 jlink 구성에 `jdk.management`가 빠진 점을 확인했다. NIGO `RuntimeMonitorReader`가 `com.sun.management.OperatingSystemMXBean`을 사용하므로 해당 모듈을 포함한 별도 로컬 시험 JRE로 검증한다. Java launcher hash만으로 runtime 모듈 구성을 구별할 수 없어 instance 등록/실행 시 전체 설치 inventory를 검증한다. 이 보완은 정식 JRE 선정·고객 재배포 승인·필요 모듈 전체 확정을 대신하지 않는다. [초기화 검증 기록](../results/2026-09-18-instance-initialization.md)을 따른다.

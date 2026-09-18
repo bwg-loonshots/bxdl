@@ -1,15 +1,15 @@
-# CLI·설치·설정·엔진 검사와 초기화
+# CLI·설치·설정·초기화와 Mac 서비스
 
 `--json`은 명령 인자 앞/뒤에서 받을 수 있으며 stdout에 JSON 문서 하나만 쓴다. setup에서는 `--non-interactive`와 함께 사용해야 한다. 사람용 결과도 같은 내부 결과를 표현한다. 대화형 setup 질문은 stderr에 출력하며, 비대화형 JSON 실행은 질문이나 로그 없이 결과만 stdout에 쓴다. 잘못된 인자나 parser 오류에 입력값·secret을 그대로 되돌려 쓰지 않는다.
 
 | exit | 현재 의미 |
 | --- | --- |
-| 0 | 패키지 검증·파일 설치·엔진 식별·설정 저장·인스턴스 등록/조회·초기화 성공. 노드 정상 보장이 아님 |
+| 0 | 패키지 검증·파일 설치·엔진 식별·설정 저장·등록/조회·초기화 성공, 또는 서비스 결과 SUCCEEDED. 명령별 의미를 확인해야 함 |
 | 2 | 인자 오류, `config validate`/로컬 전용 `preflight`의 설정 read/schema 오류 |
-| 3 | artifact·설치·engine lock/응답/입력 검증 실패, 결합 preflight 불일치, setup 저장 오류 또는 등록 인스턴스의 잠금·입력 변경·초기화 사전 조건 거부 |
-| 4 | 로컬 preflight FAIL 또는 아직 제공하지 않는 운영 명령 |
-| 5 | preflight 미완료 또는 setup 취소/EOF·비대화형 미완성 초안 |
-| 6 | cold JVM timeout, 설치 receipt commit 불명 또는 초기화 시도/결과 기록 불명(UNKNOWN) |
+| 3 | artifact·설치·engine lock/응답/입력 검증 실패, 결합 preflight 불일치, setup 저장 오류 또는 등록·초기화·서비스 사전 조건 거부 |
+| 4 | 로컬 preflight FAIL, 서비스 관측 결과 FAILED 또는 아직 제공하지 않는 운영 명령 |
+| 5 | preflight·서비스 관측 INCOMPLETE 또는 setup 취소/EOF·비대화형 미완성 초안 |
+| 6 | cold JVM timeout, 설치 receipt commit·초기화·서비스 시도/관측 불명(UNKNOWN) |
 | 7 | 입력/안내·결과 출력 실패 또는 분류되지 않은 내부 오류 |
 
 engine 명령과 결합/등록형 preflight는 고정한 JVM의 cold 명령을 실행한다. cold timeout은 직접 child를 종료·회수하고 UNKNOWN/exit 6을 반환한다. 쓰기 작업인 init/resume-init은 TERM 후 최대 5초를 더 기다리며 SIGKILL하지 않는다. child가 살아 있거나 잠금을 보유할 수 있으므로 UNKNOWN을 종료 완료로 해석하지 않는다. 두 경로 모두 자동 재시도하지 않는다.
@@ -118,6 +118,30 @@ register/show/init/resume의 `data`는 `instanceId`, `initialization=NOT_STARTED
 
 [인스턴스 가이드](./instance.md)에 준비 자료, 중단 후 명시 재개 조건, 보존된 시도, 이동/복원 미지원 경계를 정리한다. 원문 설정·secret 경로·child 출력은 결과에 노출하지 않는다. 서비스 등록·시작은 수행하지 않는다.
 
+## Mac 사용자 서비스
+
+```text
+bxdl start --instance <absolute-control-dir> [--timeout-seconds <1..600>] [--json]
+bxdl status --instance <absolute-control-dir> [--timeout-seconds <1..120>] [--json]
+bxdl stop --instance <absolute-control-dir> [--timeout-seconds <1..600>] [--json]
+```
+
+macOS arm64의 현재 사용자 GUI 로그인 세션에서 이미 등록·초기화한 개발 인스턴스를 제어한다. start는 설치된 package의 `bin/bxdl`과 같은 바이트의 CLI를 요구한다. 새 CLI만 기존 package에 덮어쓰면 전체 inventory 검증에 실패하며, 외부의 다른 CLI로 시작하면 `SERVICE_CLI_MISMATCH`다. 새 CLI를 담은 archive와 새 설치본을 준비해야 하며 기존 등록/data의 업데이트·migration은 제공하지 않는다.
+
+start마다 control 아래에 고유 attempt·worker/JAR snapshot·plist·report를 만든다. 수동 bootstrap의 `RunAtLoad=true`, `KeepAlive=false`를 사용하며 `~/Library/LaunchAgents` 자동 로그인 등록은 하지 않는다. worker는 한 번 실행 허가를 소비하고 입력·전체 설치본·cold·INITIALIZED/genesis를 다시 검증한 뒤 같은 PID로 Java를 실행한다. `service-run`은 이 내부 진입점이며 직접 실행·kickstart로 실패 시도를 재사용할 수 없다.
+
+| 명령 | 기본 / 허용 timeout | 시간과 결과의 의미 |
+| --- | --- | --- |
+| start | 120초 / 1~600초 | 사전 검증·bootstrap 뒤의 시작 관측 대기. 전체 명령의 총 시간 제한이나 실행 취소가 아님 |
+| status | 10초 / 1~120초 | launchd·report·HTTP의 공통 관측 시간 예산. 읽기 전용이며 저장 상태를 복구하지 않음 |
+| stop | 60초 / 1~600초 | stop 의도 기록 뒤 종료 관측·등록 정리의 공통 시간 예산. timeout에 SIGKILL·live job bootout을 하지 않음 |
+
+서비스 `data`는 `instanceId`, `outcome`, `serviceState`, `engineState`, `runtimeReadiness`, `reason`, `operationBusy`, 선택 `attemptId/pid/nodeInstanceId/health`를 포함한다. `serviceProfile=MACOS_USER_LAUNCH_AGENT`, `developmentOnly=true`, `loginAutoStart=false`, `automaticRestart=false`, `globalConsensus=NOT_CHECKED`를 유지한다. 원문 설정·secret 경로·private 실패 원인은 공개 결과에 반사하지 않는다.
+
+서비스 결과 SUCCEEDED는 exit 0, INCOMPLETE는 5, FAILED는 4, UNKNOWN은 6이다. 호출 사전 조건·자료 검증 오류는 exit 3이다. 로컬 READY는 거래 확정·peer 연결·전역 quorum의 보장이 아니다. 종료된 인스턴스의 status도 STOPPED 결과로 exit 0일 수 있으므로 exit만 보고 실행 중이라고 해석하지 않는다. `instance show`의 초기화 Summary와 runtime `status`를 구별한다.
+
+stop은 정확한 label·PID·프로그램 인자를 확인한 뒤 TERM을 요청한다. 같은 시도의 정상 STOPPED report, launchd의 프로세스 부재, control 잠금 획득을 모두 확인해야 `STOPPED_VERIFIED`를 기록하고 남은 job 등록을 정리한다. status가 종료를 관측했어도 기록을 게시하지는 않으므로 다음 시작 전에는 명시 stop이 필요하다. gate 실패·UNKNOWN·불완전 종료는 자동 재시작/초기화/repair로 해결하지 않는다. [서비스 사용과 실패 처리](./instance.md), [설계·인수 경계](../design/2026-09-18-macos-launchagent.md)를 따른다.
+
 ## 미구현 명령
 
-start/stop/status/logs/diagnose/upgrade/uninstall은 명시적인 UNSUPPORTED 오류를 반환한다. no-op 성공이나 가짜 PID/engine 상태를 만들지 않는다. setup의 패키지 선택·설치 연결, launchd/systemd 설치·실행과 인증된 원격 관리는 아직 제공하지 않는다. macOS를 첫 UX 대상으로 구현할 순서는 [Mac 우선 설계](../design/2026-09-17-rust-macos-first.md)를 따른다.
+logs/diagnose/upgrade/uninstall은 명시적인 UNSUPPORTED 오류를 반환한다. no-op 성공이나 가짜 PID/engine 상태를 만들지 않는다. setup의 패키지 선택·설치 연결, 로그인 자동 시작·장기 운영 LaunchDaemon·Linux/systemd·Docker와 인증된 원격 관리는 아직 제공하지 않는다. macOS를 첫 UX 대상으로 구현할 순서는 [Mac 우선 설계](../design/2026-09-17-rust-macos-first.md)를 따른다.

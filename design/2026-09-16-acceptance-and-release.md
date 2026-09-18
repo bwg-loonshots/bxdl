@@ -53,7 +53,7 @@ harness의 PKI·key·port·data·서비스 등록·VM/container는 모두 test-o
 | LIFE-01 | RocksDB 거래 확정→정상 종료→동일 DB/key/WAL 재기동 | 동일 head/hash·identity와 후속 거래 확정; 정상 close 근거 |
 | LIFE-02 | 같은 instance 중복 start·DB lock·유사 PID/다른 서비스 | 이중 writer 거부, 타 process/data에 영향 없음; launchd job/systemd unit/container identity 확인 |
 | LIFE-03 | startup/stop 지연·CLI 종료·관측 단절 | 제품의 자동 강제 kill/restart 없음, operation·서비스·engine 상태 대조, incomplete 유지. OS/runtime 강제 종료는 정상 close로 오인하지 않음 |
-| LIFE-04 | CLI 우회 직접 서비스 시작·세션/호스트 재시작 | 모든 profile에 startup gate 적용, unresolved init/update·복구 필요 instance 거부. Mac 명시 opt-in 로그인 시작, Linux enable 부팅, Docker 명시 재생성 각각 검증 |
+| LIFE-04 | CLI 우회 직접 서비스 시작·세션/호스트 재시작 | 모든 profile에 startup gate 적용, unresolved init/update·복구 필요 instance 거부. 첫 Mac profile은 수동 LaunchAgent의 직접 kickstart 거부와 세션 종료 뒤 명시 재시작을 검증한다. Mac 로그인 자동 시작은 후속 별도 정책이며, Linux enable 부팅·Docker 명시 재생성은 해당 profile에서 각각 검증 |
 | OBS-01 | validator/observer·IDLE·UNKNOWN·실패·미지원 fixture | role별 해석 일치, HTTP 200/head 정체만으로 healthy/failure 판정 없음. 실제 가능한 상태는 엔진으로 재현 |
 | OBS-02 | 엔진 교체·재시작·stale 응답·identity 불일치 | build/instance를 구분하고 이전 응답을 현재 정상으로 재사용하지 않음 |
 | QBFT-01 | 같은 package의 4-validator mTLS, 단일 ingress 거래 | 같은 finalized height/hash/root, 거래 확정. Mac 로컬·Linux 4-host·container topology를 evidence에 구분 |

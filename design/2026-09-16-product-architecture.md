@@ -1,6 +1,6 @@
 # BXDL 제품·배포 아키텍처
 
-- 상태: 전체 목표 설계. 일부 제품 기반은 구현했으며 [현재 CLI](../docs/cli.md)·[구현 상태](../docs/implementation-status.md)가 실제 제공 범위다. 아래 NIGO 관련 호출은 공급 합의 전 제안이다.
+- 상태: 전체 목표 설계. [현재 CLI](../docs/cli.md)·[구현 상태](../docs/implementation-status.md)가 실제 제공 범위다. 아래 전체 목표 호출과 달리 구현은 수신한 PROPOSED 개발 계약 및 후속 날짜별 설계에 고정한다.
 - 상위 문서: [설계 인덱스](./README.md). 2026-09-17 [Rust·Mac 우선 결정](./2026-09-17-rust-macos-first.md)이 플랫폼 순서와 Mac 사용자 profile을 정의한다.
 
 ## 1. 책임 경계
@@ -54,7 +54,7 @@ bxdl/
   Cargo.toml Cargo.lock rust-toolchain.toml
 ```
 
-현재는 Rust `src/cli.rs`, `src/artifact`, `src/config`와 제품 계약·패키징 예시·문서·CI를 구현했다. 나머지는 해당 단계의 실제 계약·인수와 함께 추가한다. `apps/console`, 중앙 management service와 새로운 daemon은 첫 구현에 추가하지 않는다.
+현재는 Rust CLI·artifact/config·setup·install과 engine 아래 cold/instance/init·수동 LaunchAgent/runtime 관측을 구현했다. 위 트리는 전체 목표 분리안이며 현재 파일 구조는 실제 코드를 따른다. 나머지는 해당 단계의 계약·인수와 함께 추가한다. `apps/console`, 중앙 management service와 새로운 daemon은 첫 구현에 추가하지 않는다.
 
 ## 4. 배포물과 호스트 layout
 
@@ -91,7 +91,7 @@ init 완료 시 engine이 증명한 genesis/profile/backend/공개 validator ide
 
 ## 6. CLI와 결과 모델
 
-아래는 **전체 BXDL 목표 명령**이며 NIGO의 현재 flag 또는 지금 실행 가능한 CLI 목록이 아니다. 현재 version은 CLI identity만, preflight는 `--config` 로컬 metadata만 제공하며 `package build`와 `config validate`를 추가했다. 실행 예제는 [현재 CLI](../docs/cli.md)를 따른다.
+아래는 **전체 BXDL 목표 명령**이며 NIGO의 현재 flag 또는 지금 실행 가능한 CLI 목록이 아니다. 현재 package·setup/install·제품/native cold·등록/명시 초기화·수동 LaunchAgent start/status/stop의 정확한 인자와 실행 예제는 [현재 CLI](../docs/cli.md)를 따른다.
 
 | 명령 | 수행 범위·권한 | 필수 조건 |
 | --- | --- | --- |
