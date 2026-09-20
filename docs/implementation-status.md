@@ -1,4 +1,4 @@
-# 구현 상태 — 2026-09-18
+# 구현 상태 — 2026-09-21
 
 Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후 **R2의 Mac 새 폴더 패키지 설치**와 **R3의 NIGO 개발 후보 정보·cold 사전검사**를 추가했다. clean NIGO 후보를 별도로 수신하고 제품 설정과 명시 native QBFT 설정을 연결하는 preflight를 추가했다. 이후 설치본·설정을 등록해 `--instance`로 preflight와 명시 init/resume-init을 호출하고, Mac 사용자 LaunchAgent의 start/status/stop을 연결했다. 실제 새 package의 단일 validator 서비스 수명주기를 확인했으며 setup에서 서비스 운용까지 이어지는 전체 UX·G1-M은 아직 완료하지 않았다.
 
@@ -16,7 +16,7 @@ Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후
 - `init/resume-init`: 작업별 확인 flag, durable intent, inherited advisory lock, 단발 NIGO 호출, process exit/stdout/동일 attempt report/engine journal 대조. 불명 결과와 시도 자료를 보존한다.
 - `start/status/stop`: Mac 사용자 GUI 세션의 시도별 LaunchAgent, 일회 gate와 같은 PID의 Java exec, report·launchd·로컬 HTTP 관측, 정상 종료 증명 후 등록 정리. 로그인 자동 시작·자동 재시작은 제공하지 않는다.
 
-`logs/diagnose/upgrade/uninstall`은 미구현이다. 제품 config에서 NIGO QBFT peer/pin/validator 상세 설정을 추측 렌더링하지 않는다. `setup`의 instance.json과 `engine preflight`의 node.json을 구별한다.
+`upgrade/uninstall`은 미구현이다. `logs/diagnose`는 아래 오프라인 범위로 제공한다. 제품 config에서 NIGO QBFT peer/pin/validator 상세 설정을 추측 렌더링하지 않는다. `setup`의 instance.json과 `engine preflight`의 node.json을 구별한다.
 
 ## 새로 수신한 NIGO 결과
 
@@ -46,6 +46,12 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 
 현재 profile은 수동 bootstrap한 사용자 LaunchAgent다. 자동 로그인 시작, 장기 운영 LaunchDaemon, 로그아웃/OS 종료의 escalation·sleep/wake 인수, 같은 package의 4-validator 거래/재시작과 전체 G1-M, 정식 JRE·최소 macOS 선정은 남아 있다. 같은 최종 package로 `Library/Application Support/BXDL` 아래 고유 시험 control/data/config에서도 register/init/start/status/stop을 확인했다. 공백 경로를 포함한 이 호스트의 결과이며 추가 OS·접근 정책 조합을 보장하지 않는다.
 
+## 오프라인 logs/diagnose
+
+`logs --instance`는 최신 초기화·서비스 시도의 고정 이벤트와 저장된 상태를 읽는다. `diagnose --instance --output`은 같은 정제 결과를 새0600 JSON으로 저장한다. 원문 stdout/stderr·설정·credential·ID·경로·hash는 내보내지 않는다. 서비스가 꺼져 있어도 동작하며 JVM·네트워크·launchctl·DB를 실행하거나 복구하지 않는다. 수집 누락·손상·변경·크기/시간 제한은 partial과 사유로 남긴다. 파일 생성 성공은 노드 health나 초기화의 새 검증이 아니다.
+
+설계와 한도는 [오프라인 진단 설계](../design/2026-09-21-offline-diagnostics.md), 실제 검사 근거는 [진단 검증 기록](../results/2026-09-21-offline-diagnostics.md)을 따른다. raw/follow·전체 시도 검색·로그 rotation·보존/용량 정리·UNKNOWN 조정·안전한 제거는 후속이다. NIGO 공급 revision과 요구 원장은 그대로 유지한다.
+
 ## 계획 대비 상태
 
 | 작업 | 상태 | 남은 조건 |
@@ -60,15 +66,16 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 | BX-023 | IN_PROGRESS | 제품/native cold·실제 RocksDB 단발 초기화 확인. 지속 runtime·DB/WAL 복구·service 인수 후속 |
 | BX-030 | IN_PROGRESS | R1 초안·R2 파일 installer·독립 instance 등록/명시 초기화 연결. setup package 선택·자동 연결 후속 |
 | BX-031/032 | IN_PROGRESS | 수동 LaunchAgent·status·정상 stop·restart 확인. 로그인/로그아웃·sleep/wake와 전체 사용자 lifecycle 인수 후속 |
-| BX-033/034 | PLAN | logs/diagnose·안전한 제거, 지원 자료 정제·보존/용량 정책 |
+| BX-033 | IN_PROGRESS | 오프라인 최신 시도 logs/diagnose·정제·bounded partial 출력 구현. 전체 시도 조회·보존/용량 정책 후속 |
+| BX-034 | PLAN | 데이터·키를 보존하는 안전한 제거 |
 | BX-040~043 | IN_PROGRESS | 단일 노드 서비스·같은 DB 재시작 확인. G1-M 전체 사용자 흐름·4-validator, Linux/Docker 별도 후속 |
-| BX-044 | IN_PROGRESS | 이전 PR #4 fast CI 통과. 이번 fmt/clippy·200개 테스트·Linux 타입 검사 통과, 원격 CI는 해당 PR 기록 참조. 전체 package 인수·릴리스 pipeline 후속 |
+| BX-044 | IN_PROGRESS | LaunchAgent PR #5 fast CI 통과. 진단 변경의 로컬 검사는 연결된 결과 기록을 따르며 원격 CI는 해당 PR 기록 참조. 전체 package 인수·릴리스 pipeline 후속 |
 | BX-050~053/M6 | PLAN | 버전 쌍 업데이트·offline 유지보수·고객 운영 확대 |
 
 ## 다음 순서
 
-1. 새 Mac package에서 확인한 단일 validator lifecycle을 바탕으로 남은 중단·실패 경계와 사용자 세션 인수를 완료한다. 저장된 초기화 상태와 실제 노드 health를 분리하고 UNKNOWN 뒤 자동 재시작하지 않는다.
-2. setup에 검증한 package 선택·명시 instance 등록과 NIGO native 설정 준비를 연결한다. QBFT membership·peer/pin·PKI/거래 fixture를 준비하며 자동 렌더 도입 시에만 새 schema/초안 migration을 설계한다.
+1. setup에 검증한 package 선택·명시 instance 등록과 NIGO native 설정 준비를 연결한다. 명시 init/start와 오류 수정·취소·재개 UX를 연결한다.
+2. QBFT membership·peer/pin·PKI/거래 fixture와 4-validator 인수를 준비하고, Mac 중단·실패 경계·사용자 세션 인수를 완료한다. 저장 기록과 실제 health를 구분하며 UNKNOWN 뒤 자동 재시작하지 않는다.
 3. 정식 Java 21 공급자·patch/hash·필요 runtime modules·NOTICE/SBOM과 최소 macOS를 선정한다. cold 실행 가능성이 init/runtime 가능성을 보증하지 않는다.
 4. 선정 JRE와 같은 Mac package에서 동일 데이터 재시작·G1-M 전체 운영·4-validator 회귀를 인수한다. Linux/systemd G1-L, Docker G1-D는 뒤에서 별도 검증한다.
 

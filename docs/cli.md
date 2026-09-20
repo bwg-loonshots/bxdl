@@ -4,11 +4,11 @@
 
 | exit | 현재 의미 |
 | --- | --- |
-| 0 | 패키지 검증·파일 설치·엔진 식별·설정 저장·등록/조회·초기화 성공, 또는 서비스 결과 SUCCEEDED. 명령별 의미를 확인해야 함 |
+| 0 | 패키지·설치·엔진 식별·설정 저장·등록/조회·초기화 성공, 서비스 SUCCEEDED 또는 진단 수집/저장 완료. 명령별 의미를 확인해야 함 |
 | 2 | 인자 오류, `config validate`/로컬 전용 `preflight`의 설정 read/schema 오류 |
-| 3 | artifact·설치·engine lock/응답/입력 검증 실패, 결합 preflight 불일치, setup 저장 오류 또는 등록·초기화·서비스 사전 조건 거부 |
+| 3 | artifact·설치·engine 입력 검증 실패, 결합 preflight 불일치, setup 저장 오류, 등록·초기화·서비스 사전 조건 거부 또는 진단 수집/출력 거부 |
 | 4 | 로컬 preflight FAIL, 서비스 관측 결과 FAILED 또는 아직 제공하지 않는 운영 명령 |
-| 5 | preflight·서비스 관측 INCOMPLETE 또는 setup 취소/EOF·비대화형 미완성 초안 |
+| 5 | preflight·서비스 관측 INCOMPLETE, 진단 partial 또는 setup 취소/EOF·비대화형 미완성 초안 |
 | 6 | cold JVM timeout, 설치 receipt commit·초기화·서비스 시도/관측 불명(UNKNOWN) |
 | 7 | 입력/안내·결과 출력 실패 또는 분류되지 않은 내부 오류 |
 
@@ -142,6 +142,29 @@ start마다 control 아래에 고유 attempt·worker/JAR snapshot·plist·report
 
 stop은 정확한 label·PID·프로그램 인자를 확인한 뒤 TERM을 요청한다. 같은 시도의 정상 STOPPED report, launchd의 프로세스 부재, control 잠금 획득을 모두 확인해야 `STOPPED_VERIFIED`를 기록하고 남은 job 등록을 정리한다. status가 종료를 관측했어도 기록을 게시하지는 않으므로 다음 시작 전에는 명시 stop이 필요하다. gate 실패·UNKNOWN·불완전 종료는 자동 재시작/초기화/repair로 해결하지 않는다. [서비스 사용과 실패 처리](./instance.md), [설계·인수 경계](../design/2026-09-18-macos-launchagent.md)를 따른다.
 
+## 오프라인 기록과 지원 보고서
+
+```text
+bxdl logs --instance <control-dir> [--tail <1..200>]
+    [--max-bytes <4096..1048576>] [--timeout-seconds <1..30>] [--json]
+bxdl diagnose --instance <control-dir> --output <new.json> [--tail <1..200>]
+    [--max-bytes <4096..1048576>] [--timeout-seconds <1..30>] [--json]
+```
+
+두 명령은 엔진이 내려가 있어도 등록 제어 폴더의 저장 상태와 **최신 초기화 시도·최신 서비스 시도**의 허용된 이벤트만 읽는다. JVM·네트워크·서비스 호출, DB·설정/credential 내용 수집, 상태 변경·복구는 수행하지 않는다. 현재 상태를 검증하는 `status`와 구분하며 저장된 성공 이벤트를 현재 health·안전성의 증거로 사용하지 않는다.
+
+| 옵션 | 기본값 | 의미 |
+| --- | --- | --- |
+| `--tail` | 50 | 전체 이벤트 목록의 마지막 N개. 초기화→서비스의 논리적 순서이며 시각순 정렬이나 전체 과거 시도 조회가 아님 |
+| `--max-bytes` | 262144 | 수집 대상 payload 읽기와 최종 보고서 JSON 각각의 크기 예산. 경로·권한·control anchor 확인의 고정 메타데이터 비용은 별도 |
+| `--timeout-seconds` | 5 | 파일 작업 경계에서 확인하는 수집 시간 예산. 멈춘 파일시스템 syscall의 강제 중단 시간 보장은 아님 |
+
+instance/attempt/node ID·경로·hash·원문 설정·credential은 결과에 포함하지 않는다. raw stdout/stderr는 내용 대신 확인 가능한 크기와 `RAW_TEXT_EXCLUDED_BY_POLICY`를 기록한다. `--raw`·`--follow`는 지원하지 않는다. 누락·손상·변경·예산 제한 때문에 충분히 읽지 못한 자료는 `partial=true`와 사유로 남긴다.
+
+logs는 수집 결과를 출력한다. diagnose는 이미 존재하는 부모 아래 **새 0600 JSON 파일**을 만들며 기존 파일에 덮어쓰지 않는다. 출력은 control/data/package·고정한 입력 자료와 겹칠 수 없다. binding이 손상된 경우 logs는 읽을 수 있는 범위의 partial을 반환할 수 있지만, diagnose는 안전한 출력 위치를 확인할 수 없어 파일 생성을 거부한다.
+
+완료 결과는 `LOGS_COLLECTED` 또는 `DIAGNOSTIC_WRITTEN`/SUCCEEDED/exit 0이다. 일부 자료가 빠지면 `LOGS_PARTIAL` 또는 `DIAGNOSTIC_PARTIAL`/INCOMPLETE/exit 5이며 **diagnose의 partial 결과도 파일로 저장될 수 있다.** 잘못된 인자는 2, 수집·출력 거부는 3, 결과 출력 실패는 7이다. 파일 생성이나 exit 0은 엔진 초기화·정상 종료·현재 readiness 판정이 아니다.
+
 ## 미구현 명령
 
-logs/diagnose/upgrade/uninstall은 명시적인 UNSUPPORTED 오류를 반환한다. no-op 성공이나 가짜 PID/engine 상태를 만들지 않는다. setup의 패키지 선택·설치 연결, 로그인 자동 시작·장기 운영 LaunchDaemon·Linux/systemd·Docker와 인증된 원격 관리는 아직 제공하지 않는다. macOS를 첫 UX 대상으로 구현할 순서는 [Mac 우선 설계](../design/2026-09-17-rust-macos-first.md)를 따른다.
+upgrade/uninstall은 명시적인 UNSUPPORTED 오류를 반환한다. no-op 성공이나 가짜 PID/engine 상태를 만들지 않는다. setup의 패키지 선택·설치 연결, 로그인 자동 시작·장기 운영 LaunchDaemon·Linux/systemd·Docker와 인증된 원격 관리는 아직 제공하지 않는다. macOS를 첫 UX 대상으로 구현할 순서는 [Mac 우선 설계](../design/2026-09-17-rust-macos-first.md)를 따른다.

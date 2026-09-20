@@ -1,5 +1,7 @@
 //! Explicit development-candidate inspection and cold validation only.
 //! Never installs, initializes, starts a node, or infers production readiness.
+mod diagnostic_events;
+mod diagnostic_io;
 mod files;
 mod init_result;
 pub mod instance;

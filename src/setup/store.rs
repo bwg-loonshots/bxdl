@@ -83,6 +83,11 @@ impl Store {
     }
 
     pub fn open(path: &Path) -> Result<Self> {
+        Self::open_bounded(path, MAX_BYTES)
+    }
+
+    /// Diagnostic readers can bound record I/O before opening a checkpoint.
+    pub(crate) fn open_bounded(path: &Path, limit: usize) -> Result<Self> {
         let (path, parent, name) = parent_anchor(path)?;
         let before = parent.symlink_metadata(&name).map_err(|_| io_error())?;
         require_directory(&before)?;
@@ -99,13 +104,23 @@ impl Store {
             loaded: None,
         };
         store.ensure_anchor()?;
-        store.loaded = latest(&store.directory)?;
+        store.loaded = latest_bounded(&store.directory, limit.min(MAX_BYTES))?;
         Ok(store)
     }
 
+    pub(crate) fn loaded_snapshot(&self) -> Option<&[u8]> {
+        self.loaded
+            .as_ref()
+            .map(|checkpoint| checkpoint.raw.as_slice())
+    }
+
     pub fn read(&self) -> Result<Option<Vec<u8>>> {
+        self.read_bounded(MAX_BYTES)
+    }
+
+    pub(crate) fn read_bounded(&self, limit: usize) -> Result<Option<Vec<u8>>> {
         self.ensure_anchor()?;
-        let current = latest(&self.directory)?;
+        let current = latest_bounded(&self.directory, limit.min(MAX_BYTES))?;
         compare_loaded(&self.loaded, &current)?;
         Ok(current.map(|c| c.raw))
     }
@@ -232,6 +247,10 @@ fn compare_loaded(loaded: &Option<Checkpoint>, current: &Option<Checkpoint>) -> 
 }
 
 fn latest(dir: &Dir) -> Result<Option<Checkpoint>> {
+    latest_bounded(dir, MAX_BYTES)
+}
+
+fn latest_bounded(dir: &Dir, limit: usize) -> Result<Option<Checkpoint>> {
     let mut revisions = BTreeMap::new();
     let mut exported_config = None;
     let mut temporary_links = BTreeMap::<(u64, u64), (u64, u64)>::new();
@@ -291,6 +310,9 @@ fn latest(dir: &Dir) -> Result<Option<Checkpoint>> {
     let Some((&revision, metadata)) = revisions.last_key_value() else {
         return Ok(None);
     };
+    if metadata.len() > limit as u64 {
+        return Err(limit_error());
+    }
     let name = revision_name(revision);
     let identity = Identity::of(metadata);
     let mut options = OpenOptions::new();
@@ -302,7 +324,7 @@ fn latest(dir: &Dir) -> Result<Option<Checkpoint>> {
     }
     let mut raw = Vec::with_capacity(metadata.len() as usize);
     (&mut file)
-        .take(MAX_BYTES as u64 + 1)
+        .take(limit as u64)
         .read_to_end(&mut raw)
         .map_err(|_| io_error())?;
     if raw.len() > MAX_BYTES
