@@ -91,14 +91,26 @@ status는 해당 attempt의 launchd·report·로컬 bootstrap/health를 대조�
 
 gate 거부·bootstrap 불명·부적합 report·정상 종료 미확인은 시도 자료와 함께 보존한다. 새 start, init/resume-init, 잠금 파일 삭제, plist 수정으로 자동 복구하지 않는다. gate 전에 실패해 엔진이 시작하지 않은 경우도 별도 수동 조정 기능은 아직 없다. 로그아웃·OS 종료 시 launchd가 자체 종료 또는 강제 종료할 수 있으며 `ExitTimeOut=60`은 CLI timeout과 별개다. 로그인/로그아웃·sleep/wake·전체 G1-M 인수는 아직 남아 있다.
 
+## 실행하지 않고 기록 확인하기
+
+```bash
+bxdl logs --instance "/absolute/bxdl/instances/validator-a" --tail 50 --json
+bxdl diagnose --instance "/absolute/bxdl/instances/validator-a" \
+  --output "/absolute/bxdl/support/diagnostic-new.json" --json
+```
+
+logs/diagnose는 최신 초기화·서비스 시도의 정제한 이벤트와 저장 상태를 수집한다. 엔진·launchd·네트워크를 호출하지 않아 엔진이 내려가 있어도 사용할 수 있다. raw 로그나 ID·경로·hash·credential은 내보내지 않는다. 현재 노드 상태는 `status`로 별도 확인하며 진단 기록만으로 UNKNOWN을 완료로 바꾸거나 다시 초기화하지 않는다.
+
+diagnose의 출력 부모는 미리 존재해야 하고 control/data/package·참조 자료와 분리되어야 한다. 기존 파일에는 덮어쓰지 않는다. 일부 자료를 읽지 못하면 사유를 담은 `partial=true`/exit 5 보고서를 저장할 수 있다. 등록 binding이 손상돼 출력 위치의 안전을 확인할 수 없을 때는 diagnose를 거부하므로 logs로 읽을 수 있는 부분을 먼저 확인한다. [옵션·예산·종료 코드](./cli.md#오프라인-기록과-지원-보고서)를 따른다.
+
 ## 저장 위치와 현재 경계
 
 Mac 사용자 자료는 `$HOME/Library/Application Support/BXDL` 아래에서 package·control·data·config를 서로 분리해 두는 것을 권장한다. 등록 경로는 계속 명시하며 기본 설치/등록 위치를 자동 선택하지 않는다. 경로 접근 권한과 선택한 macOS에서의 LaunchAgent 실행 가능성은 별도 인수 조건이다.
 
 제어 폴더에는 `binding.json`, append-only `journal/`, 시도별 `operations/<attempt>/`, 작업 잠금과 파일 identity 기록이 있다. 서비스는 별도의 runtime journal·시도별 plist/worker/report·private stdout/stderr를 보존한다. 제어 폴더·시도 폴더는 0700, private 기록은 0600이다. 엔진 report와 `engine-instance.json`은 NIGO가 작성하는 별도 자료다. CLI stdout/stderr에는 원문 설정·secret 경로·child 원문 출력을 내보내지 않는다. private 로그를 그대로 공개하거나 지원 자료로 제출하지 않는다.
 
-각 시도는 실행 JAR와 설정/chain snapshot을 남기며 서비스 시도는 CLI snapshot과 private 로그도 남긴다. 현재 후보 JAR만 약 160 MB다. 성공·실패 시도와 로그의 자동 GC·용량 제한 정책은 후속이며 `logs/diagnose` 명령도 아직 없다. 디스크 여유를 확보하고 작업 중에는 이 자료를 옮기거나 지우지 않는다. inode에 고정한 제어 기록은 복사본을 그대로 복원해 사용하는 형식이 아니며, 인스턴스 이동·복구 절차도 아직 제공하지 않는다.
+각 시도는 실행 JAR와 설정/chain snapshot을 남기며 서비스 시도는 CLI snapshot과 private 로그도 남긴다. 현재 후보 JAR만 약 160 MB다. logs/diagnose의 수집 한도와 별개로 성공·실패 시도와 로그의 자동 GC·보존 용량 정책은 후속이다. 디스크 여유를 확보하고 작업 중에는 이 자료를 옮기거나 지우지 않는다. inode에 고정한 제어 기록은 복사본을 그대로 복원해 사용하는 형식이 아니며, 인스턴스 이동·복구 절차도 아직 제공하지 않는다.
 
 CLI와 Java는 같은 Mac 사용자 UID로 실행한다. 파일 권한·hash·advisory 잠금은 실수와 일반 동시 실행을 차단하지만 같은 UID에 대한 강한 격리나 암호학적으로 보호된 상태 로그가 아니다. 잠금 상속은 선택한 Java/NIGO가 작업 중 stdin을 닫거나 바꾸지 않는 실행 조건에 의존한다.
 
-현재 범위는 development 후보의 등록·단발 초기화와 수동 LaunchAgent start/status/stop이다. 실제 새 package에서 단일 validator의 시작·정상 stop·같은 DB 재시작을 확인했으며 G1-M 4-validator·로그아웃/sleep 검증은 아직 완료하지 않았다. setup의 package 선택·자동 등록, 설정/키 변경과 재등록 migration, 로그/진단·제거, 정식 JRE 선정은 후속이다. [초기화 설계](../design/2026-09-18-instance-initialization.md)와 [그 검증 기록](../results/2026-09-18-instance-initialization.md), [LaunchAgent 설계](../design/2026-09-18-macos-launchagent.md)와 [서비스 검증 기록](../results/2026-09-18-macos-launchagent.md)은 각각의 범위를 구분한다.
+현재 범위는 development 후보의 등록·단발 초기화, 수동 LaunchAgent start/status/stop과 오프라인 logs/diagnose다. 실제 새 package에서 단일 validator의 시작·정상 stop·같은 DB 재시작을 확인했으며 G1-M 4-validator·로그아웃/sleep 검증은 아직 완료하지 않았다. setup의 package 선택·자동 등록, 설정/키 변경과 재등록 migration, 제거·정식 JRE 선정은 후속이다. [초기화 설계](../design/2026-09-18-instance-initialization.md)와 [그 검증 기록](../results/2026-09-18-instance-initialization.md), [LaunchAgent 설계](../design/2026-09-18-macos-launchagent.md)와 [서비스 검증 기록](../results/2026-09-18-macos-launchagent.md)은 각각의 범위를 구분한다.

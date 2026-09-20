@@ -1,5 +1,6 @@
 //! Registered development instances. Registration never initializes data;
 //! explicit one-shot init/resume-init preserves uncertain attempts for inspection.
+pub mod diagnostics;
 pub mod service;
 use super::{
     Identity, Lock, Options, ProductReport, fail,

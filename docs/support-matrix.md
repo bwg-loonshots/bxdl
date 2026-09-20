@@ -4,7 +4,7 @@
 
 | 조합 | 현재 상태 |
 | --- | --- |
-| Rust 1.86.0 / macOS arm64 | CLI 개발·로컬 테스트·native 빌드 대상. setup·새 폴더 설치·cold·등록/명시 초기화·수동 LaunchAgent 명령 구현 |
+| Rust 1.86.0 / macOS arm64 | CLI 개발·로컬 테스트·native 빌드 대상. setup·설치·cold·등록/초기화·수동 LaunchAgent·오프라인 진단 구현 |
 | macOS arm64 + Java 21 + RocksDB + 사용자 LaunchAgent | macOS 26.6.2에서 실제 새 package의 단일 validator 시작·정상 stop·같은 DB 재시작 확인. 정식 JRE·OS 최소 버전·전체 G1-M 인수 전 |
 | Linux amd64/glibc + Java 21 + RocksDB + systemd | 기존 development manifest 유지, 후속 서버 인수. Ubuntu 24.04 후보 |
 | Docker/Compose | 후속 이미지·volume·network·종료/재생성 인수 필요 |
@@ -38,7 +38,9 @@ workspace·checkpoint·출력은 symlink 조상, 의도하지 않은 hard link·
 
 이번 서비스 profile은 로그인된 현재 사용자의 GUI 세션에 명시 start로 bootstrap하는 LaunchAgent다. plist는 private control 아래 시도별로 생성하고 `~/Library/LaunchAgents`에는 등록하지 않는다. 로그인 자동 시작·자동 재시작·장기 운영 LaunchDaemon은 제공하지 않는다. Application Support 아래에서 package/control/data/config를 분리해 두는 위치를 권장하며 선택한 OS의 파일 접근·GUI 세션·실행 조건을 실제 인수해야 한다.
 
-start는 설치본 `bin/bxdl`과 동일한 바이트의 CLI를 요구한다. 새 CLI를 기존 package에 덮어쓰는 업데이트와 기존 control/data의 migration은 아직 없다. `logs/diagnose`와 시도별 JAR·CLI snapshot/private 로그의 자동 정리도 후속이다. 로그아웃·OS 종료에서는 launchd가 자체 강제 종료할 수 있으므로 수동 stop의 SIGKILL 미사용을 OS 전체 보장으로 확대하지 않는다.
+start는 설치본 `bin/bxdl`과 동일한 바이트의 CLI를 요구한다. 새 CLI를 기존 package에 덮어쓰는 업데이트와 기존 control/data의 migration은 아직 없다. 시도별 JAR·CLI snapshot/private 로그의 자동 정리도 후속이다. 로그아웃·OS 종료에서는 launchd가 자체 강제 종료할 수 있으므로 수동 stop의 SIGKILL 미사용을 OS 전체 보장으로 확대하지 않는다.
+
+logs/diagnose는 저장된 최신 시도의 제한된 이벤트를 정제해 수집하는 오프라인 기능이다. 실제 health·전체 파일 무결성·DB 안전성을 검사하지 않으며 보고서 생성 성공은 서비스 인수가 아니다. 수집 시간은 파일 작업 사이에서 확인하는 예산이며 막힌 파일시스템 호출의 강제 중단을 보장하지 않는다. [진단 사용 조건](./cli.md#오프라인-기록과-지원-보고서)을 따른다.
 
 이번 로컬 시험용 JRE는 개발 Mac의 Oracle Java21.0.7에서 jlink로 만든 실행 fixture다. 고객용 JRE 선정·재배포 승인 또는 완전한 NOTICE/SBOM이 아니며 저장소에 동봉하지 않는다.
 
@@ -48,6 +50,6 @@ G1-L은 실제 Linux VM의 systemd·전용 UID·native·다중 host 네트워크
 
 이번 서비스 시험은 [LaunchAgent 검증 기록](../results/2026-09-18-macos-launchagent.md)을 따른다. Documents 아래 worker 진입 전 exit 78과 임시 경로로 분리한 후의 동작 차이를 관측했지만 원인을 TCC로 확정하지 않는다. 같은 package로 기본 `Library/Application Support/BXDL` 아래의 고유 시험 경로에서도 등록·초기화·시작·상태·정지를 확인했다. 이 임시·기본 경로의 성공을 모든 사용자 경로·OS 버전의 지원으로 확대하지 않는다.
 
-GitHub Actions는 macOS/Ubuntu의 Rust CLI fast checks를 정의한다. 기반 PR #1·#2와 등록·초기화 PR #4의 CI 통과는 각 revision의 과거 이력이다. 이번 LaunchAgent 변경의 원격 CI는 아직 미실행이다. workflow 존재나 이전 CI를 이번 PASS 근거로 사용하지 않는다. 로컬 결과도 해당 revision과 연결된 results 기록을 따른다. OS runner architecture는 실행 evidence로 기록하며 CLI CI 통과를 engine/service 인수로 확대하지 않는다.
+GitHub Actions는 macOS/Ubuntu의 Rust CLI fast checks를 정의한다. 각 변경의 원격 CI는 해당 PR 기록을 따르며 workflow 존재나 이전 revision의 CI를 이번 진단 변경의 PASS 근거로 사용하지 않는다. 로컬 결과도 해당 revision과 연결된 results 기록을 따른다. OS runner architecture는 실행 evidence로 기록하며 CLI CI 통과를 engine/service 인수로 확대하지 않는다.
 
 2026-09-18 명시 초기화 시험에서는 기존 cold 전용 jlink 구성에 `jdk.management`가 빠진 점을 확인했다. NIGO `RuntimeMonitorReader`가 `com.sun.management.OperatingSystemMXBean`을 사용하므로 해당 모듈을 포함한 별도 로컬 시험 JRE로 검증한다. Java launcher hash만으로 runtime 모듈 구성을 구별할 수 없어 instance 등록/실행 시 전체 설치 inventory를 검증한다. 이 보완은 정식 JRE 선정·고객 재배포 승인·필요 모듈 전체 확정을 대신하지 않는다. [초기화 검증 기록](../results/2026-09-18-instance-initialization.md)을 따른다.

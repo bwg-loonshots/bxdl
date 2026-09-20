@@ -30,10 +30,14 @@ fn version_reports_rust_mac_priority_without_service_claims() {
     ] {
         assert_eq!(r["data"][key], value);
     }
+    let capabilities = r["data"]["capabilities"].as_array().unwrap();
+    for capability in ["logs.sanitized", "diagnose.offline"] {
+        assert!(capabilities.iter().any(|value| value == capability));
+    }
 }
 #[test]
 fn operations_remain_explicitly_unavailable() {
-    for command in ["logs", "diagnose", "upgrade", "uninstall"] {
+    for command in ["upgrade", "uninstall"] {
         let (r, code) = run(&[command, "--instance", "node-a"]);
         assert_eq!(code, 4);
         assert_eq!(r["outcome"], "UNSUPPORTED");
@@ -109,12 +113,138 @@ fn human_and_machine_help() {
     let (mut out, mut err) = (Vec::new(), Vec::new());
     assert_eq!(cli::run(&[], &mut out, &mut err), 0);
     assert!(err.is_empty());
-    assert!(
-        String::from_utf8(out)
-            .unwrap()
-            .contains("bxdl package verify")
-    );
-    assert_eq!(run(&["help"]).0["command"], "help");
+    let text = String::from_utf8(out).unwrap();
+    let (machine, exit) = run(&["help"]);
+    assert_eq!(exit, 0);
+    assert_eq!(machine["command"], "help");
+    assert_eq!(machine["data"]["usage"], text);
+    for command in ["bxdl package verify", "bxdl logs", "bxdl diagnose"] {
+        assert!(text.contains(command));
+    }
+}
+
+#[test]
+fn diagnostics_require_explicit_inputs_and_reject_raw_follow() {
+    let canary = "DIAGNOSTIC-PRIVATE-ARG-CANARY";
+    for command in ["logs", "diagnose"] {
+        let mut base = vec![command, "--instance", "/missing-bxdl-diagnostic-instance"];
+        if command == "diagnose" {
+            base.extend(["--output", "/missing-bxdl-diagnostic-output.json"]);
+        }
+        for suffix in [
+            vec!["--follow"],
+            vec!["--raw"],
+            vec!["--raw", canary],
+            vec!["--unknown", canary],
+            vec![canary],
+            vec!["--instance", canary],
+            vec!["--tail", "1", "--tail", canary],
+            vec!["--max-bytes", "4096", "--max-bytes", canary],
+            vec!["--timeout-seconds", "1", "--timeout-seconds", canary],
+            vec!["--tail"],
+            vec!["--max-bytes="],
+            vec!["--timeout-seconds"],
+        ] {
+            let mut args = base.clone();
+            args.extend(suffix);
+            let (result, exit) = run(&args);
+            assert_eq!(exit, 2, "{command}");
+            assert_eq!(result["reasonCode"], "INVALID_ARGUMENTS");
+            assert!(!result.to_string().contains(canary));
+        }
+    }
+    for args in [
+        vec!["logs"],
+        vec!["logs", "--instance"],
+        vec!["logs", "--instance="],
+        vec!["logs", "--instance", "x", "--output", canary],
+        vec!["diagnose"],
+        vec!["diagnose", "--instance", "x"],
+        vec!["diagnose", "--output", canary],
+        vec!["diagnose", "--instance", "x", "--output="],
+        vec![
+            "diagnose",
+            "--instance",
+            "x",
+            "--output",
+            "first",
+            "--output",
+            canary,
+        ],
+    ] {
+        let (result, exit) = run(&args);
+        assert_eq!(exit, 2);
+        assert_eq!(result["reasonCode"], "INVALID_ARGUMENTS");
+        assert!(!result.to_string().contains(canary));
+    }
+}
+
+#[test]
+fn diagnostic_budget_values_are_bounded_before_collection() {
+    for command in ["logs", "diagnose"] {
+        let mut base = vec![command, "--instance", "/missing-bxdl-diagnostic-instance"];
+        if command == "diagnose" {
+            base.extend(["--output", "/missing-bxdl-diagnostic-output.json"]);
+        }
+        for (flag, invalid_values) in [
+            ("--tail", ["0", "201", "-1", "1.5", "PRIVATE-CANARY"]),
+            (
+                "--max-bytes",
+                ["4095", "1048577", "-1", "1.5", "PRIVATE-CANARY"],
+            ),
+            (
+                "--timeout-seconds",
+                ["0", "31", "-1", "1.5", "PRIVATE-CANARY"],
+            ),
+        ] {
+            for value in invalid_values.into_iter().chain(["18446744073709551616"]) {
+                let mut args = base.clone();
+                args.extend([flag, value]);
+                let (result, exit) = run(&args);
+                assert_eq!(exit, 2, "{command} {flag}");
+                assert_eq!(result["reasonCode"], "INVALID_ARGUMENTS");
+                assert!(!result.to_string().contains("PRIVATE-CANARY"));
+            }
+        }
+    }
+}
+
+#[test]
+fn diagnostic_valid_budget_boundaries_reach_collector_without_leaking_paths() {
+    let directory = tempfile::tempdir().unwrap();
+    let missing = directory.path().join("PRIVATE-CANARY-instance");
+    let output = directory.path().join("PRIVATE-CANARY-output.json");
+    for command in ["logs", "diagnose"] {
+        let mut base = vec![command, "--instance", missing.to_str().unwrap()];
+        if command == "diagnose" {
+            base.extend(["--output", output.to_str().unwrap()]);
+        }
+        for bounds in [
+            Vec::new(),
+            vec!["--tail=1", "--max-bytes=4096", "--timeout-seconds=1"],
+            vec![
+                "--tail",
+                "200",
+                "--max-bytes",
+                "1048576",
+                "--timeout-seconds",
+                "30",
+            ],
+        ] {
+            let mut args = base.clone();
+            args.extend(bounds);
+            let (result, exit) = run(&args);
+            assert_eq!(exit, 3);
+            assert_eq!(result["command"], command);
+            assert_eq!(result["outcome"], "FAILED");
+            assert_ne!(result["reasonCode"], "INVALID_ARGUMENTS");
+            assert_ne!(result["reasonCode"], "CAPABILITY_NOT_IMPLEMENTED");
+            assert!(!result.to_string().contains("PRIVATE-CANARY"));
+            assert!(!missing.exists());
+            assert!(!output.exists());
+            assert_eq!(std::fs::read_dir(directory.path()).unwrap().count(), 0);
+        }
+    }
 }
 struct FailWriter;
 impl Write for FailWriter {

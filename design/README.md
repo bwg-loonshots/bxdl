@@ -1,7 +1,7 @@
 # BXDL 제품 구현 설계
 
-- 작성일: 2026-09-16 / 갱신: 2026-09-18
-- 상태: Rust 기반의 package·제품 설정·setup, Mac 새 폴더 installer·NIGO cold, instance 등록·명시 init/resume-init과 수동 LaunchAgent start/status/stop을 구현했다. 단일 validator의 실제 서비스 수명주기를 확인했으며 setup 설치 연결·전체 G1-M/G1-L 인수는 미완료다.
+- 작성일: 2026-09-16 / 갱신: 2026-09-21
+- 상태: Rust 기반의 package·제품 설정·setup, Mac 새 폴더 installer·NIGO cold, instance 등록·명시 init/resume-init과 수동 LaunchAgent start/status/stop과 오프라인 logs/diagnose를 구현했다. 단일 validator의 실제 서비스 수명주기를 확인했으며 setup 설치 연결·전체 G1-M/G1-L 인수는 미완료다.
 - 사용자 확정: **Rust 구현 + macOS Apple Silicon 우선 설치·운용 UX**. Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
 - 현재 구현 범위와 근거: [구현 상태](../docs/implementation-status.md). NIGO가 `REQ-0002`의 방향·범위를 수용했고 BXDL은 피드백의 안전·인수 의미와 교환 절차에 동의했다. [소비자 회신](./2026-09-17-nigo-feedback-response.md)에 기록하며 PROPOSED API·fixture·dirty 개발 JAR는 수신해 제한된 cold 소비를 진행했다. 이후 #119의 clean 후보를 별도 수신·검증했고 전체 제품 인수는 남아 있다. 요청 상태는 `OPEN`이고 이번에는 공유 중인 NIGO 원장을 변경하지 않는다.
 
@@ -15,6 +15,7 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 
 | 문서 | 내용 |
 | --- | --- |
+| [오프라인 logs/diagnose](./2026-09-21-offline-diagnostics.md) | 최신 시도 이벤트·정제 지원 JSON·수집 예산·partial·안전한 파일 게시 |
 | [macOS LaunchAgent](./2026-09-18-macos-launchagent.md) | 수동 bootstrap·일회 gate·start/status/stop·정상 종료 증명과 UNKNOWN 보존 설계 |
 | [인스턴스 등록·초기화](./2026-09-18-instance-initialization.md) | private 등록 journal·명시 init/resume·동일 시도 결과 판정·UNKNOWN 보존 |
 | [제품·엔진 설정 연결](./2026-09-18-product-engine-preflight.md) | clean 후보 수신 이후 v1 제품/native 설정 대조·cold 검사 UX |

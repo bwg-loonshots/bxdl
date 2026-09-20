@@ -14,7 +14,7 @@ pub const REVISION: &str = match option_env!("BXDL_REVISION") {
     Some(v) => v,
     None => "development",
 };
-pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\nsetup은 설정 초안·로컬 검사·파일 저장만 수행합니다. 설치·초기화·시작은 하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nlogs/diagnose/upgrade/uninstall은 아직 제공하지 않습니다.\n";
+pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl logs --instance <dir> [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n  bxdl diagnose --instance <dir> --output <new.json>\n      [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\nsetup은 설정 초안·로컬 검사·파일 저장만 수행합니다. 설치·초기화·시작은 하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nlogs는 최신 초기화·서비스 시도의 정제한 저장 기록만 읽습니다. raw stdout/stderr나 실시간 follow는 제공하지 않습니다.\ndiagnose는 같은 기록을 새 JSON 지원 보고서에 저장합니다. JVM·네트워크·서비스 호출이나 현재 상태 검증은 수행하지 않습니다.\nlogs/diagnose 기본 한도는 tail 50개, 읽기 262144 bytes, 시간 5초입니다. 누락·예산 초과는 partial로 표시합니다.\nupgrade/uninstall은 아직 제공하지 않습니다.\n";
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -142,11 +142,76 @@ pub fn run_with_input<'a>(
                 7
             };
         }
+        if matches!(response.command.as_str(), "logs" | "diagnose") {
+            return if print_diagnostic_summary(out, &data).is_ok() {
+                exit
+            } else {
+                7
+            };
+        }
         if serde_json::to_writer_pretty(&mut *out, &data).is_err() || writeln!(out).is_err() {
             return 7;
         }
     }
     exit
+}
+
+/// Only the collector's fixed projections are displayed, never arbitrary fields
+/// or a fallback dump of private input. JSON mode returns before this formatter.
+fn print_diagnostic_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
+    let text = |value: &Value| value.as_str().unwrap_or("UNAVAILABLE").to_owned();
+    writeln!(
+        out,
+        "저장 상태: 초기화 {} / 서비스 {}",
+        text(&data["initializationRecord"]),
+        text(&data["serviceRecord"])
+    )?;
+    writeln!(out, "현재 runtime: 관측 안 함 (저장 기록만 수집)")?;
+    let events = data["events"].as_array().map(Vec::as_slice).unwrap_or(&[]);
+    writeln!(
+        out,
+        "사건 기록: {}개 / 생략 {}개",
+        events.len(),
+        data["eventsOmitted"].as_u64().unwrap_or(0)
+    )?;
+    for event in events {
+        writeln!(
+            out,
+            "  [{} #{}] {}: {} ({})",
+            text(&event["source"]),
+            event["sequence"].as_u64().unwrap_or(0),
+            text(&event["command"]),
+            text(&event["status"]),
+            text(&event["reason"])
+        )?;
+    }
+    if let Some(sources) = data["sources"].as_array() {
+        for source in sources {
+            let label = match source["result"].as_str() {
+                Some("COLLECTED") => continue,
+                Some("WITHHELD") => "제외",
+                Some("UNAVAILABLE") => "누락",
+                Some("TRUNCATED") => "일부 수집",
+                Some("NOT_APPLICABLE") => "대상 없음",
+                _ => "확인 필요",
+            };
+            writeln!(
+                out,
+                "자료 {label}: {} ({})",
+                text(&source["name"]),
+                text(&source["reason"])
+            )?;
+        }
+    }
+    if data["outputCreated"] == true {
+        writeln!(out, "지원 보고서: 지정한 새 파일에 저장됨")?;
+    }
+    if let Some(actions) = data["nextActions"].as_array() {
+        for action in actions.iter().filter_map(Value::as_str) {
+            writeln!(out, "다음 조치: {action}")?;
+        }
+    }
+    Ok(())
 }
 
 fn print_setup_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
@@ -374,7 +439,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["package.build", "package.verify", "config.validate", "preflight.local", "setup.draft", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "stop.macos-launchagent"],
+                        "capabilities": ["package.build", "package.verify", "config.validate", "preflight.local", "setup.draft", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
                         "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),
@@ -487,7 +552,8 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
         command @ ("init" | "resume-init") => dispatch_initialization(command, &args[1..]),
         command @ ("start" | "stop" | "status") => dispatch_service(command, &args[1..]),
         "service-run" => dispatch_service_gate(&args[1..]),
-        command @ ("logs" | "diagnose" | "upgrade" | "uninstall") => (
+        command @ ("logs" | "diagnose") => dispatch_diagnostics(command, &args[1..]),
+        command @ ("upgrade" | "uninstall") => (
             result(
                 command,
                 "UNSUPPORTED",
@@ -959,6 +1025,76 @@ fn service_failure(command: &str, error: BxdlError) -> (ResultEnvelope, i32) {
         failure(command, error, 3)
     }
 }
+fn dispatch_diagnostics(command: &str, args: &[String]) -> (ResultEnvelope, i32) {
+    let mut accepted_flags = vec![
+        ("instance", true),
+        ("tail", true),
+        ("max-bytes", true),
+        ("timeout-seconds", true),
+    ];
+    if command == "diagnose" {
+        accepted_flags.push(("output", true));
+    }
+    let Some((flags, positions)) = parse(args, &accepted_flags) else {
+        return invalid(command);
+    };
+    if !positions.is_empty()
+        || !flags.contains_key("instance")
+        || (command == "diagnose" && !flags.contains_key("output"))
+    {
+        return invalid(command);
+    }
+    let tail = match flags.get("tail") {
+        None => 50,
+        Some(value) => match value.parse::<usize>() {
+            Ok(tail @ 1..=200) => tail,
+            _ => return invalid(command),
+        },
+    };
+    let max_bytes = match flags.get("max-bytes") {
+        None => 262_144,
+        Some(value) => match value.parse::<u64>() {
+            Ok(bytes @ 4_096..=1_048_576) => bytes,
+            _ => return invalid(command),
+        },
+    };
+    let Some(timeout) = timeout_flag(&flags, 5, 30) else {
+        return invalid(command);
+    };
+    let options = engine::instance::diagnostics::Options {
+        tail,
+        max_bytes,
+        timeout,
+    };
+    let instance = Path::new(&flags["instance"]);
+    let collected = if command == "diagnose" {
+        engine::instance::diagnostics::diagnose(instance, Path::new(&flags["output"]), &options)
+    } else {
+        engine::instance::diagnostics::logs(instance, &options)
+    };
+    match collected {
+        Ok(value) => {
+            let (outcome, exit) = if value.partial {
+                ("INCOMPLETE", 5)
+            } else {
+                ("SUCCEEDED", 0)
+            };
+            let code = match (command, value.partial) {
+                ("diagnose", true) => "DIAGNOSTIC_PARTIAL",
+                ("diagnose", false) => "DIAGNOSTIC_WRITTEN",
+                (_, true) => "LOGS_PARTIAL",
+                (_, false) => "LOGS_COLLECTED",
+            };
+            let message = if command == "diagnose" {
+                "정제한 지원 보고서를 새 파일에 저장했습니다. 누락 사유를 확인하세요. 현재 상태·실시간 health 검증은 수행하지 않았습니다."
+            } else {
+                "정제한 저장 기록을 수집했습니다. 누락 사유를 확인하세요. 현재 상태·실시간 health 검증은 수행하지 않았습니다."
+            };
+            report(command, outcome, code, message, value, exit)
+        }
+        Err(error) => failure(command, error, 3),
+    }
+}
 fn dispatch_service(command: &str, args: &[String]) -> (ResultEnvelope, i32) {
     let Some((flags, positions)) = parse(args, &[("instance", true), ("timeout-seconds", true)])
     else {
@@ -1020,5 +1156,50 @@ fn dispatch_service_gate(args: &[String]) -> (ResultEnvelope, i32) {
             ),
         ),
         Err(error) => service_failure("service-run", error),
+    }
+}
+
+#[cfg(test)]
+mod diagnostic_summary_tests {
+    use super::*;
+
+    #[test]
+    fn human_summary_separates_recorded_events_from_missing_and_excluded_sources() {
+        let report = json!({
+            "initializationRecord": "INITIALIZED",
+            "serviceRecord": "GATE_CONSUMED",
+            "eventsOmitted": 2,
+            "events": [{
+                "source": "initialization.report", "sequence": 3, "command": "init",
+                "status": "INITIALIZED", "reason": "STORAGE_CLOSED",
+                "privateDetails": "PRIVATE-CANARY"
+            }],
+            "sources": [
+                {"name": "initialization.report", "result": "COLLECTED", "reason": "PRIVATE_SNAPSHOT"},
+                {"name": "service.stderr", "result": "WITHHELD", "reason": "RAW_TEXT_EXCLUDED_BY_POLICY"},
+                {"name": "service.report", "result": "UNAVAILABLE", "reason": "MISSING_UNSAFE_OR_CHANGING_INPUT"}
+            ],
+            "outputCreated": true,
+            "nextActions": ["현재 상태는 status로 별도 확인하세요."],
+            "privatePath": "PRIVATE-CANARY"
+        });
+        let mut output = Vec::new();
+        print_diagnostic_summary(&mut output, &report).unwrap();
+        let text = String::from_utf8(output).unwrap();
+        for expected in [
+            "저장 상태: 초기화 INITIALIZED / 서비스 GATE_CONSUMED",
+            "현재 runtime: 관측 안 함",
+            "사건 기록: 1개 / 생략 2개",
+            "[initialization.report #3] init: INITIALIZED (STORAGE_CLOSED)",
+            "자료 제외: service.stderr (RAW_TEXT_EXCLUDED_BY_POLICY)",
+            "자료 누락: service.report (MISSING_UNSAFE_OR_CHANGING_INPUT)",
+            "지원 보고서: 지정한 새 파일에 저장됨",
+            "다음 조치: 현재 상태는 status로 별도 확인하세요.",
+        ] {
+            assert!(text.contains(expected), "missing {expected}");
+        }
+        assert!(!text.contains("PRIVATE-CANARY"));
+        assert!(!text.contains("PRIVATE_SNAPSHOT"));
+        assert!(!text.starts_with('{'));
     }
 }

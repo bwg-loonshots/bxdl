@@ -135,7 +135,11 @@ fn load_runtime(root: &Control, state: &State) -> Result<Option<(Store, Runtime)
     }
     let store = Store::open(&path).map_err(|_| invalid())?;
     let raw = store.read().map_err(|_| invalid())?.ok_or_else(invalid)?;
-    let runtime: Runtime = json::decode(&raw).map_err(|_| invalid())?;
+    let runtime = decode_runtime(root, state, &raw)?;
+    Ok(Some((store, runtime)))
+}
+fn decode_runtime(root: &Control, state: &State, raw: &[u8]) -> Result<Runtime> {
+    let runtime: Runtime = json::decode(raw).map_err(|_| invalid())?;
     if runtime.schema_version != 1
         || runtime.instance_id != state.instance_id
         || runtime.control_directory != root.path()
@@ -152,7 +156,21 @@ fn load_runtime(root: &Control, state: &State) -> Result<Option<(Store, Runtime)
     {
         return Err(invalid());
     }
-    Ok(Some((store, runtime)))
+    Ok(runtime)
+}
+pub(super) fn diagnostic_record(
+    root: &Control,
+    state: &State,
+    raw: &[u8],
+) -> Result<(String, &'static str)> {
+    let runtime = decode_runtime(root, state, raw)?;
+    let phase = match runtime.phase {
+        RuntimePhase::StartPrepared => "START_PREPARED",
+        RuntimePhase::GateConsumed => "GATE_CONSUMED",
+        RuntimePhase::GateRefused => "GATE_REFUSED",
+        RuntimePhase::StoppedVerified => "STOPPED_VERIFIED",
+    };
+    Ok((runtime.attempt_id, phase))
 }
 fn expected<'a>(
     binding: &'a Binding,
