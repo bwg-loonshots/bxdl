@@ -58,7 +58,7 @@ fn stale_writer_conflicts_instead_of_overwriting() {
 }
 
 #[test]
-fn simultaneous_publication_has_one_explicit_winner() {
+fn simultaneous_saves_preserve_one_complete_checkpoint() {
     let (_temporary, root) = directory();
     let path = root.join("state");
     let a = Store::create(&path).unwrap();
@@ -76,16 +76,98 @@ fn simultaneous_publication_has_one_explicit_winner() {
         })
         .collect();
     let results: Vec<_> = handles.into_iter().map(|h| h.join().unwrap()).collect();
+    // Publication is exclusive, but save also validates the directory after
+    // publishing. A concurrent change may make that conservative check fail
+    // after the complete checkpoint was published; an error is not a rollback.
+    assert!(results.iter().filter(|r| r.is_ok()).count() <= 1);
+    assert!(results.iter().any(|r| {
+        r.as_ref()
+            .is_err_and(|failure| failure.code == "SETUP_CONFLICT")
+    }));
+    for failure in results.iter().filter_map(|r| r.as_ref().err()) {
+        assert!(
+            matches!(
+                failure.code.as_str(),
+                "SETUP_CONFLICT" | "SETUP_STATE_UNSAFE" | "SETUP_STATE_CORRUPT"
+            ),
+            "unexpected concurrent save result: {failure:?}"
+        );
+    }
+    let mut resumed = Store::open(&path).unwrap();
+    let published = resumed.read().unwrap().unwrap();
+    assert!(published == b"A" || published == b"B");
+    for (index, result) in results.iter().enumerate() {
+        if result.is_ok() {
+            assert_eq!(published, if index == 0 { b"A" } else { b"B" });
+        }
+    }
+    let names: Vec<_> = fs::read_dir(&path)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect();
+    assert_eq!(names, [OsString::from(revision_name(1))]);
+    let metadata = fs::metadata(path.join(revision_name(1))).unwrap();
+    assert_eq!(metadata.mode() & 0o7777, 0o600);
+    assert_eq!(metadata.nlink(), 1);
+
+    assert_eq!(
+        write_new(&path.join(revision_name(1)), b"overwrite")
+            .unwrap_err()
+            .code,
+        "OUTPUT_EXISTS"
+    );
+    resumed.save(b"next checkpoint").unwrap();
+    assert_eq!(resumed.read().unwrap().unwrap(), b"next checkpoint");
+    assert_eq!(fs::read(path.join(revision_name(1))).unwrap(), published);
+    assert_eq!(
+        fs::metadata(path.join(revision_name(1))).unwrap().ino(),
+        metadata.ino()
+    );
+    assert_eq!(fs::read_dir(path).unwrap().count(), 2);
+}
+
+#[test]
+fn simultaneous_exclusive_publication_has_one_explicit_winner() {
+    let (_temporary, root) = directory();
+    let path = root.join("state");
+    let store = Store::create(&path).unwrap();
+    let a = PendingFile::create(&store.directory, b"A").unwrap();
+    let b = PendingFile::create(&store.directory, b"B").unwrap();
+    let barrier = Barrier::new(2);
+    let results = std::thread::scope(|scope| {
+        let handles: Vec<_> = [a, b]
+            .into_iter()
+            .map(|mut pending| {
+                let barrier = &barrier;
+                scope.spawn(move || {
+                    barrier.wait();
+                    pending.publish(revision_name(1), "SETUP_CONFLICT")
+                })
+            })
+            .collect();
+        handles
+            .into_iter()
+            .map(|handle| handle.join().unwrap())
+            .collect::<Vec<_>>()
+    });
     assert_eq!(results.iter().filter(|r| r.is_ok()).count(), 1);
     assert_eq!(
         results.iter().find_map(|r| r.as_ref().err()).unwrap().code,
         "SETUP_CONFLICT"
     );
+    let winner = results.iter().position(Result::is_ok).unwrap();
     assert_eq!(
-        Store::open(&path).unwrap().read().unwrap().unwrap().len(),
-        1
+        Store::open(&path).unwrap().read().unwrap().unwrap(),
+        if winner == 0 { b"A" } else { b"B" }
     );
-    assert_eq!(fs::read_dir(path).unwrap().count(), 1);
+    let names: Vec<_> = fs::read_dir(&path)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect();
+    assert_eq!(names, [OsString::from(revision_name(1))]);
+    let metadata = fs::metadata(path.join(revision_name(1))).unwrap();
+    assert_eq!(metadata.mode() & 0o7777, 0o600);
+    assert_eq!(metadata.nlink(), 1);
 }
 
 #[test]

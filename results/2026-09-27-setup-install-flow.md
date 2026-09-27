@@ -16,12 +16,12 @@
 
 | 검사 | 결과 |
 | --- | --- |
-| `make check` | fmt, all-targets Clippy `-D warnings`, 270개 테스트 통과 |
+| 인수 전 로컬 `make check` | fmt, all-targets Clippy `-D warnings`, 270개 테스트 통과 |
 | `cargo build --locked --release` | macOS arm64 통과 |
 | `cargo check --locked --target x86_64-unknown-linux-gnu` | 타입 검사 통과; Linux 실행 인수 아님 |
 | `git diff --check` | 통과 |
 
-최종 테스트 집계는 library 234, CLI 13, CLI integration 2, setup CLI 5, setup install 11, setup safety 5다. doc test와 main 단위 테스트는 0건이다. 새 작업 트리의 전용 target에서 컴파일·실행했으며, 이전 checkout의 캐시나 이름이 일치하지 않는 0건 실행을 검증 근거로 사용하지 않았다.
+실제 패키지 인수 전 테스트 집계는 library 234, CLI 13, CLI integration 2, setup CLI 5, setup install 11, setup safety 5다. doc test와 main 단위 테스트는 0건이다. 새 작업 트리의 전용 target에서 컴파일·실행했으며, 이전 checkout의 캐시나 이름이 일치하지 않는 0건 실행을 검증 근거로 사용하지 않았다.
 
 setup install 통합시험은 실제 현재 CLI bytes와 외부 Ed25519 키로 서명한 시험 archive, 가짜 Java 프로세스를 사용한다. 실제 파일 설치·cold/등록 연결, 계획 중 취소/재개, init 거절, CLI 불일치·참조 변경·기존 data 거부, 가짜 init 실패 후 UNKNOWN 보존을 검증했다. 등록 완료 직후 workflow 완료 checkpoint가 없어진 경우의 소유 결과 재구성, 소유 증거 없는 동일 결과 비인수, 확인 프롬프트에서 취소 시 이후 명령 미소비도 포함한다. 이 시험은 실제 JVM·DB·LaunchAgent 실행 증거가 아니다.
 
@@ -43,7 +43,9 @@ setup install 통합시험은 실제 현재 CLI bytes와 외부 Ed25519 키로 �
 
 `src/engine/managed_tests.rs`에서 최초 준비 lock을 그대로 runner에 넘기도록 수정했다. 취소 중 BUSY, TERM 전달, 자식 생존, 종료 뒤 잠금 해제 검증은 유지했다. 후속 Ubuntu 검사는 통과했으며 Mac의 setup 통합시험에서도 다른 시험의 fork와 세션 drop/resume 간 일시적인 잠금 간섭이 드러났다. `tests/setup_install.rs`의 독립 시험들을 직렬화하고 소유 세션이 살아 있을 때 즉시 BUSY를 반환하는 검사를 추가했다. drop 뒤 재개는 재시도 없는 단발 호출을 유지한다.
 
-재시도·대기 한도 확대·생산 코드 변경은 없다. 위 source digest는 실제 패키지 인수 당시 snapshot이며 이후 변경은 이 테스트 fixture들과 문서뿐이다. 최종 원격 결과는 [PR #7 검사](https://github.com/bwg-loonshots/bxdl/pull/7/checks)를 따른다.
+별도 Ubuntu 실행에서 기존 Store 동시 저장 시험의 성공 반환 개수 가정도 드러났다. `save`는 독점 게시 후 다시 상태를 검사하므로 오류 반환이 게시의 롤백을 뜻하지 않는다. 정확한 Ubuntu 타이밍은 Mac에서 재현하지 못했다. 시험을 보완해 최종 체크포인트 하나·정확한 bytes·성공 호출과의 대응·권한·inode·temp 정리·덮어쓰기 거부·후속 revision에서 원본 보존을 확인하고, 원자적 게시 자체의 정확히 한 성공과 한 충돌을 별도 시험으로 유지했다. 두 동시 시험은 Mac에서 200회씩 반복 통과했다.
+
+테스트가 한 개 늘어 Mac 전체 구성은 271개(library 235와 나머지 36)다. 재시도·대기 한도 확대·생산 코드 변경은 없다. 위 source digest는 실제 패키지 인수 당시 snapshot이며 이후 변경은 테스트 fixture들과 문서뿐이다. 최종 원격 결과는 [PR #7 검사](https://github.com/bwg-loonshots/bxdl/pull/7/checks)를 따른다.
 
 ## 실제 패키지 인수
 
