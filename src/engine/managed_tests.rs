@@ -1,4 +1,7 @@
-use super::super::{files, instance_fs::Control};
+use super::super::{
+    files,
+    instance_fs::{Control, OperationLock},
+};
 use super::*;
 use std::{fs, io::Write, os::unix::fs::PermissionsExt, path::PathBuf};
 
@@ -14,14 +17,17 @@ struct Fixture {
 }
 
 impl Fixture {
-    fn new(script: &str) -> Self {
+    fn new(script: &str) -> (Self, OperationLock) {
         let temp = tempfile::tempdir().unwrap();
         let root = fs::canonicalize(temp.path()).unwrap();
         fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
         let control = Control::create(&root.join("control")).unwrap();
         let guard = control.lock().unwrap();
         let workspace = Workspace::persistent(&control.attempt("attempt-1").unwrap()).unwrap();
-        drop(guard);
+        // Carry the attempt's first lock into the runner. A release/reacquire
+        // here races unrelated parallel tests between fork and exec: CLOEXEC
+        // closes their inherited copy only at exec, so the lock can remain busy
+        // briefly even after this thread drops its descriptor.
         workspace
             .write("fixture.jar", b"pinned fake fixture, not NIGO")
             .unwrap();
@@ -35,14 +41,17 @@ impl Fixture {
         let java = Binary::open(&executable, &files::digest(script.as_bytes())).unwrap();
         let jar = workspace.path.join("fixture.jar");
         let config = workspace.path.join("node.json");
-        Self {
-            _temp: temp,
-            control,
-            workspace,
-            java,
-            jar,
-            config,
-        }
+        (
+            Self {
+                _temp: temp,
+                control,
+                workspace,
+                java,
+                jar,
+                config,
+            },
+            guard,
+        )
     }
 
     fn request(&self, lock: File, timeout: Duration) -> Request<'_> {
@@ -105,10 +114,9 @@ fn process_exists(pid: &str) -> bool {
 
 #[test]
 fn owned_success_returns_actual_pid_stdout_and_preserves_persistent_workspace() {
-    let fixture = Fixture::new(&format!(
+    let (fixture, guard) = Fixture::new(&format!(
         "#!/bin/sh\nprintf '%s\\n' '{CANARY}' >&2\nprintf '{{\"pid\":%s,\"status\":\"INITIALIZED\"}}\\n' \"$$\"\nexit 0\n"
     ));
-    let guard = fixture.control.lock().unwrap();
     let output =
         run(fixture.request(guard.child_stdin().unwrap(), Duration::from_secs(3))).unwrap();
     let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
@@ -126,10 +134,9 @@ fn owned_success_returns_actual_pid_stdout_and_preserves_persistent_workspace() 
 #[test]
 fn nonzero_exit_is_returned_for_the_caller_to_classify() {
     for exit in [64, 74] {
-        let fixture = Fixture::new(&format!(
+        let (fixture, guard) = Fixture::new(&format!(
             "#!/bin/sh\nprintf '{{\"status\":\"FAILED\"}}\\n'\nexit {exit}\n"
         ));
-        let guard = fixture.control.lock().unwrap();
         let output =
             run(fixture.request(guard.child_stdin().unwrap(), Duration::from_secs(3))).unwrap();
         assert_eq!(output.exit, exit);
@@ -144,7 +151,7 @@ fn cancellation_sends_term_without_kill_preserves_work_and_child_inherited_lock(
     // Start cancellation only after the fixture proves it installed its trap.
     // This exercises the shared timeout/overflow TERM-and-grace branch without
     // racing shell startup against an intentionally short deadline.
-    let fixture = Fixture::new(&format!(
+    let (fixture, guard) = Fixture::new(&format!(
         "#!/bin/sh\ntrap 'printf term > term-seen' TERM\nprintf '%s' \"$$\" > ready-pid\nwhile [ ! -f trigger ]; do [ -f release ] && exit 0; /bin/sleep 0.02; done\ni=0\nwhile [ \"$i\" -lt 160 ]; do printf '%s\\n' '{}'; i=$((i+1)); done\nwhile [ ! -f release ]; do /bin/sleep 0.02; done\nexit 0\n",
         "x".repeat(1024)
     ));
@@ -154,7 +161,6 @@ fn cancellation_sends_term_without_kill_preserves_work_and_child_inherited_lock(
             let _ = fs::write(&self.0, b"release");
         }
     }
-    let guard = fixture.control.lock().unwrap();
     let request = fixture.request(guard.child_stdin().unwrap(), Duration::from_secs(30));
     let pid = thread::scope(|scope| {
         // Unwind releases the fixture before scope waits for its worker.
@@ -193,8 +199,7 @@ fn cancellation_sends_term_without_kill_preserves_work_and_child_inherited_lock(
 
 #[test]
 fn pure_timeout_is_unknown_bounded_and_preserves_operation_files() {
-    let fixture = Fixture::new("#!/bin/sh\nexec /bin/sleep 3\n");
-    let guard = fixture.control.lock().unwrap();
+    let (fixture, guard) = Fixture::new("#!/bin/sh\nexec /bin/sleep 3\n");
     let start = Instant::now();
     unknown_result(run(
         fixture.request(guard.child_stdin().unwrap(), Duration::from_millis(100))
@@ -208,12 +213,11 @@ fn pure_timeout_is_unknown_bounded_and_preserves_operation_files() {
 #[test]
 fn oversized_stdout_or_stderr_is_unknown_and_keeps_all_operation_files() {
     for redirect in ["", " >&2"] {
-        let fixture = Fixture::new(&format!(
+        let (fixture, guard) = Fixture::new(&format!(
             "#!/bin/sh\ni=0\nwhile [ \"$i\" -lt 160 ]; do printf '%s\\n' '{}'{}; i=$((i+1)); done\nexit 0\n",
             "x".repeat(1024),
             redirect
         ));
-        let guard = fixture.control.lock().unwrap();
         let start = Instant::now();
         unknown_result(run(
             fixture.request(guard.child_stdin().unwrap(), Duration::from_secs(3))
@@ -270,8 +274,7 @@ fn capture_requires_eof_and_bounds_post_exit_trickling_output() {
 
 #[test]
 fn invalid_operation_cannot_spawn_the_pinned_executable() {
-    let fixture = Fixture::new("#!/bin/sh\nprintf invoked > invoked\nexit 0\n");
-    let guard = fixture.control.lock().unwrap();
+    let (fixture, guard) = Fixture::new("#!/bin/sh\nprintf invoked > invoked\nexit 0\n");
     for command in ["run", "preflight", "", "init;run"] {
         let mut request = fixture.request(guard.child_stdin().unwrap(), Duration::from_secs(3));
         request.command = command;
