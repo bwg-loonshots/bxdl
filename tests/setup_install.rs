@@ -17,10 +17,21 @@ use std::{
     io::Cursor,
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
+    sync::{Mutex, MutexGuard},
 };
 
 const CANARY: &str = "PRIVATE_SETUP_INSTALL_CANARY";
 const Q: &str = "nigo.protocol.consensus.qbft.node.";
+
+// These scenarios share one libtest process. Another scenario's fork can
+// transiently inherit a workflow flock before exec closes CLOEXEC descriptors,
+// even after its owning scenario drops the last local handle. Serialize the
+// unrelated scenarios, not the explicit same-workspace lock checks below.
+static SCENARIOS: Mutex<()> = Mutex::new(());
+
+fn scenario() -> MutexGuard<'static, ()> {
+    SCENARIOS.lock().expect("another setup scenario failed")
+}
 
 fn hash(raw: &[u8]) -> String {
     hex::encode(Sha256::digest(raw))
@@ -244,6 +255,7 @@ fn interact(workflow: &mut Workflow, text: &str) -> (bool, String) {
 
 #[test]
 fn planned_install_pauses_and_resumes_without_creating_customer_outputs() {
+    let _scenario = scenario();
     let f = Fixture::new(true);
     let source = fs::read(&f.source).unwrap();
     let mut workflow = f.create();
@@ -252,6 +264,10 @@ fn planned_install_pauses_and_resumes_without_creating_customer_outputs() {
     assert!(text.contains("설치 계획 #1"));
     assert_eq!(workflow.summary().plan_revision, 1);
     f.no_outputs();
+    assert_eq!(
+        Workflow::resume(&f.workspace).err().unwrap().code,
+        "SETUP_WORKFLOW_BUSY"
+    );
     drop(workflow);
     let mut resumed = Workflow::resume(&f.workspace).unwrap();
     assert!(interact(&mut resumed, "finish\n").0);
@@ -263,6 +279,7 @@ fn planned_install_pauses_and_resumes_without_creating_customer_outputs() {
 
 #[test]
 fn apply_registers_once_and_declined_init_stays_uninitialized_after_resume() {
+    let _scenario = scenario();
     let f = Fixture::new(true);
     let mut workflow = f.create();
     assert!(interact(&mut workflow, &f.inputs("apply\ny\ninit\nn\nfinish\n")).0);
@@ -289,6 +306,7 @@ fn apply_registers_once_and_declined_init_stays_uninitialized_after_resume() {
 
 #[test]
 fn cli_mismatch_is_rejected_before_fourteen_answers_or_installation() {
+    let _scenario = scenario();
     let f = Fixture::new(false);
     let mut workflow = Workflow::create(&f.workspace, None).unwrap();
     let (_, output) = interact(&mut workflow, &f.inputs("finish\n"));
@@ -300,6 +318,7 @@ fn cli_mismatch_is_rejected_before_fourteen_answers_or_installation() {
 
 #[test]
 fn changed_credential_invalidates_plan_and_never_reaches_engine_or_install() {
+    let _scenario = scenario();
     let f = Fixture::new(true);
     let mut workflow = f.create();
     interact(&mut workflow, &f.inputs(":cancel\n"));
@@ -319,6 +338,7 @@ fn changed_credential_invalidates_plan_and_never_reaches_engine_or_install() {
 
 #[test]
 fn declined_apply_and_eof_confirmation_do_not_authorize_writes() {
+    let _scenario = scenario();
     let f = Fixture::new(true);
     let mut workflow = f.create();
     let (finished, _) = interact(&mut workflow, &f.inputs("apply\nn\napply\n"));
@@ -329,6 +349,7 @@ fn declined_apply_and_eof_confirmation_do_not_authorize_writes() {
 
 #[test]
 fn existing_data_is_never_adopted_or_cleared_by_planning() {
+    let _scenario = scenario();
     let f = Fixture::new(true);
     fs::create_dir(&f.data).unwrap();
     fs::set_permissions(&f.data, fs::Permissions::from_mode(0o700)).unwrap();
@@ -347,6 +368,7 @@ fn existing_data_is_never_adopted_or_cleared_by_planning() {
 
 #[test]
 fn failed_fake_init_stays_unknown_and_resume_does_not_retry_or_start() {
+    let _scenario = scenario();
     let f = Fixture::new(true);
     let mut workflow = f.create();
     let (_, output) = interact(&mut workflow, &f.inputs("apply\ny\ninit\ny\n:cancel\n"));
@@ -376,6 +398,7 @@ fn failed_fake_init_stays_unknown_and_resume_does_not_retry_or_start() {
 
 #[test]
 fn cli_install_mode_is_explicitly_interactive_and_pause_is_exit_five() {
+    let _scenario = scenario();
     let temp = tempfile::tempdir().unwrap();
     let root = fs::canonicalize(temp.path()).unwrap();
     let workspace = root.join("workspace");
@@ -459,6 +482,7 @@ fn remove_registration_confirmation(f: &Fixture) -> PathBuf {
 
 #[test]
 fn completed_owned_registration_survives_missing_workflow_completion_without_reexecution() {
+    let _scenario = scenario();
     let f = Fixture::new(true);
     let mut workflow = f.create();
     interact(&mut workflow, &f.inputs("apply\ny\nfinish\n"));
@@ -476,6 +500,7 @@ fn completed_owned_registration_survives_missing_workflow_completion_without_ree
 
 #[test]
 fn matching_registration_without_creation_evidence_is_not_adopted() {
+    let _scenario = scenario();
     let f = Fixture::new(true);
     let mut workflow = f.create();
     interact(&mut workflow, &f.inputs("apply\ny\nfinish\n"));
@@ -500,6 +525,7 @@ fn matching_registration_without_creation_evidence_is_not_adopted() {
 
 #[test]
 fn cancel_at_apply_confirmation_exits_without_consuming_later_commands() {
+    let _scenario = scenario();
     let f = Fixture::new(true);
     let mut workflow = f.create();
     let (finished, _) = interact(

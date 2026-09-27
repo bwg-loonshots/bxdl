@@ -41,7 +41,9 @@ setup install 통합시험은 실제 현재 CLI bytes와 외부 Ed25519 키로 �
 
 첫 PR CI의 Mac 검사는 통과했으나 Ubuntu에서는 기존 managed cancellation 시험이 실행 전 준비 단계에서 `INSTANCE_BUSY`로 실패했다. 준비용 lock을 해제한 직후 재획득하는 구간에서 병렬 fork가 복제한 descriptor가 exec까지 잠시 남을 수 있다. fork/CLOEXEC/flock의 동일 메커니즘을 별도 재현했다.
 
-`src/engine/managed_tests.rs`에서 최초 준비 lock을 그대로 runner에 넘기도록 수정했다. 취소 중 BUSY, TERM 전달, 자식 생존, 종료 뒤 잠금 해제 검증은 유지했으며 재시도·대기 한도 확대·생산 코드 변경은 없다. 위 source digest는 실제 패키지 인수 당시 snapshot이며 이후 변경은 이 테스트 fixture와 문서뿐이다. 최종 원격 결과는 [PR #7 검사](https://github.com/bwg-loonshots/bxdl/pull/7/checks)를 따른다.
+`src/engine/managed_tests.rs`에서 최초 준비 lock을 그대로 runner에 넘기도록 수정했다. 취소 중 BUSY, TERM 전달, 자식 생존, 종료 뒤 잠금 해제 검증은 유지했다. 후속 Ubuntu 검사는 통과했으며 Mac의 setup 통합시험에서도 다른 시험의 fork와 세션 drop/resume 간 일시적인 잠금 간섭이 드러났다. `tests/setup_install.rs`의 독립 시험들을 직렬화하고 소유 세션이 살아 있을 때 즉시 BUSY를 반환하는 검사를 추가했다. drop 뒤 재개는 재시도 없는 단발 호출을 유지한다.
+
+재시도·대기 한도 확대·생산 코드 변경은 없다. 위 source digest는 실제 패키지 인수 당시 snapshot이며 이후 변경은 이 테스트 fixture들과 문서뿐이다. 최종 원격 결과는 [PR #7 검사](https://github.com/bwg-loonshots/bxdl/pull/7/checks)를 따른다.
 
 ## 실제 패키지 인수
 
