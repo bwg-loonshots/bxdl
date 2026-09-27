@@ -210,3 +210,234 @@ fn input_and_trust_paths_cannot_overlap_control_data_or_package() {
     });
     assert!(disjoint(f.control.path(), &f.binding).is_err());
 }
+
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+mod owned {
+    use super::*;
+    use crate::artifact::{BuildOptions, Manifest, VerifyOptions};
+
+    // Only static test bytes: no engine, JVM, native library, key parser or
+    // network is executed. A fixture records the already-checked registration
+    // boundary so the read-only reconstruction contract can be exercised.
+    struct OwnedFixture {
+        _temporary: tempfile::TempDir,
+        root: PathBuf,
+        options: RegisterOptions,
+        owner: install::RootIdentity,
+        state: State,
+        journal: Store,
+    }
+    impl OwnedFixture {
+        fn new() -> Self {
+            let temporary = tempfile::tempdir().unwrap();
+            let root = fs::canonicalize(temporary.path()).unwrap();
+            fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
+            let identity: Identity = serde_json::from_slice(include_bytes!(
+                "../../contracts/nigo/development-clean-2026-09-18/evidence/engine-info.json"
+            ))
+            .unwrap();
+            let stage = root.join("payload");
+            let payload = [
+                ("bin/bxdl", b"test-only CLI bytes".as_slice()),
+                ("engine/nigo-node.jar", b"test-only JAR bytes"),
+                ("runtime/bin/java", b"test-only Java bytes"),
+                ("runtime/lib/modules", b"test-only JRE module bytes"),
+                ("licenses/THIRD_PARTY_NOTICES", b"test-only notices"),
+                ("licenses/SBOM.json", b"{}"),
+            ];
+            for (name, raw) in payload {
+                let path = stage.join(name);
+                fs::create_dir_all(path.parent().unwrap()).unwrap();
+                put(&path, raw);
+                let mode = if matches!(name, "bin/bxdl" | "runtime/bin/java") {
+                    0o755
+                } else {
+                    0o644
+                };
+                fs::set_permissions(path, fs::Permissions::from_mode(mode)).unwrap();
+            }
+            let mut manifest: Manifest =
+                serde_json::from_str(include_str!("../../packaging/package-spec.example.json"))
+                    .unwrap();
+            manifest.engine.revision = identity.source.commit.clone();
+            manifest.engine.contract_revision = identity.contract.fingerprint.clone();
+            manifest.engine.jar_sha256 = files::digest(payload[1].1);
+            manifest.runtime.java_sha256 = files::digest(payload[2].1);
+            let spec = root.join("spec.json");
+            put(&spec, &serde_json::to_vec(&manifest).unwrap());
+            let archive = root.join("bundle.tar.gz");
+            artifact::build(&BuildOptions {
+                root: stage,
+                spec_path: spec,
+                output: archive.clone(),
+                signing_key_path: None,
+                allow_unsigned_development: true,
+            })
+            .unwrap();
+            let trust = VerifyOptions {
+                public_key_path: None,
+                allow_unsigned_development: true,
+            };
+            let verified = artifact::verify(&archive, &trust).unwrap();
+            let package = root.join("package");
+            install::install(&archive, &package, &trust).unwrap();
+            let lock = root.join("engine.lock.json");
+            put(&lock, &serde_json::to_vec(&json!({"schemaVersion":1,"jarSha256":files::digest(payload[1].1),"jarSizeBytes":payload[1].1.len(),"javaSha256":files::digest(payload[2].1),"expected":identity})).unwrap());
+            put(&root.join("chain.json"), br#"{"nigo.protocol.chain-id":"11578","nigo.protocol.consensus.protocol":"QBFT","nigo.protocol.consensus.profile-id":"TEST_QBFT"}"#);
+            let mut product: Value = serde_json::from_str(include_str!(
+                "../../config/examples/instance.development.json"
+            ))
+            .unwrap();
+            product["nodeId"] = json!(format!("0x{}", "a".repeat(64)));
+            product["chainDescription"] = json!("chain.json");
+            product["storage"]["dataDirectory"] = json!("data");
+            let prefix = "nigo.protocol.consensus.qbft.node.";
+            let mut node = json!({"server.address":"127.0.0.1","server.port":"18080"});
+            for (name, value) in [
+                ("node-id", format!("0x{}", "a".repeat(64))),
+                ("validator-id", format!("0x{}", "b".repeat(40))),
+                ("role", "VALIDATOR".into()),
+                ("transport-security-scheme", "MTLS".into()),
+                ("listen-host", "192.0.2.10".into()),
+                ("listen-port", "19090".into()),
+            ] {
+                node[format!("{prefix}{name}")] = json!(value);
+            }
+            for (i, (product_name, native_name)) in [
+                ("validatorKeystore", "keystore-path"),
+                ("validatorPasswordFile", "keystore-password-file"),
+                ("tlsKeyStore", "mtls-key-store-path"),
+                ("tlsKeyPasswordFile", "mtls-key-store-password-file"),
+                ("tlsTrustStore", "mtls-trust-store-path"),
+                ("tlsTrustPasswordFile", "mtls-trust-store-password-file"),
+            ]
+            .iter()
+            .enumerate()
+            {
+                let name = format!("{i}.private");
+                put(&root.join(&name), b"OWNERSHIP_TEST_SECRET_CANARY");
+                product["secrets"][product_name] = json!(name);
+                node[format!("{prefix}{native_name}")] = json!(name);
+            }
+            let product_path = root.join("product.json");
+            put(&product_path, &serde_json::to_vec(&product).unwrap());
+            let native = root.join("node.json");
+            put(&native, &serde_json::to_vec(&json!({"chainFile":"chain.json","dataDirectory":"data","backend":"rocksdb","node":node})).unwrap());
+            let options = RegisterOptions {
+                instance: root.join("control"),
+                package,
+                archive,
+                public_key: None,
+                allow_unsigned_development: true,
+                product: product_path,
+                native,
+                lock,
+                timeout: Duration::from_secs(1),
+            };
+            let (mut binding, _, _) = registration_inputs(&options).unwrap();
+            binding.instance_id = "validator-one".into();
+            binding.archive_sha256 = verified.archive_sha256;
+            binding.manifest_sha256 = verified.manifest_sha256;
+            binding.chain_fingerprint = "c".repeat(64);
+            binding.node_identity = format!("0x{}:0x{}", "a".repeat(64), "b".repeat(40));
+            let mut owner = None;
+            let control = Control::create_owned(&options.instance, &mut |identity| {
+                owner = Some(identity);
+                Ok(())
+            })
+            .unwrap();
+            let raw = serde_json::to_vec(&binding).unwrap();
+            store::write_new(&control.path().join("binding.json"), &raw).unwrap();
+            let state = State {
+                schema_version: 1,
+                instance_id: binding.instance_id,
+                binding_sha256: files::digest(&raw),
+                phase: Phase::Registered,
+                attempt: None,
+                genesis_hash: None,
+                reason: "REGISTERED_COLD_CHECKED".into(),
+            };
+            let mut journal = Store::create(&control.path().join("journal")).unwrap();
+            state.save(&mut journal).unwrap();
+            Self {
+                _temporary: temporary,
+                root,
+                options,
+                owner: owner.unwrap(),
+                state,
+                journal,
+            }
+        }
+    }
+
+    #[test]
+    fn completed_registration_reconstruction_is_read_only_and_binds_request() {
+        let mut f = OwnedFixture::new();
+        let before = f.journal.read().unwrap();
+        let summary = inspect_owned_registration(&f.options, &f.owner).unwrap();
+        assert_eq!(summary.initialization, "NOT_STARTED");
+        assert_eq!(summary.operation_busy, Some(false));
+        assert_eq!(before, f.journal.read().unwrap());
+        assert!(!f.root.join("data").exists());
+        let output = serde_json::to_string(&summary).unwrap();
+        assert!(!output.contains("CANARY"));
+        assert!(!output.contains(f.root.to_str().unwrap()));
+        let copy = f.root.join("same-product-copy.json");
+        put(&copy, &fs::read(&f.options.product).unwrap());
+        f.options.product = copy;
+        assert!(inspect_owned_registration(&f.options, &f.owner).is_err());
+    }
+
+    #[test]
+    fn full_binding_observation_preserves_unknown_and_works_while_lock_is_busy() {
+        let mut f = OwnedFixture::new();
+        f.state.phase = Phase::InitIntent;
+        f.state.attempt = Some(Attempt {
+            id: "existing-attempt".into(),
+            command: "init".into(),
+        });
+        f.state.reason = "INITIALIZATION_ATTEMPT_UNRESOLVED".into();
+        f.state.save(&mut f.journal).unwrap();
+        let before = f.journal.read().unwrap();
+        let control = Control::open(&f.options.instance).unwrap();
+        let _guard = control.lock().unwrap();
+        let summary = verify_owned_binding(&f.options, &f.owner).unwrap();
+        assert_eq!(summary.initialization, "UNKNOWN");
+        assert_eq!(summary.operation_busy, Some(true));
+        assert_eq!(summary.attempt_id.as_deref(), Some("existing-attempt"));
+        assert!(inspect_owned_registration(&f.options, &f.owner).is_err());
+        assert_eq!(before, f.journal.read().unwrap());
+    }
+
+    #[test]
+    fn owned_registration_rejects_partial_replaced_and_changed_inputs() {
+        for case in 0..6 {
+            let mut f = OwnedFixture::new();
+            match case {
+                0 => {
+                    fs::remove_file(f.options.instance.join("binding.json")).unwrap();
+                }
+                1 => {
+                    f.owner.inode += 1;
+                }
+                2 => {
+                    put(&f.root.join("0.private"), b"CHANGED_SECRET_CANARY");
+                }
+                3 => {
+                    put(&f.options.package.join("runtime/lib/modules"), b"modified");
+                }
+                4 => {
+                    put(&f.options.archive, b"not the trusted archive");
+                }
+                _ => {
+                    f.options.allow_unsigned_development = false;
+                }
+            }
+            let error = inspect_owned_registration(&f.options, &f.owner)
+                .err()
+                .expect("must refuse");
+            assert!(!error.message.contains("CANARY"));
+            assert!(!error.message.contains(f.root.to_str().unwrap()));
+        }
+    }
+}

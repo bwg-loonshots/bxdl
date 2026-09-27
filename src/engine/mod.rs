@@ -13,6 +13,7 @@ mod process;
 mod product;
 mod runtime_http;
 mod runtime_result;
+pub mod setup_plan;
 
 pub use product::{ProductReport, preflight_product};
 

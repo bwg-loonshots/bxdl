@@ -39,7 +39,7 @@ pub struct RegisterOptions {
     pub lock: PathBuf,
     pub timeout: Duration,
 }
-#[derive(Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Pin {
     path: PathBuf,
@@ -137,6 +137,15 @@ impl State {
 }
 
 pub fn register(options: &RegisterOptions) -> Result<Summary> {
+    register_owned(options, |_| Ok(()))
+}
+
+/// Persist ownership in the callback before any control/binding/journal contents
+/// are created. On callback failure the new empty root remains incomplete.
+pub fn register_owned(
+    options: &RegisterOptions,
+    mut on_reserved: impl FnMut(install::RootIdentity) -> Result<()>,
+) -> Result<Summary> {
     host()?;
     let instance = files::absolute(&options.instance)?;
     files::check_path(&instance, true)?;
@@ -146,6 +155,63 @@ pub fn register(options: &RegisterOptions) -> Result<Summary> {
             "인스턴스 폴더가 이미 있습니다. instance show로 확인하거나 새 경로를 사용하세요.",
         ));
     }
+    let (mut binding, native, inputs) = registration_inputs(options)?;
+    // No persistent control or data paths are created until every check passes.
+    let package = verified_package(&binding, false)?;
+    binding.archive_sha256 = package.archive_sha256.clone();
+    binding.manifest_sha256 = package.manifest_sha256.clone();
+    let report = super::preflight_product(
+        &binding.options(options.timeout),
+        &binding.product,
+        &binding.native,
+    )?;
+    let engine = report.engine.as_ref().ok_or_else(precondition)?;
+    let cold = engine.preflight.as_ref().ok_or_else(precondition)?;
+    if report.configuration_binding != "MATCHED" || engine.identity != binding.identity {
+        return Err(precondition());
+    }
+    binding.instance_id = report.product.instance_id;
+    binding.chain_fingerprint = cold.chain_fingerprint.clone();
+    binding.node_identity = cold.node_identity.clone();
+    if binding.backend != "rocksdb" || cold.backend != binding.backend {
+        return Err(precondition());
+    }
+    for input in &inputs {
+        input.recheck()?;
+    }
+    native.recheck()?;
+    data_precondition(&binding, false)?;
+    install::verify_installed(&binding.package, &package)?;
+    let root = Control::create_owned(&instance, &mut on_reserved)?;
+    let _guard = root.lock()?;
+    // The durable ownership callback may take time. Do not publish a completed
+    // registration if its previously checked inputs changed during that gap.
+    for input in &inputs {
+        input.recheck()?;
+    }
+    native.recheck()?;
+    verified_package(&binding, true)?;
+    let raw = serde_json::to_vec(&binding).map_err(|_| corrupt())?;
+    store::write_new(&root.path().join("binding.json"), &raw).map_err(state_error)?;
+    let mut journal = Store::create(&root.path().join("journal")).map_err(state_error)?;
+    let state = State {
+        schema_version: 1,
+        instance_id: binding.instance_id,
+        binding_sha256: files::digest(&raw),
+        phase: Phase::Registered,
+        attempt: None,
+        genesis_hash: None,
+        reason: "REGISTERED_COLD_CHECKED".into(),
+    };
+    state.save(&mut journal)?;
+    root.recheck()?;
+    Ok(state.summary(Some(false)))
+}
+
+// Load the exact request references without starting the engine. Used both by
+// fresh registration and by read-only verification of a previously owned root.
+fn registration_inputs(options: &RegisterOptions) -> Result<(Binding, NativeInput, Vec<Input>)> {
+    let instance = files::absolute(&options.instance)?;
     let native = NativeInput::load(&options.native)?;
     let product = Input::read(&options.product, 262_144, false)?;
     let lock = Input::read(&options.lock, 65_536, false)?;
@@ -194,49 +260,91 @@ pub fn register(options: &RegisterOptions) -> Result<Summary> {
         }
     }
     disjoint(&instance, &binding)?;
-    // No persistent control or data paths are created until every check passes.
-    let package = verified_package(&binding, false)?;
-    binding.archive_sha256 = package.archive_sha256.clone();
-    binding.manifest_sha256 = package.manifest_sha256.clone();
-    let report = super::preflight_product(
-        &binding.options(options.timeout),
-        &binding.product,
-        &binding.native,
-    )?;
-    let engine = report.engine.as_ref().ok_or_else(precondition)?;
-    let cold = engine.preflight.as_ref().ok_or_else(precondition)?;
-    if report.configuration_binding != "MATCHED" || engine.identity != binding.identity {
+    Ok((binding, native, inputs))
+}
+
+/// Recover only a completed fresh registration belonging to the recorded root.
+/// Never adopts an arbitrary matching directory, repairs partial records, or
+/// turns an initialization/service attempt into a completed registration.
+pub fn inspect_owned_registration(
+    options: &RegisterOptions,
+    owned: &install::RootIdentity,
+) -> Result<Summary> {
+    verify_owned(options, owned, true)
+}
+
+/// Observe the current state of an owned registration without running an engine
+/// or requiring its lifetime operation lock. Every request path, trust option,
+/// input pin and installed byte is rechecked. UNKNOWN stays UNKNOWN; a changing
+/// checkpoint is rejected rather than combined with a stale binding.
+pub fn verify_owned_binding(
+    options: &RegisterOptions,
+    owned: &install::RootIdentity,
+) -> Result<Summary> {
+    verify_owned(options, owned, false)
+}
+
+fn verify_owned(
+    options: &RegisterOptions,
+    owned: &install::RootIdentity,
+    registered_only: bool,
+) -> Result<Summary> {
+    host()?;
+    let root = Control::open(&options.instance)?;
+    root.require_owner(owned)?;
+    let (binding, binding_file, journal, state) = load(&root)?;
+    if registered_only
+        && (state.phase != Phase::Registered || state.reason != "REGISTERED_COLD_CHECKED")
+    {
         return Err(precondition());
     }
-    binding.instance_id = report.product.instance_id;
-    binding.chain_fingerprint = cold.chain_fingerprint.clone();
-    binding.node_identity = cold.node_identity.clone();
-    if binding.backend != "rocksdb" || cold.backend != binding.backend {
+    let (requested, native, inputs) = registration_inputs(options)?;
+    if binding.package != requested.package
+        || binding.archive != requested.archive
+        || binding.public_key != requested.public_key
+        || binding.allow_unsigned_development != requested.allow_unsigned_development
+        || binding.product != requested.product
+        || binding.native != requested.native
+        || binding.lock != requested.lock
+        || binding.identity != requested.identity
+        || binding.backend != requested.backend
+        || binding.data_directory != requested.data_directory
+        || binding.pins != requested.pins
+    {
         return Err(precondition());
     }
+    let product = ProductInput::load(&binding.product)?;
+    product.check(&native)?;
+    let raw_product = Input::read(&binding.product, 262_144, false)?;
+    let product_value: serde_json::Value = json::decode(&raw_product.raw).map_err(|_| corrupt())?;
+    if product_value["instanceId"].as_str() != Some(binding.instance_id.as_str()) {
+        return Err(precondition());
+    }
+    verified_package(&binding, true)?;
     for input in &inputs {
         input.recheck()?;
     }
     native.recheck()?;
-    data_precondition(&binding, false)?;
-    install::verify_installed(&binding.package, &package)?;
-    let root = Control::create(&instance)?;
-    let _guard = root.lock()?;
-    let raw = serde_json::to_vec(&binding).map_err(|_| corrupt())?;
-    store::write_new(&root.path().join("binding.json"), &raw).map_err(state_error)?;
-    let mut journal = Store::create(&root.path().join("journal")).map_err(state_error)?;
-    let state = State {
-        schema_version: 1,
-        instance_id: binding.instance_id,
-        binding_sha256: files::digest(&raw),
-        phase: Phase::Registered,
-        attempt: None,
-        genesis_hash: None,
-        reason: "REGISTERED_COLD_CHECKED".into(),
+    product.recheck()?;
+    raw_product.recheck()?;
+    binding_file.recheck()?;
+    // Revalidate the checkpoint after all external inputs before returning the
+    // snapshot. Package verification already checked its complete inventory.
+    journal.read().map_err(state_error)?;
+    root.require_owner(owned)?;
+    let busy = match root.lock() {
+        Ok(_guard) => false,
+        Err(e) if e.code == "INSTANCE_BUSY" => true,
+        Err(e) => return Err(e),
     };
-    state.save(&mut journal)?;
-    root.recheck()?;
-    Ok(state.summary(Some(false)))
+    let mut result = state.summary(Some(busy));
+    if fs::symlink_metadata(root.path().join("service-journal")).is_ok() {
+        result.service_registration = "NOT_OBSERVED";
+    }
+    journal.read().map_err(state_error)?;
+    binding_file.recheck()?;
+    root.require_owner(owned)?;
+    Ok(result)
 }
 
 impl Binding {

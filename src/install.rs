@@ -44,6 +44,26 @@ pub struct InstallReport {
     pub lifecycle: String,
 }
 
+/// A create-new root observed before writing its contents. A workflow must
+/// durably bind this evidence to its operation/plan inside the reservation
+/// callback; collecting an existing directory's inode later is not ownership.
+/// This prevents accidental adoption, not tampering by the same Unix user.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RootIdentity {
+    pub device: u64,
+    pub inode: u64,
+}
+
+impl RootIdentity {
+    fn of(metadata: &Metadata) -> Self {
+        Self {
+            device: metadata.dev(),
+            inode: metadata.ino(),
+        }
+    }
+}
+
 /// Consume and extract one verified stream into an exclusively reserved new
 /// destination. Receipt absence means INCOMPLETE, including after a late gzip
 /// failure. No caller-supplied existing directory is adopted or cleaned up.
@@ -52,13 +72,25 @@ pub fn install(
     destination: &Path,
     options: &VerifyOptions,
 ) -> Result<InstallReport> {
+    install_owned(archive, destination, options, |_| Ok(()))
+}
+
+/// Invoke `on_reserved` exactly once after exclusively creating and syncing the
+/// destination, before any payload/receipt write. A callback error preserves the
+/// incomplete empty root. The callback must commit ownership before returning.
+pub fn install_owned(
+    archive: &Path,
+    destination: &Path,
+    options: &VerifyOptions,
+    mut on_reserved: impl FnMut(RootIdentity) -> Result<()>,
+) -> Result<InstallReport> {
     if !cfg!(all(target_os = "macos", target_arch = "aarch64")) {
         return Err(error(
             "INSTALL_PLATFORM_UNSUPPORTED",
             "Installation currently requires a macOS arm64 host",
         ));
     }
-    let mut sink = Installer::new(destination)?;
+    let mut sink = Installer::new(destination, &mut on_reserved)?;
     let verified = artifact::verify_to_sink(archive, options, &mut sink)?;
     sink.commit(verified)
 }
@@ -98,7 +130,7 @@ struct ActiveFile {
     identity: Identity,
     written: u64,
 }
-struct Installer {
+struct Installer<'a> {
     path: PathBuf,
     parent: Dir,
     parent_identity: Identity,
@@ -110,9 +142,13 @@ struct Installer {
     active: Option<ActiveFile>,
     manifest_bytes: Vec<u8>,
     signature: Option<Vec<u8>>,
+    on_reserved: &'a mut dyn FnMut(RootIdentity) -> Result<()>,
 }
-impl Installer {
-    fn new(destination: &Path) -> Result<Self> {
+impl<'a> Installer<'a> {
+    fn new(
+        destination: &Path,
+        on_reserved: &'a mut dyn FnMut(RootIdentity) -> Result<()>,
+    ) -> Result<Self> {
         let (path, parent, name) = parent_anchor(destination)?;
         reject_destination_alias(&parent, &name)?;
         let parent_identity = Identity::of(&parent.dir_metadata().map_err(|_| io_error())?);
@@ -128,6 +164,7 @@ impl Installer {
             active: None,
             manifest_bytes: Vec::new(),
             signature: None,
+            on_reserved,
         })
     }
     fn root(&self) -> Result<&Dir> {
@@ -189,7 +226,20 @@ impl Installer {
         self.root_identity = Some(Identity::of(&before));
         self.root = Some(root);
         sync_dir(&self.parent)?;
-        self.check_anchor()
+        sync_dir(self.root()?)?;
+        self.check_anchor()?;
+        (self.on_reserved)(RootIdentity::of(&before))?;
+        self.check_anchor()?;
+        if self
+            .root()?
+            .entries()
+            .map_err(|_| io_error())?
+            .next()
+            .is_some()
+        {
+            return Err(unsafe_error());
+        }
+        Ok(())
     }
     fn file_parent(&mut self, path: &str) -> Result<(Dir, OsString)> {
         self.check_anchor()?;
@@ -321,7 +371,7 @@ impl Installer {
         Ok(report)
     }
 }
-impl PayloadSink for Installer {
+impl PayloadSink for Installer<'_> {
     fn begin(
         &mut self,
         manifest: &Manifest,
@@ -548,4 +598,4 @@ mod installed;
 #[cfg(test)]
 #[path = "install/tests.rs"]
 mod tests;
-pub use installed::verify_installed;
+pub use installed::{verify_installed, verify_installed_owned};

@@ -367,12 +367,12 @@ mod mac {
         assert!(!fixture.root.join("missing").exists());
     }
 
-    struct ReplacePathSink {
-        installer: Installer,
+    struct ReplacePathSink<'a> {
+        installer: Installer<'a>,
         archive: PathBuf,
         saved: PathBuf,
     }
-    impl PayloadSink for ReplacePathSink {
+    impl PayloadSink for ReplacePathSink<'_> {
         fn begin(
             &mut self,
             manifest: &Manifest,
@@ -406,8 +406,9 @@ mod mac {
             .unwrap()
             .read_to_end(&mut original)
             .unwrap();
+        let mut on_reserved = |_| Ok(());
         let mut sink = ReplacePathSink {
-            installer: Installer::new(&fixture.destination).unwrap(),
+            installer: Installer::new(&fixture.destination, &mut on_reserved).unwrap(),
             archive: fixture.archive.clone(),
             saved: fixture.root.join("opened-original.tar.gz"),
         };
@@ -482,5 +483,75 @@ mod mac {
                 assert!(!fixture.root.join(RECEIPT).exists());
             }
         }
+    }
+    #[test]
+    fn ownership_is_observed_before_payload_and_callback_failure_leaves_empty_root() {
+        let f = Fixture::new();
+        let mut calls = 0;
+        let err = install_owned(&f.archive, &f.destination, &f.options, |identity| {
+            calls += 1;
+            let metadata = fs::metadata(&f.destination).unwrap();
+            assert_eq!(identity.device, metadata.dev());
+            assert_eq!(identity.inode, metadata.ino());
+            assert_eq!(fs::read_dir(&f.destination).unwrap().count(), 0);
+            Err(error("WORKFLOW_TEST_COMMIT_FAILED", "fixed error"))
+        })
+        .unwrap_err();
+        assert_eq!(err.code, "WORKFLOW_TEST_COMMIT_FAILED");
+        assert_eq!(calls, 1);
+        f.assert_incomplete();
+        assert_eq!(fs::read_dir(&f.destination).unwrap().count(), 0);
+        assert!(
+            install_owned(&f.archive, &f.destination, &f.options, |_| {
+                panic!("an existing root must not produce fresh ownership evidence")
+            })
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn completed_owned_install_reconciles_but_matching_replacement_does_not() {
+        let f = Fixture::new();
+        let mut owner = None;
+        install_owned(&f.archive, &f.destination, &f.options, |identity| {
+            assert_eq!(fs::read_dir(&f.destination).unwrap().count(), 0);
+            owner = Some(identity);
+            Ok(())
+        })
+        .unwrap();
+        let expected = artifact::verify(&f.archive, &f.options).unwrap();
+        let owner = owner.unwrap();
+        verify_installed_owned(&f.destination, &expected, &owner).unwrap();
+        let receipt = fs::read(f.destination.join(RECEIPT)).unwrap();
+        fs::rename(&f.destination, f.root.join("original-root")).unwrap();
+        f.install().unwrap();
+        assert_eq!(receipt, fs::read(f.destination.join(RECEIPT)).unwrap());
+        verify_installed(&f.destination, &expected).unwrap();
+        assert_eq!(
+            verify_installed_owned(&f.destination, &expected, &owner)
+                .unwrap_err()
+                .code,
+            "INSTALL_OWNERSHIP_MISMATCH"
+        );
+    }
+
+    #[test]
+    fn replacing_reserved_root_inside_callback_never_receives_payload() {
+        let f = Fixture::new();
+        let saved = f.root.join("reserved-root");
+        let err = install_owned(&f.archive, &f.destination, &f.options, |_| {
+            fs::rename(&f.destination, &saved).unwrap();
+            fs::create_dir(&f.destination).unwrap();
+            fs::set_permissions(
+                &f.destination,
+                std::os::unix::fs::PermissionsExt::from_mode(0o700),
+            )
+            .unwrap();
+            Ok(())
+        })
+        .unwrap_err();
+        assert_eq!(err.code, "INSTALL_UNSAFE_PATH");
+        assert_eq!(fs::read_dir(saved).unwrap().count(), 0);
+        assert_eq!(fs::read_dir(&f.destination).unwrap().count(), 0);
     }
 }

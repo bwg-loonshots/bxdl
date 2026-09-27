@@ -111,7 +111,15 @@ pub(super) struct Control {
 impl Control {
     /// The caller validates overlaps before this first mutation. Missing parent
     /// paths are not created; failed creation remains visibly incomplete.
+    #[cfg(test)]
     pub(super) fn create(path: &Path) -> Result<Self> {
+        Self::create_owned(path, &mut |_| Ok(()))
+    }
+
+    pub(super) fn create_owned(
+        path: &Path,
+        on_reserved: &mut dyn FnMut(crate::install::RootIdentity) -> Result<()>,
+    ) -> Result<Self> {
         let (path, parent, name) = parent_anchor(path)?;
         let mut options = DirBuilder::new();
         options.mode(0o700);
@@ -124,6 +132,16 @@ impl Control {
         })?;
         sync_dir(&parent)?;
         let (root, identity) = open_private(&parent, &name)?;
+        sync_dir(&root)?;
+        check_anchor(&path, &root, identity)?;
+        on_reserved(crate::install::RootIdentity {
+            device: identity.device,
+            inode: identity.inode,
+        })?;
+        check_anchor(&path, &root, identity)?;
+        if root.entries().map_err(|_| io_error())?.next().is_some() {
+            return Err(unsafe_state());
+        }
         let mut options = OpenOptions::new();
         options
             .read(true)
@@ -206,6 +224,17 @@ impl Control {
 
     pub(super) fn path(&self) -> &Path {
         &self.path
+    }
+
+    pub(super) fn require_owner(&self, expected: &crate::install::RootIdentity) -> Result<()> {
+        self.recheck()?;
+        if self.identity.device != expected.device || self.identity.inode != expected.inode {
+            return Err(error(
+                "INSTANCE_OWNERSHIP_MISMATCH",
+                "인스턴스 폴더가 이 작업이 생성한 폴더와 다릅니다.",
+            ));
+        }
+        Ok(())
     }
 
     pub(super) fn recheck(&self) -> Result<()> {
