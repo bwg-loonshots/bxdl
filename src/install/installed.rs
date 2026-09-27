@@ -3,7 +3,8 @@
 //! This is an observation, not isolation from a concurrent same-UID process.
 
 use super::{
-    Identity, InstallReport, READ_FLAGS, RECEIPT, parent_anchor, reject_inventory_aliases,
+    Identity, InstallReport, READ_FLAGS, RECEIPT, RootIdentity, parent_anchor,
+    reject_inventory_aliases,
 };
 use crate::artifact::{self, Manifest, Report};
 use crate::error::{BxdlError, Result};
@@ -48,9 +49,30 @@ pub fn verify_installed(destination: &Path, expected: &Report) -> Result<()> {
     verify_observed(destination, expected, || {})
 }
 
+/// Reconstruct completion only for a root captured in the create-new callback.
+/// `owned` must already be durably associated with this workflow and expected
+/// authenticated archive; neither this function nor a receipt establishes that
+/// association. It never reserves, repairs, or adopts an existing directory.
+pub fn verify_installed_owned(
+    destination: &Path,
+    expected: &Report,
+    owned: &RootIdentity,
+) -> Result<()> {
+    verify_observed_owned(destination, expected, Some(owned), || {})
+}
+
 fn verify_observed(
     destination: &Path,
     expected: &Report,
+    after_hashing: impl FnOnce(),
+) -> Result<()> {
+    verify_observed_owned(destination, expected, None, after_hashing)
+}
+
+fn verify_observed_owned(
+    destination: &Path,
+    expected: &Report,
+    owned: Option<&RootIdentity>,
     after_hashing: impl FnOnce(),
 ) -> Result<()> {
     if !cfg!(all(target_os = "macos", target_arch = "aarch64")) {
@@ -79,6 +101,12 @@ fn verify_observed(
     let parent_id = Identity::of(&parent.dir_metadata().map_err(|_| unsafe_path())?);
     let before = parent.symlink_metadata(&name).map_err(|_| unsafe_path())?;
     require_directory(&before)?;
+    if owned.is_some_and(|owned| *owned != RootIdentity::of(&before)) {
+        return Err(BxdlError::new(
+            "INSTALL_OWNERSHIP_MISMATCH",
+            "The installation is not the root reserved by this operation",
+        ));
+    }
     let root_stamp = Stamp::of(&before);
     let root = parent.open_dir(&name).map_err(|_| unsafe_path())?;
     if Stamp::of(&root.dir_metadata().map_err(|_| unsafe_path())?) != root_stamp {

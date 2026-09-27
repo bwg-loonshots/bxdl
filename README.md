@@ -2,7 +2,7 @@
 
 NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구다. **Rust로 구현하며 macOS Apple Silicon에서 설치·운용 UX를 먼저 완성한다.** Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
 
-현재 구현은 개발용 패키지 조립·검증, **Mac의 새 폴더 설치**, 재개 가능한 setup 설정 도우미, **제품·NIGO 설정의 결합 cold 검사**, **인스턴스 등록과 명시적 init/resume-init**, **Mac 사용자 LaunchAgent의 start/status/stop**, **오프라인 logs/diagnose**다. 실제 새 package에서 단일 validator의 시작·정상 종료·같은 데이터 재시작을 확인했으며 전체 G1-M 인수는 남아 있다. 엔진 JAR/JRE·고객 키·DB를 이 저장소에 동봉하지 않는다.
+현재 구현은 개발용 패키지 조립·검증, **Mac의 새 폴더 설치**, 초안 모드와 **명시 설치·등록·초기화·시작을 연결한 setup 설치 도우미**, **제품·NIGO 설정의 결합 cold 검사**, **인스턴스 등록과 명시적 init/resume-init**, **Mac 사용자 LaunchAgent의 start/status/stop**, **오프라인 logs/diagnose**다. 새 setup CLI와 동일한 CLI를 담은 개발용 package로 취소·재개, 설치·초기화, 단일 노드 시작·정상 종료·같은 데이터 재시작을 확인했다. [검증 범위와 남은 인수](./results/2026-09-27-setup-install-flow.md)를 따르며 전체 G1-M은 후속이다. 엔진 JAR/JRE·고객 키·DB를 이 저장소에 동봉하지 않는다.
 
 ## 구현한 명령
 
@@ -18,6 +18,7 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 | `bxdl preflight --config <json>` | 파일/디렉터리 metadata만 검사, 엔진·서비스 검사는 NOT_CHECKED |
 | `bxdl preflight --config <instance.json> --engine-config <node.json> ...` | 제품과 명시 QBFT 설정의 일치를 확인한 뒤 pinned 엔진 cold 검사 |
 | `bxdl setup [--workspace <dir>]` | 설정 입력·수정·저장·재개와 로컬 검사, 새 제품 JSON 내보내기 |
+| `bxdl setup --install --workspace <new-session>` | Mac 터미널에서 자료·계획을 저장하고 설치/등록·초기화·시작을 각각 명시 선택. `--resume`으로 같은 세션 재검증 |
 | `bxdl instance register --instance <new-dir> ...` | 설치본·원본 archive·신뢰 key·제품/native 설정을 검증하고 private 등록 기록 생성 |
 | `bxdl instance show --instance <dir>` | 저장된 초기화 상태와 현재 작업 잠금 관측. 노드 health 검사가 아님 |
 | `bxdl preflight --instance <dir>` | 등록한 입력·설치본을 다시 검증하고 결합 cold 검사 |
@@ -29,11 +30,20 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 | `bxdl logs --instance <dir>` | 최신 초기화·서비스 시도의 정제한 저장 이벤트와 누락 사유를 제한해 조회 |
 | `bxdl diagnose --instance <dir> --output <new.json>` | 같은 오프라인 기록을 새 JSON 지원 보고서로 저장. 현재 health 검증은 수행하지 않음 |
 
-`upgrade/uninstall`은 exit 4와 CAPABILITY_NOT_IMPLEMENTED를 반환한다. setup 저장 성공은 설치·엔진 준비 완료가 아니며, init 성공도 실행 중 노드·서비스 준비 완료가 아니다. logs/diagnose는 raw 로그·비밀·경로·hash를 내보내지 않고 누락은 partial로 표시한다. 보고서 생성 성공을 노드 안전·정상 판정으로 해석하지 않는다. [사용법과 한도](./docs/cli.md#오프라인-기록과-지원-보고서)를 따른다.
+`upgrade/uninstall`은 exit 4와 CAPABILITY_NOT_IMPLEMENTED를 반환한다. 기본 setup 저장 성공은 초안 저장이며 설치 모드의 `finish`도 현재 단계까지만 저장한다. init 성공은 실행 중 노드·서비스 준비 완료가 아니다. logs/diagnose는 raw 로그·비밀·경로·hash를 내보내지 않고 누락은 partial로 표시한다. 보고서 생성 성공을 노드 안전·정상 판정으로 해석하지 않는다. [사용법과 한도](./docs/cli.md#오프라인-기록과-지원-보고서)를 따른다.
 
 start는 설치 package의 `bin/bxdl`과 같은 바이트의 CLI로 호출한다. 기존 설치본에 새 CLI만 덮어쓰는 업데이트는 지원하지 않는다. 로그인된 Mac 사용자 세션에서 수동 시작하며 로그인 자동 시작·자동 재시작은 제공하지 않는다. 정상 종료가 검증된 뒤에만 다음 명시 start를 허용한다. 실패·UNKNOWN 복구와 보존된 snapshot/private 로그의 자동 정리는 후속이다.
 
-## 설정 준비
+## 설치 도우미와 설정 준비
+
+Mac arm64에서 패키지와 함께 공급된 동일 CLI로 새 설치를 진행하려면 별도 설치 세션을 지정한다. 부모 폴더는 미리 있어야 하며 자동 생성하지 않는다.
+
+```bash
+bxdl setup --install --workspace /absolute/existing-parent/new-session
+bxdl setup --install --workspace /absolute/existing-parent/new-session --resume
+```
+
+archive·외부 신뢰 공개키(또는 명시 unsigned-development)·engine lock·native node.json과 제품 설정을 준비한다. `plan` 뒤 `apply`와 확인은 설정·설치·등록까지 진행하고, `init`과 `start`는 각각 별도 확인이 필요하다. `finish`로 원하는 단계에서 나가거나 `:cancel`로 저장 후 중단할 수 있다. 새 설치 모드는 TTY 전용이며 `--json`·`--output`·`--non-interactive`를 받지 않는다. 기존 DB 업그레이드·키 발급·native 설정 자동 생성은 제공하지 않는다. [설치 흐름과 재개 조건](./docs/setup.md#설치-모드-패키지부터-시작까지)을 따른다.
 
 Mac 터미널에서 `bxdl setup`을 실행하면 이름·경로·포트·기존 체인/키 자료의 파일 경로를 묻는다. 각 답을 저장하며 `:back`으로 수정하고 `:cancel`로 나갈 수 있다. 기존 초안은 `bxdl setup --resume`으로 이어간다. 기본 작업 폴더는 `$HOME/Library/Application Support/BXDL/setup`이며 새 폴더만 생성한다.
 
@@ -44,7 +54,7 @@ Mac 터미널에서 `bxdl setup`을 실행하면 이름·경로·포트·기존 
 
 입력 완료 후 `save`는 초안 저장, `export`는 확인 후 새 설정 JSON 저장이다. 참조 파일 누락이 있더라도 초안은 저장할 수 있으며 검사 결과에 실패가 남는다. 자동화의 `--from`/`--resume`·`--non-interactive`·`--json`과 경로·출력 규칙은 [setup 사용 가이드](./docs/setup.md)를 따른다.
 
-설정과 native QBFT 자료를 준비하고 package를 설치한 뒤 [인스턴스 등록·초기화 가이드](./docs/instance.md)에 따라 한 번 등록한다. 이후에는 같은 `--instance` 제어 폴더를 사용한다. 등록 때 지정한 원본 archive·외부 신뢰 key·설정·키 자료는 계속 필요하다. UNKNOWN은 보존된 불명 상태이며 자동 init 재시도나 데이터 삭제로 해결하지 않는다.
+개별 명령을 사용할 때는 설정과 native QBFT 자료를 준비하고 package를 설치한 뒤 [인스턴스 등록·초기화 가이드](./docs/instance.md)에 따라 한 번 등록한다. 이후에는 같은 `--instance` 제어 폴더를 사용한다. 설치 도우미의 작업 폴더와 등록 때 지정한 원본 archive·외부 신뢰 key·설정·키 자료도 계속 필요하다. UNKNOWN은 보존된 불명 상태이며 자동 init 재시도나 데이터 삭제로 해결하지 않는다.
 
 ## 개발과 실행
 
@@ -81,8 +91,9 @@ Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux targe
 - [제품·엔진 설정 연결 설계](./design/2026-09-18-product-engine-preflight.md)
 - [인스턴스 등록·초기화 설계](./design/2026-09-18-instance-initialization.md)
 - [Mac LaunchAgent의 시작·관측·종료 설계](./design/2026-09-18-macos-launchagent.md)
+- [setup 설치 흐름·소유 결과·재개 설계](./design/2026-09-27-setup-install-flow.md)
 - [현재 구현·검증 상태](./docs/implementation-status.md)
-- [설정 도우미·초안 저장과 재개](./docs/setup.md)
+- [설치 도우미·설정 초안 저장과 재개](./docs/setup.md)
 - [패키지 입력·서명·형식](./docs/package-format.md)
 - [Mac 패키지 설치와 실패 처리](./docs/install.md)
 - [인스턴스 등록·초기화·서비스 제어와 중단 처리](./docs/instance.md)

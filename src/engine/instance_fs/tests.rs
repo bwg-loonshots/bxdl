@@ -222,3 +222,60 @@ fn data_preparation_rejects_symlink_and_missing_parent_without_mutation() {
     );
     assert!(!absent.exists());
 }
+
+#[test]
+fn owner_hook_precedes_control_contents_and_failure_preserves_empty_root() {
+    let (_temp, root) = fixture();
+    let mut calls = 0;
+    let result = Control::create_owned(&root, &mut |owner| {
+        calls += 1;
+        let metadata = fs::metadata(&root).unwrap();
+        assert_eq!(owner.device, std::os::unix::fs::MetadataExt::dev(&metadata));
+        assert_eq!(owner.inode, std::os::unix::fs::MetadataExt::ino(&metadata));
+        assert_eq!(fs::read_dir(&root).unwrap().count(), 0);
+        Err(error("WORKFLOW_TEST_COMMIT_FAILED", "fixed error"))
+    });
+    assert_eq!(code(result), "WORKFLOW_TEST_COMMIT_FAILED");
+    assert_eq!(calls, 1);
+    assert_eq!(fs::read_dir(&root).unwrap().count(), 0);
+    assert!(Control::open(&root).is_err());
+    assert_eq!(
+        code(Control::create_owned(&root, &mut |_| panic!("no adoption"))),
+        "INSTANCE_CONTROL_EXISTS"
+    );
+}
+
+#[test]
+fn owned_control_reopens_but_new_control_at_same_path_cannot_reuse_owner() {
+    let (_temp, root) = fixture();
+    let mut owner = None;
+    let control = Control::create_owned(&root, &mut |identity| {
+        owner = Some(identity);
+        Ok(())
+    })
+    .unwrap();
+    let owner = owner.unwrap();
+    control.require_owner(&owner).unwrap();
+    Control::open(&root).unwrap().require_owner(&owner).unwrap();
+    fs::rename(&root, root.with_file_name("old-root")).unwrap();
+    let replacement = Control::create(&root).unwrap();
+    assert_eq!(
+        code(replacement.require_owner(&owner)),
+        "INSTANCE_OWNERSHIP_MISMATCH"
+    );
+}
+
+#[test]
+fn control_root_replaced_in_owner_hook_is_not_written() {
+    let (_temp, root) = fixture();
+    let saved = root.with_file_name("reserved-root");
+    let result = Control::create_owned(&root, &mut |_| {
+        fs::rename(&root, &saved).unwrap();
+        fs::create_dir(&root).unwrap();
+        fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
+        Ok(())
+    });
+    assert_eq!(code(result), "INSTANCE_CONTROL_UNSAFE");
+    assert_eq!(fs::read_dir(root).unwrap().count(), 0);
+    assert_eq!(fs::read_dir(saved).unwrap().count(), 0);
+}

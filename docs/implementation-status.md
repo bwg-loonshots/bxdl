@@ -1,6 +1,6 @@
-# 구현 상태 — 2026-09-21
+# 구현 상태 — 2026-09-27
 
-Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후 **R2의 Mac 새 폴더 패키지 설치**와 **R3의 NIGO 개발 후보 정보·cold 사전검사**를 추가했다. clean NIGO 후보를 별도로 수신하고 제품 설정과 명시 native QBFT 설정을 연결하는 preflight를 추가했다. 이후 설치본·설정을 등록해 `--instance`로 preflight와 명시 init/resume-init을 호출하고, Mac 사용자 LaunchAgent의 start/status/stop을 연결했다. 실제 새 package의 단일 validator 서비스 수명주기를 확인했으며 setup에서 서비스 운용까지 이어지는 전체 UX·G1-M은 아직 완료하지 않았다.
+Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후 **R2의 Mac 새 폴더 패키지 설치**와 **R3의 NIGO 개발 후보 정보·cold 사전검사**를 추가했다. clean NIGO 후보를 별도로 수신하고 제품 설정과 명시 native QBFT 설정을 연결하는 preflight를 추가했다. 이후 설치본·설정을 등록해 `--instance`로 preflight와 명시 init/resume-init을 호출하고, Mac 사용자 LaunchAgent의 start/status/stop을 연결했다. 이번에는 `setup --install`에서 이 단계를 선택하고 재개하는 A~C 흐름을 구현했다. 기존 package의 단일 validator 서비스 근거와 새 setup의 exact package·TTY 인수, 전체 G1-M을 구분한다.
 
 ## 실제 제공 기능
 
@@ -11,6 +11,7 @@ Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후
 - `config validate`/기본 `preflight`: BXDL 제품 설정·로컬 metadata 검사. 엔진 옵션이 없는 preflight는 엔진을 실행하지 않는다.
 - 결합 `preflight`: 제품/local 검사, 명시 QBFT VALIDATOR/MTLS 설정과 ID·경로·endpoint·키 참조 일치, 같은 native snapshot의 pinned engine cold 검사. 제품/설정/chain hash와 결과를 연결한다. 로컬 FAIL·불일치는 JVM 실행 전에 거부한다.
 - `setup`: 14개 제품 설정 입력·수정·checkpoint·재개·기존 JSON 가져오기·새 JSON 출력. 파일 저장 성공은 engine/service 준비 완료가 아니다.
+- `setup --install --workspace`: Mac arm64 TTY에서 archive·신뢰 key·lock·native 입력과 제품 설정을 계획으로 고정하고, apply/init/start를 각각 확인한 뒤 기존 API로 연결한다. 별도 세션 잠금·소유 증거·완료 결과를 확인해 명시 재개한다. 기본 초안 모드는 유지한다.
 - `instance register/show`: archive·외부 key·engine lock·전체 설치 manifest·제품/native/cold 결과를 고정해 private 등록 journal 생성, 저장 상태와 advisory busy 조회. 등록 후에도 원본 archive/key와 참조 자료가 필요하다.
 - `preflight --instance`: 등록 입력 hash·전체 설치본을 재검증하고 기존 결합 cold 실행. 정상도 INCOMPLETE다.
 - `init/resume-init`: 작업별 확인 flag, durable intent, inherited advisory lock, 단발 NIGO 호출, process exit/stdout/동일 attempt report/engine journal 대조. 불명 결과와 시도 자료를 보존한다.
@@ -34,11 +35,11 @@ Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후
 
 등록·초기화 구현은 `make check` 162개 테스트, Mac release 빌드, Linux 타입 검사를 통과했다. 설치된 당시 Mac package의 실제 NIGO JAR로 초기화, 실제 controller crash에서의 잠금 유지·UNKNOWN 보존, 합성 중단 checkpoint에서의 실제 resume을 확인했다. [검증 기록](../results/2026-09-18-instance-initialization.md)에 시험 범위와 JRE 모듈 보완을 구분했다. PR #4의 Mac·Ubuntu fast CI 통과도 그 revision의 이력이며 이번 LaunchAgent 변경의 근거로 소급하지 않는다.
 
-## 이번 LaunchAgent 구현의 근거와 한계
+## 이전 LaunchAgent 구현의 근거와 한계
 
 서비스 명령과 내부 worker gate를 구현했다. macOS 26.6.2 arm64의 실제 새 package에서 새 install/register/init 후 start/status·중복 start 거부·정상 stop을 확인했다. 같은 DB 재시작에서는 nodeInstanceId가 바뀌고 genesis가 유지됐다. start controller만 강제 종료한 시험에서도 LaunchAgent worker/Java가 계속 진행해 로컬 READY에 도달했고, 중복 start는 거부한 뒤 정상 stop했다. 소비된 attempt의 직접 kickstart 재실행 거부·데이터 hash 불변과 정상 종료 뒤 job 등록 해제도 확인했다. 이는 peer 없는 단일 validator의 서비스 시험이며 거래 확정·4-validator 인수가 아니다.
 
-이번 `make check`의 fmt·Clippy·200개 테스트와 `make check-linux` 타입 검사는 통과했다. 원격 CI 결과는 해당 PR의 revision별 검사 기록을 따른다. 시험 경로·제약·실제 결과는 [LaunchAgent 검증 기록](../results/2026-09-18-macos-launchagent.md)을 따른다. Documents 아래 첫 시험은 worker 진입 전 exit 78로 종료했고 임시 경로로 입력을 분리한 시험은 동작했으나, OS 접근 제어/TCC를 원인으로 확정하지 않는다. 설계와 실패 정책은 [LaunchAgent 문서](../design/2026-09-18-macos-launchagent.md), 실제 사용법은 [인스턴스 가이드](./instance.md)를 따른다.
+당시 `make check`의 fmt·Clippy·200개 테스트와 `make check-linux` 타입 검사는 통과했다. 이번 설치 도우미의 검사 결과로 전용하지 않는다. 원격 CI 결과는 해당 PR의 revision별 검사 기록을 따른다. 시험 경로·제약·실제 결과는 [LaunchAgent 검증 기록](../results/2026-09-18-macos-launchagent.md)을 따른다. Documents 아래 첫 시험은 worker 진입 전 exit 78로 종료했고 임시 경로로 입력을 분리한 시험은 동작했으나, OS 접근 제어/TCC를 원인으로 확정하지 않는다. 설계와 실패 정책은 [LaunchAgent 문서](../design/2026-09-18-macos-launchagent.md), 실제 사용법은 [인스턴스 가이드](./instance.md)를 따른다.
 
 start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요하다. 기존 초기화용 package에 서비스 CLI만 덮어쓰는 방법은 사용할 수 없다. 새 archive·설치본의 전체 inventory를 검증하며 기존 등록/data의 migration은 후속이다. 시도별 worker/JAR snapshot과 private 로그는 보존하고 자동 용량 정리는 제공하지 않는다.
 
@@ -52,6 +53,16 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 
 설계와 한도는 [오프라인 진단 설계](../design/2026-09-21-offline-diagnostics.md), 실제 검사 근거는 [진단 검증 기록](../results/2026-09-21-offline-diagnostics.md)을 따른다. raw/follow·전체 시도 검색·로그 rotation·보존/용량 정리·UNKNOWN 조정·안전한 제거는 후속이다. NIGO 공급 revision과 요구 원장은 그대로 유지한다.
 
+## setup 설치 흐름 A~C
+
+`--install --workspace <새 세션>`과 `--resume`은 기본 초안 모드와 독립된 진입점이다. `--from`으로 제품 JSON을 가져올 수 있으며 설치 모드는 `--json`, `--output`, `--non-interactive` 혼용과 비터미널 입력을 거부한다. 공급 자료·현재 CLI 일치 검사, 계획 고정, 새 제품 설정 출력·파일 설치·cold·등록, 별도 명시 init/resume-init/start를 연결했다.
+
+세션 container 아래 workflow·draft·generated를 분리하고 세션 전체 잠금과 inode 소유 기록을 유지한다. installer/register의 create-new 직후 기록한 소유 증거와 전체 완료 결과가 함께 맞는 경우에만 재개에서 완료를 재구성한다. partial·외부 결과는 자동 채택하지 않으며 엔진 UNKNOWN을 자동 성공이나 새 초기화로 전환하지 않는다.
+
+최초 범위는 workspace와 package/control/data의 **기존 부모**를 요구한다. package/control/data 기본 제안은 workspace의 sibling이다. 계획했던 Application Support 상위 폴더 자동0700 준비는 미구현으로 남겼다. 자동 GC 값과 발행자 주소 수는 안내만 하며 native/chain 설정을 수정하지 않는다. 기존 clean `303e163a` 공급 pin과 검증 이력을 유지하고 이번에 최신 NIGO JAR로 교체하지 않는다.
+
+`make check` 270개 테스트와 Mac release 빌드·Linux 타입 검사를 통과했다. 새 CLI를 담은 unsigned-development package와 실제 TTY에서 취소·재개, 공백 경로 설치·등록, 별도 init/start, 정상 stop과 동일 DB 재시작을 확인했다. 단일 노드 로컬 READY이며 전역 합의는 NOT_CHECKED다. 최종 상태는 job NOT_LOADED·engine STOPPED다. 실제 강제 중단·실패 주입과 전체 G1-M은 남았다. [검증 기록](../results/2026-09-27-setup-install-flow.md), [설계와 남은 인수](../design/2026-09-27-setup-install-flow.md), [사용법](./setup.md)을 따른다.
+
 ## 계획 대비 상태
 
 | 작업 | 상태 | 남은 조건 |
@@ -64,7 +75,7 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 | BX-020 | IN_PROGRESS | v1 제품/native 명시 설정 대조 구현, 자동 렌더·network/peer/pin 입력 확장 후속 |
 | BX-021/022/024 | IN_PROGRESS | instance journal·명시 init/resume·결과 대조, gated run·정상 종료/같은 DB 재시작 확인. 전체 실패·복구/운영 인수 후속 |
 | BX-023 | IN_PROGRESS | 제품/native cold·실제 RocksDB 단발 초기화 확인. 지속 runtime·DB/WAL 복구·service 인수 후속 |
-| BX-030 | IN_PROGRESS | R1 초안·R2 파일 installer·독립 instance 등록/명시 초기화 연결. setup package 선택·자동 연결 후속 |
+| BX-030 | IN_PROGRESS | setup 설치 A~C 구현 및 동일 개발 package/TTY의 정상 흐름·취소·재개 확인. signed 실제 package·강제 중단·실패 주입과 전체 인수 후속 |
 | BX-031/032 | IN_PROGRESS | 수동 LaunchAgent·status·정상 stop·restart 확인. 로그인/로그아웃·sleep/wake와 전체 사용자 lifecycle 인수 후속 |
 | BX-033 | IN_PROGRESS | 오프라인 최신 시도 logs/diagnose·정제·bounded partial 출력 구현. 전체 시도 조회·보존/용량 정책 후속 |
 | BX-034 | PLAN | 데이터·키를 보존하는 안전한 제거 |
@@ -74,7 +85,7 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 
 ## 다음 순서
 
-1. setup에 검증한 package 선택·명시 instance 등록과 NIGO native 설정 준비를 연결한다. 명시 init/start와 오류 수정·취소·재개 UX를 연결한다.
+1. 새 setup CLI와 동일한 signed package의 전체 문답과 실제 프로세스 중단·실패 주입을 인수한다. 정상 흐름·취소/재개는 완료했으며, 자동시험의 EOF·동시 재개·소유 증거 누락 검증을 실제 실행 인수와 구분한다. 최신 NIGO 수신·교체는 일치하는 공급 묶음을 확보한 뒤 별도로 진행하며 기존 DB migration은 포함하지 않는다.
 2. QBFT membership·peer/pin·PKI/거래 fixture와 4-validator 인수를 준비하고, Mac 중단·실패 경계·사용자 세션 인수를 완료한다. 저장 기록과 실제 health를 구분하며 UNKNOWN 뒤 자동 재시작하지 않는다.
 3. 정식 Java 21 공급자·patch/hash·필요 runtime modules·NOTICE/SBOM과 최소 macOS를 선정한다. cold 실행 가능성이 init/runtime 가능성을 보증하지 않는다.
 4. 선정 JRE와 같은 Mac package에서 동일 데이터 재시작·G1-M 전체 운영·4-validator 회귀를 인수한다. Linux/systemd G1-L, Docker G1-D는 뒤에서 별도 검증한다.

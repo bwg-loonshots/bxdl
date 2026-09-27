@@ -1,8 +1,11 @@
 //! Resumable product configuration drafts. This is not an installed instance,
 //! an engine initialization journal, or a NIGO validation contract.
+mod install_wizard;
 pub(crate) mod paths;
 pub(crate) mod store;
 mod wizard;
+pub mod workflow;
+mod workflow_store;
 
 pub use wizard::{Finish, interact};
 
@@ -373,6 +376,23 @@ impl Session {
         self.store.read()?;
         Ok(output)
     }
+}
+
+/// The install container reserves its draft directory before publishing its
+/// ownership manifest. Prepare the same v1 draft without creating a directory.
+fn initial_draft(workspace: &Path, from: Option<&Path>, input_base: &Path) -> Result<Vec<u8>> {
+    let mut draft = Draft {
+        schema_version: 1,
+        kind: "BXDL_SETUP_DRAFT".into(),
+        input_base: text(&absolute(input_base)?)?,
+        answers: BTreeMap::new(),
+    };
+    if let Some(from) = from {
+        draft.answers = answers_from_config(&config::normalized_file(from)?)?;
+    }
+    check_draft(&draft, workspace)?;
+    serde_json::to_vec(&draft)
+        .map_err(|_| error("SETUP_DRAFT_INVALID", "초안을 구성할 수 없습니다."))
 }
 
 fn check_draft(draft: &Draft, workspace: &Path) -> Result<()> {

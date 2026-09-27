@@ -77,59 +77,7 @@ impl ProductInput {
 
     pub(super) fn check(&self, native: &files::NativeInput) -> Result<()> {
         self.recheck()?;
-        let p = &self.document;
-        let node = &native.value.node;
-        let get = |key: &str| node.get(key).ok_or_else(mismatch);
-        let chain: Value = json::decode(&native.chain.raw).map_err(|_| mismatch())?;
-        if chain["nigo.protocol.consensus.protocol"] != "QBFT"
-            || p["role"] != "validator"
-            || text(get(&format!("{QBFT}role"))?)? != "VALIDATOR"
-            || text(get(&format!("{QBFT}transport-security-scheme"))?)? != "MTLS"
-            || text(&p["storage"]["backend"])? != native.value.backend
-            || !same_path(&p["chainDescription"], &native.chain.path)?
-            || !same_path(&p["storage"]["dataDirectory"], &native.data)?
-            || paths::overlaps(&self.file.path, &native.data).map_err(|_| mismatch())?
-        {
-            return Err(mismatch());
-        }
-        let expected_id = canonical_hex(text(&p["nodeId"])?, 64)?;
-        if expected_id != canonical_hex(text(get(&format!("{QBFT}node-id"))?)?, 64)? {
-            return Err(mismatch());
-        }
-        for (section, address, port) in [
-            (
-                "http",
-                "server.address".to_owned(),
-                "server.port".to_owned(),
-            ),
-            (
-                "p2p",
-                format!("{QBFT}listen-host"),
-                format!("{QBFT}listen-port"),
-            ),
-        ] {
-            if ip(&p[section]["address"])? != ip(get(&address)?)?
-                || port_value(&p[section]["port"])? != port_value(get(&port)?)?
-            {
-                return Err(mismatch());
-            }
-        }
-        for (product, property) in [
-            ("validatorKeystore", "keystore-path"),
-            ("validatorPasswordFile", "keystore-password-file"),
-            ("tlsKeyStore", "mtls-key-store-path"),
-            ("tlsKeyPasswordFile", "mtls-key-store-password-file"),
-            ("tlsTrustStore", "mtls-trust-store-path"),
-            ("tlsTrustPasswordFile", "mtls-trust-store-password-file"),
-        ] {
-            // NativeInput already resolves these against the native config's
-            // own directory; product normalization used its separate base.
-            let path = Path::new(text(get(&format!("{QBFT}{property}"))?)?);
-            if !same_path(&p["secrets"][product], path)? {
-                return Err(mismatch());
-            }
-        }
-        Ok(())
+        check_document(&self.document, &self.file.path, native)
     }
 
     pub(super) fn check_result(&self, result: &ColdResult) -> Result<()> {
@@ -144,6 +92,67 @@ impl ProductInput {
         }
         Ok(())
     }
+}
+
+/// Match an already normalized product document, including an unsaved draft.
+/// This does not inspect key contents, validate NIGO semantics, or run Java.
+pub(super) fn check_document(
+    p: &Value,
+    product_path: &Path,
+    native: &files::NativeInput,
+) -> Result<()> {
+    let node = &native.value.node;
+    let get = |key: &str| node.get(key).ok_or_else(mismatch);
+    let chain: Value = json::decode(&native.chain.raw).map_err(|_| mismatch())?;
+    if chain["nigo.protocol.consensus.protocol"] != "QBFT"
+        || p["role"] != "validator"
+        || text(get(&format!("{QBFT}role"))?)? != "VALIDATOR"
+        || text(get(&format!("{QBFT}transport-security-scheme"))?)? != "MTLS"
+        || text(&p["storage"]["backend"])? != native.value.backend
+        || !same_path(&p["chainDescription"], &native.chain.path)?
+        || !same_path(&p["storage"]["dataDirectory"], &native.data)?
+        || paths::overlaps(product_path, &native.data).map_err(|_| mismatch())?
+    {
+        return Err(mismatch());
+    }
+    let expected_id = canonical_hex(text(&p["nodeId"])?, 64)?;
+    if expected_id != canonical_hex(text(get(&format!("{QBFT}node-id"))?)?, 64)? {
+        return Err(mismatch());
+    }
+    for (section, address, port) in [
+        (
+            "http",
+            "server.address".to_owned(),
+            "server.port".to_owned(),
+        ),
+        (
+            "p2p",
+            format!("{QBFT}listen-host"),
+            format!("{QBFT}listen-port"),
+        ),
+    ] {
+        if ip(&p[section]["address"])? != ip(get(&address)?)?
+            || port_value(&p[section]["port"])? != port_value(get(&port)?)?
+        {
+            return Err(mismatch());
+        }
+    }
+    for (product, property) in [
+        ("validatorKeystore", "keystore-path"),
+        ("validatorPasswordFile", "keystore-password-file"),
+        ("tlsKeyStore", "mtls-key-store-path"),
+        ("tlsKeyPasswordFile", "mtls-key-store-password-file"),
+        ("tlsTrustStore", "mtls-trust-store-path"),
+        ("tlsTrustPasswordFile", "mtls-trust-store-password-file"),
+    ] {
+        // NativeInput already resolves these against the native config's
+        // own directory; product normalization used its separate base.
+        let path = Path::new(text(get(&format!("{QBFT}{property}"))?)?);
+        if !same_path(&p["secrets"][product], path)? {
+            return Err(mismatch());
+        }
+    }
+    Ok(())
 }
 
 fn text(value: &Value) -> Result<&str> {
