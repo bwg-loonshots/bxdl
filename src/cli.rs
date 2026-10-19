@@ -14,7 +14,7 @@ pub const REVISION: &str = match option_env!("BXDL_REVISION") {
     Some(v) => v,
     None => "development",
 };
-pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl runtime stage --source <extracted-java-home> --lock <json> --output <new-dir> [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup --install --workspace <new-session> [--from <instance.json>]\n  bxdl setup --install --workspace <session> --resume\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl logs --instance <dir> [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n  bxdl diagnose --instance <dir> --output <new.json>\n      [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\n기본 setup은 설정 초안·로컬 검사·파일 저장만 수행합니다.\nsetup --install은 터미널에서 설치·등록·초기화·시작을 각각 명시 선택합니다. 기존 DB 업그레이드는 제공하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nlogs는 최신 초기화·서비스 시도의 정제한 저장 기록만 읽습니다. raw stdout/stderr나 실시간 follow는 제공하지 않습니다.\ndiagnose는 같은 기록을 새 JSON 지원 보고서에 저장합니다. JVM·네트워크·서비스 호출이나 현재 상태 검증은 수행하지 않습니다.\nlogs/diagnose 기본 한도는 tail 50개, 읽기 262144 bytes, 시간 5초입니다. 누락·예산 초과는 partial로 표시합니다.\nupgrade/uninstall은 아직 제공하지 않습니다.\n";
+pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl runtime stage --source <extracted-java-home> --lock <json> --output <new-dir> [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup --install --workspace <new-session> [--from <instance.json>]\n  bxdl setup --install --workspace <session> --resume\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl status --instance <dir> --wait [--timeout-seconds <1..600>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl logs --instance <dir> [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n  bxdl diagnose --instance <dir> --output <new.json>\n      [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\n기본 setup은 설정 초안·로컬 검사·파일 저장만 수행합니다.\nsetup --install은 터미널에서 설치·등록·초기화·시작을 각각 명시 선택합니다. 기존 DB 업그레이드는 제공하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nstatus --wait는 현재 시작 시도만 최대 120초(기본) 관측하며 초기화·시작·중지는 실행하지 않습니다.\nlogs는 최신 초기화·서비스 시도의 정제한 저장 기록만 읽습니다. raw stdout/stderr나 실시간 follow는 제공하지 않습니다.\ndiagnose는 같은 기록을 새 JSON 지원 보고서에 저장합니다. JVM·네트워크·서비스 호출이나 현재 상태 검증은 수행하지 않습니다.\nlogs/diagnose 기본 한도는 tail 50개, 읽기 262144 bytes, 시간 5초입니다. 누락·예산 초과는 partial로 표시합니다.\nupgrade/uninstall은 아직 제공하지 않습니다.\n";
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -105,6 +105,16 @@ pub fn run_with_input<'a>(
     stderr: &'a mut dyn Write,
 ) -> i32 {
     let (json_mode, args) = take_json(args);
+    if !json_mode {
+        if let Some(notice) = service_wait_notice(&args) {
+            if writeln!(stderr, "{notice}")
+                .and_then(|_| stderr.flush())
+                .is_err()
+            {
+                return 7;
+            }
+        }
+    }
     let (mut response, exit) = if args.first().is_some_and(|arg| arg == "setup") {
         dispatch_setup(&args[1..], json_mode, interactive, input, stderr)
     } else {
@@ -137,6 +147,13 @@ pub fn run_with_input<'a>(
     if let Some(data) = response.data {
         if response.command == "setup" {
             return if print_setup_summary(out, &data).is_ok() {
+                exit
+            } else {
+                7
+            };
+        }
+        if matches!(response.command.as_str(), "start" | "status" | "stop") {
+            return if print_service_summary(out, &data).is_ok() {
                 exit
             } else {
                 7
@@ -214,18 +231,119 @@ fn print_diagnostic_summary(out: &mut dyn Write, data: &Value) -> std::io::Resul
     Ok(())
 }
 
+/// Render only public observation fields, never health payloads or source paths.
+/// The install wizard uses the same projection as start/status/stop.
+pub(crate) fn print_service_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
+    for (key, label) in [
+        ("serviceState", "서비스"),
+        ("engineState", "엔진"),
+        ("runtimeReadiness", "로컬 준비 상태"),
+    ] {
+        let (description, code) = match data[key].as_str() {
+            Some("RUNNING") => ("실행 중", "RUNNING"),
+            Some("STARTING") => ("시작 중", "STARTING"),
+            Some("PENDING") => ("준비 대기 중", "PENDING"),
+            Some("START_PENDING") => ("시작 준비 대기 중", "START_PENDING"),
+            Some("START_NOT_CONFIRMED") => ("시작 여부 미확인", "START_NOT_CONFIRMED"),
+            Some("GATE_REFUSED") => ("실행 전 검사에서 거부됨", "GATE_REFUSED"),
+            Some("GUI_UNAVAILABLE") => ("사용자 로그인 세션 확인 불가", "GUI_UNAVAILABLE"),
+            Some("CHECKING") => ("확인 중", "CHECKING"),
+            Some("READY") => ("준비됨", "READY"),
+            Some("NOT_READY") => ("아직 준비되지 않음", "NOT_READY"),
+            Some("STOPPED") => ("정지됨", "STOPPED"),
+            Some("EXITED") => ("프로세스 종료됨", "EXITED"),
+            Some("FAILED") => ("실패 확인됨", "FAILED"),
+            Some("NOT_LOADED") => ("서비스에 등록되지 않음", "NOT_LOADED"),
+            Some("NOT_REGISTERED") => ("서비스에 등록되지 않음", "NOT_REGISTERED"),
+            Some("NOT_STARTED") => ("시작하지 않음", "NOT_STARTED"),
+            Some("NOT_OBSERVED") => ("관측 전", "NOT_OBSERVED"),
+            Some("NOT_CHECKED") => ("미검사", "NOT_CHECKED"),
+            _ => ("확인되지 않음", "UNKNOWN"),
+        };
+        writeln!(out, "{label}: {description} ({code})")?;
+    }
+    let attempt = data["attemptId"]
+        .as_str()
+        .filter(|id| {
+            !id.is_empty()
+                && id.len() <= 80
+                && id
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'_' | b'-'))
+        })
+        .unwrap_or("확인되지 않음");
+    writeln!(out, "시작 시도: {attempt}")?;
+    let reason = data.get("reason").or_else(|| data.get("serviceReason"));
+    let reason = reason
+        .and_then(Value::as_str)
+        .filter(|code| safe_reason_code(code))
+        .unwrap_or("UNKNOWN");
+    writeln!(out, "서비스 사유: {reason}")?;
+    if let Some(last) = data["lastObservationReason"]
+        .as_str()
+        .filter(|code| safe_reason_code(code))
+    {
+        writeln!(out, "마지막 관측 사유: {last}")?;
+    }
+    match reason {
+        "SERVICE_START_WAIT_EXPIRED" | "SERVICE_STATUS_WAIT_EXPIRED" => {
+            writeln!(
+                out,
+                "관측 시간이 끝났습니다. 실행은 계속될 수 있으며, 시작 실패가 확정된 것은 아닙니다."
+            )?;
+            writeln!(
+                out,
+                "다음 조치: bxdl status --instance <인스턴스> --wait로 같은 시작 시도의 준비 상태를 이어서 확인하세요."
+            )?;
+        }
+        "SERVICE_STATUS_QUERY_EXPIRED" => {
+            writeln!(
+                out,
+                "이번 상태 조회의 관측 시간이 끝났습니다. 실행 여부를 확정하지 못했습니다."
+            )?;
+            writeln!(
+                out,
+                "다음 조치: bxdl status --instance <인스턴스> --wait로 현재 시도를 다시 확인하세요."
+            )?;
+        }
+        _ if data["engineState"] == "FAILED" || data["outcome"] == "FAILED" => {
+            writeln!(
+                out,
+                "실패가 관측됐습니다. logs 또는 diagnose의 정제한 기록을 확인하세요. 자동으로 다시 시작하지 않습니다."
+            )?;
+        }
+        _ if data["engineState"] == "STARTING" => {
+            writeln!(
+                out,
+                "엔진이 준비 중입니다. status --wait로 같은 시작 시도를 이어서 확인할 수 있습니다."
+            )?;
+        }
+        _ => {}
+    }
+    writeln!(
+        out,
+        "네트워크 합의: 미검사 (로컬 READY만으로 quorum·거래 확정을 보장하지 않음)"
+    )
+}
+
+fn safe_reason_code(code: &str) -> bool {
+    !code.is_empty()
+        && code.len() <= 96
+        && code
+            .bytes()
+            .all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_')
+}
+
 fn print_setup_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
     if data["mode"] == "INSTALL" {
         for (key, label) in [
             ("installation", "패키지 설치"),
             ("registration", "인스턴스 등록"),
             ("initialization", "저장소 초기화"),
-            ("serviceState", "서비스 관측"),
-            ("runtimeReadiness", "로컬 readiness"),
         ] {
             writeln!(out, "{label}: {}", data[key].as_str().unwrap_or("UNKNOWN"))?;
         }
-        writeln!(out, "네트워크 합의: 미검사")?;
+        print_service_summary(out, data)?;
         if let Some(path) = data["workspace"].as_str() {
             writeln!(out, "설치 작업 폴더: {path}")?;
         }
@@ -525,7 +643,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["runtime.stage", "package.build", "package.verify", "config.validate", "preflight.local", "setup.draft", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
+                        "capabilities": ["runtime.stage", "package.build", "package.verify", "config.validate", "preflight.local", "setup.draft", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
                         "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),
@@ -1136,7 +1254,15 @@ fn dispatch_initialization(command: &str, args: &[String]) -> (ResultEnvelope, i
 }
 
 fn service_failure(command: &str, error: BxdlError) -> (ResultEnvelope, i32) {
-    if error.code.contains("UNKNOWN") || error.code == "ENGINE_TIMEOUT" {
+    if error.code.contains("UNKNOWN")
+        || matches!(
+            error.code.as_str(),
+            "ENGINE_TIMEOUT"
+                | "SERVICE_ATTEMPT_CHANGED"
+                | "SERVICE_LAUNCHCTL_WAIT_EXPIRED"
+                | "SERVICE_HTTP_WAIT_EXPIRED"
+        )
+    {
         (
             result(command, "UNKNOWN", &error.code, &error.message, None),
             6,
@@ -1215,27 +1341,65 @@ fn dispatch_diagnostics(command: &str, args: &[String]) -> (ResultEnvelope, i32)
         Err(error) => failure(command, error, 3),
     }
 }
-fn dispatch_service(command: &str, args: &[String]) -> (ResultEnvelope, i32) {
-    let Some((flags, positions)) = parse(args, &[("instance", true), ("timeout-seconds", true)])
-    else {
-        return invalid(command);
-    };
-    if !positions.is_empty() || !flags.contains_key("instance") {
-        return invalid(command);
+struct ServiceOptions {
+    instance: PathBuf,
+    timeout: std::time::Duration,
+    wait: bool,
+}
+
+fn service_options(command: &str, args: &[String]) -> Option<ServiceOptions> {
+    let (flags, positions) = parse(
+        args,
+        &[
+            ("instance", true),
+            ("timeout-seconds", true),
+            ("wait", false),
+        ],
+    )?;
+    let wait = flags.contains_key("wait");
+    if !positions.is_empty() || !flags.contains_key("instance") || (wait && command != "status") {
+        return None;
     }
     let (default, maximum) = match command {
         "start" => (120, 600),
         "stop" => (60, 600),
-        _ => (10, 120),
+        "status" if wait => (120, 600),
+        "status" => (10, 120),
+        _ => return None,
     };
-    let Some(timeout) = timeout_flag(&flags, default, maximum) else {
+    Some(ServiceOptions {
+        instance: PathBuf::from(&flags["instance"]),
+        timeout: timeout_flag(&flags, default, maximum)?,
+        wait,
+    })
+}
+
+fn service_wait_notice(args: &[String]) -> Option<String> {
+    let command = args.first()?.as_str();
+    let options = service_options(command, &args[1..])?;
+    let seconds = options.timeout.as_secs();
+    let action = match command {
+        "start" => format!("사전 검증과 시작 요청 후 준비 상태를 최대 {seconds}초 관측합니다."),
+        "status" if options.wait => format!(
+            "현재 시작 시도의 준비 상태를 기다립니다. 새 실행은 요청하지 않습니다 (최대 {seconds}초)."
+        ),
+        _ => return None,
+    };
+    Some(format!(
+        "{action} 관측 기한이 끝나도 실행은 계속될 수 있습니다."
+    ))
+}
+
+fn dispatch_service(command: &str, args: &[String]) -> (ResultEnvelope, i32) {
+    let Some(options) = service_options(command, args) else {
         return invalid(command);
     };
-    let instance = Path::new(&flags["instance"]);
+    let instance = options.instance.as_path();
     let result_value = match command {
-        "start" => engine::instance::service::start(instance, timeout),
-        "stop" => engine::instance::service::stop(instance, timeout),
-        _ => engine::instance::service::status(instance, timeout),
+        "start" => engine::instance::service::start(instance, options.timeout),
+        "stop" => engine::instance::service::stop(instance, options.timeout),
+        _ if options.wait => engine::instance::service::wait_ready(instance, options.timeout),
+        _ => engine::instance::service::status(instance, options.timeout),
     };
     match result_value {
         Ok(value) => {
@@ -1321,5 +1485,153 @@ mod diagnostic_summary_tests {
         assert!(!text.contains("PRIVATE-CANARY"));
         assert!(!text.contains("PRIVATE_SNAPSHOT"));
         assert!(!text.starts_with('{'));
+    }
+}
+
+#[cfg(test)]
+mod service_ux_tests {
+    use super::*;
+
+    fn args(values: &[&str]) -> Vec<String> {
+        values.iter().map(|s| (*s).to_owned()).collect()
+    }
+
+    #[test]
+    fn wait_bounds_are_independent_from_single_query_and_mutation_options() {
+        let single = service_options("status", &args(&["--instance", "x"])).unwrap();
+        assert_eq!(single.timeout.as_secs(), 10);
+        assert!(!single.wait);
+        let wait = service_options("status", &args(&["--instance", "x", "--wait"])).unwrap();
+        assert_eq!(wait.timeout.as_secs(), 120);
+        assert!(wait.wait);
+        assert!(
+            service_options(
+                "status",
+                &args(&["--instance", "x", "--wait", "--timeout-seconds", "600"])
+            )
+            .is_some()
+        );
+        for command in ["start", "stop"] {
+            assert!(service_options(command, &args(&["--instance", "x", "--wait"])).is_none());
+        }
+        for seconds in ["0", "601"] {
+            assert!(
+                service_options(
+                    "status",
+                    &args(&["--instance", "x", "--wait", "--timeout-seconds", seconds])
+                )
+                .is_none()
+            );
+        }
+        assert!(
+            service_options(
+                "status",
+                &args(&["--instance", "x", "--timeout-seconds", "121"])
+            )
+            .is_none()
+        );
+        assert!(service_options("status", &args(&["--instance", "x", "--wait=true"])).is_none());
+        assert!(
+            service_options("status", &args(&["--instance", "x", "--wait", "--wait"])).is_none()
+        );
+        assert!(
+            service_wait_notice(&args(&[
+                "start",
+                "--instance",
+                "x",
+                "--timeout-seconds",
+                "42"
+            ]))
+            .unwrap()
+            .contains("사전 검증과 시작 요청 후 준비 상태를 최대 42초 관측합니다.")
+        );
+        assert!(service_wait_notice(&args(&["status", "--instance", "x"])).is_none());
+        assert!(
+            service_wait_notice(&args(&["status", "--instance", "x", "--wait"]))
+                .unwrap()
+                .contains("새 실행은 요청하지 않습니다")
+        );
+    }
+
+    #[test]
+    fn human_service_projection_distinguishes_expiry_from_failure_without_dumping_private_data() {
+        for reason in ["SERVICE_START_WAIT_EXPIRED", "SERVICE_STATUS_WAIT_EXPIRED"] {
+            let value = json!({
+                "serviceState": "RUNNING", "engineState": "STARTING", "runtimeReadiness": "UNKNOWN",
+                "outcome": "UNKNOWN", "reason": reason, "lastObservationReason": "SERVICE_START_PENDING",
+                "attemptId": "bxdl-123-abcd-1", "health": {"token": "PRIVATE_CANARY"},
+                "privatePath": "/PRIVATE_CANARY", "credential": "PRIVATE_CANARY"
+            });
+            let mut output = Vec::new();
+            print_service_summary(&mut output, &value).unwrap();
+            let text = String::from_utf8(output).unwrap();
+            for expected in [
+                "서비스: 실행 중 (RUNNING)",
+                "엔진: 시작 중 (STARTING)",
+                "시작 시도: bxdl-123-abcd-1",
+                "마지막 관측 사유: SERVICE_START_PENDING",
+                "관측 시간이 끝났습니다",
+                "실행은 계속될 수",
+                "status --instance <인스턴스> --wait",
+            ] {
+                assert!(text.contains(expected), "missing {expected}: {text}");
+            }
+            assert!(!text.contains("실패가 관측됐습니다"));
+            assert!(!text.contains("PRIVATE_CANARY"));
+            assert!(!text.contains("\"health\""));
+        }
+        let mut output = Vec::new();
+        print_service_summary(&mut output, &json!({"serviceState":"EXITED", "engineState":"FAILED", "runtimeReadiness":"NOT_READY", "outcome":"FAILED", "reason":"SERVICE_EXITED_DURING_START"})).unwrap();
+        let text = String::from_utf8(output).unwrap();
+        assert!(text.contains("실패가 관측됐습니다"));
+        assert!(!text.contains("관측 시간이 끝났습니다"));
+
+        let mut output = Vec::new();
+        print_service_summary(
+            &mut output,
+            &json!({
+                "serviceState": "NOT_REGISTERED", "engineState": "NOT_STARTED",
+                "runtimeReadiness": "NOT_CHECKED", "reason": "SERVICE_NOT_STARTED"
+            }),
+        )
+        .unwrap();
+        let text = String::from_utf8(output).unwrap();
+        assert!(text.contains("서비스: 서비스에 등록되지 않음 (NOT_REGISTERED)"));
+        assert!(text.contains("엔진: 시작하지 않음 (NOT_STARTED)"));
+        assert!(!text.contains("서비스: 확인되지 않음"));
+    }
+
+    #[test]
+    fn projection_rejects_unrecognized_states_and_unsafe_observation_strings() {
+        let mut output = Vec::new();
+        print_service_summary(&mut output, &json!({
+            "serviceState":"/PRIVATE_CANARY", "engineState":"PRIVATE_CANARY", "runtimeReadiness":"PRIVATE_CANARY",
+            "serviceReason":"secret\nPRIVATE_CANARY", "lastObservationReason":"/PRIVATE_CANARY",
+            "attemptId":"PRIVATE_CANARY\n", "health":"PRIVATE_CANARY"
+        })).unwrap();
+        let text = String::from_utf8(output).unwrap();
+        assert!(!text.contains("PRIVATE_CANARY"));
+        assert!(text.contains("엔진: 확인되지 않음 (UNKNOWN)"));
+        assert!(text.contains("서비스 사유: UNKNOWN"));
+    }
+
+    #[test]
+    fn uncertain_service_errors_do_not_claim_engine_failure() {
+        for code in [
+            "ENGINE_TIMEOUT",
+            "SERVICE_ATTEMPT_CHANGED",
+            "SERVICE_LAUNCHCTL_WAIT_EXPIRED",
+            "SERVICE_HTTP_WAIT_EXPIRED",
+        ] {
+            for command in ["start", "status", "stop"] {
+                let (value, exit) = service_failure(
+                    command,
+                    BxdlError::new(code, "현재 실행 상태를 확정하지 못했습니다."),
+                );
+                assert_eq!(exit, 6, "{command} {code}");
+                assert_eq!(value.outcome, "UNKNOWN", "{command} {code}");
+                assert_eq!(value.reason_code, code);
+            }
+        }
     }
 }

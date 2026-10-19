@@ -3,11 +3,12 @@
 use super::fail;
 use crate::error::Result;
 use std::{
-    io::{Read, Write},
+    io::{ErrorKind, Read, Write},
     net::{SocketAddr, TcpStream},
     time::{Duration, Instant},
 };
 
+pub(super) const WAIT_EXPIRED: &str = "SERVICE_HTTP_WAIT_EXPIRED";
 pub(super) const MEDIA: &str = "application/vnd.nigo.console+json";
 const LIMIT: usize = 262_144;
 const HEADER_LIMIT: usize = 16_384;
@@ -29,23 +30,21 @@ pub(super) fn get(address: SocketAddr, endpoint: &str, timeout: Duration) -> Res
     }
     let deadline = Instant::now() + timeout.min(Duration::from_secs(10));
     let mut stream =
-        TcpStream::connect_timeout(&address, remaining(deadline)?).map_err(|_| invalid())?;
+        TcpStream::connect_timeout(&address, remaining(deadline)?).map_err(io_failure)?;
     stream
         .set_write_timeout(Some(remaining(deadline)?))
         .map_err(|_| invalid())?;
     let request = format!(
         "GET {endpoint} HTTP/1.1\r\nHost: {address}\r\nAccept: {MEDIA}\r\nAccept-Encoding: identity\r\nConnection: close\r\n\r\n"
     );
-    stream
-        .write_all(request.as_bytes())
-        .map_err(|_| invalid())?;
+    stream.write_all(request.as_bytes()).map_err(io_failure)?;
     let mut raw = Vec::new();
     let mut buffer = [0; 8192];
     loop {
         stream
             .set_read_timeout(Some(remaining(deadline)?))
             .map_err(|_| invalid())?;
-        let count = stream.read(&mut buffer).map_err(|_| invalid())?;
+        let count = stream.read(&mut buffer).map_err(io_failure)?;
         if count == 0 {
             break;
         }
@@ -63,7 +62,19 @@ fn remaining(deadline: Instant) -> Result<Duration> {
     deadline
         .checked_duration_since(Instant::now())
         .filter(|d| !d.is_zero())
-        .ok_or_else(invalid)
+        .ok_or_else(wait_expired)
+}
+fn io_failure(error: std::io::Error) -> crate::error::BxdlError {
+    match error.kind() {
+        ErrorKind::TimedOut | ErrorKind::WouldBlock => wait_expired(),
+        _ => invalid(),
+    }
+}
+fn wait_expired() -> crate::error::BxdlError {
+    fail(
+        WAIT_EXPIRED,
+        "로컬 엔진의 HTTP 관측 시간이 끝났습니다. 응답 identity가 잘못된 것으로 단정하지 않습니다.",
+    )
 }
 fn parse(raw: &[u8]) -> Result<Response> {
     let split = raw
@@ -164,6 +175,29 @@ fn invalid() -> crate::error::BxdlError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn only_explicit_deadline_and_socket_timeout_errors_are_wait_expiry() {
+        for kind in [ErrorKind::TimedOut, ErrorKind::WouldBlock] {
+            assert_eq!(io_failure(kind.into()).code, WAIT_EXPIRED);
+        }
+        assert_eq!(
+            remaining(Instant::now() - Duration::from_millis(1))
+                .unwrap_err()
+                .code,
+            WAIT_EXPIRED
+        );
+        for kind in [
+            ErrorKind::ConnectionRefused,
+            ErrorKind::ConnectionReset,
+            ErrorKind::UnexpectedEof,
+        ] {
+            assert_eq!(io_failure(kind.into()).code, "SERVICE_HTTP_UNKNOWN");
+        }
+        let malformed = parse(b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{}")
+            .err()
+            .unwrap();
+        assert_eq!(malformed.code, "SERVICE_HTTP_UNKNOWN");
+    }
     #[test]
     fn rejects_redirects_truncation_ambiguous_framing_and_wrong_media() {
         let prefix = format!("HTTP/1.1 200 OK\r\nContent-Type: {MEDIA}\r\n");

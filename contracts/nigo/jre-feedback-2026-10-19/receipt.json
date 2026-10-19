@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-19",
+  "reviewedRevision": "e3f55ecb5eb19ee9dc32737687902836edb62e27",
+  "pullRequest": "https://github.com/bwg-loonshots/nigo-protocol/pull/212",
+  "harnessCommit": "6489c9540853bdadfa8c384227558d5eeca3ffea",
+  "documents": [
+    {
+      "path": "requirements/REQ-0003-nigo-jre-feedback.md",
+      "sha256": "4d81ecdd66268b482471a64b0e3c9517711cf405eba1a3bae31d625cc39a256c",
+      "url": "https://github.com/bwg-loonshots/nigo-protocol/blob/e3f55ecb5eb19ee9dc32737687902836edb62e27/requirements/REQ-0003-nigo-jre-feedback.md"
+    },
+    {
+      "path": "nigo-e2e-test-suite/EXTERNAL_ENGINE_JRE_VALIDATION.md",
+      "sha256": "c772d80680f987aa7dbc3217ff1d11e9469540be5f9a5815f1efe36ec38dc44a",
+      "url": "https://github.com/bwg-loonshots/nigo-protocol/blob/e3f55ecb5eb19ee9dc32737687902836edb62e27/nigo-e2e-test-suite/EXTERNAL_ENGINE_JRE_VALIDATION.md"
+    },
+    {
+      "path": "nigo-e2e-test-suite/results/2026-10-19-rc1-temurin-exact-jar-validation.md",
+      "sha256": "1120fd59f21135eeb72975e3432a28685000f8a679564668f6a5cedc99c73042",
+      "url": "https://github.com/bwg-loonshots/nigo-protocol/blob/e3f55ecb5eb19ee9dc32737687902836edb62e27/nigo-e2e-test-suite/results/2026-10-19-rc1-temurin-exact-jar-validation.md"
+    }
+  ],
+  "engineSource": "540a89f0814c01d2a4ec67da1087af35195882ca",
+  "engineJarSha256": "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45",
+  "engineJarSizeBytes": 164083923,
+  "runtimeVersion": "21.0.12.1+1-LTS",
+  "runtimeLockSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+  "supplierRunResultSha256": "279752beef1d70a3f542a638c1a59fd613626737cfa31b4e7b2cb73b4ba6d6c6",
+  "supplierEnvironmentSha256": "6ef2ce8ee5f216dbe544255f94e533e6cbe18697438d2ebdf3c0f2492a41755f",
+  "review": {
+    "kind": "EXISTING_SUPPLIER_CODE_AND_EVIDENCE_REVIEW",
+    "J1": "ACCEPTED_FOR_FULL_JRE_DEVELOPMENT_CANDIDATE",
+    "J2": "ACCEPTED_EXTERNAL_EXACT_JAR_HARNESS",
+    "J3": "ACCEPTED_SPECIFIED_COMBINATION_PASS",
+    "supplierCases": {
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "identifiedChildren": 66,
+    "httpRuntimeNativeProbes": 18,
+    "mtlsProbes": 10,
+    "nativeCalls": 72,
+    "runtimeFilesMatched": 259,
+    "runtimeModules": 49
+  },
+  "remaining": [
+    "BXDL J4 actual package and complete G1-M acceptance",
+    "J5 SBOM discrepancy, complete NOTICE/source supply and signature provenance",
+    "minimum OS, production resource and startup SLA",
+    "source-free QBFT preparation, Linux/systemd and Docker"
+  ],
+  "priorBxdlRunOutcome": "INCOMPLETE_WITH_SEPARATE_READY_STOP_FOLLOWUP"
+}

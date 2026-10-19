@@ -55,3 +55,7 @@ NIGO/RocksDB/crypto native·Rust 전체 전이 의존성 SBOM/NOTICE 완성은 �
 - 소비자 단일 노드 시험과 공급자 4-validator/crypto 결과를 구분한다. 공급자 회신을 받기 전 동의/PASS로 표시하지 않는다.
 - Mach-O launcher minOS11.0은 BXDL 지원 최소 OS가 아니다. 공급자 플랫폼 표와 실제 macOS26.6.2 시험을 구분한다.
   최소 OS matrix·오프라인 환경·4-validator·전체 G1-M·운영 출시 인수는 남아 있다.
+
+## 공급자 회신 수신 — 2026-10-19
+
+[NIGO PR #212의 J1~J3를 검토·수용했다](../contracts/nigo/jre-feedback-2026-10-19/README.md). 지정 RC1/Temurin의 공급자9사례 PASS이며 기존 lock을 유지한다. 원문 revision/hash와 검토 범위는 수신 원장을 따른다. 이후 BXDL 제품 인수와 전체 공급망 확인을 진행하며, 위 요청 당시의 대기 상태와 기존 시험 결과는 이력으로 보존한다.

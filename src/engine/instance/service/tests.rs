@@ -161,3 +161,435 @@ fn consumed_deadline_never_grants_another_full_wait() {
     let rest = remaining(deadline).unwrap();
     assert!(rest <= Duration::from_millis(100));
 }
+
+fn observation(engine: &str, readiness: &str, outcome: &str, reason: &str) -> ServiceSummary {
+    ServiceSummary {
+        instance_id: "service-test".into(),
+        outcome: outcome.into(),
+        service_state: "RUNNING".into(),
+        engine_state: engine.into(),
+        runtime_readiness: readiness.into(),
+        reason: reason.into(),
+        last_observation_reason: None,
+        operation_busy: true,
+        development_only: true,
+        login_auto_start: false,
+        automatic_restart: false,
+        service_profile: "MACOS_USER_LAUNCH_AGENT",
+        global_consensus: "NOT_CHECKED",
+        attempt_id: Some("run-attempt".into()),
+        pid: Some(31234),
+        node_instance_id: Some("node-test".into()),
+        health: None,
+    }
+}
+fn waiting(kind: WaitKind) -> ReadinessWait {
+    ReadinessWait {
+        attempt: None,
+        kind,
+        last: None,
+    }
+}
+#[test]
+fn delayed_readiness_keeps_the_same_attempt_until_ready() {
+    for kind in [WaitKind::Start, WaitKind::Status] {
+        let mut wait = waiting(kind);
+        assert!(
+            wait.accept(
+                observation("STARTING", "UNKNOWN", "UNKNOWN", "ENGINE_STARTING"),
+                false
+            )
+            .unwrap()
+            .is_none()
+        );
+        assert!(
+            wait.accept(
+                observation("RUNNING", "NOT_READY", "INCOMPLETE", "STARTUP_IN_PROGRESS"),
+                false
+            )
+            .unwrap()
+            .is_none()
+        );
+        let ready = wait
+            .accept(
+                observation("RUNNING", "READY", "SUCCEEDED", "VALIDATOR_READY"),
+                true,
+            )
+            .unwrap()
+            .unwrap();
+        assert_eq!(ready.reason, "VALIDATOR_READY");
+        assert_eq!(ready.outcome, "SUCCEEDED");
+        assert_eq!(ready.attempt_id.as_deref(), Some("run-attempt"));
+        assert!(ready.last_observation_reason.is_none());
+    }
+}
+#[test]
+fn expired_wait_keeps_unknown_or_incomplete_and_the_observation_reason() {
+    for kind in [WaitKind::Start, WaitKind::Status] {
+        for (engine, readiness, outcome, reason) in [
+            ("STARTING", "UNKNOWN", "UNKNOWN", "ENGINE_STARTING"),
+            ("RUNNING", "NOT_READY", "INCOMPLETE", "STARTUP_IN_PROGRESS"),
+        ] {
+            let result = waiting(kind)
+                .accept(observation(engine, readiness, outcome, reason), true)
+                .unwrap()
+                .unwrap();
+            assert_eq!(result.reason, kind.expired_reason());
+            assert_eq!(result.outcome, outcome);
+            assert_eq!(result.engine_state, engine);
+            assert_eq!(result.runtime_readiness, readiness);
+            assert_eq!(result.attempt_id.as_deref(), Some("run-attempt"));
+            assert_eq!(result.pid, Some(31234));
+            let json = serde_json::to_value(result).unwrap();
+            assert_eq!(json["lastObservationReason"], reason);
+        }
+    }
+}
+#[test]
+fn failed_and_stopped_observations_are_not_relabelled_as_wait_expiry() {
+    for kind in [WaitKind::Start, WaitKind::Status] {
+        for (engine, readiness, reason) in [
+            ("FAILED", "UNKNOWN", "ENGINE_RUNTIME_FAILED"),
+            ("RUNNING", "FAILED", "VALIDATOR_START_FAILED"),
+            ("GATE_REFUSED", "UNKNOWN", "SERVICE_GATE_REFUSED"),
+        ] {
+            let result = waiting(kind)
+                .accept(observation(engine, readiness, "FAILED", reason), true)
+                .unwrap()
+                .unwrap();
+            assert_eq!(result.outcome, "FAILED");
+            assert_eq!(result.reason, reason);
+            assert!(result.last_observation_reason.is_none());
+        }
+        let result = waiting(kind)
+            .accept(
+                observation(
+                    "STOPPED",
+                    "STOPPED",
+                    "SUCCEEDED",
+                    "SERVICE_STOPPED_VERIFIED",
+                ),
+                true,
+            )
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            result.reason,
+            match kind {
+                WaitKind::Start => "SERVICE_EXITED_DURING_START",
+                WaitKind::Status => "SERVICE_STOPPED_VERIFIED",
+            }
+        );
+        assert_eq!(
+            result.outcome,
+            match kind {
+                WaitKind::Start => "INCOMPLETE",
+                WaitKind::Status => "SUCCEEDED",
+            }
+        );
+        assert!(result.last_observation_reason.is_none());
+    }
+}
+#[test]
+fn waiting_never_adopts_ready_from_a_replaced_or_missing_attempt() {
+    for replacement in [Some("another-attempt".into()), None] {
+        let mut wait = waiting(WaitKind::Status);
+        wait.accept(
+            observation("STARTING", "UNKNOWN", "UNKNOWN", "ENGINE_STARTING"),
+            false,
+        )
+        .unwrap();
+        let mut next = observation("RUNNING", "READY", "SUCCEEDED", "VALIDATOR_READY");
+        next.attempt_id = replacement;
+        let error = wait.accept(next, true).err().unwrap();
+        assert_eq!(error.code, "SERVICE_ATTEMPT_CHANGED");
+        assert_eq!(wait.attempt.as_deref(), Some("run-attempt"));
+    }
+}
+#[test]
+fn unstarted_instance_returns_immediately_and_does_not_adopt_a_future_attempt() {
+    let mut wait = waiting(WaitKind::Status);
+    let mut result = observation(
+        "NOT_STARTED",
+        "NOT_CHECKED",
+        "INCOMPLETE",
+        "SERVICE_NOT_STARTED",
+    );
+    result.attempt_id = None;
+    result.pid = None;
+    let result = wait.accept(result, false).unwrap().unwrap();
+    assert_eq!(result.reason, "SERVICE_NOT_STARTED");
+    assert!(wait.attempt.is_none());
+    assert!(wait.last.is_none());
+}
+#[test]
+fn final_query_expiry_preserves_starting_but_does_not_hide_identity_errors() {
+    let mut wait = waiting(WaitKind::Status);
+    wait.accept(
+        observation("STARTING", "UNKNOWN", "UNKNOWN", "ENGINE_STARTING"),
+        false,
+    )
+    .unwrap();
+    let partial = expired_summary(
+        observation(
+            "UNKNOWN",
+            "UNKNOWN",
+            "UNKNOWN",
+            "SERVICE_OBSERVATION_UNKNOWN",
+        ),
+        "SERVICE_STATUS_QUERY_EXPIRED",
+    );
+    let result = wait.accept(partial, true).unwrap().unwrap();
+    assert_eq!(result.reason, "SERVICE_STATUS_WAIT_EXPIRED");
+    assert_eq!(result.engine_state, "STARTING");
+    assert_eq!(
+        result.last_observation_reason.as_deref(),
+        Some("ENGINE_STARTING")
+    );
+
+    let mut wait = waiting(WaitKind::Start);
+    wait.accept(
+        observation("STARTING", "UNKNOWN", "UNKNOWN", "ENGINE_STARTING"),
+        false,
+    )
+    .unwrap();
+    let result = wait
+        .accept(
+            observation(
+                "RUNNING",
+                "UNKNOWN",
+                "UNKNOWN",
+                "SERVICE_HTTP_IDENTITY_UNKNOWN",
+            ),
+            true,
+        )
+        .unwrap()
+        .unwrap();
+    assert_eq!(result.engine_state, "RUNNING");
+    assert_eq!(
+        result.last_observation_reason.as_deref(),
+        Some("SERVICE_HTTP_IDENTITY_UNKNOWN")
+    );
+}
+#[test]
+fn deadline_before_next_poll_finishes_from_last_observation_without_a_fresh_budget() {
+    let now = Instant::now();
+    let deadline = now + Duration::from_secs(20);
+    assert_eq!(
+        observation_deadline(deadline, now),
+        now + Duration::from_secs(8)
+    );
+    assert_eq!(
+        observation_deadline(deadline, deadline - Duration::from_nanos(1)),
+        deadline
+    );
+    assert_eq!(
+        observation_deadline(deadline, deadline + Duration::from_secs(1)),
+        deadline
+    );
+    assert_eq!(
+        query_remaining(now - Duration::from_millis(1))
+            .err()
+            .unwrap()
+            .code,
+        "SERVICE_STATUS_QUERY_EXPIRED"
+    );
+    let mut wait = waiting(WaitKind::Status);
+    wait.accept(
+        observation("RUNNING", "NOT_READY", "INCOMPLETE", "STARTUP_IN_PROGRESS"),
+        false,
+    )
+    .unwrap();
+    let result = wait.finish().unwrap();
+    assert_eq!(result.reason, "SERVICE_STATUS_WAIT_EXPIRED");
+    assert_eq!(
+        result.last_observation_reason.as_deref(),
+        Some("STARTUP_IN_PROGRESS")
+    );
+    assert_eq!(result.outcome, "INCOMPLETE");
+}
+
+impl Fixture {
+    fn bind_initialized(&mut self) {
+        let root = self.control.path().parent().unwrap();
+        let binding = Binding {
+            schema_version: 1,
+            instance_id: self.state.instance_id.clone(),
+            package: root.join("package"),
+            archive: root.join("bundle.tar.gz"),
+            public_key: None,
+            allow_unsigned_development: true,
+            product: root.join("product.json"),
+            native: root.join("node.json"),
+            lock: root.join("trusted.lock.json"),
+            archive_sha256: "a".repeat(64),
+            manifest_sha256: "b".repeat(64),
+            identity: serde_json::from_slice(include_bytes!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/contracts/nigo/engine-rc1-2026-10-19/evidence/engine-info.json"
+            )))
+            .unwrap(),
+            backend: "rocksdb".into(),
+            chain_fingerprint: "c".repeat(64),
+            node_identity: format!("0x{}:0x{}", "1".repeat(64), "2".repeat(40)),
+            data_directory: root.join("data"),
+            pins: vec![],
+        };
+        let raw = serde_json::to_vec(&binding).unwrap();
+        store::write_new(&self.control.path().join("binding.json"), &raw).unwrap();
+        self.state.binding_sha256 = files::digest(&raw);
+        let mut journal = Store::create(&self.control.path().join("journal")).unwrap();
+        self.state.save(&mut journal).unwrap();
+        self.runtime.binding_sha256 = self.state.binding_sha256.clone();
+        self.runtime.save(&mut self.store).unwrap();
+        self.control.attempt(&self.runtime.attempt_id).unwrap();
+    }
+}
+fn tree_bytes(path: &Path) -> std::collections::BTreeMap<PathBuf, (u32, Vec<u8>)> {
+    fn walk(
+        root: &Path,
+        path: &Path,
+        result: &mut std::collections::BTreeMap<PathBuf, (u32, Vec<u8>)>,
+    ) {
+        let metadata = fs::symlink_metadata(path).unwrap();
+        let bytes = if metadata.is_dir() {
+            vec![]
+        } else {
+            fs::read(path).unwrap()
+        };
+        result.insert(
+            path.strip_prefix(root).unwrap().to_owned(),
+            (metadata.permissions().mode(), bytes),
+        );
+        if metadata.is_dir() {
+            for entry in fs::read_dir(path).unwrap() {
+                walk(root, &entry.unwrap().path(), result);
+            }
+        }
+    }
+    let mut result = std::collections::BTreeMap::new();
+    walk(path, path, &mut result);
+    result
+}
+#[test]
+fn expired_status_wait_reads_existing_attempt_without_writing_or_starting() {
+    let mut f = Fixture::new();
+    f.bind_initialized();
+    let before = tree_bytes(f.control.path());
+    let result =
+        wait_observations(f.control.path(), None, Duration::ZERO, WaitKind::Status).unwrap();
+    assert_eq!(result.reason, "SERVICE_STATUS_WAIT_EXPIRED");
+    assert_eq!(
+        result.last_observation_reason.as_deref(),
+        Some("SERVICE_OBSERVATION_UNKNOWN")
+    );
+    assert_eq!(result.attempt_id.as_deref(), Some("run-attempt"));
+    assert_eq!(result.outcome, "UNKNOWN");
+    assert_eq!(before, tree_bytes(f.control.path()));
+    let result = status_until(f.control.path(), Instant::now()).unwrap();
+    assert_eq!(result.reason, "SERVICE_STATUS_QUERY_EXPIRED");
+    assert_eq!(result.attempt_id.as_deref(), Some("run-attempt"));
+    assert_eq!(before, tree_bytes(f.control.path()));
+}
+#[test]
+fn expired_query_does_not_hide_invalid_runtime_identity() {
+    let mut f = Fixture::new();
+    f.bind_initialized();
+    f.runtime.instance_id = "different-instance".into();
+    f.runtime.save(&mut f.store).unwrap();
+    let before = tree_bytes(f.control.path());
+    let error = status_until(f.control.path(), Instant::now())
+        .err()
+        .unwrap();
+    assert_eq!(error.code, "SERVICE_STATE_INVALID");
+    assert_eq!(before, tree_bytes(f.control.path()));
+}
+
+#[test]
+fn stalled_http_query_preserves_attempt_and_report_without_claiming_identity_failure() {
+    use std::{io::Read, net::TcpListener, sync::mpsc};
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let address = listener.local_addr().unwrap();
+    let (release, released) = mpsc::channel();
+    let server = thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        stream
+            .set_read_timeout(Some(Duration::from_secs(2)))
+            .unwrap();
+        let mut request = [0; 1024];
+        let _ = stream.read(&mut request);
+        // Keep the accepted connection open without a response until the client
+        // has observed its socket deadline. No fixed test sleep is necessary.
+        let _ = released.recv_timeout(Duration::from_secs(2));
+    });
+    let error = runtime_http::get(
+        address,
+        "/monitor/api/console/bootstrap",
+        Duration::from_millis(50),
+    )
+    .err()
+    .unwrap();
+    let _ = release.send(());
+    server.join().unwrap();
+    assert_eq!(error.code, runtime_http::WAIT_EXPIRED);
+    let result = observation_failure(
+        observation("RUNNING", "UNKNOWN", "UNKNOWN", "ENGINE_RUNNING"),
+        &error,
+        "SERVICE_HTTP_IDENTITY_UNKNOWN",
+    );
+    assert_eq!(result.reason, "SERVICE_STATUS_QUERY_EXPIRED");
+    assert_eq!(
+        result.last_observation_reason.as_deref(),
+        Some("ENGINE_RUNNING")
+    );
+    assert_eq!(result.attempt_id.as_deref(), Some("run-attempt"));
+    assert_eq!(result.pid, Some(31234));
+    assert_eq!(result.engine_state, "RUNNING");
+    assert_eq!(result.runtime_readiness, "UNKNOWN");
+    assert_eq!(result.outcome, "UNKNOWN");
+}
+#[test]
+fn adapter_timeout_and_actual_identity_failure_remain_distinct_in_status() {
+    let partial = || observation("RUNNING", "UNKNOWN", "UNKNOWN", "ENGINE_RUNNING");
+    let launchd = fail(
+        super::super::super::launchd::WAIT_EXPIRED,
+        "bounded helper expired",
+    );
+    let result = observation_failure(partial(), &launchd, "SERVICE_OBSERVATION_UNKNOWN");
+    assert_eq!(result.reason, "SERVICE_STATUS_QUERY_EXPIRED");
+    assert_eq!(
+        result.last_observation_reason.as_deref(),
+        Some("ENGINE_RUNNING")
+    );
+
+    let health = runtime_result::HealthReport {
+        observed_at_epoch_millis: "1789600000000".into(),
+        running: false,
+        lifecycle_running: false,
+        readiness: Some(runtime_result::Readiness {
+            status: "READY".into(),
+            reason: "OBSERVER_INITIALIZED".into(),
+            role: "OBSERVER".into(),
+            startup_mode: "MANUAL_START".into(),
+            startup_completed: true,
+            sync_status: "FOLLOWING".into(),
+        }),
+        execution_status: None,
+    };
+    let error = validate_health_role(
+        &health,
+        &format!("0x{}:0x{}", "1".repeat(64), "2".repeat(40)),
+    )
+    .unwrap_err();
+    let result = observation_failure(partial(), &error, "SERVICE_HTTP_IDENTITY_UNKNOWN");
+    assert_eq!(result.reason, "SERVICE_HTTP_IDENTITY_UNKNOWN");
+    assert!(result.last_observation_reason.is_none());
+    assert_eq!(result.runtime_readiness, "UNKNOWN");
+    let result = observation_failure(
+        partial(),
+        &fail("SERVICE_HTTP_UNKNOWN", "malformed response"),
+        "SERVICE_HTTP_IDENTITY_UNKNOWN",
+    );
+    assert_eq!(result.reason, "SERVICE_HTTP_IDENTITY_UNKNOWN");
+    assert!(result.last_observation_reason.is_none());
+}

@@ -30,6 +30,7 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 | `bxdl resume-init --instance <dir> --confirm-resume` | 같은 identity의 INITIALIZING journal과 기존 ledger가 있는 미완료 시도만 명시 재개 |
 | `bxdl start --instance <dir>` | 초기화한 인스턴스를 시도별 LaunchAgent로 명시 시작. gate를 통과한 worker가 같은 PID로 Java 실행 |
 | `bxdl status --instance <dir>` | 해당 시도의 launchd·report·로컬 HTTP 상태 조회. 전역 quorum 검사가 아님 |
+| `bxdl status --instance <dir> --wait` | 현재 시도의 준비 상태를 기본120초 읽기 관측. 기한 만료·실제 실패·시도 변경 구분 |
 | `bxdl stop --instance <dir>` | 소유 job에 TERM 요청 후 엔진 정상 종료 보고·프로세스 부재·잠금 해제를 함께 확인 |
 | `bxdl logs --instance <dir>` | 최신 초기화·서비스 시도의 정제한 저장 이벤트와 누락 사유를 제한해 조회 |
 | `bxdl diagnose --instance <dir> --output <new.json>` | 같은 오프라인 기록을 새 JSON 지원 보고서로 저장. 현재 health 검증은 수행하지 않음 |
@@ -111,3 +112,7 @@ Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux targe
 선정 Temurin21과 제작자용 `runtime stage`는 [JRE 준비](docs/runtime.md)를 참고한다.
 [실제 Temurin 패키지 검증](results/2026-10-19-temurin-runtime.md): 자동 검사290개·설치/초기화/정상 종료/동일 DB 재시작 PASS.
 [최종 잠금 수정 재검증](results/2026-10-19-workflow-lock-release.md): 자동 검사292개 통과. 새 패키지의 재시작 관측은 UNKNOWN으로 자동 시험 INCOMPLETE이며, 동일 실행의 후속 READY·정상 종료·재개는 별도 확인했다.
+
+[NIGO J1~J3 회신 수신](contracts/nigo/jre-feedback-2026-10-19/README.md): 지정 RC1/Temurin 공급자9사례 PASS를 수용했다. [시작 관측 UX](design/2026-10-19-start-observation-ux.md)는 같은 실행의 대기와 기한 종료 안내를 제공한다. 실제 BXDL 제품 인수와 공급망 잔여는 별도로 관리한다.
+
+[시작 관측 UX 검증](results/2026-10-19-start-observation-ux.md): 자동 검사312개, 실제 package의 짧은 상태 관측 만료·같은 시도 READY·정상 종료·재개 PASS. 전역 합의는 NOT_CHECKED다.
