@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "kind": "bxdl-package",
+  "product": {
+    "name": "BXDL",
+    "version": "0.1.0-dev",
+    "revision": "development"
+  },
+  "channel": "development",
+  "platform": {
+    "os": "darwin",
+    "arch": "arm64",
+    "libc": "none",
+    "minGlibc": "none",
+    "javaMajor": 21,
+    "backend": "rocksdb"
+  },
+  "engine": {
+    "revision": "540a89f0814c01d2a4ec67da1087af35195882ca",
+    "jarSha256": "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45",
+    "contractStatus": "proposed",
+    "contractRevision": "bac1756a81f2d2ddf67ae094fc770bc67060482acab87da7d48b93d441ab8f88"
+  },
+  "runtime": {
+    "vendor": "Eclipse Adoptium Temurin",
+    "version": "21.0.12.1+1-LTS",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c"
+  },
+  "files": []
+}

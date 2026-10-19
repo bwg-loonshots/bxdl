@@ -333,3 +333,148 @@ fn early_cli_check_requires_exact_current_executable_size_and_bytes() {
         "SETUP_CLI_MISMATCH"
     );
 }
+
+#[test]
+fn registration_metadata_distinguishes_explicit_modes_from_legacy_missing_mode() {
+    let f = Fixture::new();
+    let prepared = f.prepare().unwrap();
+    assert_eq!(
+        registration_input(&f.native, &prepared.pins).unwrap(),
+        RegistrationInput {
+            mode: RegistrationMode::Unspecified,
+            issuers: IssuerInput::Count(0),
+        }
+    );
+    // Persisted Prepared stays exactly the legacy shape; display metadata cannot
+    // silently add fields to the workflow's hashed plan on resume.
+    let encoded = serde_json::to_value(&prepared).unwrap();
+    assert_eq!(
+        encoded
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        [
+            "automaticGc",
+            "backend",
+            "dataDirectory",
+            "identity",
+            "issuerCount",
+            "pins"
+        ]
+    );
+    let old = serde_json::to_vec(&prepared).unwrap();
+    assert_eq!(
+        serde_json::to_vec(&serde_json::from_slice::<Prepared>(&old).unwrap()).unwrap(),
+        old
+    );
+    for (value, mode) in [
+        ("OPEN", RegistrationMode::Open),
+        ("ALLOWLISTED", RegistrationMode::Allowlisted),
+    ] {
+        edit(&f.root.join("chain.json"), |chain| {
+            chain["nigo.protocol.native-assets.registration-mode"] = json!(value);
+        });
+        let prepared = f.prepare().unwrap();
+        let before = f.snapshot();
+        assert_eq!(
+            registration_input(&f.native, &prepared.pins).unwrap(),
+            RegistrationInput {
+                mode,
+                issuers: IssuerInput::Count(0),
+            }
+        );
+        assert_eq!(f.snapshot(), before);
+    }
+}
+
+#[test]
+fn policy_errors_remain_engine_decisions_and_never_become_valid_display_metadata() {
+    let f = Fixture::new();
+    for value in [json!("open"), json!(CANARY), json!(1)] {
+        edit(&f.root.join("chain.json"), |chain| {
+            chain["nigo.protocol.native-assets.registration-mode"] = value;
+        });
+        let prepared = f.prepare().unwrap();
+        let display = registration_input(&f.native, &prepared.pins).unwrap();
+        assert_eq!(display.mode, RegistrationMode::Unrecognized);
+        assert!(!format!("{display:?}").contains(CANARY));
+    }
+    // Existing strict JSON rejects null before policy validation; preserve it.
+    edit(&f.root.join("chain.json"), |chain| {
+        chain["nigo.protocol.native-assets.registration-mode"] = Value::Null;
+    });
+    assert_eq!(f.prepare().unwrap_err().code, "ENGINE_PRODUCT_MISMATCH");
+    edit(&f.root.join("chain.json"), |chain| {
+        chain["nigo.protocol.native-assets.registration-mode"] = json!("ALLOWLISTED");
+        chain[format!("{ISSUER_PREFIX}0]")] = json!(format!("0x{}", "a".repeat(40)));
+        chain[format!("{ISSUER_PREFIX}1]")] = json!(format!("0x{}", "A".repeat(40)));
+    });
+    let prepared = f.prepare().unwrap();
+    // Retain the old persisted distinct-address count, but do not describe this
+    // RC1-invalid duplicated input as a valid one-address allowlist in the UI.
+    assert_eq!(prepared.issuer_count, Some(1));
+    assert_eq!(
+        registration_input(&f.native, &prepared.pins)
+            .unwrap()
+            .issuers,
+        IssuerInput::Duplicate
+    );
+    edit(&f.root.join("chain.json"), |chain| {
+        chain[format!("{ISSUER_PREFIX}1]")] = json!(CANARY);
+    });
+    let prepared = f.prepare().unwrap();
+    assert_eq!(
+        registration_input(&f.native, &prepared.pins)
+            .unwrap()
+            .issuers,
+        IssuerInput::Unrecognized
+    );
+    edit(&f.root.join("chain.json"), |chain| {
+        chain
+            .as_object_mut()
+            .unwrap()
+            .remove(&format!("{ISSUER_PREFIX}1]"));
+        chain["nigo.protocol.native-assets.registration-mode"] = json!("OPEN");
+    });
+    let prepared = f.prepare().unwrap();
+    assert_eq!(
+        registration_input(&f.native, &prepared.pins).unwrap(),
+        RegistrationInput {
+            mode: RegistrationMode::Open,
+            issuers: IssuerInput::Count(1),
+        }
+    );
+    assert!(!f.product_path.parent().unwrap().exists());
+    assert!(!prepared.data_directory.exists());
+}
+
+#[test]
+fn registration_display_rejects_changed_or_unpinned_input_without_raw_output() {
+    let f = Fixture::new();
+    let prepared = f.prepare().unwrap();
+    assert_eq!(
+        registration_input(&f.native, &[]).unwrap_err().code,
+        "ENGINE_INPUT_CHANGED"
+    );
+    let mut duplicate = prepared.pins.clone();
+    duplicate.push(
+        duplicate
+            .iter()
+            .find(|pin| pin.path == f.native)
+            .unwrap()
+            .clone(),
+    );
+    assert_eq!(
+        registration_input(&f.native, &duplicate).unwrap_err().code,
+        "ENGINE_INPUT_CHANGED"
+    );
+    edit(&f.root.join("chain.json"), |chain| {
+        chain["nigo.protocol.native-assets.registration-mode"] = json!(CANARY);
+    });
+    let error = registration_input(&f.native, &prepared.pins).unwrap_err();
+    assert_eq!(error.code, "ENGINE_INPUT_CHANGED");
+    assert!(!error.to_string().contains(CANARY));
+    assert!(!error.to_string().contains(f.root.to_str().unwrap()));
+}

@@ -1,0 +1,117 @@
+{
+  "status": "REMOTE_RECEIPT_STATIC_VERIFIED",
+  "candidate": "nigo-engine-v0.1.0-rc.1",
+  "handoffDocumentRevision": "4ec4e0e600d9bd573a7f00a4d1b5cc45092c20ff",
+  "source": {
+    "commit": "540a89f0814c01d2a4ec67da1087af35195882ca",
+    "dirty": false
+  },
+  "archiveSha256": "4036c4bc2fd48b6f155cd5b3c746a53da3d57d04ff9da1b891213a0177f88703",
+  "archiveSize": 157696067,
+  "manifestSha256": "7e2f276266d0a42f602e1d2f2bd52f2452f8e74ed9015fc2265269b94e2664cd",
+  "artifact": {
+    "fileName": "nigo-node-0.0.1-SNAPSHOT.jar",
+    "sha256": "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45",
+    "sizeBytes": 164083923
+  },
+  "contract": {
+    "status": "PROPOSED",
+    "revision": "540a89f0814c01d2a4ec67da1087af35195882ca",
+    "documentationSha256": "f52c8ef1c31fa51b269da547139e72ba90e6131198e351ee3426b760b5e3db95",
+    "definitionSha256": "bffe91e25a3c58db7626fadbb8333b5216ab293b7760dee033f2fdf974841687",
+    "runtimeDocumentationSha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+    "runtimeFixtureSha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e",
+    "fingerprint": "bac1756a81f2d2ddf67ae094fc770bc67060482acab87da7d48b93d441ab8f88"
+  },
+  "console": {
+    "node": "v24.21.0",
+    "npm": "11.19.0",
+    "sourceFingerprint": "4df95293576a4baaa63639d3540ae6657b89c0eae80b1e2e2f7f9e6412a32c73"
+  },
+  "payloadFiles": 14,
+  "inventoryEntries": 13,
+  "archiveStructure": "REGULAR_FILES_AND_DIRECTORIES_ONLY_NO_DUPLICATES_OR_ALIASES",
+  "gzipChecksum": "PASS",
+  "remoteLocalPayloadEquality": "PASS",
+  "embeddedBuildEngineInfoAndManifest": "MATCHED",
+  "embeddedConsole": "MATCHED",
+  "contractSourceArchiveJarAndFingerprint": "MATCHED",
+  "supplierSummaryRecount": [
+    {
+      "id": "node-source",
+      "executionKind": "SOURCE_CLASSPATH",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 1006,
+        "skipped": 2,
+        "tests": 1008
+      }
+    },
+    {
+      "id": "block-sync-source",
+      "executionKind": "SOURCE_CLASSPATH",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 136,
+        "skipped": 0,
+        "tests": 136
+      }
+    },
+    {
+      "id": "gossip-source",
+      "executionKind": "SOURCE_CLASSPATH",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 34,
+        "skipped": 0,
+        "tests": 34
+      }
+    },
+    {
+      "id": "native-tooling-source",
+      "executionKind": "SOURCE_CLASSPATH",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 79,
+        "skipped": 0,
+        "tests": 79
+      }
+    },
+    {
+      "id": "exact-jar",
+      "executionKind": "PACKAGED_JAR",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 9,
+        "skipped": 0,
+        "tests": 9
+      }
+    }
+  ],
+  "notRunOptIn": [
+    {
+      "className": "org.nigo.node.config.StandardProductPersistentNodeTests",
+      "name": "publicSupplyAndDefaultProductSurviveColdNodeRestartsAcrossBothBackendsAndFees()",
+      "result": "NOT_RUN_OPT_IN"
+    },
+    {
+      "className": "org.nigo.protocol.blockchain.pool.PendingStateStoreViewAttributionTests",
+      "name": "attributePinnedConstructionWithoutWeakeningItsSnapshot(String)",
+      "result": "NOT_RUN_OPT_IN"
+    }
+  ],
+  "jvmExecution": "NOT_RUN_BY_RECEIPT_VERIFIER",
+  "consumerPackageAcceptance": "NOT_RUN",
+  "serverEnforcedReleaseImmutability": false,
+  "remoteAssetDigestsAndSizes": "MATCHED",
+  "nativeDocsVsSource": "MATCHED",
+  "remoteReleaseId": 416932996,
+  "remoteTagObject": "2b3d42909428a748add850bb4f2cd815cafdcad0",
+  "remoteTagPeeledCommit": "540a89f0814c01d2a4ec67da1087af35195882ca",
+  "tagCryptographicVerification": "unsigned"
+}

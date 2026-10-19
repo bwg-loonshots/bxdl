@@ -1,9 +1,36 @@
-# 구현 상태 — 2026-09-27
+# 구현 상태 — 2026-10-19
 
 Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후 **R2의 Mac 새 폴더 패키지 설치**와 **R3의 NIGO 개발 후보 정보·cold 사전검사**를 추가했다. clean NIGO 후보를 별도로 수신하고 제품 설정과 명시 native QBFT 설정을 연결하는 preflight를 추가했다. 이후 설치본·설정을 등록해 `--instance`로 preflight와 명시 init/resume-init을 호출하고, Mac 사용자 LaunchAgent의 start/status/stop을 연결했다. 이번에는 `setup --install`에서 이 단계를 선택하고 재개하는 A~C 흐름을 구현했다. 기존 package의 단일 validator 서비스 근거와 새 setup의 exact package·TTY 인수, 전체 G1-M을 구분한다.
 
+## 최신 엔진 후보 — 2026-10-19 RC1
+
+NIGO `nigo-engine-v0.1.0-rc.1`(source `540a89f0`, JAR `f1ea80e2…`)을 원격 수신·검증하고
+[계약 snapshot](../contracts/nigo/engine-rc1-2026-10-19/README.md), 새 lock/spec 예시를 추가했다.
+등록 모드 OPEN/ALLOWLISTED와 빈 허용목록의 의미를 설치 계획에 표시하며 기존 journal 형식을 유지한다.
+이후의 9월 구현/시험 기록은 당시 303e 후보의 이력이다.
+
+`make check` 280개·Mac release 빌드·Linux 타입 검사 PASS. 실제 RC1과 외부 Ed25519 시험 key로 서명한 package에서
+전체 14문답·취소/재개·cold/등록/init/start/stop·동일 DB 재시작을 통과했다. 최종 service NOT_LOADED·engine STOPPED다.
+4-validator 합의는 NOT_CHECKED이며 test-only JRE를 정식 재배포 대상으로 선정하지 않았다.
+[전체 근거와 남은 범위](../results/2026-10-19-engine-rc1-adoption.md)를 따른다.
+
+## 선정 JRE — 2026-10-19 Temurin
+
+Temurin21.0.12.1+1 전체 JRE·archive/source/launcher/259파일을 고정하고 제작자용 `runtime stage`를 추가했다.
+사용자 설치 마법사에는 JRE 선택 단계를 추가하지 않는다. 290개 자동 검사·Mac release·Linux 타입 검사를 통과했고,
+선정 JRE+RC1의 실제 서명 package에서 전체14문답·취소/재개·설치/init/start/stop·동일 DB 재시작이 PASS다.
+최종 노드는 정지했으며 4-validator 합의는 NOT_CHECKED다. NIGO 공급자 호환성·전체 제품 공급망·출시는 후속이다.
+[새 검증 기록](../results/2026-10-19-temurin-runtime.md)을 따르며 이전280개/Oracle 기록은 당시 조합의 이력이다.
+
+## 최종 잠금 수정과 재검증
+
+설치 세션 잠금 해제를 보완하고 회귀 2개를 추가해 자동 검사 292개를 통과했다.
+최종 패키지의 설치·초기화·첫 기동/종료는 통과했지만 재시작 15초 관측은 UNKNOWN으로 끝나 자동 하네스는 INCOMPLETE다.
+같은 실행의 후속 READY·정상 종료·재개를 별도로 확인했다. [최종 기록](../results/2026-10-19-workflow-lock-release.md)을 따른다.
+
 ## 실제 제공 기능
 
+- `runtime stage`: 신뢰 lock의 전체 JRE 파일을 검증해 새 staging·provenance 생성. 오프라인 제작자용이며 다운로드/JVM 실행 없음.
 - `package build/verify`: 기대 hash·결정적 tar/gzip·외부 Ed25519 key·전체 파일 inventory·경로/형식/한도 검사.
 - `install`: Mac arm64 개발 package를 새 명시 경로에 설치. 기존 대상 거부, 검증 중 파일 비실행, 최종 gzip 검사 뒤 receipt 기록. 중단 폴더를 자동 덮어쓰기·삭제·resume하지 않음.
 - `engine inspect`: 신뢰 lock의 정확한 JAR/Java hash 및 engine-info build/source/console/contract identity 대조.
@@ -69,13 +96,13 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 | --- | --- | --- |
 | BX-001/005 | IN_PROGRESS | 첫 Mac profile, 최소 OS/JRE/native·launchd 인수 |
 | BX-002/010 | DONE | Rust 기반·CLI envelope·고정 toolchain/lock |
-| BX-003 | PLAN | 정식 Java21 공급자·patch/hash·NOTICE/SBOM 선정 |
-| BX-004 | IN_PROGRESS | clean 후보 수신·검증 완료, 전체 계약 합의/제품 인수 후속 |
+| BX-003 | IN_PROGRESS | Temurin21.0.12.1+1 full JRE 고정·runtime stage·runtime BOM/source 확보. NIGO 호환성·전체 제품 NOTICE/SBOM/소스 전달·출시 인수 후속 |
+| BX-004 | IN_PROGRESS | RC1 정책 수용·원격 수신·lock/snapshot 및 단일 노드 signed package 검증, 변경 공유·전체 제품 인수 후속 |
 | BX-011~014 | IN_PROGRESS | build/verify/새 폴더 설치 구현, 정식 공급·릴리스/업데이트 후속 |
 | BX-020 | IN_PROGRESS | v1 제품/native 명시 설정 대조 구현, 자동 렌더·network/peer/pin 입력 확장 후속 |
 | BX-021/022/024 | IN_PROGRESS | instance journal·명시 init/resume·결과 대조, gated run·정상 종료/같은 DB 재시작 확인. 전체 실패·복구/운영 인수 후속 |
 | BX-023 | IN_PROGRESS | 제품/native cold·실제 RocksDB 단발 초기화 확인. 지속 runtime·DB/WAL 복구·service 인수 후속 |
-| BX-030 | IN_PROGRESS | setup 설치 A~C 구현 및 동일 개발 package/TTY의 정상 흐름·취소·재개 확인. signed 실제 package·강제 중단·실패 주입과 전체 인수 후속 |
+| BX-030 | IN_PROGRESS | RC1 signed 실제 package/TTY 전체14문답·정상 흐름·취소·재개 확인. 강제 중단·실패 주입과 전체 인수 후속 |
 | BX-031/032 | IN_PROGRESS | 수동 LaunchAgent·status·정상 stop·restart 확인. 로그인/로그아웃·sleep/wake와 전체 사용자 lifecycle 인수 후속 |
 | BX-033 | IN_PROGRESS | 오프라인 최신 시도 logs/diagnose·정제·bounded partial 출력 구현. 전체 시도 조회·보존/용량 정책 후속 |
 | BX-034 | PLAN | 데이터·키를 보존하는 안전한 제거 |
@@ -85,9 +112,9 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 
 ## 다음 순서
 
-1. 새 setup CLI와 동일한 signed package의 전체 문답과 실제 프로세스 중단·실패 주입을 인수한다. 정상 흐름·취소/재개는 완료했으며, 자동시험의 EOF·동시 재개·소유 증거 누락 검증을 실제 실행 인수와 구분한다. 최신 NIGO 수신·교체는 일치하는 공급 묶음을 확보한 뒤 별도로 진행하며 기존 DB migration은 포함하지 않는다.
+1. RC1 lock/snapshot과 NIGO 소비자 회신을 공유한다. signed 실제 package의 전체 14문답·정상 흐름·취소/재개·동일 DB 재시작은 완료했다. 실제 프로세스 중단·실패 주입은 후속이며 자동시험 결과로 대신하지 않는다. 기존 DB migration은 포함하지 않는다.
 2. QBFT membership·peer/pin·PKI/거래 fixture와 4-validator 인수를 준비하고, Mac 중단·실패 경계·사용자 세션 인수를 완료한다. 저장 기록과 실제 health를 구분하며 UNKNOWN 뒤 자동 재시작하지 않는다.
-3. 정식 Java 21 공급자·patch/hash·필요 runtime modules·NOTICE/SBOM과 최소 macOS를 선정한다. cold 실행 가능성이 init/runtime 가능성을 보증하지 않는다.
+3. 선정 Temurin21의 NIGO 필수 실행 조건·동일 JAR 공급자 검증을 회신받고 전체 제품 NOTICE/SBOM·대응 소스 전달·최소 macOS를 확정한다.
 4. 선정 JRE와 같은 Mac package에서 동일 데이터 재시작·G1-M 전체 운영·4-validator 회귀를 인수한다. Linux/systemd G1-L, Docker G1-D는 뒤에서 별도 검증한다.
 
 R2 파일 receipt는 instance 등록·NIGO journal이 아니며 전체 R2/R3 완료라고 표시하지 않는다. 현재 Mac 사용자 profile의 CLI·엔진은 같은 UID다. 파일 권한만으로 강한 격리를 보장하지 않는다. 기존 사용자 node/data/key는 시험하지 않는다.

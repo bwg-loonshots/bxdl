@@ -4,6 +4,10 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 
 현재 구현은 개발용 패키지 조립·검증, **Mac의 새 폴더 설치**, 초안 모드와 **명시 설치·등록·초기화·시작을 연결한 setup 설치 도우미**, **제품·NIGO 설정의 결합 cold 검사**, **인스턴스 등록과 명시적 init/resume-init**, **Mac 사용자 LaunchAgent의 start/status/stop**, **오프라인 logs/diagnose**다. 새 setup CLI와 동일한 CLI를 담은 개발용 package로 취소·재개, 설치·초기화, 단일 노드 시작·정상 종료·같은 데이터 재시작을 확인했다. [검증 범위와 남은 인수](./results/2026-09-27-setup-install-flow.md)를 따르며 전체 G1-M은 후속이다. 엔진 JAR/JRE·고객 키·DB를 이 저장소에 동봉하지 않는다.
 
+2026-10-19에는 [NIGO RC1](./contracts/nigo/engine-rc1-2026-10-19/README.md)을 원격 수신하고 등록 모드 안내를 추가했다.
+실제 RC1·동일 CLI를 담은 서명 개발 package에서 전체 14문답·설치·초기화·정상 종료·같은 DB 재시작을 확인했다.
+[RC1 검증 결과](./results/2026-10-19-engine-rc1-adoption.md)의 범위를 따르며 Temurin21.0.12.1+1 전체 JRE를 후속 후보로 선정했다. 4-validator 합의·공급자 호환성 확인·정식 배포 인수는 남아 있다.
+
 ## 구현한 명령
 
 | 명령 | 실제 동작 |
@@ -103,3 +107,7 @@ Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux targe
 - [전체 설계](./design/README.md), [제품 JSON 계약](./contracts/bxdl/README.md)
 
 2026-09-16 Go 기반은 Rust로 대체했다. 과거 검증 기록만 results에 보존하며 현재 제품 빌드/테스트는 Cargo를 사용한다.
+
+선정 Temurin21과 제작자용 `runtime stage`는 [JRE 준비](docs/runtime.md)를 참고한다.
+[실제 Temurin 패키지 검증](results/2026-10-19-temurin-runtime.md): 자동 검사290개·설치/초기화/정상 종료/동일 DB 재시작 PASS.
+[최종 잠금 수정 재검증](results/2026-10-19-workflow-lock-release.md): 자동 검사292개 통과. 새 패키지의 재시작 관측은 UNKNOWN으로 자동 시험 INCOMPLETE이며, 동일 실행의 후속 READY·정상 종료·재개는 별도 확인했다.

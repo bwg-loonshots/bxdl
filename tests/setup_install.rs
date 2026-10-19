@@ -262,6 +262,9 @@ fn planned_install_pauses_and_resumes_without_creating_customer_outputs() {
     let (finished, text) = interact(&mut workflow, &f.inputs(":cancel\n"));
     assert!(!finished);
     assert!(text.contains("설치 계획 #1"));
+    assert!(text.contains("자산 등록 모드: 미지정"));
+    assert!(text.contains("기존 후보"));
+    assert!(!text.contains("공개 등록 자격"));
     assert_eq!(workflow.summary().plan_revision, 1);
     f.no_outputs();
     assert_eq!(
@@ -270,7 +273,9 @@ fn planned_install_pauses_and_resumes_without_creating_customer_outputs() {
     );
     drop(workflow);
     let mut resumed = Workflow::resume(&f.workspace).unwrap();
-    assert!(interact(&mut resumed, "finish\n").0);
+    let (finished, resumed_text) = interact(&mut resumed, "finish\n");
+    assert!(finished);
+    assert!(resumed_text.contains("자산 등록 모드: 미지정"));
     assert_eq!(resumed.summary().plan_revision, 1);
     assert_eq!(resumed.summary().runtime_readiness, "NOT_CHECKED");
     assert_eq!(source, fs::read(&f.source).unwrap());

@@ -319,6 +319,48 @@ mod tests {
     }
 
     #[test]
+    fn rc1_identity_binds_synthetic_init_and_resume_without_accepting_previous_build() {
+        // The provider build DTO is a golden input; these operation records are
+        // synthetic and do not claim that the supplier executed this sequence.
+        let identity: Identity = json::decode(include_bytes!(
+            "../../contracts/nigo/engine-rc1-2026-10-19/evidence/engine-info.json"
+        ))
+        .unwrap();
+        assert_eq!(
+            identity.source.commit,
+            "540a89f0814c01d2a4ec67da1087af35195882ca"
+        );
+        assert!(!identity.source.dirty);
+        for command in ["init", "resume-init"] {
+            let mut fixture = Fixture::new(command);
+            let legacy_build = fixture.events[0]["details"]["build"].clone();
+            fixture.identity = identity.clone();
+            fixture.events[0]["details"]["build"] = json!(identity);
+            assert_eq!(
+                fixture.validate().unwrap().genesis_hash,
+                fixture.instance["genesisHash"]
+            );
+            let mut initializing = fixture.instance.clone();
+            initializing["status"] = json!("INITIALIZING");
+            initializing["genesisHash"] = json!("");
+            let pending = validate_resume(
+                &serde_json::to_vec(&initializing).unwrap(),
+                &fixture.expected(),
+            );
+            if command == "resume-init" {
+                pending.unwrap();
+            } else {
+                assert_eq!(pending.unwrap_err().code, "ENGINE_INIT_RESULT_INVALID");
+            }
+            fixture.events[0]["details"]["build"] = legacy_build;
+            rejected(fixture.validate());
+            fixture.events[0]["details"]["build"] = json!(identity);
+            fixture.identity.source.dirty = true;
+            rejected(fixture.validate());
+        }
+    }
+
+    #[test]
     fn init_and_resume_bind_all_records_and_serialize_only_genesis() {
         for command in ["init", "resume-init"] {
             let fixture = Fixture::new(command);

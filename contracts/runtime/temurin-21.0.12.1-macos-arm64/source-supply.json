@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "status": "LOCAL_SOURCE_MATERIAL_RETAINED_NOT_CUSTOMER_PUBLISHED",
+  "sourceArchive": {
+    "name": "OpenJDK21U-jdk-sources_21.0.12.1_1.tar.gz",
+    "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jdk-sources_21.0.12.1_1.tar.gz",
+    "sha256": "573057d03584ae793fb7ec9a14c76d826d9187a53efeefd99da47403a5308234",
+    "sizeBytes": 115126841
+  },
+  "buildScripts": {
+    "url": "https://api.github.com/repos/adoptium/temurin-build/tarball/e6ba7dec3d07654074559310376a3ae89da5f4ac",
+    "commit": "e6ba7dec3d07654074559310376a3ae89da5f4ac",
+    "name": "temurin-build-e6ba7dec3d07654074559310376a3ae89da5f4ac.tar.gz",
+    "sha256": "68cc1415728c510d7d5ada8e50c7680db050ade567e8e253ef72285a58d4df66",
+    "sizeBytes": 584378,
+    "hashOrigin": "observed over HTTPS commit-addressed archive; not a vendor-published checksum"
+  },
+  "sourcePresenceChecked": [
+    "OpenJDK LICENSE",
+    "libfreetype",
+    "libpng",
+    "libjavajpeg",
+    "giflib",
+    "liblcms",
+    "libharfbuzz",
+    "zlib",
+    "src/java.base/share/data/cacerts",
+    "temurin-build/security/certdata.txt",
+    "temurin-build/security/mk-cacerts.sh"
+  ],
+  "customerDelivery": "Publish matching source and build material alongside the binary, or deliver both in the offline release kit; upstream URL alone is not the completed BXDL source delivery."
+}

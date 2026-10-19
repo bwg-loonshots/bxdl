@@ -305,6 +305,82 @@ mod tests {
             assert!(["init", "resume-init", "run"].contains(&event.command));
         }
     }
+
+    #[test]
+    fn rc1_build_details_are_removed_and_unknown_reasons_stay_withheld() {
+        // Observed event projection is not RC1 identity verification. Never
+        // publish the actual build object, even though its fixed event is known.
+        let build: Value = json::decode(include_bytes!(
+            "../../contracts/nigo/engine-rc1-2026-10-19/evidence/engine-info.json"
+        ))
+        .unwrap();
+        for command in ["init", "resume-init", "run"] {
+            let mut events = vec![
+                row(
+                    command,
+                    1,
+                    "CHECKING",
+                    "VALIDATING_CONFIGURATION",
+                    json!({"build":build}),
+                ),
+                row(
+                    command,
+                    2,
+                    "STARTING",
+                    "OPENING_MANAGED_STORAGE",
+                    json!({"backend":"rocksdb"}),
+                ),
+            ];
+            if command == "run" {
+                let mut details = identity();
+                details["nodeInstanceId"] = json!("b51f6f4d-e704-4be3-9630-38a93875f30a");
+                details["networkQuorumVerified"] = json!(false);
+                events.push(row(
+                    command,
+                    3,
+                    "RUNNING",
+                    "LOCAL_STARTUP_COMPLETED",
+                    details,
+                ));
+                events.push(row(command, 4, "STOPPING", "SHUTDOWN_REQUESTED", json!({})));
+                events.push(row(
+                    command,
+                    5,
+                    "STOPPED",
+                    "STORAGE_AND_CONSENSUS_CLOSED",
+                    json!({"storageClosed":true,"consensusStopReturned":true}),
+                ));
+            } else {
+                events.push(row(command, 3, "INITIALIZED", "STORAGE_CLOSED", identity()));
+            }
+            let projected = project(&rows(&events), command, ATTEMPT);
+            assert_eq!(projected.events.len(), events.len());
+            assert_eq!(projected.omitted, 0);
+            assert!(!projected.partial);
+            check_secret_free(&projected);
+            let visible = serde_json::to_string(&projected).unwrap();
+            for private in [
+                build["source"]["commit"].as_str().unwrap(),
+                build["contract"]["fingerprint"].as_str().unwrap(),
+                build["console"]["sourceFingerprint"].as_str().unwrap(),
+            ] {
+                assert!(!visible.contains(private));
+            }
+            events.push(row(
+                command,
+                events.len() as u64 + 1,
+                "FAILED",
+                CANARY,
+                json!({"privateCanary":CANARY}),
+            ));
+            let withheld = project(&rows(&events), command, ATTEMPT);
+            assert_eq!(withheld.events.len(), projected.events.len());
+            assert_eq!(withheld.omitted, 1);
+            assert!(withheld.partial);
+            check_secret_free(&withheld);
+        }
+    }
+
     #[test]
     fn complete_init_and_resume_events_are_fixed_projection_not_success_proof() {
         for command in ["init", "resume-init"] {

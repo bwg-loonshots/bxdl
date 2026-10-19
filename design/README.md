@@ -1,9 +1,9 @@
 # BXDL 제품 구현 설계
 
-- 작성일: 2026-09-16 / 갱신: 2026-09-21
-- 상태: Rust 기반의 package·제품 설정·setup, Mac 새 폴더 installer·NIGO cold, instance 등록·명시 init/resume-init과 수동 LaunchAgent start/status/stop과 오프라인 logs/diagnose를 구현했다. 단일 validator의 실제 서비스 수명주기를 확인했으며 setup 설치 연결·전체 G1-M/G1-L 인수는 미완료다.
+- 작성일: 2026-09-16 / 갱신: 2026-10-19
+- 상태: Rust 기반의 package·제품 설정·setup, Mac 새 폴더 installer·NIGO cold, instance 등록·명시 init/resume-init과 수동 LaunchAgent start/status/stop과 오프라인 logs/diagnose를 구현했다. 단일 validator의 실제 서비스 수명주기를 확인했으며 setup 설치 연결도 구현했다. RC1 원격 수신과 새 package 검증은 아래 최신 기록을 따르며 전체 G1-M/G1-L 인수는 미완료다.
 - 사용자 확정: **Rust 구현 + macOS Apple Silicon 우선 설치·운용 UX**. Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
-- 현재 구현 범위와 근거: [구현 상태](../docs/implementation-status.md). NIGO가 `REQ-0002`의 방향·범위를 수용했고 BXDL은 피드백의 안전·인수 의미와 교환 절차에 동의했다. [소비자 회신](./2026-09-17-nigo-feedback-response.md)에 기록하며 PROPOSED API·fixture·dirty 개발 JAR는 수신해 제한된 cold 소비를 진행했다. 이후 #119의 clean 후보를 별도 수신·검증했고 전체 제품 인수는 남아 있다. 요청 상태는 `OPEN`이고 이번에는 공유 중인 NIGO 원장을 변경하지 않는다.
+- 현재 구현 범위와 근거: [구현 상태](../docs/implementation-status.md). NIGO가 `REQ-0002`의 방향·범위를 수용했고 BXDL은 피드백의 안전·인수 의미와 교환 절차에 동의했다. [소비자 회신](./2026-09-17-nigo-feedback-response.md)에 기록하며 PROPOSED API·fixture·dirty 개발 JAR는 수신해 제한된 cold 소비를 진행했다. 이후 #119의 clean 후보를 별도 수신·검증했고 전체 제품 인수는 남아 있다. REQ-0003 정책을 수용하고 RC1을 별도로 수신했다. 요청 전체는 `OPEN`이며 소비자 회신은 전용 NIGO worktree에서 준비한다.
 
 ## 목표
 
@@ -15,6 +15,9 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 
 | 문서 | 내용 |
 | --- | --- |
+| [JRE 선정과 공급자 검증](./2026-10-19-jre-selection.md) | Temurin21 고정·전체 runtime staging·소스/legal·엔진 검증 분담 |
+| [RC1 수신·Mac 패키지 인수](./2026-10-19-engine-rc1-adoption.md) | 후보 identity 고정, 등록 모드 안내·기존 계획 호환, 실제 signed package 인수 |
+| [setup 설치 흐름](./2026-09-27-setup-install-flow.md) | 자료·계획·등록·명시 init/start와 중단·재개 |
 | [오프라인 logs/diagnose](./2026-09-21-offline-diagnostics.md) | 최신 시도 이벤트·정제 지원 JSON·수집 예산·partial·안전한 파일 게시 |
 | [macOS LaunchAgent](./2026-09-18-macos-launchagent.md) | 수동 bootstrap·일회 gate·start/status/stop·정상 종료 증명과 UNKNOWN 보존 설계 |
 | [인스턴스 등록·초기화](./2026-09-18-instance-initialization.md) | private 등록 journal·명시 init/resume·동일 시도 결과 판정·UNKNOWN 보존 |
@@ -33,7 +36,7 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 | 사용자 확정 | 별도 BXDL 저장소, 기업용 허가형 제품, Rust 전환, macOS 우선 UX |
 | 기반 구현 선택 | Rust 1.86.0와 Cargo.lock, development `.tar.gz`, Ed25519 서명·외부 key 검증, JSON 제품 설정 |
 | 검증 대기 후보 | macOS arm64·Java 21·RocksDB·사용자 launchd 1차 인수, Linux/systemd 후속 |
-| M0 잔여 결정 | 지원 macOS 최소 버전·launchd profile·자원, JRE 공급자·patch·hash·재배포 자료; Linux 조합은 후속 |
+| M0 잔여 결정 | 지원 macOS 최소 버전·launchd profile·자원, Temurin21 후보 선정 후 공급자 검증·재배포 자료 완성; Linux 조합은 후속 |
 | NIGO 범위·의미 수용 | 첫 Mac NIGO-01~04/06, Linux·NIGO-05 후속, 초기화/검사/관측/종료 안전 의미와 결과 교환. 제공·수신 owner 확인 |
 | NIGO 개발 후보 수신·잔여 | engine-info/preflight/init/resume-init/run과 runtime 계약/fixture·개발 JAR 수신. clean 후보와 QBFT 종료·live sync 보완 수신. BXDL 등록·초기화·수동 LaunchAgent 연결 이후 전체 제품 인수·공식 공급/유지보수 후속 |
 | 후속 범위 | 원격 관리·SSO/RBAC, 새 웹 콘솔, fleet, Docker/Helm, 백업/복원 자동화, 인증서 순차 교체 |

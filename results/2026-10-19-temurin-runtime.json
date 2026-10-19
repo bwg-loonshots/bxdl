@@ -1,0 +1,124 @@
+{
+  "outcome": "PASS",
+  "scope": "LOCAL_MANAGED_LIFECYCLE_NOT_QUORUM",
+  "cliSha256": "4116961ec89be9f54091db79d6f0142e4c04bc3de541d839b3f3a1a0dd8139c8",
+  "engineSource": "540a89f0814c01d2a4ec67da1087af35195882ca",
+  "engineJarSha256": "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45",
+  "developmentOnly": true,
+  "authenticity": "verified-external-ed25519",
+  "archiveSha256": "06f6c6c42ccfe296c449061282266f15e9ce210884f2580477ae93fcd0b6a362",
+  "manifestSha256": "67bbb6a73457c3451d933347a868eb1278c6a508f2114f4d721d06f31373c95c",
+  "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+  "runtimeVendor": "Eclipse Adoptium Temurin",
+  "runtimeVersion": "21.0.12.1+1-LTS",
+  "runtimeLockSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+  "full14Inputs": true,
+  "registrationMode": "ALLOWLISTED",
+  "steps": [
+    {
+      "stage": "FRESH_TEST_TLS_CREATED_AND_VALIDITY_CHECKED"
+    },
+    {
+      "stage": "REGISTRATION_CONTRACT_5_CASES_VERIFIED_WITHOUT_DATA"
+    },
+    {
+      "stage": "SIGNED_PACKAGE_AND_RC1_INSPECT_VERIFIED",
+      "cliSha256": "4116961ec89be9f54091db79d6f0142e4c04bc3de541d839b3f3a1a0dd8139c8",
+      "archiveSha256": "06f6c6c42ccfe296c449061282266f15e9ce210884f2580477ae93fcd0b6a362"
+    },
+    {
+      "stage": "CANCEL_AND_CHECKPOINT_VERIFIED"
+    },
+    {
+      "stage": "FULL_14_INPUTS_AND_REGISTRATION_PLAN_VERIFIED"
+    },
+    {
+      "stage": "REGISTERED_AND_COLD_INCOMPLETE_VERIFIED"
+    },
+    {
+      "stage": "INITIALIZED_VERIFIED",
+      "genesisHash": "0x8502cb416f95f5d82fc458252dca7c164fdc5347ed4830949cb379d6917a4df0"
+    },
+    {
+      "stage": "FIRST_RUN_OBSERVED",
+      "localReadiness": "READY"
+    },
+    {
+      "stage": "FIRST_STOP_VERIFIED"
+    },
+    {
+      "stage": "SAME_DATA_RESTART_AND_STOP_VERIFIED"
+    },
+    {
+      "stage": "FINAL_RESUME_WITHOUT_MUTATION_VERIFIED"
+    }
+  ],
+  "date": "2026-10-19",
+  "bxdlBaseCommit": "70f527be3d1ecf321bb661fa9202f0b4cadf7ef0",
+  "bxdlSourceState": "UNCOMMITTED_WORKING_TREE",
+  "implementationSha256": "d3be0a9916a1c456662fa6502c27eb66bdc96a7904b004d3aba2d8dfc3cb628c",
+  "implementationDigestMethod": "Cargo.toml, Cargo.lock and src/**/*.rs sorted by relative POSIX path string; hash(path UTF8 + NUL + bytes + NUL), 58 files",
+  "harnessSha256": "e6fe47186e3dff18ac8829926addb99db13486994254017df28e1a51e6db7e65",
+  "platform": {
+    "os": "macOS",
+    "version": "26.6.2",
+    "build": "25G83",
+    "arch": "arm64"
+  },
+  "tests": {
+    "library": 254,
+    "cli": 13,
+    "cliIntegration": 2,
+    "setupCli": 5,
+    "setupInstall": 11,
+    "setupSafety": 5,
+    "total": 290,
+    "failed": 0,
+    "ignored": 0
+  },
+  "checks": {
+    "makeCheck": "PASS",
+    "macReleaseBuild": "PASS",
+    "linuxTypecheck": "PASS_NOT_EXECUTED",
+    "independentCodeReview": "NO_ACTIONABLE_FINDINGS"
+  },
+  "runtimeStage": {
+    "outcome": "PASS",
+    "filesVerified": 259,
+    "bytesVerified": 157631121,
+    "symlinksMaterialized": 0,
+    "archiveVerification": "NOT_PERFORMED_BY_STAGE",
+    "runtimeExecution": "NOT_PERFORMED_BY_STAGE"
+  },
+  "upstreamArchive": {
+    "sha256": "dec50fc6f9fcd4fe3ae8cabf5a5fa68f6afc48841f7698e468e9aa5d54beed84",
+    "sizeBytes": 48144965,
+    "verified": "official TLS release/API/checksum bytes matched",
+    "detachedSignature": "NOT_VERIFIED"
+  },
+  "sourceArchive": {
+    "sha256": "573057d03584ae793fb7ec9a14c76d826d9187a53efeefd99da47403a5308234",
+    "sizeBytes": 115126841,
+    "status": "DOWNLOADED_HASH_VERIFIED_LOCAL_NOT_CUSTOMER_DELIVERED"
+  },
+  "supplierSbomArchiveHashMatches": false,
+  "payload": {
+    "filesVerified": 270,
+    "bytesVerified": 324979068
+  },
+  "finalState": {
+    "serviceState": "NOT_LOADED",
+    "engineState": "STOPPED",
+    "operationBusy": false,
+    "globalConsensus": "NOT_CHECKED"
+  },
+  "unverified": [
+    "NIGO supplier compatibility acknowledgement and exact-JAR/selected-JRE regression",
+    "4-validator product quorum and full G1-M offline/crash/login/sleep cases",
+    "complete product NOTICE/SBOM and customer source delivery",
+    "vendor detached signature and supplier SBOM discrepancy resolution",
+    "minimum supported macOS and Apple notarization",
+    "Linux/systemd/Docker",
+    "existing database upgrade/downgrade"
+  ]
+}

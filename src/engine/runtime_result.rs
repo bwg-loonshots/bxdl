@@ -993,6 +993,110 @@ mod tests {
     }
 
     #[test]
+    fn rc1_identity_binds_synthetic_run_and_bootstrap_and_rejects_previous_build() {
+        // Supplier engine-info is real; process events and bootstrap are synthetic.
+        // This checks the consumer contract, not a live RC1 process or quorum.
+        let legacy = Fixture::new();
+        let mut fixture = Fixture::new();
+        fixture.identity = json::decode(include_bytes!(
+            "../../contracts/nigo/engine-rc1-2026-10-19/evidence/engine-info.json"
+        ))
+        .unwrap();
+        assert_eq!(
+            fixture.identity.source.commit,
+            "540a89f0814c01d2a4ec67da1087af35195882ca"
+        );
+        assert!(!fixture.identity.source.dirty);
+        assert_ne!(fixture.identity, legacy.identity);
+        fixture.events[0]["details"]["build"] = json!(fixture.identity);
+        let journal = bytes(&fixture.journal);
+        validate_initialized(&journal, &fixture.expected()).unwrap();
+        for (count, status) in [(3, "RUNNING"), (5, "STOPPED")] {
+            let mut raw = Vec::new();
+            for event in &fixture.events[..count] {
+                raw.extend(bytes(event));
+                raw.push(b'\n');
+            }
+            let observed = validate_report(&raw, &journal, &fixture.expected()).unwrap();
+            assert_eq!(observed.status, status);
+            assert_eq!(observed.node_instance_id.as_deref(), Some(NODE));
+        }
+        let mut bootstrap = fixture.bootstrap();
+        validate_bootstrap(&bytes(&bootstrap), MEDIA, &fixture.expected(), NODE).unwrap();
+        // Same process/genesis identifiers cannot make a previous build current.
+        bad(validate_report(
+            &legacy.report(),
+            &journal,
+            &fixture.expected(),
+        ));
+        bad(validate_report(
+            &fixture.report(),
+            &journal,
+            &legacy.expected(),
+        ));
+        bootstrap["engine"]["build"] = json!(legacy.identity);
+        bad(validate_bootstrap(
+            &bytes(&bootstrap),
+            MEDIA,
+            &fixture.expected(),
+            NODE,
+        ));
+    }
+
+    #[test]
+    fn rc1_supplier_health_golden_preserves_every_readiness_and_large_decimal() {
+        let raw = include_bytes!("../../contracts/nigo/engine-rc1-2026-10-19/health-cases.json");
+        let identity: Identity = json::decode(include_bytes!(
+            "../../contracts/nigo/engine-rc1-2026-10-19/evidence/engine-info.json"
+        ))
+        .unwrap();
+        assert_eq!(
+            super::super::files::digest(raw),
+            identity.contract.runtime_fixture_sha256
+        );
+        let supplied: Value = serde_json::from_slice(raw).unwrap();
+        assert_eq!(supplied["contractStatus"], "PROPOSED");
+        let media = supplied["mediaType"].as_str().unwrap();
+        assert_eq!(media, MEDIA);
+        let cases = supplied["cases"].as_array().unwrap();
+        assert_eq!(cases.len(), 15);
+        let mut states = std::collections::BTreeSet::new();
+        let mut large_decimal_seen = false;
+        for case in cases {
+            let health = &case["health"];
+            let parsed = validate_health(&bytes(health), media).unwrap();
+            let readiness = parsed.readiness.unwrap();
+            states.insert(readiness.status.clone());
+            assert_eq!(
+                serde_json::to_value(readiness).unwrap(),
+                health["readiness"]
+            );
+            assert_eq!(parsed.running, health["running"].as_bool().unwrap());
+            assert_eq!(
+                parsed.lifecycle_running,
+                health["lifecycleRunning"].as_bool().unwrap()
+            );
+            if health["executionProgress"]["view"]["height"] == "9007199254740993" {
+                large_decimal_seen = true;
+                let mut numeric = health.clone();
+                numeric["executionProgress"]["view"]["height"] = json!(9007199254740993_u64);
+                bad(validate_health(&bytes(&numeric), media));
+            }
+            let mut unknown = health.clone();
+            unknown["readiness"]["reason"] = json!(CANARY);
+            bad(validate_health(&bytes(&unknown), media));
+        }
+        assert_eq!(
+            states,
+            ["FAILED", "NOT_READY", "READY", "UNKNOWN"]
+                .into_iter()
+                .map(str::to_owned)
+                .collect()
+        );
+        assert!(large_decimal_seen);
+    }
+
+    #[test]
     fn exact_prefixes_and_stopped_keep_run_identity_without_claiming_health() {
         for (count, status) in [
             (1, "CHECKING"),

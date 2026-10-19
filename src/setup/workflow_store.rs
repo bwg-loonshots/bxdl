@@ -66,7 +66,7 @@ pub(crate) struct WorkflowStore {
     draft_path: PathBuf,
     generated_path: PathBuf,
     root: Dir,
-    lock: File,
+    lock: WorkflowLock,
     workflow_dir: Dir,
     draft_dir: Dir,
     generated_dir: Dir,
@@ -96,8 +96,8 @@ impl WorkflowStore {
         options.read(true).write(true).create_new(true).mode(0o600);
         let lock = root.open_with(LOCK, &options).map_err(|_| io_error())?;
         require_lock(&lock.metadata().map_err(|_| io_error())?)?;
-        acquire(&lock)?;
-        lock.sync_all().map_err(|_| io_error())?;
+        let lock = WorkflowLock::acquire(lock)?;
+        lock.file.sync_all().map_err(|_| io_error())?;
 
         // Create stores only inside the root just acquired, then verify their
         // visible identity before and after every later operation.
@@ -126,7 +126,7 @@ impl WorkflowStore {
         let record = Record {
             schema_version: 1,
             root: identity,
-            lock: Identity::of(&lock.metadata().map_err(|_| io_error())?),
+            lock: Identity::of(&lock.file.metadata().map_err(|_| io_error())?),
             workflow: workflow_identity,
             draft: draft_identity,
             generated: generated_identity,
@@ -180,7 +180,7 @@ impl WorkflowStore {
         if !Identity::of(&visible_lock).matches(&opened_lock) {
             return Err(unsafe_state());
         }
-        acquire(&lock)?;
+        let lock = WorkflowLock::acquire(lock)?;
         let record = read_record(&root)?;
         let (workflow_dir, workflow_identity) = open_private(&root, JOURNAL)?;
         let (draft_dir, draft_identity) = open_private(&root, DRAFT)?;
@@ -275,7 +275,7 @@ impl WorkflowStore {
             .root
             .symlink_metadata(LOCK)
             .map_err(|_| unsafe_state())?;
-        let opened = self.lock.metadata().map_err(|_| unsafe_state())?;
+        let opened = self.lock.file.metadata().map_err(|_| unsafe_state())?;
         require_lock(&visible)?;
         require_lock(&opened)?;
         if !self.record.lock.matches(&visible) || !self.record.lock.matches(&opened) {
@@ -311,12 +311,30 @@ impl WorkflowStore {
     }
 }
 
-fn acquire(file: &File) -> Result<()> {
-    flock(file, FlockOperation::NonBlockingLockExclusive).map_err(|e| {
-        if e == rustix::io::Errno::WOULDBLOCK {
-            error("SETUP_WORKFLOW_BUSY", "다른 설치 도우미가 이 세션을 사용하고 있습니다. 기존 작업을 종료한 뒤 명시적으로 재개하세요.")
-        } else { io_error() }
-    })
+/// A wizard owns this lock only for its local lifetime. Unlike the engine's
+/// OperationLock, no child is authorized to retain it. CLOEXEC alone leaves a
+/// fork-to-exec window in which an unrelated child can hold the open description.
+struct WorkflowLock {
+    file: File,
+}
+impl WorkflowLock {
+    fn acquire(file: File) -> Result<Self> {
+        flock(&file, FlockOperation::NonBlockingLockExclusive).map_err(|e| {
+            if e == rustix::io::Errno::WOULDBLOCK {
+                error("SETUP_WORKFLOW_BUSY", "다른 설치 도우미가 이 세션을 사용하고 있습니다. 기존 작업을 종료한 뒤 명시적으로 재개하세요.")
+            } else { io_error() }
+        })?;
+        // Construct the unlock guard only after acquisition succeeds. An open
+        // that fails to acquire must never release another wizard's lock.
+        Ok(Self { file })
+    }
+}
+impl Drop for WorkflowLock {
+    fn drop(&mut self) {
+        // Unlock the shared open description even if a fork-inherited copy is
+        // still open. This also covers errors after acquisition in create/open.
+        let _ = flock(&self.file, FlockOperation::Unlock);
+    }
 }
 fn file_options() -> OpenOptions {
     let mut o = OpenOptions::new();

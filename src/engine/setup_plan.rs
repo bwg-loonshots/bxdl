@@ -35,6 +35,73 @@ pub struct Prepared {
     pub issuer_count: Option<usize>,
 }
 
+/// Display-only input metadata. Kept out of Prepared so persisted plan hashes
+/// and legacy workflow journals keep their original representation.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum RegistrationMode {
+    Open,
+    Allowlisted,
+    Unspecified,
+    Unrecognized,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum IssuerInput {
+    Count(usize),
+    Duplicate,
+    Unrecognized,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct RegistrationInput {
+    pub mode: RegistrationMode,
+    pub issuers: IssuerInput,
+}
+
+/// Describe only the bytes already pinned by the plan. This does not validate
+/// policy eligibility, infer an engine capability, or persist new journal fields.
+pub(crate) fn registration_input(native_path: &Path, pins: &[Pin]) -> Result<RegistrationInput> {
+    let native = files::NativeInput::load(native_path)?;
+    for input in [&native.config, &native.chain] {
+        let matches = pins
+            .iter()
+            .filter(|pin| pin.path == input.path)
+            .collect::<Vec<_>>();
+        if matches.len() != 1 || matches[0].sha256 != files::digest(&input.raw) {
+            return Err(fail(
+                "ENGINE_INPUT_CHANGED",
+                "준비한 등록 정책 입력이 변경되었습니다.",
+            ));
+        }
+    }
+    let chain: Value = json::decode(&native.chain.raw).map_err(|_| invalid())?;
+    let mode = match chain.get("nigo.protocol.native-assets.registration-mode") {
+        None => RegistrationMode::Unspecified,
+        Some(Value::String(value)) if value == "OPEN" => RegistrationMode::Open,
+        Some(Value::String(value)) if value == "ALLOWLISTED" => RegistrationMode::Allowlisted,
+        _ => RegistrationMode::Unrecognized,
+    };
+    let issuers = match configured_issuers(&chain) {
+        None => IssuerInput::Unrecognized,
+        Some(count) => {
+            let supplied = chain
+                .as_object()
+                .ok_or_else(invalid)?
+                .keys()
+                .filter(|key| key.starts_with(ISSUER_PREFIX))
+                .count();
+            if supplied != count {
+                IssuerInput::Duplicate
+            } else {
+                IssuerInput::Count(count)
+            }
+        }
+    };
+    native.config.recheck()?;
+    native.chain.recheck()?;
+    Ok(RegistrationInput { mode, issuers })
+}
+
 /// `package` must originate from `artifact::verify` with the caller's explicit
 /// trust policy. A caller-constructed Report cannot authenticate any package.
 /// The proposed product file is not opened or created. The caller owns its bytes,

@@ -21,7 +21,7 @@ stage/
 
 검증기는 필수 파일의 존재와 바이트 무결성을 검사하며 실제 JRE 구성·JAR 형식·NOTICE의 법적 충분성·SBOM 내용의 완전성을 보증하지 않는다. `SBOM.json` 내용 검증 및 공식 dependency 목록 대조는 실제 runtime/engine 공급 시 추가할 gate다. 개발 fixture의 가짜 JAR/Java bytes로 통과한 테스트를 엔진 실행으로 보고하지 않는다.
 
-`packaging/package-spec.example.json`은 Mac용이며 `package-spec.linux.example.json`은 기존 Linux용이다. 별도 spec 파일로 복사하고 선택한 입력의 출처와 **예상 SHA-256**을 채운다. 예시의 placeholder는 실행 가능한 lock이 아니다. 신뢰하지 않은 파일의 hash를 계산하여 입력한 것만으로 출처가 인증되지는 않는다. Builder는 제공한 expected engine/Java hash와 staging 실제 bytes를 비교하고 자동으로 expected hash를 채우지 않는다.
+`packaging/package-spec.rc1.example.json`은 검증해 수신한 RC1의 엔진 identity를 채운 Mac 예시다. runtime/제품 조합은 실제 선택한 입력으로 완성해야 한다. `packaging/package-spec.example.json`은 일반 Mac용이며 `package-spec.linux.example.json`은 기존 Linux용이다. 별도 spec 파일로 복사하고 선택한 입력의 출처와 **예상 SHA-256**을 채운다. 예시의 placeholder는 실행 가능한 lock이 아니다. 신뢰하지 않은 파일의 hash를 계산하여 입력한 것만으로 출처가 인증되지는 않는다. Builder는 제공한 expected engine/Java hash와 staging 실제 bytes를 비교하고 자동으로 expected hash를 채우지 않는다.
 
 ```bash
 bxdl package build --root ./stage --spec ./package-spec.json \
@@ -65,4 +65,10 @@ v1 platform은 `darwin/arm64/none/none` 또는 기존 `linux/amd64/glibc/2.34` �
 
 ## 개발 후보와 공식 공급
 
-NIGO 개발 후보의 정확한 bytes와 계약을 수신해 [개발 snapshot](../contracts/nigo/development-2026-09-17/README.md)에 보존했다. `engine` 명령의 lock 형식은 `contracts/bxdl/engine-lock.schema.json`이다. 선택한 JAR 및 Java executable의 신뢰 hash와 실제 expected identity를 외부에서 제공한다. 현재 선택한 공식 JRE·정식 release lock은 없으며 개발 Mac Java를 배포 대상으로 자동 채택하지 않는다. 호환된 공식 contract status·runtime provenance·실제 Linux native 인수를 추가한 별도 버전에서 고객 후보 채널을 열어야 한다.
+NIGO 개발 후보의 정확한 bytes와 계약을 수신해 [RC1 snapshot](../contracts/nigo/engine-rc1-2026-10-19/README.md)에 보존했다. `engine` 명령의 lock 형식은 `contracts/bxdl/engine-lock.schema.json`이다. 선택한 JAR 및 Java executable의 신뢰 hash와 실제 expected identity를 외부에서 제공한다. Temurin21.0.12.1+1 전체 JRE를 개발 패키지 후보로 선정했다. [runtime stage와 고정 lock](./runtime.md)을 사용하며 기존 Oracle 시험 runtime은 과거 근거로 보존한다. 정식 release lock·운영 지원 승격은 아직 없다. 호환된 공식 contract status·runtime provenance·선정 플랫폼의 native/서비스 인수를 추가한 별도 버전에서 고객 후보 채널을 열어야 한다.
+
+## 선정 runtime 준비
+
+RC1+Temurin의 구체 예시는 `packaging/package-spec.rc1-temurin.example.json`이다.
+[준비 절차](./runtime.md)에 따라 전체 runtime 파일·원본 legal·provenance를 검증한 새 stage를 만든다.
+package v1 schema와 검증 규칙은 유지한다.

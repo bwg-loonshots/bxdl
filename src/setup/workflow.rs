@@ -709,8 +709,12 @@ impl Workflow {
 
     pub(super) fn show_plan(&self, out: &mut dyn Write) -> Result<()> {
         let plan = self.plan()?;
+        let registration = registration_summary(setup_plan::registration_input(
+            required(&plan.inputs.native)?,
+            &plan.prepared.pins,
+        ));
         let text = format!(
-            "\n설치 계획 #{} — 새 개발용 노드\n엔진 source: {} (dirty={})\n패키지 설치: {}\n제품 설정: {}\n인스턴스 기록: {}\n새 데이터: {}\n자동 GC: {}\n자산 발행자 허용목록: {}\n기존 DB 업그레이드가 아닙니다. cold 검사는 설치 후 수행하며 네트워크 합의는 별도 확인합니다.\n원본 archive·공개키·lock·native·chain·키 참조와 이 작업 폴더는 등록 후에도 보존하세요.\n",
+            "\n설치 계획 #{} — 새 개발용 노드\n엔진 source: {} (dirty={})\n패키지 설치: {}\n제품 설정: {}\n인스턴스 기록: {}\n새 데이터: {}\n자동 GC: {}\n{}\n기존 DB 업그레이드가 아닙니다. cold 검사는 설치 후 수행하며 네트워크 합의는 별도 확인합니다.\n원본 archive·공개키·lock·native·chain·키 참조와 이 작업 폴더는 등록 후에도 보존하세요.\n",
             plan.revision,
             plan.prepared.identity.source.commit,
             plan.prepared.identity.source.dirty,
@@ -723,14 +727,50 @@ impl Workflow {
             } else {
                 "OFF"
             },
-            plan.prepared
-                .issuer_count
-                .map_or("미제공 — native/chain 설정 확인".into(), |n| format!(
-                    "{n}개 (체인 초기화 전에 확인)"
-                ))
+            registration
         );
         out.write_all(text.as_bytes()).map_err(|_| output_failed())
     }
+}
+
+fn registration_summary(input: Result<setup_plan::RegistrationInput>) -> String {
+    use setup_plan::{IssuerInput, RegistrationMode};
+    let Ok(input) = input else {
+        return "자산 등록 정책: 확인 불가 — 고정한 입력 자료를 다시 확인하세요.\n현재 계획의 정책 의미를 표시할 수 없습니다. 입력 자료와 기존 등록을 확인하세요.".into();
+    };
+    let mode = match input.mode {
+        RegistrationMode::Open => "OPEN (입력값)",
+        RegistrationMode::Allowlisted => "ALLOWLISTED (입력값)",
+        RegistrationMode::Unspecified => {
+            "미지정 — 기존 후보의 입력일 수 있으며 RC1는 명시 모드가 필요합니다"
+        }
+        RegistrationMode::Unrecognized => {
+            "확인 불가 — RC1는 정확한 OPEN 또는 ALLOWLISTED가 필요합니다"
+        }
+    };
+    let eligibility = match (input.mode, input.issuers) {
+        (_, IssuerInput::Duplicate) => "중복 주소 포함 — RC1에서 거절하는 입력입니다".into(),
+        (_, IssuerInput::Unrecognized) => "허용목록 형식 확인 필요 — 엔진 검증 전".into(),
+        (RegistrationMode::Open, IssuerInput::Count(0)) => {
+            "RC1 기준 공개 등록 자격 (허용목록 0개); 실제 인증된 주체(0 주소 제외)가 대상입니다"
+                .into()
+        }
+        (RegistrationMode::Open, IssuerInput::Count(_)) => {
+            "RC1 규칙과 불일치 — OPEN에는 빈 허용목록이 필요합니다".into()
+        }
+        (RegistrationMode::Allowlisted, IssuerInput::Count(0)) => {
+            "RC1 기준 신규 자산 등록 불가 (허용목록 0개)".into()
+        }
+        (RegistrationMode::Allowlisted, IssuerInput::Count(count)) => {
+            format!("RC1 기준 허용목록 {count}개 주소에 등록 자격")
+        }
+        (_, IssuerInput::Count(count)) => {
+            format!("허용목록 {count}개 — 모드 의미와 엔진 지원 여부를 추론하지 않습니다")
+        }
+    };
+    format!(
+        "자산 등록 모드: {mode}\n등록 자격: {eligibility}\n이 안내는 입력 요약이며 공급 엔진의 검증 결과가 아닙니다. 등록 거래 성공을 보장하지 않습니다.\nRC1의 모드·허용목록은 genesis에 고정됩니다. 초기화 후 설정 편집으로 변경할 수 없습니다."
+    )
 }
 
 pub fn interact(
@@ -865,4 +905,59 @@ fn output_failed() -> crate::error::BxdlError {
         "SETUP_OUTPUT_FAILED",
         "안내를 출력하지 못했습니다. 작업 기록을 보존했습니다.",
     )
+}
+
+#[cfg(test)]
+mod registration_tests {
+    use super::*;
+    use setup_plan::{IssuerInput, RegistrationInput, RegistrationMode};
+
+    fn summary(mode: RegistrationMode, issuers: IssuerInput) -> String {
+        registration_summary(Ok(RegistrationInput { mode, issuers }))
+    }
+
+    #[test]
+    fn empty_allowlist_has_opposite_meaning_in_each_explicit_mode() {
+        let open = summary(RegistrationMode::Open, IssuerInput::Count(0));
+        assert!(open.contains("OPEN (입력값)"));
+        assert!(open.contains("공개 등록 자격 (허용목록 0개)"));
+        let restricted = summary(RegistrationMode::Allowlisted, IssuerInput::Count(0));
+        assert!(restricted.contains("ALLOWLISTED (입력값)"));
+        assert!(restricted.contains("신규 자산 등록 불가 (허용목록 0개)"));
+        for text in [open, restricted] {
+            assert!(text.contains("공급 엔진의 검증 결과가 아닙니다"));
+            assert!(text.contains("genesis에 고정"));
+            assert!(text.contains("등록 거래 성공을 보장하지 않습니다"));
+        }
+        assert!(
+            summary(RegistrationMode::Allowlisted, IssuerInput::Count(2))
+                .contains("허용목록 2개 주소에 등록 자격")
+        );
+    }
+
+    #[test]
+    fn missing_or_bad_input_never_claims_registration_eligibility() {
+        let missing = summary(RegistrationMode::Unspecified, IssuerInput::Count(0));
+        assert!(missing.contains("미지정"));
+        assert!(missing.contains("기존 후보"));
+        assert!(missing.contains("모드 의미와 엔진 지원 여부를 추론하지 않습니다"));
+        assert!(!missing.contains("공개 등록 자격"));
+        assert!(!missing.contains("신규 자산 등록 불가"));
+        assert!(
+            summary(RegistrationMode::Open, IssuerInput::Count(1)).contains("RC1 규칙과 불일치")
+        );
+        assert!(
+            summary(RegistrationMode::Allowlisted, IssuerInput::Duplicate)
+                .contains("중복 주소 포함")
+        );
+        assert!(
+            summary(RegistrationMode::Unrecognized, IssuerInput::Unrecognized)
+                .contains("허용목록 형식 확인 필요")
+        );
+        let unavailable = registration_summary(Err(error("TEST", "PRIVATE_CANARY /secret/path")));
+        assert!(unavailable.contains("확인 불가"));
+        assert!(unavailable.contains("입력 자료와 기존 등록을 확인"));
+        assert!(!unavailable.contains("PRIVATE_CANARY"));
+        assert!(!unavailable.contains("/secret/path"));
+    }
 }
