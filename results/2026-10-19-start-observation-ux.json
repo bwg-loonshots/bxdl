@@ -1,0 +1,179 @@
+{
+  "date": "2026-10-19",
+  "outcome": "PASS",
+  "scope": "LOCAL_PACKAGE_STATUS_WAIT_EXPIRY_AND_SAME_ATTEMPT_READY_NOT_QUORUM",
+  "baseCommit": "e87a83d703ea650246de19c8346078c790db142d",
+  "sourceState": "UNCOMMITTED_START_OBSERVATION_UX",
+  "implementationSha256": "c57d61de850c399a46ea80c143cf88f771f020e9bb2933126d4aab0756810f54",
+  "implementationDigestMethod": "Cargo.toml, Cargo.lock and src/**/*.rs sorted by relative POSIX path string; hash(path UTF8 + NUL + bytes + NUL), 58 files",
+  "cliSha256": "2a25dc017b214a54f751b3a9dfe733a1930398f947511cecac43b8902da305c8",
+  "harnessSha256": "2b51f4ecba57ebdf4d017996b678ace25a95a1ab03204917dfd4916055d0c9c2",
+  "engineSource": "540a89f0814c01d2a4ec67da1087af35195882ca",
+  "engineJarSha256": "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45",
+  "runtime": {
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "vendor": "Eclipse Adoptium Temurin",
+    "version": "21.0.12.1+1-LTS"
+  },
+  "runtimeLockSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+  "archiveSha256": "00663c9b3ff42bbf88a533aede933b16e90ac69b4f96669c9a1fa81e289ba4d4",
+  "manifestSha256": "2de47e3cba3167616ec01da0da3d4ebbae18ee0a7d19d5eb8b688430209f3bc5",
+  "authenticity": "verified-external-ed25519",
+  "developmentOnly": true,
+  "payload": {
+    "filesVerified": 270,
+    "bytesVerified": 325012332
+  },
+  "platform": {
+    "os": "macOS",
+    "version": "26.6.2",
+    "build": "25G83",
+    "arch": "arm64"
+  },
+  "tests": {
+    "library": 275,
+    "cli": 14,
+    "cliIntegration": 2,
+    "setupCli": 5,
+    "setupInstall": 11,
+    "setupSafety": 5,
+    "total": 312,
+    "failed": 0,
+    "ignored": 0
+  },
+  "checks": {
+    "makeCheck": "PASS",
+    "macReleaseBuild": "PASS",
+    "linuxTypecheck": "PASS_NOT_EXECUTED",
+    "independentCodeReview": "FINDINGS_FIXED_NO_REMAINING_ACTIONABLE_FINDINGS"
+  },
+  "initialFinalCheck": {
+    "outcome": "FAILED",
+    "test": "engine::tests::oversized_stdout_and_stderr_are_bounded_and_secret_free",
+    "failure": "ELAPSED_TIME_ASSERTION_OVER_THREE_SECONDS",
+    "concurrentReleaseBuild": true,
+    "isolatedRerun": "PASS",
+    "unchangedSourceFullRerun": "PASS"
+  },
+  "steps": [
+    {
+      "stage": "FRESH_TEST_TLS_CREATED_AND_VALIDITY_CHECKED"
+    },
+    {
+      "stage": "REGISTRATION_CONTRACT_5_CASES_VERIFIED_WITHOUT_DATA"
+    },
+    {
+      "stage": "SIGNED_PACKAGE_AND_RC1_INSPECT_VERIFIED",
+      "cliSha256": "2a25dc017b214a54f751b3a9dfe733a1930398f947511cecac43b8902da305c8",
+      "archiveSha256": "00663c9b3ff42bbf88a533aede933b16e90ac69b4f96669c9a1fa81e289ba4d4"
+    },
+    {
+      "stage": "CANCEL_AND_CHECKPOINT_VERIFIED"
+    },
+    {
+      "stage": "FULL_14_INPUTS_AND_REGISTRATION_PLAN_VERIFIED"
+    },
+    {
+      "stage": "REGISTERED_AND_COLD_INCOMPLETE_VERIFIED"
+    },
+    {
+      "stage": "INITIALIZED_VERIFIED"
+    },
+    {
+      "stage": "FIRST_RUN_OBSERVED",
+      "localReadiness": "READY"
+    },
+    {
+      "stage": "FIRST_STOP_VERIFIED"
+    },
+    {
+      "stage": "INTENTIONAL_ONE_SECOND_OBSERVATION_EXPIRED",
+      "reason": "SERVICE_STATUS_WAIT_EXPIRED",
+      "outcome": "UNKNOWN",
+      "engineState": "UNKNOWN",
+      "lastObservationReason": "SERVICE_REPORT_UNKNOWN"
+    },
+    {
+      "stage": "SETUP_AND_CLI_WAIT_OBSERVED_SAME_ATTEMPT_READY"
+    },
+    {
+      "stage": "SAME_DATA_RESTART_AND_STOP_VERIFIED"
+    },
+    {
+      "stage": "FINAL_RESUME_WITHOUT_MUTATION_VERIFIED"
+    }
+  ],
+  "observationExpiry": {
+    "command": "status --wait --timeout-seconds 1",
+    "startTimeoutSeconds": 120,
+    "outcome": "UNKNOWN",
+    "reason": "SERVICE_STATUS_WAIT_EXPIRED",
+    "engineState": "UNKNOWN",
+    "lastObservationReason": "SERVICE_REPORT_UNKNOWN",
+    "sameAttemptInSetupAndCli": true,
+    "waitCreatedAttempt": false,
+    "startControllerFinalOutcome": "SUCCEEDED_READY",
+    "startWaitExpiryCoverage": "UNIT_TESTS_ONLY"
+  },
+  "restart": {
+    "distinctNodeInstanceIds": true,
+    "genesisUnchanged": true,
+    "finalResumeCreatedAttempt": false
+  },
+  "finalState": {
+    "serviceState": "NOT_LOADED",
+    "engineState": "STOPPED",
+    "operationBusy": false,
+    "globalConsensus": "NOT_CHECKED"
+  },
+  "evidence": {
+    "acceptanceResultSha256": "a071c39d093e4fe00e9470181923104df72ac4764931c580f063c27376d8b30c",
+    "makeCheckLogSha256": "73e56e8f7a0ef4b8e07adfcf144ec74dad247c5e223644bf662023d0b16b36ad",
+    "files": [
+      {
+        "name": "package-verify.stdout.json",
+        "sha256": "5652ce5a2c56dead86fe42e7ecbba42ef24fbb737fd55fe8e2eb0d9b438ce9df"
+      },
+      {
+        "name": "bounded-restart-observation.stdout.json",
+        "sha256": "81c577ed22162d19b4c5620e023dadc206b19b166a5def94c1fc804312ca2c15"
+      },
+      {
+        "name": "setup-wait-same-attempt.pty.txt",
+        "sha256": "5818fed32bc9d41769794d85b578e07641990440253f5ba51b39f904d8df067f"
+      },
+      {
+        "name": "same-attempt-status-wait.stdout.json",
+        "sha256": "94c7965f747036a7223cb4dfe53bae5f48639b2065df0ec1bf5f80c72e0be48b"
+      },
+      {
+        "name": "same-data-restart.stdout.json",
+        "sha256": "a168a8104b27ef0ac19bfbfad94e5591d30c0b07d522bdf4f8273e4a24081d12"
+      },
+      {
+        "name": "final-stopped-status.stdout.json",
+        "sha256": "1df5f08c2404fc335cae7110b7a59b54ab73a5952f1d7daab005fa50901c1be9"
+      }
+    ]
+  },
+  "preliminaryTrial": {
+    "outcome": "INCOMPLETE",
+    "harnessSha256": "270260bf072ca48091877267055de515cb099afeb53c3604900d065510e8f5cd",
+    "reason": "START_ONE_SECOND_TIMEOUT_EXPIRED_DURING_COLD_PREFLIGHT",
+    "firstLifecycle": "PASS",
+    "restartReason": "ENGINE_TIMEOUT",
+    "restartAttemptCreated": false,
+    "acceptedAsObservationExpiryEvidence": false,
+    "failureRecordSha256": "4d372de7963eaa5755183047f1d7738ac9fb4edfd42483bbb9c43efb24b689c1",
+    "finalStatusSha256": "0c4091cf700170d11a084023b412cf69ad2468b205c177eec0e3771cedf06308",
+    "finalState": {
+      "serviceState": "NOT_LOADED",
+      "engineState": "STOPPED",
+      "operationBusy": false,
+      "globalConsensus": "NOT_CHECKED"
+    }
+  },
+  "previousFifteenSecondResult": "UNCHANGED_INCOMPLETE_WITH_SEPARATE_READY_STOP_FOLLOWUP",
+  "globalConsensus": "NOT_CHECKED",
+  "releaseAcceptance": "OPEN"
+}

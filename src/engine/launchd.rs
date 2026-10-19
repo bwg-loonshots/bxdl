@@ -29,6 +29,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+pub(super) const WAIT_EXPIRED: &str = "SERVICE_LAUNCHCTL_WAIT_EXPIRED";
 const OUTPUT_LIMIT: usize = 131_072;
 pub(super) const EXIT_TIMEOUT_SECONDS: u32 = 60;
 
@@ -519,36 +520,39 @@ fn run_bounded(mut command: Command, timeout: Duration) -> Result<Output> {
     let started = Instant::now();
     let status = loop {
         match child.try_wait() {
-            Ok(Some(status)) => break Some(status),
-            Ok(None) if started.elapsed() < timeout && !exceeded.load(Ordering::Acquire) => {
-                thread::sleep(Duration::from_millis(5))
-            }
-            _ => {
-                // Only our launchctl helper is killed, never the engine PID or
-                // a service process. Its mutation may already have succeeded.
-                let _ = child.kill();
-                thread::spawn(move || {
-                    let _ = child.wait();
-                });
-                break None;
-            }
+            Ok(Some(status)) => break Ok(status),
+            Ok(None) if exceeded.load(Ordering::Acquire) => break Err(unknown()),
+            Ok(None) if started.elapsed() >= timeout => break Err(wait_expired()),
+            Ok(None) => thread::sleep(Duration::from_millis(5)),
+            Err(_) => break Err(unknown()),
         }
     };
-    done.store(true, Ordering::Release);
-    let mut raw = Vec::new();
-    for reader in readers {
-        raw.push(
-            reader
-                .join()
-                .map_err(|_| unknown())?
-                .map_err(|_| unknown())?,
-        );
+    if status.is_err() {
+        // Only our launchctl helper is killed, never the engine PID or a service
+        // process. Even a precisely identified timeout does not undo a mutation.
+        let _ = child.kill();
+        thread::spawn(move || {
+            let _ = child.wait();
+        });
     }
-    let Some(status) = status else {
-        return Err(unknown());
-    };
+    done.store(true, Ordering::Release);
+    // Join every reader before returning, including a helper timeout. An output
+    // overflow remains an output failure even if the deadline also elapsed.
+    let captures: Vec<_> = readers.into_iter().map(|reader| reader.join()).collect();
     if exceeded.load(Ordering::Acquire) {
         return Err(unknown());
+    }
+    let status = status?;
+    let mut raw = Vec::new();
+    for capture in captures {
+        raw.push(
+            capture
+                .map_err(|_| unknown())?
+                .map_err(|error| match error.kind() {
+                    ErrorKind::TimedOut | ErrorKind::WouldBlock => wait_expired(),
+                    _ => unknown(),
+                })?,
+        );
     }
     let stderr = raw.pop().ok_or_else(unknown)?;
     let stdout = raw.pop().ok_or_else(unknown)?;
@@ -789,6 +793,12 @@ fn gui_unavailable() -> BxdlError {
     error(
         "SERVICE_GUI_UNAVAILABLE",
         "현재 사용자의 GUI 로그인 세션을 확인할 수 없습니다.",
+    )
+}
+fn wait_expired() -> BxdlError {
+    error(
+        WAIT_EXPIRED,
+        "launchd 관측 명령의 대기 시간이 끝났습니다. 실행 시도와 자료를 보존했습니다.",
     )
 }
 fn unknown() -> BxdlError {
@@ -1192,11 +1202,21 @@ mod tests {
         let mut sleep = Command::new("/bin/sleep");
         sleep.arg("2").env_clear();
         let start = Instant::now();
-        assert!(run_bounded(sleep, Duration::from_millis(20)).is_err());
+        assert_eq!(
+            run_bounded(sleep, Duration::from_millis(20))
+                .unwrap_err()
+                .code,
+            WAIT_EXPIRED
+        );
         assert!(start.elapsed() < Duration::from_secs(1));
         let mut output = Command::new("/usr/bin/yes");
         output.arg("owned-helper-output").env_clear();
-        assert!(run_bounded(output, Duration::from_secs(2)).is_err());
+        assert_eq!(
+            run_bounded(output, Duration::from_secs(2))
+                .unwrap_err()
+                .code,
+            "SERVICE_OBSERVATION_UNKNOWN"
+        );
     }
 
     #[test]

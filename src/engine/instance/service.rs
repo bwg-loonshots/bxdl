@@ -81,6 +81,8 @@ pub struct ServiceSummary {
     pub engine_state: String,
     pub runtime_readiness: String,
     pub reason: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_observation_reason: Option<String>,
     pub operation_busy: bool,
     pub development_only: bool,
     pub login_auto_start: bool,
@@ -104,6 +106,7 @@ fn summary(binding: &Binding, runtime: Option<&Runtime>) -> ServiceSummary {
         engine_state: "UNKNOWN".into(),
         runtime_readiness: "UNKNOWN".into(),
         reason: "SERVICE_OBSERVATION_UNKNOWN".into(),
+        last_observation_reason: None,
         operation_busy: false,
         development_only: true,
         login_auto_start: false,
@@ -516,7 +519,12 @@ fn report_for(
 pub fn status(instance: &Path, timeout: Duration) -> Result<ServiceSummary> {
     host()?;
     check_timeout(timeout, 120)?;
-    let deadline = Instant::now() + timeout;
+    status_until(instance, Instant::now() + timeout)
+}
+
+// Every blocking observation shares this absolute deadline. A read that runs
+// out of its own budget returns the partial observation, never a generic error.
+fn status_until(instance: &Path, deadline: Instant) -> Result<ServiceSummary> {
     let root = Control::open(instance)?;
     let (binding, _file, _journal, state) = load(&root)?;
     let runtime = load_runtime(&root, &state)?;
@@ -531,9 +539,19 @@ pub fn status(instance: &Path, timeout: Duration) -> Result<ServiceSummary> {
         return Ok(result);
     };
     let job = runtime.job(&root)?;
-    let observation = match job.inspect(remaining(deadline)?.min(Duration::from_secs(5))) {
+    let budget = match query_remaining(deadline) {
         Ok(value) => value,
-        Err(_) => return Ok(result),
+        Err(_) => return Ok(expired_summary(result, "SERVICE_STATUS_QUERY_EXPIRED")),
+    };
+    let observation = match job.inspect(budget.min(Duration::from_secs(5))) {
+        Ok(value) => value,
+        Err(error) => {
+            return Ok(observation_failure(
+                result,
+                &error,
+                "SERVICE_OBSERVATION_UNKNOWN",
+            ));
+        }
     };
     let live_pid = match observation {
         Observation::GuiUnavailable => {
@@ -621,13 +639,13 @@ pub fn status(instance: &Path, timeout: Duration) -> Result<ServiceSummary> {
         let first = runtime_http::get(
             runtime.endpoint,
             "/monitor/api/console/bootstrap",
-            remaining(deadline)?.min(Duration::from_secs(2)),
+            query_remaining(deadline)?.min(Duration::from_secs(2)),
         )?;
         runtime_result::validate_bootstrap(&first.body, &first.media, &expected, node_instance_id)?;
         let health = runtime_http::get(
             runtime.endpoint,
             "/monitor/api/consensus/health",
-            remaining(deadline)?.min(Duration::from_secs(2)),
+            query_remaining(deadline)?.min(Duration::from_secs(2)),
         )?;
         let health = runtime_result::validate_health(&health.body, &health.media)?;
         validate_health_role(&health, &binding.node_identity)?;
@@ -645,10 +663,10 @@ pub fn status(instance: &Path, timeout: Duration) -> Result<ServiceSummary> {
         let last = runtime_http::get(
             runtime.endpoint,
             "/monitor/api/console/bootstrap",
-            remaining(deadline)?.min(Duration::from_secs(2)),
+            query_remaining(deadline)?.min(Duration::from_secs(2)),
         )?;
         runtime_result::validate_bootstrap(&last.body, &last.media, &expected, node_instance_id)?;
-        match job.inspect(remaining(deadline)?.min(Duration::from_secs(2)))? {
+        match job.inspect(query_remaining(deadline)?.min(Duration::from_secs(2)))? {
             Observation::Loaded(observed) if observed.pid == runtime.pid => (),
             _ => return Err(unknown()),
         }
@@ -673,39 +691,183 @@ pub fn status(instance: &Path, timeout: Duration) -> Result<ServiceSummary> {
             }
             result.health = Some(serde_json::to_value(health).map_err(|_| invalid())?);
         }
-        Err(_) => result.reason = "SERVICE_HTTP_IDENTITY_UNKNOWN".into(),
+        Err(error) => {
+            return Ok(observation_failure(
+                result,
+                &error,
+                "SERVICE_HTTP_IDENTITY_UNKNOWN",
+            ));
+        }
     }
     Ok(result)
 }
-fn wait_start(instance: &Path, attempt: &str, timeout: Duration) -> Result<ServiceSummary> {
-    let deadline = Instant::now() + timeout;
-    loop {
-        let remaining = deadline.saturating_duration_since(Instant::now());
-        let mut result = status(
-            instance,
-            remaining
-                .max(Duration::from_millis(1))
-                .min(Duration::from_secs(8)),
-        )?;
-        if result.attempt_id.as_deref() != Some(attempt) {
-            return Err(unknown());
+#[derive(Clone, Copy)]
+enum WaitKind {
+    Start,
+    Status,
+}
+impl WaitKind {
+    fn expired_reason(self) -> &'static str {
+        match self {
+            Self::Start => "SERVICE_START_WAIT_EXPIRED",
+            Self::Status => "SERVICE_STATUS_WAIT_EXPIRED",
+        }
+    }
+}
+
+// Keeps only observations of the first attempt. READY is returned immediately,
+// so the retained value can never be a stale READY reused by a later poll.
+struct ReadinessWait {
+    attempt: Option<String>,
+    kind: WaitKind,
+    last: Option<ServiceSummary>,
+}
+impl ReadinessWait {
+    fn accept(
+        &mut self,
+        mut result: ServiceSummary,
+        expired: bool,
+    ) -> Result<Option<ServiceSummary>> {
+        match (&self.attempt, &result.attempt_id) {
+            (Some(expected), Some(actual)) if expected == actual => (),
+            (Some(_), _) => return Err(attempt_changed()),
+            (None, Some(actual)) => self.attempt = Some(actual.clone()),
+            (None, None) => return Ok(Some(result)),
         }
         if result.engine_state == "STOPPED" {
-            result.outcome = "INCOMPLETE".into();
-            result.reason = "SERVICE_EXITED_DURING_START".into();
-            return Ok(result);
+            if matches!(self.kind, WaitKind::Start) {
+                result.outcome = "INCOMPLETE".into();
+                result.reason = "SERVICE_EXITED_DURING_START".into();
+            }
+            return Ok(Some(result));
         }
         if result.runtime_readiness == "READY" || result.outcome == "FAILED" {
-            return Ok(result);
+            return Ok(Some(result));
         }
-        if Instant::now() >= deadline {
-            if result.outcome == "UNKNOWN" {
-                result.reason = "SERVICE_START_WAIT_EXPIRED".into();
+        // A final tiny budget can expire before launchd/report observation.
+        // Retain the prior same-attempt observation instead of erasing STARTING
+        // or NOT_READY. A fresh identity/report error never takes this path.
+        if result.reason == "SERVICE_STATUS_QUERY_EXPIRED" && result.engine_state == "UNKNOWN" {
+            if let Some(previous) = self.last.take() {
+                result = previous;
             }
+        }
+        if expired {
+            return Ok(Some(expired_summary(result, self.kind.expired_reason())));
+        }
+        self.last = Some(result);
+        Ok(None)
+    }
+    fn finish(&mut self) -> Result<ServiceSummary> {
+        self.last
+            .take()
+            .map(|result| expired_summary(result, self.kind.expired_reason()))
+            .ok_or_else(unknown)
+    }
+}
+
+// Classify only explicit adapter deadline/socket-timeout errors. A malformed
+// response, identity mismatch, output overflow, or ordinary I/O failure remains
+// its own uncertainty even if it arrives after the observation deadline.
+fn observation_failure(
+    mut result: ServiceSummary,
+    error: &BxdlError,
+    reason: &str,
+) -> ServiceSummary {
+    if matches!(
+        error.code.as_str(),
+        "SERVICE_STATUS_QUERY_EXPIRED"
+            | runtime_http::WAIT_EXPIRED
+            | super::super::launchd::WAIT_EXPIRED
+    ) {
+        expired_summary(result, "SERVICE_STATUS_QUERY_EXPIRED")
+    } else {
+        result.reason = reason.into();
+        result
+    }
+}
+fn expired_summary(mut result: ServiceSummary, reason: &str) -> ServiceSummary {
+    if result.last_observation_reason.is_none() {
+        result.last_observation_reason = Some(result.reason.clone());
+    }
+    result.reason = reason.into();
+    result
+}
+fn query_remaining(deadline: Instant) -> Result<Duration> {
+    remaining(deadline).map_err(|_| {
+        fail(
+            "SERVICE_STATUS_QUERY_EXPIRED",
+            "상태 조회 시간이 끝났습니다. 확인한 실행 정보는 보존했으며 같은 실행을 다시 조회할 수 있습니다.",
+        )
+    })
+}
+fn attempt_changed() -> BxdlError {
+    fail(
+        "SERVICE_ATTEMPT_CHANGED",
+        "대기 중 실행 시도가 바뀌었습니다. 새 실행을 자동으로 채택하지 않았습니다. 현재 상태를 다시 조회하세요.",
+    )
+}
+fn observation_deadline(deadline: Instant, now: Instant) -> Instant {
+    deadline.min(now + Duration::from_secs(8))
+}
+fn wait_observations(
+    instance: &Path,
+    attempt: Option<&str>,
+    timeout: Duration,
+    kind: WaitKind,
+) -> Result<ServiceSummary> {
+    let deadline = Instant::now() + timeout;
+    let mut waiting = ReadinessWait {
+        attempt: attempt.map(str::to_owned),
+        kind,
+        last: None,
+    };
+    loop {
+        let now = Instant::now();
+        if now >= deadline && waiting.last.is_some() {
+            return waiting.finish();
+        }
+        // Even an expired first observation validates and reads existing state;
+        // it receives no positive replacement budget for launchd or HTTP.
+        let result = status_until(instance, observation_deadline(deadline, now))?;
+        if let Some(result) = waiting.accept(result, Instant::now() >= deadline)? {
             return Ok(result);
         }
-        thread::sleep(Duration::from_millis(150));
+        thread::sleep(
+            Duration::from_millis(150).min(deadline.saturating_duration_since(Instant::now())),
+        );
     }
+}
+fn wait_start(instance: &Path, attempt: &str, timeout: Duration) -> Result<ServiceSummary> {
+    wait_observations(instance, Some(attempt), timeout, WaitKind::Start)
+}
+
+/// Observe the current attempt until ready, failed, stopped, or the wait ends.
+/// This never prepares a job, sends a signal, or changes an instance journal.
+pub fn wait_ready(instance: &Path, timeout: Duration) -> Result<ServiceSummary> {
+    check_wait_timeout(timeout)?;
+    wait_observations(instance, None, timeout, WaitKind::Status)
+}
+
+/// Continue the attempt already displayed by setup, without adopting a newer one.
+pub(crate) fn wait_ready_for(
+    instance: &Path,
+    attempt: &str,
+    timeout: Duration,
+) -> Result<ServiceSummary> {
+    check_wait_timeout(timeout)?;
+    if !valid_attempt(attempt) {
+        return Err(invalid());
+    }
+    wait_observations(instance, Some(attempt), timeout, WaitKind::Status)
+}
+fn check_wait_timeout(timeout: Duration) -> Result<()> {
+    host()?;
+    check_timeout(timeout, 600)?;
+    if timeout < Duration::from_secs(1) {
+        return Err(invalid());
+    }
+    Ok(())
 }
 
 pub fn stop(instance: &Path, timeout: Duration) -> Result<ServiceSummary> {

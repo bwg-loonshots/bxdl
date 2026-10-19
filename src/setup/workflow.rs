@@ -100,7 +100,13 @@ pub struct Summary {
     pub registration: String,
     pub initialization: String,
     pub service_state: String,
+    pub engine_state: String,
     pub runtime_readiness: String,
+    pub service_reason: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_observation_reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attempt_id: Option<String>,
     pub global_consensus: &'static str,
     pub development_only: bool,
 }
@@ -111,7 +117,11 @@ pub struct Workflow {
     journal: Journal,
     observed_initialization: String,
     observed_service: String,
+    observed_engine: String,
     observed_readiness: String,
+    observed_service_reason: String,
+    observed_last_reason: Option<String>,
+    observed_attempt: Option<String>,
 }
 
 impl Workflow {
@@ -157,7 +167,11 @@ impl Workflow {
             journal,
             observed_initialization: "NOT_OBSERVED".into(),
             observed_service: "NOT_OBSERVED".into(),
+            observed_engine: "NOT_OBSERVED".into(),
             observed_readiness: "NOT_CHECKED".into(),
+            observed_service_reason: "NOT_OBSERVED".into(),
+            observed_last_reason: None,
+            observed_attempt: None,
         };
         value.validate()?;
         Ok(value)
@@ -441,6 +455,10 @@ impl Workflow {
     /// Reconcile only complete, owned results. Incomplete extraction/registration
     /// is kept UNKNOWN. Initialization remains governed by the engine adapter.
     pub(super) fn reconcile(&mut self) -> Result<()> {
+        // A failed recheck must not leave a previous READY looking current.
+        if self.journal.start != Phase::Pending {
+            self.clear_service_observation("SERVICE_OBSERVATION_UNKNOWN");
+        }
         if !self.has_plan() {
             return Ok(());
         }
@@ -629,6 +647,7 @@ impl Workflow {
         match instance::service::start(required(&plan.inputs.instance)?, TIMEOUT) {
             Ok(summary) => self.set_service(summary),
             Err(failure) => {
+                self.clear_service_observation(&failure.code);
                 self.journal.start = Phase::Unknown;
                 self.save()?;
                 return Err(failure);
@@ -638,7 +657,10 @@ impl Workflow {
     }
 
     fn set_service(&mut self, value: instance::service::ServiceSummary) {
-        self.journal.start = if value.reason == "SERVICE_NOT_STARTED" && !value.operation_busy {
+        self.journal.start = if value.reason == "SERVICE_NOT_STARTED"
+            && value.attempt_id.is_none()
+            && !value.operation_busy
+        {
             Phase::Pending
         } else if value.service_state == "RUNNING" && value.engine_state == "RUNNING" {
             Phase::Confirmed
@@ -646,15 +668,65 @@ impl Workflow {
             Phase::Unknown
         };
         self.observed_service = value.service_state;
+        self.observed_engine = value.engine_state;
         self.observed_readiness = value.runtime_readiness;
+        self.observed_service_reason = value.reason;
+        self.observed_last_reason = value.last_observation_reason;
+        self.observed_attempt = value.attempt_id;
+    }
+
+    fn clear_service_observation(&mut self, reason: &str) {
+        self.observed_service = "UNKNOWN".into();
+        self.observed_engine = "UNKNOWN".into();
+        self.observed_readiness = "UNKNOWN".into();
+        self.observed_service_reason = reason.into();
+        self.observed_last_reason = None;
+        self.observed_attempt = None;
+    }
+
+    fn accept_service_observation(
+        &mut self,
+        result: Result<instance::service::ServiceSummary>,
+    ) -> Result<()> {
+        match result {
+            Ok(summary) => {
+                self.set_service(summary);
+                Ok(())
+            }
+            Err(failure) => {
+                self.clear_service_observation(&failure.code);
+                self.journal.start = Phase::Unknown;
+                Err(failure)
+            }
+        }
     }
 
     pub(super) fn observe_service(&mut self) -> Result<()> {
+        self.clear_service_observation("SERVICE_OBSERVATION_UNKNOWN");
         let plan = self.plan()?;
-        let summary =
-            instance::service::status(required(&plan.inputs.instance)?, Duration::from_secs(15))?;
-        self.set_service(summary);
-        Ok(())
+        let result =
+            instance::service::status(required(&plan.inputs.instance)?, Duration::from_secs(15));
+        self.accept_service_observation(result)
+    }
+
+    pub(super) fn wait(&mut self) -> Result<()> {
+        if !self.can_wait() {
+            return Err(unknown());
+        }
+        self.storage.require_capacity(1)?;
+        let expected_attempt = self.observed_attempt.clone().ok_or_else(unknown)?;
+        self.clear_service_observation("SERVICE_OBSERVATION_UNKNOWN");
+        let plan = self.plan()?;
+        // Read the current attempt through the service adapter. This path never
+        // invokes initialization, bootstrap, kickstart, or automatic retries.
+        let result = instance::service::wait_ready_for(
+            required(&plan.inputs.instance)?,
+            &expected_attempt,
+            TIMEOUT,
+        );
+        let observation = self.accept_service_observation(result);
+        self.save()?;
+        observation
     }
 
     pub(super) fn can_apply(&self) -> bool {
@@ -673,6 +745,9 @@ impl Workflow {
     }
     pub(super) fn can_start(&self) -> bool {
         self.journal.initialization == Phase::Confirmed && self.journal.start == Phase::Pending
+    }
+    pub(super) fn can_wait(&self) -> bool {
+        self.observed_attempt.is_some() && self.journal.start != Phase::Pending
     }
     pub(super) fn can_edit(&self) -> bool {
         self.pristine()
@@ -701,7 +776,11 @@ impl Workflow {
                 "UNKNOWN".into()
             },
             service_state: self.observed_service.clone(),
+            engine_state: self.observed_engine.clone(),
             runtime_readiness: self.observed_readiness.clone(),
+            service_reason: self.observed_service_reason.clone(),
+            last_observation_reason: self.observed_last_reason.clone(),
+            attempt_id: self.observed_attempt.clone(),
             global_consensus: "NOT_CHECKED",
             development_only: true,
         }
@@ -959,5 +1038,111 @@ mod registration_tests {
         assert!(unavailable.contains("입력 자료와 기존 등록을 확인"));
         assert!(!unavailable.contains("PRIVATE_CANARY"));
         assert!(!unavailable.contains("/secret/path"));
+    }
+}
+
+#[cfg(all(test, target_os = "macos", target_arch = "aarch64"))]
+mod service_observation_tests {
+    use super::*;
+    use std::os::unix::fs::PermissionsExt;
+
+    fn fixture() -> (tempfile::TempDir, Workflow) {
+        let temp = tempfile::tempdir().unwrap();
+        let root = fs::canonicalize(temp.path()).unwrap();
+        fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
+        let mut workflow = Workflow::create(&root.join("workflow"), None).unwrap();
+        // Isolate observation transitions from installation and JVM execution.
+        workflow.journal.initialization = Phase::Confirmed;
+        (temp, workflow)
+    }
+
+    fn observation(ready: bool) -> instance::service::ServiceSummary {
+        instance::service::ServiceSummary {
+            instance_id: "test-instance".into(),
+            outcome: if ready { "SUCCEEDED" } else { "UNKNOWN" }.into(),
+            service_state: "RUNNING".into(),
+            engine_state: if ready { "RUNNING" } else { "STARTING" }.into(),
+            runtime_readiness: if ready { "READY" } else { "UNKNOWN" }.into(),
+            reason: if ready {
+                "RUNTIME_READY"
+            } else {
+                "SERVICE_START_WAIT_EXPIRED"
+            }
+            .into(),
+            last_observation_reason: (!ready).then(|| "SERVICE_START_PENDING".into()),
+            operation_busy: true,
+            development_only: true,
+            login_auto_start: false,
+            automatic_restart: false,
+            service_profile: "MACOS_USER_LAUNCH_AGENT",
+            global_consensus: "NOT_CHECKED",
+            attempt_id: Some("bxdl-123-abcd-1".into()),
+            pid: Some(123),
+            node_instance_id: None,
+            health: None,
+        }
+    }
+
+    #[test]
+    fn pending_then_ready_keeps_the_same_attempt_and_never_enables_another_start() {
+        let (_temp, mut workflow) = fixture();
+        assert!(workflow.can_start());
+        assert!(!workflow.can_wait());
+        let bytes_before = workflow.storage.read().unwrap();
+        workflow.set_service(observation(false));
+        assert!(!workflow.can_start());
+        assert!(workflow.can_wait());
+        let pending = serde_json::to_value(workflow.summary()).unwrap();
+        assert_eq!(pending["engineState"], "STARTING");
+        assert_eq!(pending["serviceReason"], "SERVICE_START_WAIT_EXPIRED");
+        assert_eq!(pending["lastObservationReason"], "SERVICE_START_PENDING");
+        workflow
+            .accept_service_observation(Ok(observation(true)))
+            .unwrap();
+        assert!(!workflow.can_start());
+        assert!(workflow.can_wait());
+        let ready = serde_json::to_value(workflow.summary()).unwrap();
+        assert_eq!(ready["attemptId"], pending["attemptId"]);
+        assert_eq!(ready["runtimeReadiness"], "READY");
+        assert!(ready.get("lastObservationReason").is_none());
+        // The observation is memory-only; journal/plan serialization is unchanged.
+        assert_eq!(workflow.storage.read().unwrap(), bytes_before);
+        let journal = serde_json::to_value(&workflow.journal).unwrap();
+        for key in [
+            "engineState",
+            "serviceReason",
+            "lastObservationReason",
+            "attemptId",
+        ] {
+            assert!(journal.get(key).is_none());
+        }
+    }
+
+    #[test]
+    fn observation_error_invalidates_previous_ready_without_reenabling_start() {
+        let (_temp, mut workflow) = fixture();
+        workflow.set_service(observation(true));
+        let failure = workflow
+            .accept_service_observation(Err(error("SERVICE_ATTEMPT_CHANGED", "PRIVATE_CANARY")))
+            .unwrap_err();
+        assert_eq!(failure.code, "SERVICE_ATTEMPT_CHANGED");
+        let summary = serde_json::to_value(workflow.summary()).unwrap();
+        assert_eq!(summary["engineState"], "UNKNOWN");
+        assert_eq!(summary["runtimeReadiness"], "UNKNOWN");
+        assert_eq!(summary["serviceReason"], "SERVICE_ATTEMPT_CHANGED");
+        assert!(summary.get("attemptId").is_none());
+        assert!(!summary.to_string().contains("PRIVATE_CANARY"));
+        assert!(!workflow.can_start());
+        assert!(!workflow.can_wait());
+    }
+
+    #[test]
+    fn failed_plan_read_does_not_leave_ready_in_current_observation() {
+        let (_temp, mut workflow) = fixture();
+        workflow.set_service(observation(true));
+        assert!(workflow.observe_service().is_err());
+        assert_eq!(workflow.summary().runtime_readiness, "UNKNOWN");
+        assert_eq!(workflow.summary().engine_state, "UNKNOWN");
+        assert!(!workflow.can_start());
     }
 }

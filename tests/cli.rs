@@ -415,6 +415,25 @@ fn service_commands_require_explicit_instance_and_bounded_wait() {
         vec!["status", "--instance", "x", "--timeout-seconds", "121"],
         vec!["stop", "--instance", "x", "--timeout-seconds", "0"],
         vec!["start", "--instance", "x", "--force"],
+        vec!["start", "--instance", "x", "--wait"],
+        vec!["stop", "--instance", "x", "--wait"],
+        vec![
+            "status",
+            "--instance",
+            "x",
+            "--wait",
+            "--timeout-seconds",
+            "601",
+        ],
+        vec![
+            "status",
+            "--instance",
+            "x",
+            "--wait",
+            "--timeout-seconds",
+            "0",
+        ],
+        vec!["status", "--instance", "x", "--wait=true"],
         vec!["service-run", "--instance", "x"],
     ] {
         assert_eq!(run(&args).1, 2, "{args:?}");
@@ -423,5 +442,16 @@ fn service_commands_require_explicit_instance_and_bounded_wait() {
         let (value, exit) = run(&[command, "--instance", "/missing-bxdl-service-test"]);
         assert_eq!(exit, 3);
         assert_ne!(value["reasonCode"], "CAPABILITY_NOT_IMPLEMENTED");
+    }
+}
+
+#[test]
+fn status_wait_keeps_json_failure_as_a_single_document_without_notices() {
+    for extra in [vec!["--wait"], vec!["--wait", "--timeout-seconds", "600"]] {
+        let mut args = vec!["status", "--instance", "/missing-bxdl-service-wait-test"];
+        args.extend(extra);
+        let (value, exit) = run(&args);
+        assert_eq!(exit, 3);
+        assert_ne!(value["reasonCode"], "INVALID_ARGUMENTS");
     }
 }

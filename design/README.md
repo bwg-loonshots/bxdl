@@ -15,6 +15,7 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 
 | 문서 | 내용 |
 | --- | --- |
+| [시작 관측 UX](./2026-10-19-start-observation-ux.md) | 기한 종료·실제 실패 구분, 동일 시도의 읽기 대기 |
 | [JRE 선정과 공급자 검증](./2026-10-19-jre-selection.md) | Temurin21 고정·전체 runtime staging·소스/legal·엔진 검증 분담 |
 | [RC1 수신·Mac 패키지 인수](./2026-10-19-engine-rc1-adoption.md) | 후보 identity 고정, 등록 모드 안내·기존 계획 호환, 실제 signed package 인수 |
 | [setup 설치 흐름](./2026-09-27-setup-install-flow.md) | 자료·계획·등록·명시 init/start와 중단·재개 |

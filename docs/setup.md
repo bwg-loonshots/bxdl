@@ -29,6 +29,7 @@ bxdl setup --install --workspace /absolute/existing-parent/new-session --resume
 | 파일 설치·등록 | `apply`, 이어서 `y` 또는 `yes` | 새 제품 설정 출력, 패키지 설치·전체 inventory 확인, NIGO cold 검사, 인스턴스 등록 |
 | 초기화 | `init`, 이어서 별도 `y` 또는 `yes` | 등록한 새 데이터 경로에 명시 초기화. engine journal·report·종료 결과 확인 |
 | 시작 | `start`, 이어서 별도 `y` 또는 `yes` | Mac 사용자 LaunchAgent 시작. 터미널 종료 뒤에도 실행될 수 있음 |
+| 준비 상태 대기 | 시작 시도가 관측된 뒤 `wait` | 화면에 표시된 시도의 준비 상태를 최대120초 읽기 관측. init/start 재실행 없음 |
 | 종료 | `finish` 또는 Enter | 현재 단계까지만 저장하고 종료. 미선택 초기화·시작을 예약하지 않음 |
 
 자동 GC와 자산 등록 정책은 고정한 native/chain 입력의 안내다. 도우미가 GC를 켜거나 등록·발행 권한을 부여하지 않는다.
@@ -51,6 +52,8 @@ RC1 공개 chain에는 `nigo.protocol.native-assets.registration-mode`를 정확
 새 항목은 저장된 계획/저널 형식을 변경하지 않고 다시 확인한 입력에서 표시하므로 기존 계획의 재개 호환성을 유지한다.
 
 `check`는 저장된 입력과 소유한 결과를 재검증하고, 시작 시도가 있다면 서비스 상태를 관측한다. `edit`는 노드 설정을, `inputs`는 설치 자료·목적지를 다시 입력한다. 출력 생성 전의 수정은 기존 계획을 무효화하므로 다시 `plan`과 명시 확인이 필요하다. 출력 생성 이후에는 이 도우미에서 설정·등록 binding을 바꾸지 않는다.
+
+시작 관측 기한이 끝나도 실행은 계속될 수 있다. 화면의 서비스·엔진·로컬 준비 상태와 시작 시도, 마지막 관측 사유를 확인한다. `wait`는 관측된 같은 시도를 기다리고 `check`는 다시 조회한다. 시도 변경·조회 오류를 이전 READY로 덮지 않으며, 새 start를 자동 수행하지 않는다. 완료되지 않은 시작의 기존 진행 기록과 계획 형식은 유지한다.
 
 정상 cold 결과인 `INCOMPLETE`는 DB·native·runtime 미검사를 유지한다. 도우미는 등록 API의 알려진 cold 계약을 통해 진행하며 모든 실패나 INCOMPLETE를 일괄 성공으로 바꾸지 않는다. 설치 완료·등록 완료·초기화 완료·실행 상태·로컬 readiness는 별개이며 네트워크 합의는 계속 `NOT_CHECKED`다.
 

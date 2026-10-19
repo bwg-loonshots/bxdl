@@ -123,6 +123,7 @@ register/show/init/resume의 `data`는 `instanceId`, `initialization=NOT_STARTED
 ```text
 bxdl start --instance <absolute-control-dir> [--timeout-seconds <1..600>] [--json]
 bxdl status --instance <absolute-control-dir> [--timeout-seconds <1..120>] [--json]
+bxdl status --instance <absolute-control-dir> --wait [--timeout-seconds <1..600>] [--json]
 bxdl stop --instance <absolute-control-dir> [--timeout-seconds <1..600>] [--json]
 ```
 
@@ -141,6 +142,16 @@ start마다 control 아래에 고유 attempt·worker/JAR snapshot·plist·report
 서비스 결과 SUCCEEDED는 exit 0, INCOMPLETE는 5, FAILED는 4, UNKNOWN은 6이다. 호출 사전 조건·자료 검증 오류는 exit 3이다. 로컬 READY는 거래 확정·peer 연결·전역 quorum의 보장이 아니다. 종료된 인스턴스의 status도 STOPPED 결과로 exit 0일 수 있으므로 exit만 보고 실행 중이라고 해석하지 않는다. `instance show`의 초기화 Summary와 runtime `status`를 구별한다.
 
 stop은 정확한 label·PID·프로그램 인자를 확인한 뒤 TERM을 요청한다. 같은 시도의 정상 STOPPED report, launchd의 프로세스 부재, control 잠금 획득을 모두 확인해야 `STOPPED_VERIFIED`를 기록하고 남은 job 등록을 정리한다. status가 종료를 관측했어도 기록을 게시하지는 않으므로 다음 시작 전에는 명시 stop이 필요하다. gate 실패·UNKNOWN·불완전 종료는 자동 재시작/초기화/repair로 해결하지 않는다. [서비스 사용과 실패 처리](./instance.md), [설계·인수 경계](../design/2026-09-18-macos-launchagent.md)를 따른다.
+
+### 같은 실행의 준비 상태 기다리기
+
+start의 지정 시간은 시작 전 cold 명령(최대120초)과 bootstrap 뒤 준비 관측에 각각 적용된다. 전체 명령 시간 한도가 아니며, 짧게 지정하면 기동 전 검사에서 ENGINE_TIMEOUT이 날 수 있다. 이미 시작된 시도의 짧은 관측에는 `status --wait`를 사용한다.
+
+`status --wait`는 읽기 관측이며 기본120초/최대600초다. 단발 status는 기존 기본10초/최대120초다. `--wait`를 start/stop에 사용할 수 없다. 명령 시작 시 현재 attempt에 고정하고 중간 변경은 `SERVICE_ATTEMPT_CHANGED`/UNKNOWN/exit6으로 중단한다. 새 실행을 요청하거나 기존 실패를 수리하지 않는다.
+
+`SERVICE_START_WAIT_EXPIRED`·`SERVICE_STATUS_WAIT_EXPIRED`는 관측 기한 종료이며 마지막 결과의 UNKNOWN/INCOMPLETE를 유지한다. `data.lastObservationReason`은 마지막 실제 사유이고, `data.attemptId/engineState/runtimeReadiness`도 보존한다. 실제 FAILED·READY·종료는 만료로 덮지 않는다. 단발 조회 예산 만료는 `SERVICE_STATUS_QUERY_EXPIRED`다. 출력의 상태는 마지막 관측이며 이후 변화는 새 조회로 확인한다.
+
+사람용 start/status/stop과 설치 도우미는 서비스·엔진·로컬 준비 상태, 시도 ID와 안전한 reason code만 표시한다. JSON 모드는 그대로 한 문서만 출력하며 사람용 대기 안내를 섞지 않는다.
 
 ## 오프라인 기록과 지원 보고서
 
@@ -167,4 +178,4 @@ logs는 수집 결과를 출력한다. diagnose는 이미 존재하는 부모 �
 
 ## 미구현 명령
 
-upgrade/uninstall은 명시적인 UNSUPPORTED 오류를 반환한다. no-op 성공이나 가짜 PID/engine 상태를 만들지 않는다. setup의 패키지 선택·설치 연결, 로그인 자동 시작·장기 운영 LaunchDaemon·Linux/systemd·Docker와 인증된 원격 관리는 아직 제공하지 않는다. macOS를 첫 UX 대상으로 구현할 순서는 [Mac 우선 설계](../design/2026-09-17-rust-macos-first.md)를 따른다.
+upgrade/uninstall은 명시적인 UNSUPPORTED 오류를 반환한다. no-op 성공이나 가짜 PID/engine 상태를 만들지 않는다. 로그인 자동 시작·장기 운영 LaunchDaemon·Linux/systemd·Docker와 인증된 원격 관리는 아직 제공하지 않는다. macOS를 첫 UX 대상으로 구현할 순서는 [Mac 우선 설계](../design/2026-09-17-rust-macos-first.md)를 따른다.

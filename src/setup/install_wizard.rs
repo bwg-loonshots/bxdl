@@ -54,6 +54,12 @@ pub(super) fn interact(
         if w.can_start() {
             say(out, "  start 지금 LaunchAgent 시작 (별도 확인)\n")?;
         }
+        if w.can_wait() {
+            say(
+                out,
+                "  wait 현재 시작 시도의 준비 상태 기다리기 (최대 120초)\n",
+            )?;
+        }
         if w.has_plan() {
             say(out, "  check 저장 결과 재검증·실행 상태 확인\n")?;
         }
@@ -129,6 +135,13 @@ pub(super) fn interact(
                     Some(true) => {}
                 }
                 w.start()
+            }
+            "wait" if w.can_wait() => {
+                say(
+                    out,
+                    "현재 시작 시도만 관측합니다. 새 초기화·시작 요청 없이 최대 120초 기다립니다.\n",
+                )?;
+                w.wait()
             }
             "check" if w.has_plan() => w.reconcile(),
             _ => {
@@ -347,10 +360,24 @@ fn show_status(w: &Workflow, out: &mut dyn Write) -> Result<()> {
     say(
         out,
         &format!(
-            "\n저장 상태: 설치 {} / 등록 {} / 초기화 {}\n현재 관측: 서비스 {} / 로컬 readiness {} / 네트워크 합의 미검사\n",
-            s.installation, s.registration, s.initialization, s.service_state, s.runtime_readiness
+            "\n저장 상태: 설치 {} / 등록 {} / 초기화 {}\n",
+            s.installation, s.registration, s.initialization
         ),
-    )
+    )?;
+    let projection = serde_json::to_value(s).map_err(|_| {
+        error(
+            "SETUP_OUTPUT_FAILED",
+            "현재 관측 결과를 구성하지 못했습니다.",
+        )
+    })?;
+    crate::cli::print_service_summary(out, &projection)
+        .and_then(|_| out.flush())
+        .map_err(|_| {
+            error(
+                "SETUP_OUTPUT_FAILED",
+                "안내를 출력하지 못했습니다. 작업 기록을 보존했습니다.",
+            )
+        })
 }
 fn confirm(input: &mut dyn BufRead, out: &mut dyn Write, text: &str) -> Result<Option<bool>> {
     say(out, &format!("{text}\n[y/N] > "))?;

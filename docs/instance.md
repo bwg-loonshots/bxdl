@@ -74,6 +74,8 @@ BXDL_PACKAGE="/absolute/bxdl/releases/candidate-02"
 BXDL_INSTANCE="/absolute/bxdl/instances/validator-a"
 "$BXDL_PACKAGE/bin/bxdl" start --instance "$BXDL_INSTANCE" --json
 "$BXDL_PACKAGE/bin/bxdl" status --instance "$BXDL_INSTANCE" --json
+# 준비 완료까지 현재 실행 시도를 관측한다. 엔진을 다시 시작하지 않는다.
+"$BXDL_PACKAGE/bin/bxdl" status --instance "$BXDL_INSTANCE" --wait --timeout-seconds 120 --json
 "$BXDL_PACKAGE/bin/bxdl" stop --instance "$BXDL_INSTANCE" --json
 # stop이 정상 종료를 검증하고 등록 정리를 마친 뒤에만 같은 데이터로 다시 시작한다.
 "$BXDL_PACKAGE/bin/bxdl" start --instance "$BXDL_INSTANCE" --json
@@ -83,7 +85,11 @@ BXDL_INSTANCE="/absolute/bxdl/instances/validator-a"
 
 plist는 control의 시도 폴더에 두고 수동 bootstrap한다. `~/Library/LaunchAgents`에는 설치하지 않는다. 로그인 자동 시작·자동 재시작은 없으며 내부 `service-run`이나 `launchctl kickstart`로 이미 소비한 attempt를 다시 실행할 수 없다. 이 profile은 로그인 세션이 없는 장기 서버용 LaunchDaemon이 아니다.
 
-start timeout은 기본 120초(1~600초)이며 사전 검증·bootstrap 뒤 시작 관측에 적용한다. 만료는 실행 취소가 아니며 worker/Java가 계속 진행할 수 있다. status는 기본 10초(1~120초), stop은 기본 60초(1~600초)의 공통 관측 예산을 사용한다. stop은 의도 기록 후 정확한 job을 확인해 TERM을 요청하며, timeout에 SIGKILL이나 live job bootout을 하지 않는다.
+start timeout은 기본 120초(1~600초)다. 시작 전 cold 명령에는 최대120초로 제한해 적용하고, 사전 검증·bootstrap 뒤 시작 관측에 같은 지정값을 새로 적용한다. 전체 명령의 총 시간 한도가 아니므로 1초처럼 짧게 지정하면 기동 요청 전 cold 검사에서 ENGINE_TIMEOUT으로 끝날 수 있다. 만료는 실행 취소가 아니며 worker/Java가 계속 진행할 수 있다. status는 기본 10초(1~120초), stop은 기본 60초(1~600초)의 공통 관측 예산을 사용한다. stop은 의도 기록 후 정확한 job을 확인해 TERM을 요청하며, timeout에 SIGKILL이나 live job bootout을 하지 않는다.
+
+`status --wait`는 기본120초(1~600초) 동안 조회를 시작할 때의 실행 시도만 관측한다. READY·실제 실패·종료를 확인하면 끝나며, 도중에 시도가 바뀌면 `SERVICE_ATTEMPT_CHANGED`로 중단한다. 미시작 인스턴스는 즉시 현재 상태를 반환한다.
+
+시작 대기 만료는 `SERVICE_START_WAIT_EXPIRED`, 상태 대기 만료는 `SERVICE_STATUS_WAIT_EXPIRED`다. JSON의 `attemptId`, `engineState`, `runtimeReadiness`, `lastObservationReason`에서 마지막 관측을 확인한다. 자체 조회 예산 소진은 `SERVICE_STATUS_QUERY_EXPIRED`다. 실제 엔진 실패와 구분하며 UNKNOWN/INCOMPLETE의 기존 exit 의미를 유지한다. 대기 종료 뒤에도 엔진은 계속 진행할 수 있다. 사람용 화면은 한국어 상태와 다음 조회 방법을 표시한다.
 
 status는 해당 attempt의 launchd·report·로컬 bootstrap/health를 대조한다. 로컬 READY/exit 0은 전역 quorum·거래 확정·4-validator 정상의 증명이 아니다. STOPPED 조회도 exit 0일 수 있으므로 `engineState/runtimeReadiness/reason`을 확인한다. INCOMPLETE는 exit 5, 관측된 FAILED는 4, 관측 불명은 6이며 입력·사전 조건 거부는 3이다. `instance show`는 초기화 기록과 advisory busy만 보여주므로 노드 상태에는 `status`를 사용한다.
 
