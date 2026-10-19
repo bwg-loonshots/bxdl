@@ -1,0 +1,185 @@
+{
+  "artifact": {
+    "fileName": "nigo-node-0.0.1-SNAPSHOT.jar",
+    "sha256": "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45",
+    "sizeBytes": 164083923
+  },
+  "candidateId": "nigo-engine-v0.1.0-rc.1",
+  "console": {
+    "node": "v24.21.0",
+    "npm": "11.19.0",
+    "sourceFingerprint": "4df95293576a4baaa63639d3540ae6657b89c0eae80b1e2e2f7f9e6412a32c73"
+  },
+  "consumerAcceptance": "NOT_RUN",
+  "contract": {
+    "definitionSha256": "bffe91e25a3c58db7626fadbb8333b5216ab293b7760dee033f2fdf974841687",
+    "documentationSha256": "f52c8ef1c31fa51b269da547139e72ba90e6131198e351ee3426b760b5e3db95",
+    "fingerprint": "bac1756a81f2d2ddf67ae094fc770bc67060482acab87da7d48b93d441ab8f88",
+    "revision": "540a89f0814c01d2a4ec67da1087af35195882ca",
+    "runtimeDocumentationSha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+    "runtimeFixtureSha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e",
+    "status": "PROPOSED"
+  },
+  "createdAtUtc": "2026-10-19T05:28:45.653890+00:00",
+  "environment": {
+    "architecture": "arm64",
+    "gradleWrapperVersion": "9.4.1",
+    "javaVersionOutput": "java version \"21.0.7\" 2025-04-15 LTS\nJava(TM) SE Runtime Environment (build 21.0.7+8-LTS-245)\nJava HotSpot(TM) 64-Bit Server VM (build 21.0.7+8-LTS-245, mixed mode, sharing)",
+    "nodeSourceTestWorker": {
+      "activeProcessorCount": 4,
+      "heapMaxBytes": 1073741824,
+      "maxParallelForks": 1,
+      "productionSizingClaim": false
+    },
+    "nodeVersion": "24.21.0",
+    "npmVersion": "11.19.0",
+    "os": "macOS",
+    "osBuild": "25G83",
+    "osVersion": "26.6.2"
+  },
+  "expectedPrereleaseUrl": "https://github.com/bwg-loonshots/nigo-protocol/releases/tag/nigo-engine-v0.1.0-rc.1",
+  "harnessCommit": "540a89f0814c01d2a4ec67da1087af35195882ca",
+  "limitations": [
+    "Development RC only; not an official production release or customer-delivery approval.",
+    "BXDL receipt, lock selection, package/JRE/LaunchAgent acceptance are pending.",
+    "No source-free QBFT generator, consumer PKI, JRE, installer, DB or raw logs included.",
+    "NIGO P2/P3 late-authored modules, Type-2 examples and every carrier/recipe are not accepted here.",
+    "Linux/systemd, power-cut, long-run/performance and DB upgrade/downgrade not checked.",
+    "No claim of reproducible build, signed provenance or server-enforced ref/asset immutability."
+  ],
+  "mandatoryTasks": {
+    ":nigo-block-sync:test": "EXECUTED",
+    ":nigo-native-tooling:test": "EXECUTED",
+    ":nigo-node:bootJar": "EXECUTED",
+    ":nigo-node:consoleBuild": "EXECUTED",
+    ":nigo-node:consoleBundle": "EXECUTED",
+    ":nigo-node:consoleCheckNode": "EXECUTED",
+    ":nigo-node:consoleCheckNpm": "EXECUTED",
+    ":nigo-node:consoleInstall": "EXECUTED",
+    ":nigo-node:consoleTest": "EXECUTED",
+    ":nigo-node:consoleTypecheck": "EXECUTED",
+    ":nigo-node:consoleVerify": "EXECUTED",
+    ":nigo-node:engineDistribution": "EXECUTED",
+    ":nigo-node:generateEngineBuildInfo": "EXECUTED",
+    ":nigo-node:test": "EXECUTED",
+    ":nigo-node:testEngineArtifact": "EXECUTED",
+    ":nigo-node:testEngineArtifactIdentity": "EXECUTED",
+    ":nigo-transaction-gossip:test": "EXECUTED",
+    ":verifyArchitectureBoundaries": "EXECUTED"
+  },
+  "manifestPolicy": "Original generated manifest preserved; NOT_RECORDED/NOT_CHECKED are not overwritten.",
+  "notRunOptIn": [
+    {
+      "className": "org.nigo.node.config.StandardProductPersistentNodeTests",
+      "gate": "NIGO_S3_NODE_RESTART=1",
+      "group": "node-source",
+      "name": "publicSupplyAndDefaultProductSurviveColdNodeRestartsAcrossBothBackendsAndFees()",
+      "reason": "Separate opt-in Node/SDK cold-restart product matrix is outside this supplier RC scope.",
+      "result": "NOT_RUN_OPT_IN"
+    },
+    {
+      "className": "org.nigo.protocol.blockchain.pool.PendingStateStoreViewAttributionTests",
+      "gate": "nigo.u4.pendingAttribution=true",
+      "group": "node-source",
+      "name": "attributePinnedConstructionWithoutWeakeningItsSnapshot(String)",
+      "reason": "Separate opt-in pending-view attribution/performance diagnostic remains deferred.",
+      "result": "NOT_RUN_OPT_IN"
+    }
+  ],
+  "packagingToolSha256": "5de61b9ddfed9084b135f01994ed6bb1837d733621abe7a46e355b1cb364df9a",
+  "releaseBranch": "release/engine-0.1",
+  "remotePublication": "NOT_PERFORMED_BY_PACKAGING_SCRIPT",
+  "scope": {
+    "consumerTarget": "macOS arm64 / Java 21 / RocksDB / fresh data",
+    "dataCompatibility": "FRESH_ONLY",
+    "qbft": {
+      "observers": 1,
+      "repetitionsPerBackend": 1,
+      "scenarios": [
+        "source-failover",
+        "same-height-hash-root",
+        "same-db-key-restart",
+        "manual-follower",
+        "confirmed-normal-shutdown"
+      ],
+      "transport": "MTLS",
+      "validators": 4
+    },
+    "supplierBackends": [
+      "h2",
+      "rocksdb"
+    ]
+  },
+  "source": {
+    "commit": "540a89f0814c01d2a4ec67da1087af35195882ca",
+    "dirty": false
+  },
+  "status": "SUPPLIER_VALIDATED_LOCAL_BUNDLE",
+  "supplierLog": {
+    "rawLogIncluded": false,
+    "sha256": "db916dccd8be68cccf780ac792004dccf40eb052f8cf569407c7e8db0acaafe5",
+    "sizeBytes": 5157953
+  },
+  "tests": [
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 1006,
+        "skipped": 2,
+        "tests": 1008
+      },
+      "executionKind": "SOURCE_CLASSPATH",
+      "gradleTask": ":nigo-node:test",
+      "id": "node-source"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 136,
+        "skipped": 0,
+        "tests": 136
+      },
+      "executionKind": "SOURCE_CLASSPATH",
+      "gradleTask": ":nigo-block-sync:test",
+      "id": "block-sync-source"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 34,
+        "skipped": 0,
+        "tests": 34
+      },
+      "executionKind": "SOURCE_CLASSPATH",
+      "gradleTask": ":nigo-transaction-gossip:test",
+      "id": "gossip-source"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 79,
+        "skipped": 0,
+        "tests": 79
+      },
+      "executionKind": "SOURCE_CLASSPATH",
+      "gradleTask": ":nigo-native-tooling:test",
+      "id": "native-tooling-source"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 9,
+        "skipped": 0,
+        "tests": 9
+      },
+      "executionKind": "PACKAGED_JAR",
+      "gradleTask": ":nigo-node:testEngineArtifact",
+      "id": "exact-jar"
+    }
+  ]
+}

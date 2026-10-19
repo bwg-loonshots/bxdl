@@ -1,6 +1,6 @@
 # 제품 설정과 NIGO 개발 후보의 cold 검사
 
-setup으로 저장한 제품 설정과 운영자가 준비한 NIGO native 설정이 같은 노드를 가리키는지 확인하고, 고정한 개발 후보의 cold 검사를 실행할 수 있다. `init`, `resume-init`, `run`과 서비스 관리는 아직 연결하지 않는다. 최신 수신 기준은 [clean 개발 후보 snapshot](../contracts/nigo/development-clean-2026-09-18/README.md)이며 계약은 `PROPOSED`, 채널은 `development`, `officialRelease=false`다.
+setup으로 저장한 제품 설정과 운영자가 준비한 NIGO native 설정이 같은 노드를 가리키는지 확인하고, 고정한 개발 후보의 cold 검사를 실행한다. 등록 후 init/resume-init과 LaunchAgent start/status/stop은 [인스턴스 가이드](./instance.md)를 따른다. 최신 수신 기준은 [RC1 snapshot](../contracts/nigo/engine-rc1-2026-10-19/README.md)이며 계약은 `PROPOSED`, 채널은 `development`, `officialRelease=false`다.
 
 ## 제품 설정과 함께 검사하기
 
@@ -24,7 +24,7 @@ JSON 결과의 `data.product`는 로컬 검사 결과, `data.configurationBindin
 
 ## 두 종류의 설정과 필요한 자료
 
-`instance.json`은 BXDL 제품 입력이고 `node.json`은 NIGO native 입력이다. setup은 native 설정을 자동 생성하지 않는다. node.json의 `chainFile`, `dataDirectory`, `backend`, `node`와 공개 chain의 flat properties는 [수신 계약](../contracts/nigo/development-clean-2026-09-18/ENGINE_CONTRACT.md)에 맞게 별도 준비한다. 각 설정의 상대경로는 각 원본 설정 파일 위치를 기준으로 해석한다.
+`instance.json`은 BXDL 제품 입력이고 `node.json`은 NIGO native 입력이다. setup은 native 설정을 자동 생성하지 않는다. node.json의 `chainFile`, `dataDirectory`, `backend`, `node`와 공개 chain의 flat properties는 [RC1 수신 계약](../contracts/nigo/engine-rc1-2026-10-19/ENGINE_CONTRACT.md)에 맞게 별도 준비한다. 각 설정의 상대경로는 각 원본 설정 파일 위치를 기준으로 해석한다.
 
 공개 node ID는 `0x`로 시작하는 32-byte hex이고 validator ID와 다르다. 제품 v1의 일반 식별자나 예제 placeholder가 이 엔진 identity를 대신하지 않는다. 제품에 없는 validator ID, peer 목록·역할·거래 권한·credential pin, sync/ingress 정책 등은 native 입력으로 제공하며 NIGO가 검증한다. BXDL이 chain membership·genesis나 PKI를 추측해 생성하지 않는다.
 
@@ -54,7 +54,9 @@ bxdl engine preflight --jar /absolute/package/engine/nigo-node.jar \
 
 `--lock`은 패키지 밖에서 신뢰한 입력이다. [schema](../contracts/bxdl/engine-lock.schema.json)는 `schemaVersion=1`, `jarSha256`, `jarSizeBytes`, `javaSha256`과 `expected`를 요구한다. `expected`는 AVAILABLE인 buildInfoStatus 및 engine/version/source/java/console/contract/distribution 전체 engine-info DTO를 고정한다. source.dirty도 정확히 일치해야 한다.
 
-[Clean lock 예시](../packaging/engine-lock.clean-development.example.json)는 source `303e163a9b3f293fa39e42d02b8daa1843973c14`, dirty=false인 새 공급 JAR의 identity다. Java SHA-256은 0으로 남겨 두었으므로 그대로 실행할 수 없다. 검토해 선택한 Java executable의 hash로 채운다. [기존 lock 예시](../packaging/engine-lock.development.example.json)는 source `aee1cbe5…`, dirty=true인 이전 후보의 이력이다. 새 JAR에 기존 source·hash·계약 fingerprint나 시험 근거를 재사용하지 않는다.
+[RC1 lock 예시](../packaging/engine-lock.rc1-development.example.json)는 source `540a89f0…`와 JAR `f1ea80e2…`의 실제 engine-info를 고정한다. Java SHA-256은 미선정 0 값이므로 선택·검증한 Java hash로 채우고 전체 runtime inventory도 검증한다. RC1 chain에는 정확한 `OPEN`/`ALLOWLISTED` 등록 모드가 필수이며 기존 DB 업그레이드를 제공하지 않는다.
+
+과거 [Clean lock 예시](../packaging/engine-lock.clean-development.example.json)는 source `303e163a9b3f293fa39e42d02b8daa1843973c14`, dirty=false인 새 공급 JAR의 identity다. Java SHA-256은 0으로 남겨 두었으므로 그대로 실행할 수 없다. 검토해 선택한 Java executable의 hash로 채운다. [기존 lock 예시](../packaging/engine-lock.development.example.json)는 source `aee1cbe5…`, dirty=true인 이전 후보의 이력이다. 새 JAR에 기존 source·hash·계약 fingerprint나 시험 근거를 재사용하지 않는다.
 
 제공자 manifest·인계 기록·JAR 내장 자료를 교차 확인한다. 전달받은 파일의 hash를 그 자리에서 믿는 것만으로 공급자가 인증되지 않는다. Java 실행파일 하나의 hash는 전체 JRE 의존 파일의 인증이 아니며, 제품 패키지 전체 inventory 검증과 정식 runtime 선정은 별도다.
 
@@ -68,4 +70,10 @@ engine-info의 올바른 응답은 exit 0이다. 올바른 cold 검사는 NIGO e
 
 2026-09-18에는 NIGO PR #119의 clean 후보를 새로 수신했다. 문서 checkout은 `49d1cefc…`, 공급 JAR source는 `303e163a…`이며 서로 다르다. 공급자는 이 JAR의 QBFT 종료·source 전환·같은 데이터 재시작 시험을 별도 evidence로 제공했다. [이전 dirty 후보](../contracts/nigo/development-2026-09-17/README.md)의 종료/drain·sync 제한과 당시 소비 결과는 이력으로 보존한다. 새 공급자 시험을 BXDL의 JRE/package·launchd·오프라인·4-validator G1-M 인수로 승격하지 않는다.
 
-이번 연결은 설정 자동 렌더·PKI 생성·설치 등록·instance journal·init·launchd를 제공하지 않는다. 정상 cold 결과 뒤에도 초기화·기동·정상 종료·동일 DB 재시작은 별도 구현과 인수가 필요하다. clean 수신으로 NIGO 요구 원장의 OPEN을 변경하거나 정식 release를 승인하지 않는다.
+native 설정 자동 렌더·PKI 생성은 후속이다. 현재 설치 등록·instance journal·명시 init과 LaunchAgent lifecycle은 구현되어 있으며 [구현 상태](./implementation-status.md)와 후보별 실행 결과를 따른다. 정상 cold 결과만으로 runtime/합의 인수를 완료하지 않으며, 후보 수신으로 정식 release나 전체 G1-M을 승인하지 않는다.
+
+## RC1 + 선정 Temurin JRE
+
+[고정 development lock](../packaging/engine-lock.rc1-temurin-development.json)은 실제 RC1 JAR와
+Temurin21.0.12.1+1의 Java hash를 포함한다. [runtime stage](./runtime.md)로 전체 JRE를 별도 검증하고
+서명된 패키지 inventory와 함께 사용한다. 원래 runtime 미선정 예시는 보존한다.

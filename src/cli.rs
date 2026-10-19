@@ -1,5 +1,5 @@
 //! Operator interface. Mutations require a registered instance and explicit intent.
-use crate::{artifact, config, engine, error::BxdlError, install, setup};
+use crate::{artifact, config, engine, error::BxdlError, install, runtime, setup};
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::{
@@ -14,7 +14,7 @@ pub const REVISION: &str = match option_env!("BXDL_REVISION") {
     Some(v) => v,
     None => "development",
 };
-pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup --install --workspace <new-session> [--from <instance.json>]\n  bxdl setup --install --workspace <session> --resume\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl logs --instance <dir> [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n  bxdl diagnose --instance <dir> --output <new.json>\n      [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\n기본 setup은 설정 초안·로컬 검사·파일 저장만 수행합니다.\nsetup --install은 터미널에서 설치·등록·초기화·시작을 각각 명시 선택합니다. 기존 DB 업그레이드는 제공하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nlogs는 최신 초기화·서비스 시도의 정제한 저장 기록만 읽습니다. raw stdout/stderr나 실시간 follow는 제공하지 않습니다.\ndiagnose는 같은 기록을 새 JSON 지원 보고서에 저장합니다. JVM·네트워크·서비스 호출이나 현재 상태 검증은 수행하지 않습니다.\nlogs/diagnose 기본 한도는 tail 50개, 읽기 262144 bytes, 시간 5초입니다. 누락·예산 초과는 partial로 표시합니다.\nupgrade/uninstall은 아직 제공하지 않습니다.\n";
+pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl runtime stage --source <extracted-java-home> --lock <json> --output <new-dir> [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup --install --workspace <new-session> [--from <instance.json>]\n  bxdl setup --install --workspace <session> --resume\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl logs --instance <dir> [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n  bxdl diagnose --instance <dir> --output <new.json>\n      [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\n기본 setup은 설정 초안·로컬 검사·파일 저장만 수행합니다.\nsetup --install은 터미널에서 설치·등록·초기화·시작을 각각 명시 선택합니다. 기존 DB 업그레이드는 제공하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nlogs는 최신 초기화·서비스 시도의 정제한 저장 기록만 읽습니다. raw stdout/stderr나 실시간 follow는 제공하지 않습니다.\ndiagnose는 같은 기록을 새 JSON 지원 보고서에 저장합니다. JVM·네트워크·서비스 호출이나 현재 상태 검증은 수행하지 않습니다.\nlogs/diagnose 기본 한도는 tail 50개, 읽기 262144 bytes, 시간 5초입니다. 누락·예산 초과는 partial로 표시합니다.\nupgrade/uninstall은 아직 제공하지 않습니다.\n";
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -525,13 +525,47 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["package.build", "package.verify", "config.validate", "preflight.local", "setup.draft", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
+                        "capabilities": ["runtime.stage", "package.build", "package.verify", "config.validate", "preflight.local", "setup.draft", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
                         "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),
                 ),
                 0,
             )
+        }
+        "runtime" => {
+            if args.get(1).map(String::as_str) != Some("stage") {
+                return invalid("runtime");
+            }
+            let Some((flags, pos)) = parse(
+                &args[2..],
+                &[("source", true), ("lock", true), ("output", true)],
+            ) else {
+                return invalid("runtime stage");
+            };
+            if !pos.is_empty()
+                || ["source", "lock", "output"]
+                    .iter()
+                    .any(|name| !flags.contains_key(*name))
+            {
+                return invalid("runtime stage");
+            }
+            let options = runtime::StageOptions {
+                source: (&flags["source"]).into(),
+                lock: (&flags["lock"]).into(),
+                output: (&flags["output"]).into(),
+            };
+            match runtime::stage(&options) {
+                Ok(value) => report(
+                    "runtime stage",
+                    "SUCCEEDED",
+                    "RUNTIME_STAGED",
+                    "신뢰 lock의 전체 runtime 파일을 검증해 새 폴더에 준비했습니다. archive 인증·JVM 실행·제품 호환성 검증은 포함하지 않습니다.",
+                    value,
+                    0,
+                ),
+                Err(error) => failure("runtime stage", error, 3),
+            }
         }
         "package" => match args.get(1).map(String::as_str) {
             Some("verify") => {

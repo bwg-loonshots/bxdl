@@ -1,0 +1,30 @@
+BXDL development package — selected Java runtime notices
+
+This package includes Eclipse Temurin 21.0.12.1+1-LTS for macOS aarch64,
+provided by Eclipse Adoptium. The complete upstream JRE Home files are
+preserved without jlink minimization. File contents are unchanged; packaging
+normalizes filesystem permissions to 0644/0755.
+
+The runtime is distributed under GNU General Public License version 2 with
+the Classpath Exception and the third-party terms included by the supplier.
+Read runtime/legal/**, including runtime/legal/java.base/LICENSE,
+ADDITIONAL_LICENSE_INFO and ASSEMBLY_EXCEPTION. Original notices are retained.
+Java/OpenJDK and Eclipse Temurin marks remain their respective owners' marks.
+
+The exact runtime file inventory and archive identity are recorded in
+ docs/runtime-provenance.json. Upstream metadata and SBOM are preserved in
+ docs/runtime/supplier-metadata.json and licenses/temurin-supplier-sbom.json.
+The supplier SBOM JRE archive hash differs from the released archive hash;
+see docs/runtime/observed-runtime.json. The cause has not been established.
+licenses/SBOM.json is a BXDL-generated runtime-only file/component inventory,
+not a complete product dependency SBOM. Engine/native/Rust dependency notices
+and complete product supply-chain review remain release work.
+
+Matching OpenJDK source and Temurin build material are identified by
+ docs/runtime/source-supply.json. The development acceptance retains both
+archives locally. Customer delivery must include or provide equivalent access
+to corresponding source material together with the binary; recording upstream
+links alone does not establish completed source delivery.
+
+This development package does not claim customer release approval, NIGO
+supplier validation of this JRE, Apple notarization, or a supported minimum OS.

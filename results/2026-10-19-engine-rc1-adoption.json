@@ -1,0 +1,88 @@
+{
+  "outcome": "PASS",
+  "scope": "LOCAL_MANAGED_LIFECYCLE_NOT_QUORUM",
+  "cliSha256": "c5d62bc3ddbd2e61557a4f9954dfde67894d104e049f6f05f121256bc4688fac",
+  "engineSource": "540a89f0814c01d2a4ec67da1087af35195882ca",
+  "engineJarSha256": "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45",
+  "developmentOnly": true,
+  "authenticity": "verified-external-ed25519",
+  "archiveSha256": "421dd69ad14454b2820b2f4e02e2739e035eb98fe2220c5a9f6718e6cc458300",
+  "manifestSha256": "ffd4790ff5758ec8a873e853579020d4b02823c429b5c40e024ea1adc7a7e5d0",
+  "javaSha256": "94b66f2cc8edfba9e0e8b25abe93e4c3617d2cc1af7e8eaec0f5b2afe0df5c12",
+  "full14Inputs": true,
+  "registrationMode": "ALLOWLISTED",
+  "steps": [
+    {
+      "stage": "FRESH_TEST_TLS_CREATED_AND_VALIDITY_CHECKED"
+    },
+    {
+      "stage": "REGISTRATION_CONTRACT_5_CASES_VERIFIED_WITHOUT_DATA"
+    },
+    {
+      "stage": "SIGNED_PACKAGE_AND_RC1_INSPECT_VERIFIED",
+      "cliSha256": "c5d62bc3ddbd2e61557a4f9954dfde67894d104e049f6f05f121256bc4688fac",
+      "archiveSha256": "421dd69ad14454b2820b2f4e02e2739e035eb98fe2220c5a9f6718e6cc458300"
+    },
+    {
+      "stage": "CANCEL_AND_CHECKPOINT_VERIFIED"
+    },
+    {
+      "stage": "FULL_14_INPUTS_AND_REGISTRATION_PLAN_VERIFIED"
+    },
+    {
+      "stage": "REGISTERED_AND_COLD_INCOMPLETE_VERIFIED"
+    },
+    {
+      "stage": "INITIALIZED_VERIFIED"
+    },
+    {
+      "stage": "FIRST_RUN_OBSERVED",
+      "localReadiness": "READY"
+    },
+    {
+      "stage": "FIRST_STOP_VERIFIED"
+    },
+    {
+      "stage": "SAME_DATA_RESTART_AND_STOP_VERIFIED"
+    },
+    {
+      "stage": "FINAL_RESUME_WITHOUT_MUTATION_VERIFIED"
+    }
+  ],
+  "date": "2026-10-19",
+  "bxdlBaseCommit": "70f527be3d1ecf321bb661fa9202f0b4cadf7ef0",
+  "bxdlSourceState": "UNCOMMITTED_WORKING_TREE",
+  "implementationSha256": "7ecb3ef57167d23119acdb051ee1ee532269f26a31e9f6caaf3c5a128f649b06",
+  "platform": {
+    "os": "macOS",
+    "version": "26.6.2",
+    "build": "25G83",
+    "arch": "arm64"
+  },
+  "jre": "LOCAL-TEST Oracle Java 21.0.7 jlink; not selected for redistribution",
+  "tests": {
+    "library": 244,
+    "cli": 13,
+    "cliIntegration": 2,
+    "setupCli": 5,
+    "setupInstall": 11,
+    "setupSafety": 5,
+    "total": 280,
+    "failed": 0,
+    "ignored": 0
+  },
+  "finalState": {
+    "serviceState": "NOT_LOADED",
+    "engineState": "STOPPED",
+    "operationBusy": false,
+    "globalConsensus": "NOT_CHECKED"
+  },
+  "unverified": [
+    "4-validator product quorum",
+    "full G1-M offline/crash/login/sleep cases",
+    "production JRE and supply chain",
+    "Linux/systemd/Docker",
+    "existing database upgrade/downgrade"
+  ],
+  "harnessSha256": "f9291cc2b9910240b050d90a05c7243a9a93ad4a744dd820835b215ca73c863e"
+}

@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BXDL pinned runtime lock v1",
+  "description": "Trusted maintainer input for offline runtime stage on the darwin/arm64 Java 21 profile. files pins the entire extracted Java Home after permitted internal file symlinks are materialized. Archive/sourceArchive fields preserve upstream provenance and are not authenticated or downloaded by runtime stage. Runtime validation additionally checks unique paths, exact full inventory, path restrictions, file/directory conflicts, a 4 GiB total, and bin/java SHA-256 equality with javaSha256. A matching lock does not certify JVM execution, engine compatibility, license completeness, or product release readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "bxdl-runtime-lock"
+    },
+    "vendor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "Nonempty trimmed label without control characters; runtime validator also enforces a 256-byte UTF-8 limit."
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "Nonempty trimmed label without control characters; runtime validator also enforces a 256-byte UTF-8 limit."
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "os": {
+          "const": "darwin"
+        },
+        "arch": {
+          "const": "arm64"
+        },
+        "javaMajor": {
+          "const": 21
+        }
+      },
+      "required": [
+        "os",
+        "arch",
+        "javaMajor"
+      ]
+    },
+    "archive": {
+      "$ref": "#/$defs/archive"
+    },
+    "sourceArchive": {
+      "$ref": "#/$defs/archive"
+    },
+    "javaSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "uniqueItems": true,
+      "description": "Complete expected regular-file inventory using Java Home relative paths. All parent directories are implied. Duplicate path names and total size over 4294967296 bytes are rejected by the runtime validator.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 247,
+            "pattern": "^[^/\\\\:\\u0000-\\u001f\\u007f]+(?:/[^/\\\\:\\u0000-\\u001f\\u007f]+)*$",
+            "description": "Path relative to the complete extracted Java Home, such as bin/java. runtime/ is added by staging. Runtime validation rejects dot components, forbidden secret/data paths and suffixes, overlong UTF-8 paths and final components over 100 bytes."
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 536870912
+          },
+          "mode": {
+            "type": "integer",
+            "enum": [
+              420,
+              493
+            ],
+            "description": "Normalized materialized regular-file mode: decimal 420 is 0644, decimal 493 is 0755."
+          }
+        },
+        "required": [
+          "path",
+          "sha256",
+          "size",
+          "mode"
+        ]
+      },
+      "allOf": [
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "const": "bin/java"
+              },
+              "size": {
+                "minimum": 1
+              },
+              "mode": {
+                "const": 493
+              }
+            },
+            "required": [
+              "path",
+              "size",
+              "mode"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "const": "release"
+              },
+              "size": {
+                "minimum": 1
+              }
+            },
+            "required": [
+              "path",
+              "size"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "const": "legal/java.base/LICENSE"
+              },
+              "size": {
+                "minimum": 1
+              }
+            },
+            "required": [
+              "path",
+              "size"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "kind",
+    "vendor",
+    "version",
+    "platform",
+    "archive",
+    "sourceArchive",
+    "javaSha256",
+    "files"
+  ],
+  "$defs": {
+    "archive": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Pinned upstream provenance only. runtime stage does not download or verify this archive; the maintainer must independently verify supplied archive bytes against the trusted lock.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^/\\\\\\u0000-\\u001f\\u007f]+$",
+          "not": {
+            "enum": [
+              ".",
+              ".."
+            ]
+          },
+          "description": "Trimmed archive filename without separators or control characters; runtime validator also enforces the UTF-8 byte limit."
+        },
+        "url": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 2048,
+          "pattern": "^https://[^\\s\\u0000-\\u001f\\u007f]*$",
+          "description": "HTTPS provenance reference, not a request to download; runtime validator also enforces the UTF-8 byte limit."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615
+        }
+      },
+      "required": [
+        "name",
+        "url",
+        "sha256",
+        "sizeBytes"
+      ]
+    }
+  }
+}

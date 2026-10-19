@@ -22,7 +22,7 @@ Rust 이식은 serde/serde_json(JSON), flate2(Rust compression backend), sha2/he
 
 NIGO `ROCKSDB_OPERATIONS.md`와 `tasks/2026-09-07-rocksdb-storage-implementation.md`에 macOS/Darwin arm64·Java 21의 실제 RocksDB·Node 정상 재시작 근거가 있다. `PROVIDERS.md`는 macOS aarch64 native 경로·JVM os.arch·writable/loadable temp 조건을 명시한다. 이는 BXDL의 선택한 package/JRE/launchd 조합을 인수한 결과가 아니다.
 
-동봉 Java 21의 공급자·patch·archive hash·NOTICE와 최소 macOS 버전은 미선정이다. 개발 Mac의 Java를 재배포 대상으로 자동 채택하지 않는다. NIGO가 범위·안전 의미를 수용했지만 개발 후보 JAR/manifest·PROPOSED 계약/fixture는 수신했고 hash 고정 cold adapter를 구현했다. clean 후보는 #119 인계로 수신·검증했고, 공식 JRE/배포 lock·전체 engine 인수는 남아 있다. REQ-0002는 `OPEN`이고 [소비자 회신](../design/2026-09-17-nigo-feedback-response.md)에 owner·수신 revision·대기 항목을 기록한다. source commit이나 fake JAR/Java fixture를 공식 공급물로 표기하지 않는다.
+2026-10-19에 Temurin21.0.12.1+1 전체 JRE의 공급자·patch·archive hash를 후보로 선정했다. [JRE 준비](./runtime.md)를 따른다. 공급자 호환성 확인·완전한 NOTICE/SBOM·최소 macOS 지원 확정은 남아 있다. 개발 Mac의 Java를 재배포 대상으로 자동 채택하지 않는다. NIGO가 범위·안전 의미를 수용했지만 개발 후보 JAR/manifest·PROPOSED 계약/fixture는 수신했고 hash 고정 cold adapter를 구현했다. clean 후보는 #119 인계로 수신·검증했고, 공식 JRE/배포 lock·전체 engine 인수는 남아 있다. REQ-0002는 `OPEN`이고 [소비자 회신](../design/2026-09-17-nigo-feedback-response.md)에 owner·수신 revision·대기 항목을 기록한다. source commit이나 fake JAR/Java fixture를 공식 공급물로 표기하지 않는다.
 
 Manifest v1의 Mac 값 `libc=none`, `minGlibc=none`은 Linux glibc 조건이 적용되지 않는다는 뜻이다. Mac에 libc가 없다는 뜻이 아니다. Linux의 `glibc/2.34`는 기존 development 후보 계약값을 유지하며 실제 지원 보장이 아니다.
 
@@ -53,3 +53,19 @@ G1-L은 실제 Linux VM의 systemd·전용 UID·native·다중 host 네트워크
 GitHub Actions는 macOS/Ubuntu의 Rust CLI fast checks를 정의한다. 각 변경의 원격 CI는 해당 PR 기록을 따르며 workflow 존재나 이전 revision의 CI를 이번 진단 변경의 PASS 근거로 사용하지 않는다. 로컬 결과도 해당 revision과 연결된 results 기록을 따른다. OS runner architecture는 실행 evidence로 기록하며 CLI CI 통과를 engine/service 인수로 확대하지 않는다.
 
 2026-09-18 명시 초기화 시험에서는 기존 cold 전용 jlink 구성에 `jdk.management`가 빠진 점을 확인했다. NIGO `RuntimeMonitorReader`가 `com.sun.management.OperatingSystemMXBean`을 사용하므로 해당 모듈을 포함한 별도 로컬 시험 JRE로 검증한다. Java launcher hash만으로 runtime 모듈 구성을 구별할 수 없어 instance 등록/실행 시 전체 설치 inventory를 검증한다. 이 보완은 정식 JRE 선정·고객 재배포 승인·필요 모듈 전체 확정을 대신하지 않는다. [초기화 검증 기록](../results/2026-09-18-instance-initialization.md)을 따른다.
+
+## 2026-10-19 RC1 소비자 검증
+
+`nigo-engine-v0.1.0-rc.1`의 source `540a89f0`·JAR `f1ea80e2…`를 원격에서 수신하고 별도 lock/snapshot으로 고정했다.
+macOS26.6.2(25G83) arm64와 기존 test-only Oracle21.0.7 jlink를 포함한 외부 Ed25519 서명 package에서
+전체14문답·취소/재개·등록/init/start/stop·동일 DB 재시작을 확인했다. 새 유효 TLS 시험 자료와 fresh data를 사용했다.
+위 과거 후보 기록을 새 RC1 근거로 재사용하지 않았다. [실행 기록](../results/2026-10-19-engine-rc1-adoption.md)을 따른다.
+정식 JRE 재배포 선정·최소 OS·전체 native 공급망과 4-validator/오프라인/장기 운영 G1-M은 별도이며 Linux 타입 검사만으로 Linux 실행 지원을 주장하지 않는다.
+
+## 2026-10-19 Temurin 후보
+
+Temurin21.0.12.1+1-LTS full JRE(49실제모듈)를 후보로 고정했다. Home259파일과 원본 legal을 보존한 signed package의
+setup전체14문답·init/start/stop·동일 RocksDB 재시작은 macOS26.6.2(25G83) arm64에서 PASS다.
+[정확한 package/runtime identity와 결과](../results/2026-10-19-temurin-runtime.md)를 따른다.
+공급자 SBOM 불일치·NIGO selected-runtime 회귀·전체 제품 NOTICE/SBOM/source 제공과 최소 OS 지원은 미확정이다.
+Mach-O launcher minOS11.0이나 공급자 플랫폼 표를 BXDL 최소 OS 지원으로 전용하지 않는다.

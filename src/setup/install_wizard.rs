@@ -98,7 +98,7 @@ pub(super) fn interact(
                 match confirm(
                     input,
                     out,
-                    "표시한 새 데이터 경로에 이 체인의 제네시스를 초기화할까요? 체인·발행자 허용목록을 먼저 확인하세요.",
+                    "표시한 새 데이터 경로에 이 체인의 제네시스를 초기화할까요? 체인·자산 등록 모드·허용목록을 먼저 확인하세요.",
                 )? {
                     None => return Ok(false),
                     Some(false) => continue,
