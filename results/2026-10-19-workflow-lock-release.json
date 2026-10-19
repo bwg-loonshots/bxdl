@@ -1,0 +1,131 @@
+{
+  "date": "2026-10-19",
+  "outcome": "INCOMPLETE",
+  "scope": "AUTOMATED_LOCAL_LIFECYCLE_WITH_SEPARATE_SUCCESSFUL_FOLLOWUP",
+  "reason": "COMMAND_EXIT_same-data-restart",
+  "baseCommit": "236b8f4faa00af326295e6649cf11d92c934a06c",
+  "sourceState": "UNCOMMITTED_WORKFLOW_LOCK_FIX",
+  "implementationSha256": "5efb284de619a4f10f769cf1e72285e82bc605ae7070f6aab374c1f6618fe0c7",
+  "implementationDigestMethod": "Cargo.toml, Cargo.lock and src/**/*.rs sorted by relative POSIX path string; hash(path UTF8 + NUL + bytes + NUL), 58 files",
+  "cliSha256": "4d97115ba682cc4409b52d84409bd8e1bcde12093742a20ed70027c9a75e1a70",
+  "engineSource": "540a89f0814c01d2a4ec67da1087af35195882ca",
+  "engineJarSha256": "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45",
+  "runtime": {
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "vendor": "Eclipse Adoptium Temurin",
+    "version": "21.0.12.1+1-LTS"
+  },
+  "runtimeLockSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+  "archiveSha256": "9c0542f8a98f60f89078bffa5cc1bca83d50b5009f547bdc2cf0de575121f84c",
+  "manifestSha256": "f127167baa016538587517c7f0f930025c9ca659a695ceae57b6c4e3948b4703",
+  "authenticity": "verified-external-ed25519",
+  "payload": {
+    "filesVerified": 270,
+    "bytesVerified": 324979068
+  },
+  "platform": {
+    "os": "macOS",
+    "version": "26.6.2",
+    "build": "25G83",
+    "arch": "arm64"
+  },
+  "tests": {
+    "library": 256,
+    "cli": 13,
+    "cliIntegration": 2,
+    "setupCli": 5,
+    "setupInstall": 11,
+    "setupSafety": 5,
+    "total": 292,
+    "failed": 0,
+    "ignored": 0
+  },
+  "checks": {
+    "makeCheck": "PASS",
+    "macReleaseBuild": "PASS",
+    "linuxTypecheck": "PASS_NOT_EXECUTED",
+    "independentCodeReview": "NO_ACTIONABLE_FINDINGS"
+  },
+  "automatedSteps": [
+    {
+      "stage": "FRESH_TEST_TLS_CREATED_AND_VALIDITY_CHECKED"
+    },
+    {
+      "stage": "REGISTRATION_CONTRACT_5_CASES_VERIFIED_WITHOUT_DATA"
+    },
+    {
+      "stage": "SIGNED_PACKAGE_AND_RC1_INSPECT_VERIFIED",
+      "cliSha256": "4d97115ba682cc4409b52d84409bd8e1bcde12093742a20ed70027c9a75e1a70",
+      "archiveSha256": "9c0542f8a98f60f89078bffa5cc1bca83d50b5009f547bdc2cf0de575121f84c"
+    },
+    {
+      "stage": "CANCEL_AND_CHECKPOINT_VERIFIED"
+    },
+    {
+      "stage": "FULL_14_INPUTS_AND_REGISTRATION_PLAN_VERIFIED"
+    },
+    {
+      "stage": "REGISTERED_AND_COLD_INCOMPLETE_VERIFIED"
+    },
+    {
+      "stage": "INITIALIZED_VERIFIED",
+      "genesisHash": "0x8502cb416f95f5d82fc458252dca7c164fdc5347ed4830949cb379d6917a4df0"
+    },
+    {
+      "stage": "FIRST_RUN_OBSERVED",
+      "localReadiness": "READY"
+    },
+    {
+      "stage": "FIRST_STOP_VERIFIED"
+    }
+  ],
+  "restartObservation": {
+    "initialStartOutcome": "UNKNOWN",
+    "initialReason": "SERVICE_OPERATION_UNKNOWN",
+    "timeoutSeconds": 15,
+    "openingManagedStorageAt": "2026-10-19T06:54:14.196Z",
+    "initialCommandObservedAt": "2026-10-19T06:54:19.311635Z",
+    "sameAttemptRunningAt": "2026-10-19T06:54:33.071Z",
+    "laterLiveHealth": "READY",
+    "restartCommandRepeated": false,
+    "timeoutExtended": false,
+    "engineFailureCause": "NOT_ESTABLISHED",
+    "startupLatencyExplanation": "PENDING_SUPPLIER_REVIEW"
+  },
+  "followup": {
+    "outcome": "PASS",
+    "scope": "FOLLOWUP_OF_SAME_RESTART_ATTEMPT_NOT_AUTOMATED_RUN_PASS",
+    "originalAutomatedRunOutcome": "INCOMPLETE",
+    "originalStartReason": "SERVICE_OPERATION_UNKNOWN",
+    "originalStartTimeoutSeconds": 15,
+    "cliSha256": "4d97115ba682cc4409b52d84409bd8e1bcde12093742a20ed70027c9a75e1a70",
+    "sameRestartAttempt": true,
+    "genesisUnchanged": true,
+    "distinctNodeInstanceIds": true,
+    "finalState": {
+      "serviceState": "NOT_LOADED",
+      "engineState": "STOPPED",
+      "operationBusy": false,
+      "globalConsensus": "NOT_CHECKED"
+    },
+    "steps": [
+      {
+        "stage": "SAME_RESTART_ATTEMPT_OBSERVED_READY_WITHOUT_REEXECUTION"
+      },
+      {
+        "stage": "RESTART_NORMAL_STOP_VERIFIED"
+      },
+      {
+        "stage": "FINAL_RESUME_WITHOUT_MUTATION_VERIFIED"
+      }
+    ]
+  },
+  "excludedPreparationRun": {
+    "reason": "BUILD_COMPLETED_AFTER_INITIAL_CLI_SNAPSHOT",
+    "acceptedAsEvidence": false,
+    "installedOrInitializedOrStartedEngine": false,
+    "action": "Stopped only the owned pre-install UI and preserved raw evidence"
+  },
+  "globalConsensus": "NOT_CHECKED",
+  "releaseAcceptance": "OPEN"
+}

@@ -92,6 +92,8 @@ installer와 register는 create-new로 얻은 root의 device/inode를 callback�
 
 `finish` exit 0은 세션 저장 성공이며 모든 단계 완료가 아니다. 취소/EOF는 exit 5다. 화면에 표시된 설치·등록·초기화와 관측 상태를 별도로 확인한다. 세션의 생성 config, 원본 archive/key/lock/native와 참조 자료는 등록 이후에도 필요하므로 임시 자료처럼 지우지 않는다.
 
+설치 세션 잠금은 도우미 객체의 수명 동안만 유지한다. 획득 성공 후 guard를 만들고 종료·생성 오류 때 명시적으로 해제하여, fork~exec 중 우연히 상속한 파일 설명이 재개를 막지 않게 한다. 엔진 프로세스에 의도적으로 상속하는 instance OperationLock과는 수명이 다르다. [최종 수정 근거](../results/2026-10-19-workflow-lock-release.md).
+
 ## 검증 범위와 후속
 
 A는 경로/잠금/append-only 저장과 기존 초안 호환, B는 새 설정·설치·등록의 명시 연결과 소유 결과, C는 명시 초기화·시작과 재개 UX다. source 수준 회귀에는 동시 재개, marker/lock/경로 교체, symlink/hardlink/FIFO, 중단 생성·공개 snapshot 손상, 크기/revision 예산, 신뢰·CLI 불일치와 동의·EOF 경계를 포함한다.

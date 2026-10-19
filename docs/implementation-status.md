@@ -22,6 +22,12 @@ Temurin21.0.12.1+1 전체 JRE·archive/source/launcher/259파일을 고정하고
 최종 노드는 정지했으며 4-validator 합의는 NOT_CHECKED다. NIGO 공급자 호환성·전체 제품 공급망·출시는 후속이다.
 [새 검증 기록](../results/2026-10-19-temurin-runtime.md)을 따르며 이전280개/Oracle 기록은 당시 조합의 이력이다.
 
+## 최종 잠금 수정과 재검증
+
+설치 세션 잠금 해제를 보완하고 회귀 2개를 추가해 자동 검사 292개를 통과했다.
+최종 패키지의 설치·초기화·첫 기동/종료는 통과했지만 재시작 15초 관측은 UNKNOWN으로 끝나 자동 하네스는 INCOMPLETE다.
+같은 실행의 후속 READY·정상 종료·재개를 별도로 확인했다. [최종 기록](../results/2026-10-19-workflow-lock-release.md)을 따른다.
+
 ## 실제 제공 기능
 
 - `runtime stage`: 신뢰 lock의 전체 JRE 파일을 검증해 새 staging·provenance 생성. 오프라인 제작자용이며 다운로드/JVM 실행 없음.

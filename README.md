@@ -110,3 +110,4 @@ Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux targe
 
 선정 Temurin21과 제작자용 `runtime stage`는 [JRE 준비](docs/runtime.md)를 참고한다.
 [실제 Temurin 패키지 검증](results/2026-10-19-temurin-runtime.md): 자동 검사290개·설치/초기화/정상 종료/동일 DB 재시작 PASS.
+[최종 잠금 수정 재검증](results/2026-10-19-workflow-lock-release.md): 자동 검사292개 통과. 새 패키지의 재시작 관측은 UNKNOWN으로 자동 시험 INCOMPLETE이며, 동일 실행의 후속 READY·정상 종료·재개는 별도 확인했다.

@@ -77,6 +77,58 @@ fn create_initializes_separate_stores_and_explicit_resume_preserves_bytes() {
 }
 
 #[test]
+fn dropping_workflow_releases_inherited_description_without_releasing_next_owner() {
+    let (_temp, path) = fixture();
+    let store = create(&path);
+    // dup and fork retain the same open description. Hold it deterministically
+    // instead of racing an unrelated child's brief fork-to-exec interval.
+    let inherited = store.lock.file.try_clone().unwrap();
+    assert_eq!(code(WorkflowStore::open(&path)), "SETUP_WORKFLOW_BUSY");
+    drop(store);
+    let resumed = WorkflowStore::open(&path).unwrap();
+    assert_eq!(resumed.read().unwrap(), INITIAL);
+    assert_eq!(code(WorkflowStore::open(&path)), "SETUP_WORKFLOW_BUSY");
+    // Closing the stale description cannot release the next owner's lock.
+    drop(inherited);
+    assert_eq!(code(WorkflowStore::open(&path)), "SETUP_WORKFLOW_BUSY");
+    drop(resumed);
+    WorkflowStore::open(&path).unwrap();
+}
+
+#[test]
+fn acquired_lock_releases_inherited_description_on_constructor_error() {
+    let (_temp, path) = fixture();
+    let store = create(&path);
+    let root = store.root.try_clone().unwrap();
+    drop(store);
+    fs::remove_file(path.join(RECORD)).unwrap();
+    let mut inherited = None;
+    let attempt = (|| -> Result<WorkflowLock> {
+        let mut options = file_options();
+        options.read(true).write(true);
+        let lock = WorkflowLock::acquire(root.open_with(LOCK, &options).unwrap())?;
+        inherited = Some(lock.file.try_clone().unwrap());
+        // The same fallible post-acquisition step used by WorkflowStore::open.
+        read_record(&root)?;
+        Ok(lock)
+    })();
+    assert_eq!(code(attempt), "SETUP_WORKFLOW_UNSAFE");
+    let mut options = file_options();
+    options.read(true).write(true);
+    let next = WorkflowLock::acquire(root.open_with(LOCK, &options).unwrap()).unwrap();
+    drop(inherited);
+    assert_eq!(
+        code(WorkflowLock::acquire(
+            root.open_with(LOCK, &options).unwrap()
+        )),
+        "SETUP_WORKFLOW_BUSY"
+    );
+    drop(next);
+    WorkflowLock::acquire(root.open_with(LOCK, &options).unwrap()).unwrap();
+    assert!(!path.join(RECORD).exists());
+}
+
+#[test]
 fn exclusive_lock_covers_whole_object_lifetime_and_independent_process() {
     let (_temp, path) = fixture();
     let store = create(&path);
