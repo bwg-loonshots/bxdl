@@ -14,7 +14,7 @@ pub const REVISION: &str = match option_env!("BXDL_REVISION") {
     Some(v) => v,
     None => "development",
 };
-pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl runtime stage --source <extracted-java-home> --lock <json> --output <new-dir> [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup --install --workspace <new-session> [--from <instance.json>]\n  bxdl setup --install --workspace <session> --resume\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl status --instance <dir> --wait [--timeout-seconds <1..600>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl logs --instance <dir> [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n  bxdl diagnose --instance <dir> --output <new.json>\n      [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\n기본 setup은 설정 초안·로컬 검사·파일 저장만 수행합니다.\nsetup --install은 터미널에서 설치·등록·초기화·시작을 각각 명시 선택합니다. 기존 DB 업그레이드는 제공하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nstatus --wait는 현재 시작 시도만 최대 120초(기본) 관측하며 초기화·시작·중지는 실행하지 않습니다.\nlogs는 최신 초기화·서비스 시도의 정제한 저장 기록만 읽습니다. raw stdout/stderr나 실시간 follow는 제공하지 않습니다.\ndiagnose는 같은 기록을 새 JSON 지원 보고서에 저장합니다. JVM·네트워크·서비스 호출이나 현재 상태 검증은 수행하지 않습니다.\nlogs/diagnose 기본 한도는 tail 50개, 읽기 262144 bytes, 시간 5초입니다. 누락·예산 초과는 partial로 표시합니다.\nupgrade/uninstall은 아직 제공하지 않습니다.\n";
+pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl runtime stage --source <extracted-java-home> --lock <json> --output <new-dir> [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl config fingerprint --certificate <leaf.pem|leaf.der> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup --network --workspace <new-session> --from <instance.json>\n      --network-file <network.json> [--output <new-node.json>]\n  bxdl setup --network --workspace <session> --resume [--output <new-node.json>]\n  bxdl setup --install --workspace <new-session> [--from <instance.json>]\n  bxdl setup --install --workspace <session> --resume\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl status --instance <dir> --wait [--timeout-seconds <1..600>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl logs --instance <dir> [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n  bxdl diagnose --instance <dir> --output <new.json>\n      [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\n기본 setup은 설정 초안·로컬 검사·파일 저장만 수행합니다.\nsetup --network는 기존 제품 설정·공개 네트워크 자료로 RC1 native 설정을 준비합니다. 키 생성·엔진 실행은 하지 않습니다.\nsetup --install은 터미널에서 설치·등록·초기화·시작을 각각 명시 선택합니다. 기존 DB 업그레이드는 제공하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nstatus --wait는 현재 시작 시도만 최대 120초(기본) 관측하며 초기화·시작·중지는 실행하지 않습니다.\nlogs는 최신 초기화·서비스 시도의 정제한 저장 기록만 읽습니다. raw stdout/stderr나 실시간 follow는 제공하지 않습니다.\ndiagnose는 같은 기록을 새 JSON 지원 보고서에 저장합니다. JVM·네트워크·서비스 호출이나 현재 상태 검증은 수행하지 않습니다.\nlogs/diagnose 기본 한도는 tail 50개, 읽기 262144 bytes, 시간 5초입니다. 누락·예산 초과는 partial로 표시합니다.\nupgrade/uninstall은 아직 제공하지 않습니다.\n";
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -145,6 +145,13 @@ pub fn run_with_input<'a>(
         return 7;
     }
     if let Some(data) = response.data {
+        if response.command == "setup network" {
+            return if print_network_summary(out, &data).is_ok() {
+                exit
+            } else {
+                7
+            };
+        }
         if response.command == "setup" {
             return if print_setup_summary(out, &data).is_ok() {
                 exit
@@ -171,6 +178,30 @@ pub fn run_with_input<'a>(
         }
     }
     exit
+}
+
+fn print_network_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
+    let text = |value: &Value| value.as_str().unwrap_or("UNAVAILABLE").to_owned();
+    writeln!(out, "네트워크 준비 작업 폴더: {}", text(&data["workspace"]))?;
+    writeln!(
+        out,
+        "선택 완료: {} / {}",
+        data["completedFields"].as_array().map_or(0, Vec::len),
+        data["totalFields"].as_u64().unwrap_or(0)
+    )?;
+    if let Some(configuration) = data.get("configuration") {
+        writeln!(
+            out,
+            "validator {}개 / peer {}개 / 거래 권한 {}",
+            configuration["validatorCount"].as_u64().unwrap_or(0),
+            configuration["peerCount"].as_u64().unwrap_or(0),
+            text(&configuration["transactionPermission"])
+        )?;
+    }
+    if let Some(path) = data["outputPath"].as_str() {
+        writeln!(out, "native 설정: {path}")?;
+    }
+    writeln!(out, "엔진 cold 검사·설치·실제 네트워크 검증: 미실행")
 }
 
 /// Only the collector's fixed projections are displayed, never arbitrary fields
@@ -411,12 +442,40 @@ fn dispatch_setup(
             ("output", true),
             ("non-interactive", false),
             ("install", false),
+            ("network", false),
+            ("network-file", true),
         ],
     ) else {
         return invalid("setup");
     };
     let automated = flags.contains_key("non-interactive");
     let resume = flags.contains_key("resume");
+    if flags.contains_key("network") {
+        if !positions.is_empty()
+            || json_mode
+            || automated
+            || flags.contains_key("install")
+            || !flags.contains_key("workspace")
+            || (resume && (flags.contains_key("from") || flags.contains_key("network-file")))
+            || (!resume && (!flags.contains_key("from") || !flags.contains_key("network-file")))
+        {
+            return invalid("setup network");
+        }
+        if !interactive {
+            return failure(
+                "setup network",
+                BxdlError::new(
+                    "SETUP_INTERACTIVE_TERMINAL_REQUIRED",
+                    "네트워크 준비 도우미는 터미널에서 실행하세요.",
+                ),
+                2,
+            );
+        }
+        return dispatch_network_setup(&flags, input, prompts);
+    }
+    if flags.contains_key("network-file") {
+        return invalid("setup");
+    }
     if flags.contains_key("install") {
         if !positions.is_empty()
             || json_mode
@@ -554,6 +613,82 @@ fn dispatch_setup(
     }
 }
 
+fn dispatch_network_setup(
+    flags: &BTreeMap<String, String>,
+    input: &mut dyn BufRead,
+    prompts: &mut dyn Write,
+) -> (ResultEnvelope, i32) {
+    let command = "setup network";
+    let workspace = Path::new(&flags["workspace"]);
+    let output = match flags
+        .get("output")
+        .map(|path| setup::absolute(Path::new(path)))
+        .transpose()
+    {
+        Ok(value) => value,
+        Err(error) => return failure(command, error, 2),
+    };
+    let session = if flags.contains_key("resume") {
+        setup::network::Session::resume(workspace)
+    } else {
+        setup::network::Session::create(
+            workspace,
+            Path::new(&flags["from"]),
+            Path::new(&flags["network-file"]),
+        )
+    };
+    let mut session = match session {
+        Ok(value) => value,
+        Err(error) => return failure(command, error, 3),
+    };
+    match setup::network::interact(&mut session, input, prompts, output.as_deref()) {
+        Ok(finish) => {
+            let mut summary = session.summary();
+            if let setup::network::Finish::Exported(path) = &finish {
+                summary.output_path = Some(path.clone());
+            }
+            let (outcome, code, message, exit) = match finish {
+                setup::network::Finish::Paused => (
+                    "INCOMPLETE",
+                    "SETUP_NETWORK_PAUSED",
+                    "네트워크 준비 초안을 보존했습니다. 같은 작업 폴더에서 --resume으로 이어가세요.",
+                    5,
+                ),
+                setup::network::Finish::Saved => (
+                    "SUCCEEDED",
+                    "SETUP_NETWORK_SAVED",
+                    "네트워크 준비 초안을 저장했습니다. native 파일은 아직 게시하지 않았습니다.",
+                    0,
+                ),
+                setup::network::Finish::Exported(_) => (
+                    "SUCCEEDED",
+                    "SETUP_NETWORK_WRITTEN",
+                    "새 native 설정 파일을 준비했습니다. 엔진 cold 검사·설치·실제 네트워크 검증은 남아 있습니다.",
+                    0,
+                ),
+            };
+            report(command, outcome, code, message, summary, exit)
+        }
+        Err(error) => {
+            if error.code == "SETUP_NETWORK_PUBLICATION_UNCERTAIN" {
+                return (
+                    result(command, "UNKNOWN", &error.code, &error.message, None),
+                    6,
+                );
+            }
+            let exit = if matches!(
+                error.code.as_str(),
+                "SETUP_INPUT_FAILED" | "SETUP_OUTPUT_FAILED"
+            ) {
+                7
+            } else {
+                3
+            };
+            failure(command, error, exit)
+        }
+    }
+}
+
 fn dispatch_install_setup(
     flags: &BTreeMap<String, String>,
     input: &mut dyn BufRead,
@@ -643,7 +778,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["runtime.stage", "package.build", "package.verify", "config.validate", "preflight.local", "setup.draft", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
+                        "capabilities": ["runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
                         "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),
@@ -761,6 +896,29 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
         "install" => dispatch_install(&args[1..]),
         "engine" => dispatch_engine(&args[1..]),
         "config" => {
+            if args.get(1).map(String::as_str) == Some("fingerprint") {
+                let command = "config fingerprint";
+                let Some((flags, pos)) = parse(&args[2..], &[("certificate", true)]) else {
+                    return invalid(command);
+                };
+                let Some(path) = flags.get("certificate") else {
+                    return invalid(command);
+                };
+                if !pos.is_empty() {
+                    return invalid(command);
+                }
+                return match config::network::fingerprint(Path::new(path)) {
+                    Ok(value) => report(
+                        command,
+                        "SUCCEEDED",
+                        "TRANSPORT_FINGERPRINT_COMPUTED",
+                        "공개 leaf 인증서 bytes에서 NIGO MTLS pin을 계산했습니다. 인증서 신뢰·만료·키 일치는 검증하지 않았습니다.",
+                        value,
+                        0,
+                    ),
+                    Err(error) => failure(command, error, 3),
+                };
+            }
             if args.get(1).map(String::as_str) != Some("validate") {
                 return invalid("config");
             }

@@ -1,6 +1,7 @@
 //! Proposed BXDL product configuration checks. This module neither implements
 //! NIGO rules nor persists an instance or establishes runtime readiness.
 
+pub mod network;
 mod preflight;
 pub use preflight::{preflight, preflight_bytes};
 

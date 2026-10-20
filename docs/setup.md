@@ -4,6 +4,10 @@
 
 기본 `setup`은 초안 저장·내보내기까지만 수행한다. `setup --install`은 별도 설치 세션에서 패키지·등록·초기화·시작을 각각 명시적으로 선택한다. 어느 모드든 저장 성공을 모든 단계의 완료로 해석하지 않는다.
 
+## 네트워크 설정 준비
+
+제품 설정에 없는 validator·peer/pin·sync 입력은 별도 `setup --network` 도우미로 준비할 수 있다. 승인 chain과 전체 validator 공개 목록, 기존 키 자료를 받아 RC1 native `node.json`을 생성한다. [네트워크 준비 가이드](./network.md)의 공개 인증서 pin 계산·문답·재개·설치 연결을 따른다. 기본 제품 초안 및 설치 세션 형식은 유지한다.
+
 ## 설치 모드: 패키지부터 시작까지
 
 macOS arm64 터미널에서 **설치할 패키지의 `bin/bxdl`과 동일한 bytes의 CLI**를 사용한다. 문자열 버전만 같은 CLI는 충분하지 않다. 도우미는 패키지를 검증한 뒤 CLI 일치를 먼저 검사하며 다른 CLI로 자동 교체하거나 재실행하지 않는다.
@@ -165,7 +169,7 @@ bxdl preflight --config ./instance.json \
 
 선택한 패키지는 [install](./install.md)로 새 폴더에 설치할 수 있다. 기본 setup이 패키지를 선택·설치하거나 설치 위치를 자동 탐색하지 않는다. 다섯 엔진 옵션은 모두 함께 지정하며, 생략하면 기존 로컬 검사만 수행한다. [엔진 가이드](./engine.md)에 신뢰 lock·native 자료 준비와 제한 시간이 있다.
 
-BXDL은 제품 설정과 native 설정의 node ID·경로·주소·포트·키 참조가 같은지 확인한다. 현재는 QBFT validator와 mTLS 구성을 명시해야 한다. native에만 있는 validator ID·peer 목록·인증 pin·동기화 설정은 별도 준비가 필요하며 setup이 생성하지 않는다. 기존 초안·제품 JSON 형식은 바꾸지 않는다.
+BXDL은 제품 설정과 native 설정의 node ID·경로·주소·포트·키 참조가 같은지 확인한다. 현재는 QBFT validator와 mTLS 구성을 명시해야 한다. native에만 있는 validator ID·peer 목록·인증 pin·동기화 설정은 [setup --network](./network.md)로 준비하거나 운영자가 직접 제공한다. 기존 초안·제품 JSON 형식은 바꾸지 않는다.
 
 로컬 파일 문제는 exit 4로 엔진 실행 전에 멈추고, 제품/native 설정이 다르면 exit 3으로 알린다. 올바른 cold 검사도 exit 5/INCOMPLETE다. timeout은 exit 6/UNKNOWN이며 자동 재시도하지 않는다. JSON의 `data.product`, `data.configurationBinding`, 선택 `data.engine`에서 로컬 검사·설정 일치·엔진 검사를 구별할 수 있다.
 

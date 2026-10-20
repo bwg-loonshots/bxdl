@@ -1,0 +1,119 @@
+{
+  "date": "2026-10-19",
+  "outcome": "PASS",
+  "scope": "NATIVE_NETWORK_PREPARATION_AND_PINNED_RC1_COLD_ONLY",
+  "baseCommit": "cd1556903f74a2ae4d813cefac0b071a80482ce7",
+  "sourceState": "UNCOMMITTED_NETWORK_PREPARATION",
+  "implementationSha256": "3006375d44db6a2758bf8a3adc17b9b436b21be7104f080c94c1dd558876c450",
+  "implementationDigestMethod": "Cargo.toml, Cargo.lock and src/**/*.rs sorted by relative POSIX path string; hash(path UTF8 + NUL + bytes + NUL), 63 files",
+  "cliSha256": "120089de764575709fe5d708a2d502df7dafd0b659ec4086c1176bfb8c0a803d",
+  "engineSource": "540a89f0814c01d2a4ec67da1087af35195882ca",
+  "engineJarSha256": "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45",
+  "runtime": {
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "vendor": "Eclipse Adoptium Temurin",
+    "version": "21.0.12.1+1-LTS",
+    "filesVerified": 259,
+    "runtimeLockSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761"
+  },
+  "platform": {
+    "os": "macOS",
+    "version": "26.6.2",
+    "build": "25G83",
+    "arch": "arm64"
+  },
+  "tests": {
+    "library": 300,
+    "cli": 14,
+    "cliIntegration": 2,
+    "setupCli": 5,
+    "setupInstall": 11,
+    "setupNetworkCli": 6,
+    "setupSafety": 5,
+    "total": 343,
+    "failed": 0,
+    "ignored": 0
+  },
+  "checks": {
+    "makeCheck": "PASS",
+    "macReleaseBuild": "PASS",
+    "linuxTypecheck": "PASS_NOT_EXECUTED",
+    "independentCodeReview": "TWO_FINDINGS_FIXED_NO_REMAINING_ACTIONABLE_FINDINGS"
+  },
+  "initialCheck": {
+    "outcome": "FAILED",
+    "test": "interactive_network_cancel_resumes_selected_options_and_exports_private_native_only",
+    "reason": "TEST_EXPECTED_JSON_STATUS_CONSTANTS_IN_HUMAN_OUTPUT",
+    "correction": "ASSERT_FIXED_HUMAN_NOT_EXECUTED_MESSAGE",
+    "finalFullRun": "PASS"
+  },
+  "actual": {
+    "status": "PASS",
+    "scope": "native preparation and pinned RC1 cold only",
+    "cliSha256": "120089de764575709fe5d708a2d502df7dafd0b659ec4086c1176bfb8c0a803d",
+    "engineSource": "540a89f0814c01d2a4ec67da1087af35195882ca",
+    "engineJarSha256": "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "runtimeFilesVerified": 259,
+    "validators": 4,
+    "peers": 3,
+    "syntheticPeerIdentitiesAndPins": true,
+    "localPinFormulaMatched": true,
+    "ttyCancelResumeExport": true,
+    "newNetworkCold": "INCOMPLETE",
+    "joinNetworkCold": "INCOMPLETE",
+    "configurationBinding": "MATCHED",
+    "dataCreated": false,
+    "networkAndQuorum": "NOT_CHECKED",
+    "newPackageInstallation": "NOT_CHECKED"
+  },
+  "evidence": {
+    "resultSha256": "6ba4b7b73d40fb7ffefdb3f3daf56221418325d8b321227ebb135650aaceceee",
+    "harnessSha256": "2af4b0dbed612210b17203623ca90609d5aa7d5be393eacafe74214082a9cb2f",
+    "harnessSupportSha256": "2b51f4ecba57ebdf4d017996b678ace25a95a1ab03204917dfd4916055d0c9c2",
+    "makeCheckLogSha256": "e7b12e646b03eeb8db8391b73a4ef0dd885c91668ec852d7208732e69875fa34",
+    "macReleaseBuildLogSha256": "a902d46807e4edcd034e37a37fbcde879c0e627785e5519efd9ae0c0590f7288",
+    "linuxTypecheckLogSha256": "1a5f2e8aa811bb561118344dd7c029d2e108e76c6e7c58572276fe70b6916db9",
+    "files": [
+      {
+        "name": "certificate-pin.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "certificate-pin.stdout.json",
+        "sha256": "f5793b2ef8b8c57d5fff052249cebec4af76324f4674b8c0153966c515bcd69b"
+      },
+      {
+        "name": "join-network-cold.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "join-network-cold.stdout.json",
+        "sha256": "21295b49f439844a35e886bc547f1110afea956dcbf99f921003a6c11f936e63"
+      },
+      {
+        "name": "new-network-cold.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "name": "new-network-cold.stdout.json",
+        "sha256": "0957a48b2243932b1c5e2bcb01a7cb2d8e39837e148dd37dc123b92f9f924e0a"
+      },
+      {
+        "name": "prepare-cancel.pty.txt",
+        "sha256": "306cb6c207f110ac00a2c946936d003688a30424fbd9a4ce75239770260a28dc"
+      },
+      {
+        "name": "prepare-join-export.pty.txt",
+        "sha256": "70a4b6edf90ecf982b8c2fe97280d8cbfc013cdd1a104859a4f0e52154be1a63"
+      },
+      {
+        "name": "prepare-resume-export.pty.txt",
+        "sha256": "199391456b71d9cd82c2b9573fc1a5648cb3ee1bc33c766e601ebe850d14aad6"
+      }
+    ]
+  },
+  "networkAndQuorum": "NOT_CHECKED",
+  "newPackageInstallation": "NOT_CHECKED",
+  "releaseAcceptance": "OPEN"
+}

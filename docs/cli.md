@@ -1,6 +1,6 @@
 # CLI·설치·설정·초기화와 Mac 서비스
 
-`--json`은 명령 인자 앞/뒤에서 받을 수 있으며 stdout에 JSON 문서 하나만 쓴다. setup에서는 `--non-interactive`와 함께 사용해야 한다. 사람용 결과도 같은 내부 결과를 표현한다. 대화형 setup 질문은 stderr에 출력하며, 비대화형 JSON 실행은 질문이나 로그 없이 결과만 stdout에 쓴다. 잘못된 인자나 parser 오류에 입력값·secret을 그대로 되돌려 쓰지 않는다.
+`--json`은 명령 인자 앞/뒤에서 받을 수 있으며 stdout에 JSON 문서 하나만 쓴다. 기본 setup에서는 `--non-interactive`와 함께 사용해야 한다. `setup --install`과 `setup --network`는 터미널 전용이다. 사람용 결과도 같은 내부 결과를 표현한다. 대화형 setup 질문은 stderr에 출력하며, 비대화형 JSON 실행은 질문이나 로그 없이 결과만 stdout에 쓴다. 잘못된 인자나 parser 오류에 입력값·secret을 그대로 되돌려 쓰지 않는다.
 
 | exit | 현재 의미 |
 | --- | --- |
@@ -37,9 +37,20 @@ setup `data`에는 `workspace`, `completedFields`, `nextField`, `totalFields`, `
 
 초안 작업 폴더·설정 출력만 만들며 DB·참조 키 파일을 열거나 생성하지 않는다. setup 초안 이력은 설치·초기화 journal이나 엔진 계약이 아니다.
 
+## 네트워크 준비와 인증서 pin
+
+```text
+bxdl config fingerprint --certificate <leaf.pem|leaf.der> [--json]
+bxdl setup --network --workspace <new-session> --from <instance.json>
+    --network-file <network.json> [--output <new-node.json>]
+bxdl setup --network --workspace <session> --resume [--output <new-node.json>]
+```
+
+`config fingerprint`는 공개 leaf DER의 NIGO MTLS pin을 계산한다. 일반 인증서 SHA256이나 인증서 신뢰 검증이 아니다. `setup --network`는 공통 공개 목록과 기존 제품 설정으로 RC1 native를 준비하는 별도 터미널 모드다. 출력 파일 생성도 cold/실행 검증을 뜻하지 않는다. `--json`, `--non-interactive`, `--install` 혼용은 거부한다. 사용법과 입력 계약은 [네트워크 가이드](./network.md)를 따른다.
+
 ## 제품 설정 v1
 
-현재는 JSON을 사용하며 schema는 `contracts/bxdl/instance.schema.json`이다. NIGO는 별도 native node/chain JSON 계약을 제공했다. 제품 schema에는 아직 peer/pin/validator 상세 자료가 없으므로 NIGO 설정을 추측 생성하지 않는다. `engine preflight --config`는 이 제품 JSON이 아닌 NIGO node.json을 받는다.
+현재는 JSON을 사용하며 schema는 `contracts/bxdl/instance.schema.json`이다. NIGO는 별도 native node/chain JSON 계약을 제공했다. 제품 schema는 유지하며 peer/pin/validator 상세 자료는 별도 공개 network 입력으로 받아 `setup --network`에서 RC1 native를 생성한다. `engine preflight --config`는 이 제품 JSON이 아닌 NIGO node.json을 받는다.
 
 - schemaVersion 1, validator role, RocksDB backend를 명시한다.
 - HTTP는 127.0.0.1 또는 ::1, P2P는 명시한 unicast IP다. 두 port는 1~65535 범위의 서로 다른 값이다.
@@ -83,7 +94,7 @@ bxdl preflight --config <instance.json> --engine-config <node.json>
 
 실행한 엔진 응답의 node identity/backend가 제품과 달라도 ENGINE_PRODUCT_MISMATCH로 결과를 거부한다. 따라서 reasonCode만으로 JVM 미실행 여부를 추론하지 않는다. 비교·실행한 product/native/chain bytes를 결속하고 원본 변경 시 결과를 폐기한다. `data.product`의 로컬 미검사는 엔진 결과로 덮어쓰지 않는다. NIGO cold는 key material을 읽지만 DB open·서명·network·서비스 시작을 수행하지 않는다. KEY_MATERIAL PASS도 peer handshake·expiry/revocation 인수가 아니다. 설정 원문·secret 참조 경로·child 원문 출력은 envelope에 넣지 않는다.
 
-이 명령은 설정 자동 렌더·v1 migration·PKI 생성·설치 등록·init·launchd를 추가하지 않는다. setup은 계속 초안과 제품 JSON만 저장하며, 설치 receipt나 cold 결과를 실행 준비 완료로 승격하지 않는다.
+이 명령은 설정 자동 렌더·v1 migration·PKI 생성·설치 등록·init·launchd를 추가하지 않는다. 기본 setup은 초안과 제품 JSON을 저장하며, 별도 `setup --network`는 native JSON을 준비한다. 어느 모드도 설치 receipt나 cold 결과를 실행 준비 완료로 승격하지 않는다.
 
 ## 파일 설치와 엔진 cold 검사
 
