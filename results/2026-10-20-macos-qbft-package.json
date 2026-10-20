@@ -1,0 +1,731 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-20",
+  "outcome": "INCOMPLETE",
+  "scope": "LOCAL_MAC_PACKAGE_ACCEPTANCE_AND_QUORUM_RECOVERY_PROBE",
+  "package": {
+    "archiveSha256": "9edee7c322cb975f402b9715a2d49386b70e00629c2bef453db9ac3ac90becea",
+    "manifestSha256": "4f833ea042a8779103d1e7ab70b322eb768a4e2ea7bbbdcb4ccf399b4bdc8b99",
+    "cliSha256": "120089de764575709fe5d708a2d502df7dafd0b659ec4086c1176bfb8c0a803d",
+    "engineJarSha256": "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "runtimeFilesVerified": 259,
+    "revision": "fecf7a622b06c867fac14eed74f26a66cb0a62c8",
+    "testOnlySigningKey": true
+  },
+  "environment": {
+    "os": "macOS 26.6.2 (25G83)",
+    "architecture": "arm64",
+    "ramBytes": 34359738368
+  },
+  "runs": {
+    "A": {
+      "outcome": "INCOMPLETE",
+      "reason": "COMMAND_EXIT_package-build",
+      "resultSha256": "0677142a17fa0c0de06ab737307a69cef5df983d3f9b3318b5e33b69e320c6f9",
+      "cleanup": {
+        "remaining": [],
+        "errors": []
+      },
+      "executedHarnessSha256": {}
+    },
+    "B": {
+      "outcome": "INCOMPLETE",
+      "reason": "FINALITY_TIMEOUT_same-db-catchup",
+      "resultSha256": "cf05be22ccf4895a9c783c4efd82868a0c7b78310ebd19f0a9eef1d8f10baf51",
+      "cleanup": {
+        "remaining": [],
+        "errors": []
+      },
+      "executedHarnessSha256": {
+        "prepare_fixture.py": "edd450b9d74a4e40d3961983f4cb9bdf8d30be684c6716186f1886cbe7c54af7",
+        "run_acceptance.py": "9e2ab49ac70ba2abbbc9435187deb322c4070552616f9ef8fb23678386032cc7",
+        "support.py": "07f8ba80d300c3ca97c2d600bce749ed07b72f66b123f460adbf5719f82bea2e"
+      }
+    },
+    "C": {
+      "outcome": "INCOMPLETE",
+      "reason": "FINALITY_TIMEOUT_restored-quorum",
+      "resultSha256": "fb95035a12c127f4c383fd64268fca9662a3b441c2005ddfb68dd878aa6b8620",
+      "cleanup": {
+        "remaining": [],
+        "errors": []
+      },
+      "executedHarnessSha256": {
+        "prepare_fixture.py": "edd450b9d74a4e40d3961983f4cb9bdf8d30be684c6716186f1886cbe7c54af7",
+        "run_acceptance.py": "23ebc6945a553eb37d10e1866a5a181d040c3d4ddf122e30dc906eba215da51c",
+        "support.py": "07f8ba80d300c3ca97c2d600bce749ed07b72f66b123f460adbf5719f82bea2e"
+      }
+    },
+    "D": {
+      "outcome": "PASS",
+      "reason": null,
+      "resultSha256": "cbc90b15d1e21e537ff92a1ba9a345671ed9d3f3f105e393ac8cafa6936717fc",
+      "cleanup": {
+        "remaining": [],
+        "errors": []
+      },
+      "executedHarnessSha256": {
+        "prepare_fixture.py": "edd450b9d74a4e40d3961983f4cb9bdf8d30be684c6716186f1886cbe7c54af7",
+        "run_acceptance.py": "23ebc6945a553eb37d10e1866a5a181d040c3d4ddf122e30dc906eba215da51c",
+        "run_pin_only.py": "9613dd84c2741a9e9f83d4750bc3e2a5e94ae87acb571f17efdcffce1bd7a5de",
+        "support.py": "07f8ba80d300c3ca97c2d600bce749ed07b72f66b123f460adbf5719f82bea2e"
+      }
+    },
+    "E": {
+      "outcome": "INCOMPLETE",
+      "reason": "FINALITY_TIMEOUT_baseline-tx3",
+      "resultSha256": "3e4643dcf72d380cccd841f0a9676fa98fa1b04d503d19fc968deced3e748231",
+      "cleanup": {
+        "remaining": [],
+        "errors": []
+      },
+      "executedHarnessSha256": {
+        "prepare_fixture.py": "edd450b9d74a4e40d3961983f4cb9bdf8d30be684c6716186f1886cbe7c54af7",
+        "run_acceptance.py": "23ebc6945a553eb37d10e1866a5a181d040c3d4ddf122e30dc906eba215da51c",
+        "run_recovery_probe.py": "579b9fece75c63340b8c603cb9643d554f1685cc5317a200fec855bb48505404",
+        "support.py": "07f8ba80d300c3ca97c2d600bce749ed07b72f66b123f460adbf5719f82bea2e"
+      }
+    }
+  },
+  "selectedCases": {
+    "four-validator": {
+      "sourceRun": "B",
+      "height": 1,
+      "blockHash": "0x57183517f1c83ce2a8c92b75d574adca682665073bf4635d518852d7d7c28d14",
+      "stateRoot": "0x84bbcbaf964c104f628784b086592b35a7ef118631280137e8ad1a9e1d64aef5",
+      "transactionHash": "0x82d42bc0ed6e76e65354bea336468e35ce257a9aed82a33ee8dcc374e8619b0f",
+      "nodes": [
+        "n1",
+        "n2",
+        "n3",
+        "n4"
+      ]
+    },
+    "three-validator-while-n4-stopped": {
+      "sourceRun": "B",
+      "height": 2,
+      "blockHash": "0x5121ac5e3b7b0edc2bf9fd5b900a63b2637511b5176a22c57340f638e7f58bf9",
+      "stateRoot": "0x935b947238cd71372702377594b807ec9d810022210c33911f7c0e7e1b415446",
+      "transactionHash": "0xcbb3373c54734779e42ecd0ddc3f5b782e00fa884fed649f11ed43b6d04a5ed0",
+      "nodes": [
+        "n1",
+        "n2",
+        "n3"
+      ]
+    },
+    "same-db-catchup": {
+      "sourceRun": "C",
+      "height": 2,
+      "blockHash": "0x5121ac5e3b7b0edc2bf9fd5b900a63b2637511b5176a22c57340f638e7f58bf9",
+      "stateRoot": "0x935b947238cd71372702377594b807ec9d810022210c33911f7c0e7e1b415446",
+      "transactionHash": "0xcbb3373c54734779e42ecd0ddc3f5b782e00fa884fed649f11ed43b6d04a5ed0",
+      "nodes": [
+        "n1",
+        "n2",
+        "n3",
+        "n4"
+      ],
+      "historicalReceiptPresent": [
+        true,
+        true,
+        true,
+        false
+      ],
+      "historicalReceiptRequiredByThisCase": false,
+      "contract": "RC1_SNAPSHOT_INSTALLS_HEADER_AND_STATE_WITHOUT_HISTORICAL_BODY"
+    },
+    "after-rejoin": {
+      "sourceRun": "C",
+      "height": 3,
+      "blockHash": "0xd980ce36076d8ae9595107079985c37a030b4adf8fddb72f991bfeefbf5a6a2d",
+      "stateRoot": "0x8eba8c21392d33d0cbd67a4855b22f8177c5fca5eecf6d7f1d5bc0f89e472964",
+      "transactionHash": "0xe922680845edc49a3b4d8bd05a000c4f18d578c9a3e2f9aac7c214333d712d04",
+      "nodes": [
+        "n1",
+        "n2",
+        "n3",
+        "n4"
+      ]
+    },
+    "twoOfFour": {
+      "sourceRun": "C",
+      "seconds": 45,
+      "newValidTransactionSubmitted": true,
+      "newFinality": false,
+      "roundAdvanced": true,
+      "samples": 81
+    },
+    "D-wrongPin": {
+      "sourceRun": "D",
+      "faultNode": "wrong-pin",
+      "faultNodeSyncEnabled": false,
+      "faultNodePeerCount": 0,
+      "wrongPinReasonCount": 9,
+      "matchingOutboundEvents": 9,
+      "direction": "OUTBOUND",
+      "stage": "CREDENTIAL_PIN",
+      "reason": "WRONG_PIN",
+      "duplicateSignerRunning": false
+    },
+    "D-healthy-three-during-wrong-pin": {
+      "sourceRun": "D",
+      "height": 1,
+      "blockHash": "0xfda61000c0d8697cbac4c16ab6d1e2f1dbc88c45bcb824b8cc51744f947229f8",
+      "stateRoot": "0x64c16a92583e569996466301bf6c761312acf3a2f769aa37c9831f1cd11f5043",
+      "transactionHash": "0x6d61268412cad44a6f9a63fbfe2e37f38da9f69bffa668222180dacba7f7a89c",
+      "nodes": [
+        "n1",
+        "n2",
+        "n3"
+      ]
+    },
+    "D-scope": {
+      "sourceRun": "D",
+      "freshNetwork": true,
+      "freshData": true,
+      "healthyValidatorCount": 3,
+      "wrongPinValidatorCount": 1,
+      "freshTransactionNonce": 0,
+      "submissionCount": 1,
+      "healthyNodesAuthenticatedTls13": true,
+      "catchupOrTwoOfFourRecoveryTested": false,
+      "priorFailuresSuperseded": false
+    },
+    "D-independent-transaction-check": {
+      "evidenceSha256": "88e0e890ffded865cc8125c6fbf001cece5928b82d119563e6aa432c4747ef3f",
+      "scope": "READ_ONLY_INDEPENDENT_TX0_PROJECTION_CHECK",
+      "outcome": "PASS",
+      "expectedTransactionHash": "0x6d61268412cad44a6f9a63fbfe2e37f38da9f69bffa668222180dacba7f7a89c",
+      "queriedHealthyNodes": [
+        "n1",
+        "n2",
+        "n3"
+      ],
+      "sameHeightHashRoot": true,
+      "observations": {
+        "n1": {
+          "httpPort": 24420,
+          "observedAtEpochMillis": 1792469049773,
+          "checks": {
+            "receiptRequestedHash": true,
+            "receiptSuccess": true,
+            "receiptType2": true,
+            "rpcBlockNumber": true,
+            "canonicalBlockNumber": true,
+            "rpcBlockContainsTransaction": true,
+            "receiptBlockHash": true,
+            "canonicalBlockHash": true,
+            "canonicalStateRoot": true
+          },
+          "transactionHash": "0x6d61268412cad44a6f9a63fbfe2e37f38da9f69bffa668222180dacba7f7a89c",
+          "receiptStatus": "0x1",
+          "receiptType": "0x2",
+          "height": 1,
+          "blockHash": "0xfda61000c0d8697cbac4c16ab6d1e2f1dbc88c45bcb824b8cc51744f947229f8",
+          "stateRoot": "0x64c16a92583e569996466301bf6c761312acf3a2f769aa37c9831f1cd11f5043",
+          "blockTransactionHashes": [
+            "0x6d61268412cad44a6f9a63fbfe2e37f38da9f69bffa668222180dacba7f7a89c"
+          ]
+        },
+        "n2": {
+          "httpPort": 24421,
+          "observedAtEpochMillis": 1792469050120,
+          "checks": {
+            "receiptRequestedHash": true,
+            "receiptSuccess": true,
+            "receiptType2": true,
+            "rpcBlockNumber": true,
+            "canonicalBlockNumber": true,
+            "rpcBlockContainsTransaction": true,
+            "receiptBlockHash": true,
+            "canonicalBlockHash": true,
+            "canonicalStateRoot": true
+          },
+          "transactionHash": "0x6d61268412cad44a6f9a63fbfe2e37f38da9f69bffa668222180dacba7f7a89c",
+          "receiptStatus": "0x1",
+          "receiptType": "0x2",
+          "height": 1,
+          "blockHash": "0xfda61000c0d8697cbac4c16ab6d1e2f1dbc88c45bcb824b8cc51744f947229f8",
+          "stateRoot": "0x64c16a92583e569996466301bf6c761312acf3a2f769aa37c9831f1cd11f5043",
+          "blockTransactionHashes": [
+            "0x6d61268412cad44a6f9a63fbfe2e37f38da9f69bffa668222180dacba7f7a89c"
+          ]
+        },
+        "n3": {
+          "httpPort": 24422,
+          "observedAtEpochMillis": 1792469050354,
+          "checks": {
+            "receiptRequestedHash": true,
+            "receiptSuccess": true,
+            "receiptType2": true,
+            "rpcBlockNumber": true,
+            "canonicalBlockNumber": true,
+            "rpcBlockContainsTransaction": true,
+            "receiptBlockHash": true,
+            "canonicalBlockHash": true,
+            "canonicalStateRoot": true
+          },
+          "transactionHash": "0x6d61268412cad44a6f9a63fbfe2e37f38da9f69bffa668222180dacba7f7a89c",
+          "receiptStatus": "0x1",
+          "receiptType": "0x2",
+          "height": 1,
+          "blockHash": "0xfda61000c0d8697cbac4c16ab6d1e2f1dbc88c45bcb824b8cc51744f947229f8",
+          "stateRoot": "0x64c16a92583e569996466301bf6c761312acf3a2f769aa37c9831f1cd11f5043",
+          "blockTransactionHashes": [
+            "0x6d61268412cad44a6f9a63fbfe2e37f38da9f69bffa668222180dacba7f7a89c"
+          ]
+        }
+      },
+      "unavailableSamples": 0,
+      "recentUnavailableSamples": [],
+      "nodeLifecycleMutations": false,
+      "transactionSubmitted": false,
+      "originalRunResultModified": false
+    },
+    "E-recovery": {
+      "outcome": "INCOMPLETE",
+      "reason": "FINALITY_TIMEOUT_baseline-tx3",
+      "explicitSubmission": {
+        "at": "2026-10-20T04:04:08.210277+00:00",
+        "node": "n1",
+        "port": 24320,
+        "nonce": 3,
+        "transactionHash": "0xf959cc047830416d8de3b9cff34498ed64557bfd1c88300ec70bb07ca26ac8c9",
+        "attempts": 1,
+        "submission": "ACKNOWLEDGED"
+      },
+      "budgetSeconds": 90,
+      "observationsFileSha256": "a1a48daf6f6b3a432736c5c7bdf3abd6171b4304aaf595da3399b94cfb91d601",
+      "totalSamples": 115,
+      "postSubmissionSamples": 114,
+      "allFourPendingOneSamples": 113,
+      "allFourConnectedSamples": 114,
+      "noNewFinalitySamples": 114,
+      "selectedObservations": [
+        {
+          "at": "2026-10-20T04:04:08.339619+00:00",
+          "elapsedSeconds": 62.0,
+          "nodes": [
+            {
+              "node": "n1",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 8,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 0,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n2",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 0,
+              "height": 4,
+              "round": 8,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 0,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n3",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 0,
+              "height": 4,
+              "round": 0,
+              "step": "PROPOSAL",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 0,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n4",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 0,
+              "height": 4,
+              "round": 5,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 0,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            }
+          ]
+        },
+        {
+          "at": "2026-10-20T04:04:30.799256+00:00",
+          "elapsedSeconds": 84.46,
+          "nodes": [
+            {
+              "node": "n1",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 9,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 2,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n2",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 9,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 2,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n3",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 2,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 1,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n4",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 6,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 1,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            }
+          ]
+        },
+        {
+          "at": "2026-10-20T04:04:54.010223+00:00",
+          "elapsedSeconds": 107.671,
+          "nodes": [
+            {
+              "node": "n1",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 10,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 2,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n2",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 10,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 2,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n3",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 3,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 1,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n4",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 7,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 1,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            }
+          ]
+        },
+        {
+          "at": "2026-10-20T04:05:16.118613+00:00",
+          "elapsedSeconds": 129.779,
+          "nodes": [
+            {
+              "node": "n1",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 11,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 2,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n2",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 11,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 2,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n3",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 4,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 1,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n4",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 8,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 1,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            }
+          ]
+        },
+        {
+          "at": "2026-10-20T04:05:38.211930+00:00",
+          "elapsedSeconds": 151.872,
+          "nodes": [
+            {
+              "node": "n1",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 12,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 2,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n2",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 12,
+              "step": "ROUND_CHANGE",
+              "prepareVotes": null,
+              "commitVotes": null,
+              "roundChangeVotes": 2,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n3",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 9,
+              "step": "PREPARE",
+              "prepareVotes": 2,
+              "commitVotes": 0,
+              "roundChangeVotes": 4,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            },
+            {
+              "node": "n4",
+              "peerCount": 3,
+              "latestBlockNumber": 3,
+              "finalizedBlockNumber": 3,
+              "receiptPresent": false,
+              "pendingCount": 1,
+              "height": 4,
+              "round": 9,
+              "step": "PREPARE",
+              "prepareVotes": 2,
+              "commitVotes": 0,
+              "roundChangeVotes": 4,
+              "quorumSize": 3,
+              "executionStatus": "WAITING_TIMER"
+            }
+          ]
+        }
+      ],
+      "nonce4Submitted": false,
+      "new45SecondLossScenarioReached": false,
+      "finalStatus": [
+        {
+          "node": "n1",
+          "stopped": true
+        },
+        {
+          "node": "n2",
+          "stopped": true
+        },
+        {
+          "node": "n3",
+          "stopped": true
+        },
+        {
+          "node": "n4",
+          "stopped": true
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "SINGLE_HOST_LOOPBACK_SAME_UID",
+    "TEST_ONLY_SIGNING_KEY",
+    "G1_M_OPEN",
+    "ART01_EGRESS_NOT_INSTRUMENTED",
+    "HARDENED_HARNESS_NOT_FULLY_RERUN",
+    "NO_CUSTOMER_PRODUCTION_APPROVAL"
+  ],
+  "sourceReview": {
+    "nigoReadCheckout": "6489c9540853bdadfa8c384227558d5eeca3ffea",
+    "comparedWithEngineSource": "540a89f0814c01d2a4ec67da1087af35195882ca",
+    "relevantProductionAndRecoveryTestFilesUnchanged": true
+  },
+  "verification": {
+    "makeCheck": {
+      "passed": 343,
+      "failed": 0,
+      "ignored": 0,
+      "fmt": "PASS",
+      "clippy": "PASS",
+      "logSha256": "f4ce80764eb780aae2a67f4964b4c322a8b3e7e60871d8d9b3ccdf11c3eb9ca3",
+      "initialRestrictedEnvironment": {
+        "passed": 295,
+        "failed": 5,
+        "fullSuiteReached": false,
+        "result": "ENVIRONMENT_RESTRICTED"
+      }
+    },
+    "pythonOracles": {
+      "passed": 9,
+      "runtimeNodesStarted": false
+    },
+    "fixtureGuard": {
+      "actualFixtures": [
+        "A",
+        "B"
+      ],
+      "legacyA": "PASS",
+      "wrongLegacyBFixture": "REJECTED",
+      "negativeCasesPassed": 10
+    },
+    "hardenedHarnessEndToEndRerun": false
+  },
+  "publishedHarnessSha256": {
+    "fixture_guard.py": "5b65ca351c64780dd2bfcf4d3b2dfa9510e07fb259e2a83e46db909cddaefdf4",
+    "prepare_fixture.py": "edd450b9d74a4e40d3961983f4cb9bdf8d30be684c6716186f1886cbe7c54af7",
+    "run_acceptance.py": "ce79e9dc90bbdc1d7c9b0d187ca088199474182382c86772846a198d6c9365fe",
+    "run_pin_only.py": "ef05f053afedb2e5650550c03750b8d3a6c8df156933054f4db86e65a3bb0935",
+    "run_recovery_probe.py": "864adfb7d27e19fed47e9b62cd2c16e089e19a361ea607af45c27152a842975f",
+    "support.py": "07f8ba80d300c3ca97c2d600bce749ed07b72f66b123f460adbf5719f82bea2e",
+    "test_oracles.py": "fdac200d411c78e436136e7b61b13d48daf2d80af19ec84483d3d9492e9729fa"
+  }
+}

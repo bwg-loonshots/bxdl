@@ -5,7 +5,7 @@
 | 조합 | 현재 상태 |
 | --- | --- |
 | Rust 1.86.0 / macOS arm64 | CLI 개발·로컬 테스트·native 빌드 대상. setup·설치·cold·등록/초기화·수동 LaunchAgent·오프라인 진단 구현 |
-| macOS arm64 + Java 21 + RocksDB + 사용자 LaunchAgent | macOS 26.6.2에서 실제 새 package의 단일 validator 시작·정상 stop·같은 DB 재시작 확인. 정식 JRE·OS 최소 버전·전체 G1-M 인수 전 |
+| macOS arm64 + Java 21 + RocksDB + 사용자 LaunchAgent | macOS 26.6.2에서 서비스·4-validator 거래/catch-up·pin 거부 확인. 정족수 복구 INCOMPLETE, OS 최소 버전·전체 G1-M 인수 전 |
 | Linux amd64/glibc + Java 21 + RocksDB + systemd | 기존 development manifest 유지, 후속 서버 인수. Ubuntu 24.04 후보 |
 | Docker/Compose | 후속 이미지·volume·network·종료/재생성 인수 필요 |
 | Intel Mac·Linux ARM64·Windows·Alpine/musl·H2 제품 지원 | 별도 구현·인수 전 미지원 |
@@ -22,7 +22,7 @@ Rust 이식은 serde/serde_json(JSON), flate2(Rust compression backend), sha2/he
 
 NIGO `ROCKSDB_OPERATIONS.md`와 `tasks/2026-09-07-rocksdb-storage-implementation.md`에 macOS/Darwin arm64·Java 21의 실제 RocksDB·Node 정상 재시작 근거가 있다. `PROVIDERS.md`는 macOS aarch64 native 경로·JVM os.arch·writable/loadable temp 조건을 명시한다. 이는 BXDL의 선택한 package/JRE/launchd 조합을 인수한 결과가 아니다.
 
-2026-10-19에 Temurin21.0.12.1+1 전체 JRE의 공급자·patch·archive hash를 선정하고 RC1과 함께 고정했다. [JRE 준비](./runtime.md)와 [NIGO J1~J3 수신 기록](../contracts/nigo/jre-feedback-2026-10-19/README.md)을 따른다. 지정 RC1/Temurin 조합의 공급자 9사례 검증을 수용했으며, BXDL signed package의 단일 노드 설치·초기화·서비스·재시작도 확인했다. 전체 제품 NOTICE/SBOM·대응 소스 전달·최소 macOS와 4-validator/G1-M 인수는 남아 있다. 과거 clean 후보·Oracle jlink 결과는 해당 revision의 이력이며 현재 공급 lock이나 제품 인수를 대신하지 않는다. REQ-0003은 OPEN이고 계약은 PROPOSED다. source commit이나 fake JAR/Java fixture를 공식 공급물로 표기하지 않는다.
+2026-10-19에 Temurin21.0.12.1+1 전체 JRE의 공급자·patch·archive hash를 선정하고 RC1과 함께 고정했다. [JRE 준비](./runtime.md)와 [NIGO J1~J3 수신 기록](../contracts/nigo/jre-feedback-2026-10-19/README.md)을 따른다. 지정 RC1/Temurin 조합의 공급자 9사례 검증을 수용했으며, BXDL signed package의 단일 노드 설치·초기화·서비스·재시작도 확인했다. 이후 [동일 package의 4-validator 시험](../results/2026-10-20-macos-qbft-package.md)에서 정상 거래/catch-up·pin 거부를 확인했으나 정족수 복구가 INCOMPLETE다. 전체 제품 NOTICE/SBOM·대응 소스 전달·최소 macOS와 G1-M 인수는 남아 있다. 과거 clean 후보·Oracle jlink 결과는 해당 revision의 이력이며 현재 공급 lock이나 제품 인수를 대신하지 않는다. REQ-0003은 OPEN이고 계약은 PROPOSED다. source commit이나 fake JAR/Java fixture를 공식 공급물로 표기하지 않는다.
 
 Manifest v1의 Mac 값 `libc=none`, `minGlibc=none`은 Linux glibc 조건이 적용되지 않는다는 뜻이다. Mac에 libc가 없다는 뜻이 아니다. Linux의 `glibc/2.34`는 기존 development 후보 계약값을 유지하며 실제 지원 보장이 아니다.
 

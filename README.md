@@ -6,7 +6,8 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 
 2026-10-19에는 [NIGO RC1](./contracts/nigo/engine-rc1-2026-10-19/README.md)을 원격 수신하고 등록 모드 안내를 추가했다.
 실제 RC1·동일 CLI를 담은 서명 개발 package에서 전체 14문답·설치·초기화·정상 종료·같은 DB 재시작을 확인했다.
-[RC1 검증 결과](./results/2026-10-19-engine-rc1-adoption.md)의 범위를 따르며 Temurin21.0.12.1+1 전체 JRE를 후속 후보로 선정했다. 4-validator 합의·공급자 호환성 확인·정식 배포 인수는 남아 있다.
+[RC1 검증 결과](./results/2026-10-19-engine-rc1-adoption.md)를 보존하며 Temurin21.0.12.1+1 full JRE 고정과 NIGO J1~J3 검증 회신을 수용했다.
+2026-10-20 [동일 package의 4-validator 시험](./results/2026-10-20-macos-qbft-package.md)에서 거래 확정·catch-up·잘못된 pin 거부를 확인했다. 장시간 정족수 부족 이후 합의 복구는 INCOMPLETE이며 NIGO 확인이 필요하다. 정식 배포와 전체 G1-M 인수는 남아 있다.
 
 ## 구현한 명령
 

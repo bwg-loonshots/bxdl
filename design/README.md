@@ -1,9 +1,11 @@
 # BXDL 제품 구현 설계
 
-- 작성일: 2026-09-16 / 갱신: 2026-10-19
+- 작성일: 2026-09-16 / 갱신: 2026-10-20
 - 상태: Rust 기반의 package·제품 설정·setup, Mac 새 폴더 installer·NIGO cold, instance 등록·명시 init/resume-init과 수동 LaunchAgent start/status/stop과 오프라인 logs/diagnose를 구현했다. 단일 validator의 실제 서비스 수명주기를 확인했으며 setup 설치 연결도 구현했다. RC1 원격 수신과 새 package 검증은 아래 최신 기록을 따르며 전체 G1-M/G1-L 인수는 미완료다.
 - 사용자 확정: **Rust 구현 + macOS Apple Silicon 우선 설치·운용 UX**. Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
 - 현재 구현 범위와 근거: [구현 상태](../docs/implementation-status.md). NIGO가 `REQ-0002`의 방향·범위를 수용했고 BXDL은 피드백의 안전·인수 의미와 교환 절차에 동의했다. [소비자 회신](./2026-09-17-nigo-feedback-response.md)에 기록하며 PROPOSED API·fixture·dirty 개발 JAR는 수신해 제한된 cold 소비를 진행했다. 이후 #119의 clean 후보를 별도 수신·검증했고 전체 제품 인수는 남아 있다. REQ-0003 정책을 수용하고 RC1을 별도로 수신했다. 요청 전체는 `OPEN`이며 소비자 회신은 전용 NIGO worktree에서 준비한다.
+
+2026-10-20에는 같은 signed package의 4-validator 거래·canonical catch-up·pin 거부를 확인했다. 정족수 복구는 INCOMPLETE이며 [실행 결과와 NIGO 확인 사항](../results/2026-10-20-macos-qbft-package.md)을 다음 작업 기준으로 삼는다.
 
 ## 목표
 
