@@ -4,7 +4,7 @@ macOS arm64에서 설치한 개발 package와 제품/native 설정을 한 인스
 
 ## 등록 전에 준비할 자료
 
-[setup](./setup.md)으로 만든 제품 `instance.json`, 운영자가 준비한 NIGO native `node.json`·공개 chain·validator NGVK/TLS 자료, [설치](./install.md)를 마친 package, 원본 archive와 외부 신뢰 공개 key, 선택한 JAR/JRE에 맞는 외부 engine lock이 필요하다. 제품/native는 [QBFT VALIDATOR·MTLS 대응 규칙](../design/2026-09-18-product-engine-preflight.md)을 만족해야 한다. 키·PKI·peer/pin·native 설정을 자동 생성하지 않는다.
+[setup](./setup.md)으로 만든 제품 `instance.json`, 운영자가 준비한 NIGO native `node.json`·공개 chain·validator NGVK/TLS 자료, [설치](./install.md)를 마친 package, 원본 archive와 외부 신뢰 공개 key, 선택한 JAR/JRE에 맞는 외부 engine lock이 필요하다. 제품/native는 [QBFT VALIDATOR·MTLS 대응 규칙](../design/2026-09-18-product-engine-preflight.md)을 만족해야 한다. 기존 키·공개 인증서와 전체 validator 자료에서 [네트워크 준비 도우미](./network.md)로 native를 생성할 수 있다. 키·PKI 발급은 제공하지 않는다.
 
 등록 기록, 데이터, 설치 package, 설정·키 자료는 서로 겹치지 않는 위치를 사용한다. 원본 archive·신뢰 공개 key·engine lock은 설치 package 밖에 둔다. 경로의 symlink를 허용하지 않으며 Mac의 대소문자·Unicode 별칭 충돌도 검사한다. 아래 예시의 절대경로는 준비한 자료의 실제 경로로 바꾼다. 새 인스턴스 제어 폴더와 데이터 폴더의 부모는 미리 존재해야 한다.
 
@@ -119,4 +119,4 @@ Mac 사용자 자료는 `$HOME/Library/Application Support/BXDL` 아래에서 pa
 
 CLI와 Java는 같은 Mac 사용자 UID로 실행한다. 파일 권한·hash·advisory 잠금은 실수와 일반 동시 실행을 차단하지만 같은 UID에 대한 강한 격리나 암호학적으로 보호된 상태 로그가 아니다. 잠금 상속은 선택한 Java/NIGO가 작업 중 stdin을 닫거나 바꾸지 않는 실행 조건에 의존한다.
 
-현재 범위는 development 후보의 등록·단발 초기화, 수동 LaunchAgent start/status/stop과 오프라인 logs/diagnose다. 실제 새 package에서 단일 validator의 시작·정상 stop·같은 DB 재시작을 확인했으며 G1-M 4-validator·로그아웃/sleep 검증은 아직 완료하지 않았다. setup의 package 선택·자동 등록, 설정/키 변경과 재등록 migration, 제거·정식 JRE 선정은 후속이다. [초기화 설계](../design/2026-09-18-instance-initialization.md)와 [그 검증 기록](../results/2026-09-18-instance-initialization.md), [LaunchAgent 설계](../design/2026-09-18-macos-launchagent.md)와 [서비스 검증 기록](../results/2026-09-18-macos-launchagent.md)은 각각의 범위를 구분한다.
+현재 범위는 고정 RC1·선정 Temurin development package의 등록·단발 초기화, 수동 LaunchAgent start/status/stop과 오프라인 logs/diagnose다. `setup --install`의 package 선택·명시 설치/등록/init/start 및 `setup --network`의 별도 native 설정 준비도 제공한다. 실제 package의 단일 validator 시작·정상 stop·같은 DB 재시작과 같은 시도 대기는 확인했으며, 새 네트워크 준비 CLI를 담은 package의 4-validator·로그아웃/sleep 인수는 아직 완료하지 않았다. 설정/키 변경과 재등록 migration, 안전한 제거·전체 JRE/제품 공급망은 후속이다. [초기화 설계](../design/2026-09-18-instance-initialization.md)와 [그 검증 기록](../results/2026-09-18-instance-initialization.md), [LaunchAgent 설계](../design/2026-09-18-macos-launchagent.md)와 [서비스 검증 기록](../results/2026-09-18-macos-launchagent.md)은 각각의 범위를 구분한다.

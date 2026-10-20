@@ -22,6 +22,8 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 | `bxdl preflight --config <json>` | 파일/디렉터리 metadata만 검사, 엔진·서비스 검사는 NOT_CHECKED |
 | `bxdl preflight --config <instance.json> --engine-config <node.json> ...` | 제품과 명시 QBFT 설정의 일치를 확인한 뒤 pinned 엔진 cold 검사 |
 | `bxdl setup [--workspace <dir>]` | 설정 입력·수정·저장·재개와 로컬 검사, 새 제품 JSON 내보내기 |
+| `bxdl config fingerprint --certificate <leaf.pem>` | 공개 인증서의 NIGO MTLS pin 계산 |
+| `bxdl setup --network --workspace <new-session> --from <instance.json> --network-file <network.json>` | RC1 native 설정 준비 및 재개 |
 | `bxdl setup --install --workspace <new-session>` | Mac 터미널에서 자료·계획을 저장하고 설치/등록·초기화·시작을 각각 명시 선택. `--resume`으로 같은 세션 재검증 |
 | `bxdl instance register --instance <new-dir> ...` | 설치본·원본 archive·신뢰 key·제품/native 설정을 검증하고 private 등록 기록 생성 |
 | `bxdl instance show --instance <dir>` | 저장된 초기화 상태와 현재 작업 잠금 관측. 노드 health 검사가 아님 |
@@ -48,7 +50,7 @@ bxdl setup --install --workspace /absolute/existing-parent/new-session
 bxdl setup --install --workspace /absolute/existing-parent/new-session --resume
 ```
 
-archive·외부 신뢰 공개키(또는 명시 unsigned-development)·engine lock·native node.json과 제품 설정을 준비한다. `plan` 뒤 `apply`와 확인은 설정·설치·등록까지 진행하고, `init`과 `start`는 각각 별도 확인이 필요하다. `finish`로 원하는 단계에서 나가거나 `:cancel`로 저장 후 중단할 수 있다. 새 설치 모드는 TTY 전용이며 `--json`·`--output`·`--non-interactive`를 받지 않는다. 기존 DB 업그레이드·키 발급·native 설정 자동 생성은 제공하지 않는다. [설치 흐름과 재개 조건](./docs/setup.md#설치-모드-패키지부터-시작까지)을 따른다.
+archive·외부 신뢰 공개키(또는 명시 unsigned-development)·engine lock·native node.json과 제품 설정을 준비한다. `plan` 뒤 `apply`와 확인은 설정·설치·등록까지 진행하고, `init`과 `start`는 각각 별도 확인이 필요하다. `finish`로 원하는 단계에서 나가거나 `:cancel`로 저장 후 중단할 수 있다. 새 설치 모드는 TTY 전용이며 `--json`·`--output`·`--non-interactive`를 받지 않는다. 기존 DB 업그레이드·키 발급은 제공하지 않는다. Native 파일은 별도 [네트워크 준비 도우미](./docs/network.md)로 만들 수 있다. [설치 흐름과 재개 조건](./docs/setup.md#설치-모드-패키지부터-시작까지)을 따른다.
 
 Mac 터미널에서 `bxdl setup`을 실행하면 이름·경로·포트·기존 체인/키 자료의 파일 경로를 묻는다. 각 답을 저장하며 `:back`으로 수정하고 `:cancel`로 나갈 수 있다. 기존 초안은 `bxdl setup --resume`으로 이어간다. 기본 작업 폴더는 `$HOME/Library/Application Support/BXDL/setup`이며 새 폴더만 생성한다.
 

@@ -22,7 +22,7 @@ Rust 이식은 serde/serde_json(JSON), flate2(Rust compression backend), sha2/he
 
 NIGO `ROCKSDB_OPERATIONS.md`와 `tasks/2026-09-07-rocksdb-storage-implementation.md`에 macOS/Darwin arm64·Java 21의 실제 RocksDB·Node 정상 재시작 근거가 있다. `PROVIDERS.md`는 macOS aarch64 native 경로·JVM os.arch·writable/loadable temp 조건을 명시한다. 이는 BXDL의 선택한 package/JRE/launchd 조합을 인수한 결과가 아니다.
 
-2026-10-19에 Temurin21.0.12.1+1 전체 JRE의 공급자·patch·archive hash를 후보로 선정했다. [JRE 준비](./runtime.md)를 따른다. 공급자 호환성 확인·완전한 NOTICE/SBOM·최소 macOS 지원 확정은 남아 있다. 개발 Mac의 Java를 재배포 대상으로 자동 채택하지 않는다. NIGO가 범위·안전 의미를 수용했지만 개발 후보 JAR/manifest·PROPOSED 계약/fixture는 수신했고 hash 고정 cold adapter를 구현했다. clean 후보는 #119 인계로 수신·검증했고, 공식 JRE/배포 lock·전체 engine 인수는 남아 있다. REQ-0002는 `OPEN`이고 [소비자 회신](../design/2026-09-17-nigo-feedback-response.md)에 owner·수신 revision·대기 항목을 기록한다. source commit이나 fake JAR/Java fixture를 공식 공급물로 표기하지 않는다.
+2026-10-19에 Temurin21.0.12.1+1 전체 JRE의 공급자·patch·archive hash를 선정하고 RC1과 함께 고정했다. [JRE 준비](./runtime.md)와 [NIGO J1~J3 수신 기록](../contracts/nigo/jre-feedback-2026-10-19/README.md)을 따른다. 지정 RC1/Temurin 조합의 공급자 9사례 검증을 수용했으며, BXDL signed package의 단일 노드 설치·초기화·서비스·재시작도 확인했다. 전체 제품 NOTICE/SBOM·대응 소스 전달·최소 macOS와 4-validator/G1-M 인수는 남아 있다. 과거 clean 후보·Oracle jlink 결과는 해당 revision의 이력이며 현재 공급 lock이나 제품 인수를 대신하지 않는다. REQ-0003은 OPEN이고 계약은 PROPOSED다. source commit이나 fake JAR/Java fixture를 공식 공급물로 표기하지 않는다.
 
 Manifest v1의 Mac 값 `libc=none`, `minGlibc=none`은 Linux glibc 조건이 적용되지 않는다는 뜻이다. Mac에 libc가 없다는 뜻이 아니다. Linux의 `glibc/2.34`는 기존 development 후보 계약값을 유지하며 실제 지원 보장이 아니다.
 
@@ -30,9 +30,9 @@ Manifest v1의 Mac 값 `libc=none`, `minGlibc=none`은 Linux glibc 조건이 적
 
 Mac의 기본 workspace는 `$HOME/Library/Application Support/BXDL/setup`이다. 다른 개발 플랫폼은 `--workspace`를 지정한다. UTF-8·공백 경로를 지원하고 `~`·환경변수 표현을 입력 내부에서 확장하지 않는다. workspace와 자료·data·출력의 경로 관계를 보수적으로 검사하며 Mac의 대소문자·유니코드 정규화 별칭도 충돌로 다룬다. 대소문자 구분 볼륨이라도 별칭 충돌 가능성이 있는 이름을 허용한다고 보장하지 않는다.
 
-workspace·checkpoint·출력은 symlink 조상, 의도하지 않은 hard link·특수 파일, 손상·동시 변경을 거부한다. 새 폴더 0700·파일 0600과 열린 디렉터리 기준 저장은 파일 작업 안전 조건이며 같은 UID의 engine/CLI·다른 프로세스 간 강한 격리를 만들지 않는다. ACL·mount·실제 service UID 접근 가능성과 파일 시스템별 내구성은 별도 플랫폼 인수 대상이다. 현재 setup은 NIGO process·DB·키 내용을 열지 않는다.
+workspace·checkpoint·출력은 symlink 조상, 의도하지 않은 hard link·특수 파일, 손상·동시 변경을 거부한다. 새 폴더 0700·파일 0600과 열린 디렉터리 기준 저장은 파일 작업 안전 조건이며 같은 UID의 engine/CLI·다른 프로세스 간 강한 격리를 만들지 않는다. ACL·mount·실제 service UID 접근 가능성과 파일 시스템별 내구성은 별도 플랫폼 인수 대상이다. 기본 설정 초안과 네트워크 준비 모드는 NIGO process·DB·키 내용을 열지 않는다. `setup --install`은 명시 확인한 설치·cold 검사·등록·init/start를 연결한다.
 
-서로 분리된 새 workspace를 사용하고 기존 출력에 덮어쓰지 않는다. 작업 폴더 내부의 내보내기는 `instance.json`만 허용한다. 외부 출력 부모는 기존 폴더여야 한다. 경로 충돌이 의심되면 자동으로 다른 이름을 선택하거나 기존 자료를 이동하지 않고 명시적으로 거부한다. 실제 사용 흐름은 [setup 가이드](./setup.md)를 따른다.
+기본 setup 초안 모드는 서로 분리된 새 workspace를 사용하고 기존 출력에 덮어쓰지 않는다. 이 모드의 작업 폴더 내부 내보내기는 `instance.json`만 허용한다. 외부 출력 부모는 기존 폴더여야 한다. 경로 충돌이 의심되면 자동으로 다른 이름을 선택하거나 기존 자료를 이동하지 않고 명시적으로 거부한다. 실제 사용 흐름은 [setup 가이드](./setup.md)를 따른다.
 
 ## 인수 분리
 
@@ -42,13 +42,13 @@ start는 설치본 `bin/bxdl`과 동일한 바이트의 CLI를 요구한다. 새
 
 logs/diagnose는 저장된 최신 시도의 제한된 이벤트를 정제해 수집하는 오프라인 기능이다. 실제 health·전체 파일 무결성·DB 안전성을 검사하지 않으며 보고서 생성 성공은 서비스 인수가 아니다. 수집 시간은 파일 작업 사이에서 확인하는 예산이며 막힌 파일시스템 호출의 강제 중단을 보장하지 않는다. [진단 사용 조건](./cli.md#오프라인-기록과-지원-보고서)을 따른다.
 
-이번 로컬 시험용 JRE는 개발 Mac의 Oracle Java21.0.7에서 jlink로 만든 실행 fixture다. 고객용 JRE 선정·재배포 승인 또는 완전한 NOTICE/SBOM이 아니며 저장소에 동봉하지 않는다.
+2026-09-18 서비스 시험의 Oracle Java21.0.7 jlink는 과거 실행 fixture다. 현재 선정 Temurin과 구분하며, 그 과거 결과가 고객 재배포 승인이나 완전한 NOTICE/SBOM을 의미하지 않는다.
 
 G1-M은 Mac 사용자 설치·launchd·동일 데이터 재시작·사용자 흐름 검증이다. 같은 사용자 권한으로 CLI와 engine가 실행되므로 Linux 전용 service UID와 같은 격리를 주장하지 않는다. 로그인/로그아웃·sleep·실패/재개 UX와 같은 package의 4-validator 거래/순차 재시작도 필요하며 전체 인수는 아직 미완료다.
 
 G1-L은 실제 Linux VM의 systemd·전용 UID·native·다중 host 네트워크 인수다. G1-D는 container 별도 인수다. 기존 사용자 node/data를 fixture로 사용하지 않는다. 개발 테스트와 과거 다른 revision의 evidence는 각 gate를 대신하지 않는다.
 
-이번 서비스 시험은 [LaunchAgent 검증 기록](../results/2026-09-18-macos-launchagent.md)을 따른다. Documents 아래 worker 진입 전 exit 78과 임시 경로로 분리한 후의 동작 차이를 관측했지만 원인을 TCC로 확정하지 않는다. 같은 package로 기본 `Library/Application Support/BXDL` 아래의 고유 시험 경로에서도 등록·초기화·시작·상태·정지를 확인했다. 이 임시·기본 경로의 성공을 모든 사용자 경로·OS 버전의 지원으로 확대하지 않는다.
+2026-09-18 서비스 시험은 [LaunchAgent 검증 기록](../results/2026-09-18-macos-launchagent.md)을 따른다. Documents 아래 worker 진입 전 exit 78과 임시 경로로 분리한 후의 동작 차이를 관측했지만 원인을 TCC로 확정하지 않는다. 같은 package로 기본 `Library/Application Support/BXDL` 아래의 고유 시험 경로에서도 등록·초기화·시작·상태·정지를 확인했다. 이 임시·기본 경로의 성공을 모든 사용자 경로·OS 버전의 지원으로 확대하지 않는다.
 
 GitHub Actions는 macOS/Ubuntu의 Rust CLI fast checks를 정의한다. 각 변경의 원격 CI는 해당 PR 기록을 따르며 workflow 존재나 이전 revision의 CI를 이번 진단 변경의 PASS 근거로 사용하지 않는다. 로컬 결과도 해당 revision과 연결된 results 기록을 따른다. OS runner architecture는 실행 evidence로 기록하며 CLI CI 통과를 engine/service 인수로 확대하지 않는다.
 
@@ -60,12 +60,12 @@ GitHub Actions는 macOS/Ubuntu의 Rust CLI fast checks를 정의한다. 각 변�
 macOS26.6.2(25G83) arm64와 기존 test-only Oracle21.0.7 jlink를 포함한 외부 Ed25519 서명 package에서
 전체14문답·취소/재개·등록/init/start/stop·동일 DB 재시작을 확인했다. 새 유효 TLS 시험 자료와 fresh data를 사용했다.
 위 과거 후보 기록을 새 RC1 근거로 재사용하지 않았다. [실행 기록](../results/2026-10-19-engine-rc1-adoption.md)을 따른다.
-정식 JRE 재배포 선정·최소 OS·전체 native 공급망과 4-validator/오프라인/장기 운영 G1-M은 별도이며 Linux 타입 검사만으로 Linux 실행 지원을 주장하지 않는다.
+이 RC1 최초 시험 당시 JRE 선정은 후속이었으며 현재 선정 상태는 아래 Temurin 기록을 따른다. 최소 OS·전체 native 공급망과 4-validator/오프라인/장기 운영 인수는 별도이며 Linux 타입 검사만으로 Linux 실행 지원을 주장하지 않는다.
 
 ## 2026-10-19 Temurin 후보
 
 Temurin21.0.12.1+1-LTS full JRE(49실제모듈)를 후보로 고정했다. Home259파일과 원본 legal을 보존한 signed package의
 setup전체14문답·init/start/stop·동일 RocksDB 재시작은 macOS26.6.2(25G83) arm64에서 PASS다.
 [정확한 package/runtime identity와 결과](../results/2026-10-19-temurin-runtime.md)를 따른다.
-공급자 SBOM 불일치·NIGO selected-runtime 회귀·전체 제품 NOTICE/SBOM/source 제공과 최소 OS 지원은 미확정이다.
+NIGO selected-runtime J1~J3 회귀는 수용했다. 공급자 SBOM 불일치·전체 제품 NOTICE/SBOM/source 제공과 최소 OS 지원은 미확정이다.
 Mach-O launcher minOS11.0이나 공급자 플랫폼 표를 BXDL 최소 OS 지원으로 전용하지 않는다.

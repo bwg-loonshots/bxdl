@@ -24,15 +24,15 @@ JSON 결과의 `data.product`는 로컬 검사 결과, `data.configurationBindin
 
 ## 두 종류의 설정과 필요한 자료
 
-`instance.json`은 BXDL 제품 입력이고 `node.json`은 NIGO native 입력이다. setup은 native 설정을 자동 생성하지 않는다. node.json의 `chainFile`, `dataDirectory`, `backend`, `node`와 공개 chain의 flat properties는 [RC1 수신 계약](../contracts/nigo/engine-rc1-2026-10-19/ENGINE_CONTRACT.md)에 맞게 별도 준비한다. 각 설정의 상대경로는 각 원본 설정 파일 위치를 기준으로 해석한다.
+`instance.json`은 BXDL 제품 입력이고 `node.json`은 NIGO native 입력이다. 별도 [setup --network](./network.md)는 제품 설정·승인 chain·전체 validator 공개 목록으로 RC1 native 설정을 준비한다. node.json의 `chainFile`, `dataDirectory`, `backend`, `node`와 공개 chain의 flat properties는 [RC1 수신 계약](../contracts/nigo/engine-rc1-2026-10-19/ENGINE_CONTRACT.md)에 맞게 별도 준비한다. 각 설정의 상대경로는 각 원본 설정 파일 위치를 기준으로 해석한다.
 
 공개 node ID는 `0x`로 시작하는 32-byte hex이고 validator ID와 다르다. 제품 v1의 일반 식별자나 예제 placeholder가 이 엔진 identity를 대신하지 않는다. 제품에 없는 validator ID, peer 목록·역할·거래 권한·credential pin, sync/ingress 정책 등은 native 입력으로 제공하며 NIGO가 검증한다. BXDL이 chain membership·genesis나 PKI를 추측해 생성하지 않는다.
 
 Validator keystore는 NIGO의 **NGVK revision-1 binary** 형식이다. TLS key/trust store의 PKCS12/JKS와 다르며 파일 확장자만 바꿔 변환되지 않는다. 기존 제품 예제의 validator-keystore `.p12` 이름은 경로 placeholder일 뿐 호환 형식의 근거가 아니다. TLS store type은 native 설정과 NIGO 검증을 따른다.
 
-Peer credential pin은 NIGO의 도메인 분리 fingerprint다. 일반 인증서 SHA-256 또는 SPKI hash를 그대로 넣지 않는다. 발급·배치 담당이 준비한 NIGO 형식의 pin을 사용한다. 구체적인 입력 규칙과 형식 구분은 [결합 설계](../design/2026-09-18-product-engine-preflight.md)에 정리한다.
+Peer credential pin은 NIGO의 도메인 분리 fingerprint다. 일반 인증서 SHA-256 또는 SPKI hash를 그대로 넣지 않는다. 발급·배치 담당이 제공한 공개 leaf 인증서로 `bxdl config fingerprint`를 사용하거나 검증된 NIGO 형식 pin을 받는다. 구체적인 입력 규칙과 형식 구분은 [결합 설계](../design/2026-09-18-product-engine-preflight.md)에 정리한다.
 
-BXDL 제품 작업이 source-free QBFT provisioning과 거래·동일 finalized 높이 비교 fixture의 입력 준비를 맡는다. 현재 CLI에는 해당 생성 기능이 없다. 운영에 사용할 chain/membership·signer/password·mTLS trust/pin 자료는 별도 준비가 필요하다. 공급자의 소스 기반 generator 시험이나 INSTANT 예제를 source-free QBFT 제품 인수로 표시하지 않는다.
+BXDL 제품 작업이 source-free QBFT provisioning과 거래·동일 finalized 높이 비교 fixture의 입력 준비를 맡는다. 현재 CLI는 기존 입력에서 native를 준비하며, 거래·finality 비교 fixture와 실제 4-validator 인수는 후속이다. 운영에 사용할 승인 chain/membership·signer/password·개별 TLS/신뢰 자료는 별도 준비한다. 공급자의 소스 기반 generator 시험이나 INSTANT 예제를 source-free QBFT 제품 인수로 표시하지 않는다.
 
 ## 엔진만 독립 검사하기
 
@@ -70,7 +70,7 @@ engine-info의 올바른 응답은 exit 0이다. 올바른 cold 검사는 NIGO e
 
 2026-09-18에는 NIGO PR #119의 clean 후보를 새로 수신했다. 문서 checkout은 `49d1cefc…`, 공급 JAR source는 `303e163a…`이며 서로 다르다. 공급자는 이 JAR의 QBFT 종료·source 전환·같은 데이터 재시작 시험을 별도 evidence로 제공했다. [이전 dirty 후보](../contracts/nigo/development-2026-09-17/README.md)의 종료/drain·sync 제한과 당시 소비 결과는 이력으로 보존한다. 새 공급자 시험을 BXDL의 JRE/package·launchd·오프라인·4-validator G1-M 인수로 승격하지 않는다.
 
-native 설정 자동 렌더·PKI 생성은 후속이다. 현재 설치 등록·instance journal·명시 init과 LaunchAgent lifecycle은 구현되어 있으며 [구현 상태](./implementation-status.md)와 후보별 실행 결과를 따른다. 정상 cold 결과만으로 runtime/합의 인수를 완료하지 않으며, 후보 수신으로 정식 release나 전체 G1-M을 승인하지 않는다.
+RC1 validator native 렌더는 별도 네트워크 도우미로 제공하며 고객 PKI 생성은 후속이다. 현재 설치 등록·instance journal·명시 init과 LaunchAgent lifecycle은 구현되어 있으며 [구현 상태](./implementation-status.md)와 후보별 실행 결과를 따른다. 정상 cold 결과만으로 runtime/합의 인수를 완료하지 않으며, 후보 수신으로 정식 release나 전체 G1-M을 승인하지 않는다.
 
 ## RC1 + 선정 Temurin JRE
 

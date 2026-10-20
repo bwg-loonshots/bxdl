@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "kind": "BXDL_QBFT_NETWORK",
+  "nodes": [
+    {
+      "nodeId": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "validatorId": "0x1111111111111111111111111111111111111111",
+      "host": "192.0.2.10",
+      "port": 19090,
+      "transactionPermission": "NONE",
+      "credentialFingerprints": [
+        "0x5555555555555555555555555555555555555555555555555555555555555555"
+      ],
+      "revokedCredentialFingerprints": []
+    },
+    {
+      "nodeId": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "validatorId": "0x2222222222222222222222222222222222222222",
+      "host": "192.0.2.11",
+      "port": 19090,
+      "transactionPermission": "NONE",
+      "credentialFingerprints": [
+        "0x6666666666666666666666666666666666666666666666666666666666666666"
+      ],
+      "revokedCredentialFingerprints": []
+    },
+    {
+      "nodeId": "0x3333333333333333333333333333333333333333333333333333333333333333",
+      "validatorId": "0x3333333333333333333333333333333333333333",
+      "host": "192.0.2.12",
+      "port": 19090,
+      "transactionPermission": "NONE",
+      "credentialFingerprints": [
+        "0x7777777777777777777777777777777777777777777777777777777777777777"
+      ],
+      "revokedCredentialFingerprints": []
+    },
+    {
+      "nodeId": "0x4444444444444444444444444444444444444444444444444444444444444444",
+      "validatorId": "0x4444444444444444444444444444444444444444",
+      "host": "192.0.2.13",
+      "port": 19090,
+      "transactionPermission": "NONE",
+      "credentialFingerprints": [
+        "0x8888888888888888888888888888888888888888888888888888888888888888"
+      ],
+      "revokedCredentialFingerprints": []
+    }
+  ]
+}
