@@ -1,0 +1,189 @@
+{
+  "status": "REMOTE_RECEIPT_STATIC_VERIFIED",
+  "candidate": "nigo-engine-v0.1.0-rc.2",
+  "verifiedAtDate": "2026-10-21",
+  "handoffDocumentRevision": "7f2efdfb72a0e024ba7ff80dba7b09a4533e64bc",
+  "bxdlBaseRevision": "2955ba5cdedeaf6dba65a98a905588e71770abea",
+  "source": {
+    "commit": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+    "dirty": false
+  },
+  "archiveSha256": "abab5669e9c6aa991332a908a8f991b7191179a99fc3799619ae2c8304e5ff22",
+  "archiveSize": 158091837,
+  "manifestSha256": "254a1bd33499f40d455fef451f80abb83e81eea66095ee68d796746dd7e0d10c",
+  "artifact": {
+    "fileName": "nigo-node-0.0.1-SNAPSHOT.jar",
+    "sha256": "b1aa84cbacf1057746bc5936308345cfdddb8f3fc78b63377af59da05dc0ce10",
+    "sizeBytes": 164085159
+  },
+  "contract": {
+    "status": "PROPOSED",
+    "revision": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+    "documentationSha256": "f52c8ef1c31fa51b269da547139e72ba90e6131198e351ee3426b760b5e3db95",
+    "definitionSha256": "bffe91e25a3c58db7626fadbb8333b5216ab293b7760dee033f2fdf974841687",
+    "runtimeDocumentationSha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+    "runtimeFixtureSha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e",
+    "fingerprint": "bac1756a81f2d2ddf67ae094fc770bc67060482acab87da7d48b93d441ab8f88"
+  },
+  "console": {
+    "node": "v24.21.0",
+    "npm": "11.19.0",
+    "sourceFingerprint": "4df95293576a4baaa63639d3540ae6657b89c0eae80b1e2e2f7f9e6412a32c73"
+  },
+  "payloadFiles": 19,
+  "inventoryEntries": 18,
+  "archiveStructure": "REGULAR_FILES_ONLY_NO_DUPLICATES_OR_ALIASES",
+  "gzipChecksum": "PASS",
+  "trustedArchiveIdentity": "MATCHED",
+  "suppliedArchiveChecksum": "MATCHED",
+  "fullPayloadInventoryAndChecksums": "MATCHED",
+  "embeddedBuildSuppliedEngineInfoAndManifest": "MATCHED",
+  "embeddedConsole": "MATCHED",
+  "contractSourceArchiveJarAndFingerprint": "MATCHED",
+  "nativeDocsVsSource": "MATCHED",
+  "supplierSummaryRecount": [
+    {
+      "id": "node-source",
+      "executionKind": "SOURCE_CLASSPATH",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 1009,
+        "skipped": 2,
+        "tests": 1011
+      }
+    },
+    {
+      "id": "node-cost",
+      "executionKind": "SOURCE_CLASSPATH",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 4,
+        "skipped": 0,
+        "tests": 4
+      }
+    },
+    {
+      "id": "block-sync-source",
+      "executionKind": "SOURCE_CLASSPATH",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 136,
+        "skipped": 0,
+        "tests": 136
+      }
+    },
+    {
+      "id": "gossip-source",
+      "executionKind": "SOURCE_CLASSPATH",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 34,
+        "skipped": 0,
+        "tests": 34
+      }
+    },
+    {
+      "id": "native-tooling-source",
+      "executionKind": "SOURCE_CLASSPATH",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 79,
+        "skipped": 0,
+        "tests": 79
+      }
+    },
+    {
+      "id": "exact-jar",
+      "executionKind": "PACKAGED_JAR",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 9,
+        "skipped": 0,
+        "tests": 9
+      }
+    },
+    {
+      "id": "qbft-source",
+      "executionKind": "SOURCE_CLASSPATH",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 290,
+        "skipped": 0,
+        "tests": 290
+      }
+    },
+    {
+      "id": "rdb-qbft-source",
+      "executionKind": "SOURCE_CLASSPATH",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 24,
+        "skipped": 0,
+        "tests": 24
+      }
+    },
+    {
+      "id": "rocksdb-qbft-source",
+      "executionKind": "SOURCE_CLASSPATH",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 34,
+        "skipped": 0,
+        "tests": 34
+      }
+    }
+  ],
+  "supplierCanonicalSourcePassed": 1262,
+  "supplierFocusedSourcePassed": 348,
+  "supplierExactJarPassed": 9,
+  "supplierTestCountPolicy": "Canonical, focused and packaged-JAR counts are separate executions; not BXDL product test results.",
+  "notRunOptIn": [
+    {
+      "className": "org.nigo.node.config.StandardProductPersistentNodeTests",
+      "gate": "NIGO_S3_NODE_RESTART=1",
+      "group": "node-source",
+      "name": "publicSupplyAndDefaultProductSurviveColdNodeRestartsAcrossBothBackendsAndFees()",
+      "reason": "Separate opt-in Node/SDK cold-restart product matrix is outside this supplier RC scope.",
+      "result": "NOT_RUN_OPT_IN"
+    },
+    {
+      "className": "org.nigo.protocol.blockchain.pool.PendingStateStoreViewAttributionTests",
+      "gate": "nigo.u4.pendingAttribution=true",
+      "group": "node-source",
+      "name": "attributePinnedConstructionWithoutWeakeningItsSnapshot(String)",
+      "reason": "Separate opt-in pending-view attribution/performance diagnostic remains deferred.",
+      "result": "NOT_RUN_OPT_IN"
+    }
+  ],
+  "jvmExecution": "NOT_RUN_BY_RECEIPT_VERIFIER",
+  "consumerPackageAcceptance": "NOT_RUN",
+  "consumerExecutionResultsPolicy": "This receipt records static inspection only. Later engine-info and package runs belong in separate results records.",
+  "remoteReleaseId": 419161098,
+  "remoteArchiveAssetId": 661349278,
+  "remoteChecksumAssetId": 661349277,
+  "remoteTagObject": "b2abbc8f9923c5cc465fb0eb66ef2f88242873ab",
+  "remoteTagPeeledCommit": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+  "remoteMetadataBasis": "NIGO handoff and prior BXDL remote review; this static verifier did not call the remote API.",
+  "serverEnforcedReleaseImmutability": false,
+  "tagCryptographicVerification": "NOT_RUN_BY_RECEIPT_VERIFIER",
+  "selectedLock": "packaging/engine-lock.rc2-temurin-development.json",
+  "selectedRuntimeJavaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+  "selectedRuntimeVerification": "NOT_RUN_BY_RECEIPT_VERIFIER",
+  "existingCandidateRecords": "RC.1 lock, snapshot, package spec and results retained unchanged",
+  "limitations": [
+    "Development candidate; no customer delivery or official-release approval.",
+    "Supplier evidence remains byte-preserved and does not establish BXDL package acceptance.",
+    "The earlier cost-gate failure root cause remains unresolved; RC.2 validation uses the documented fresh-JVM execution contract.",
+    "No existing installation, user data, key, database or service is replaced by snapshot selection.",
+    "Upgrade/downgrade UX, Linux/systemd, Docker, long-running operations and redistribution clearance remain outside this static receipt."
+  ]
+}

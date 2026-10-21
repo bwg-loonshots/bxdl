@@ -1,0 +1,392 @@
+{
+  "artifact": {
+    "fileName": "nigo-node-0.0.1-SNAPSHOT.jar",
+    "sha256": "b1aa84cbacf1057746bc5936308345cfdddb8f3fc78b63377af59da05dc0ce10",
+    "sizeBytes": 164085159
+  },
+  "authorization": {
+    "customerDeliveryGrant": "NOT_GRANTED",
+    "nigoOwnLicenseTerms": "UNDECIDED"
+  },
+  "candidateId": "nigo-engine-v0.1.0-rc.2",
+  "canonicalHarness": {
+    "commit": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+    "directory": "/private/tmp/nigo-engine-rc2-qualified.TEoMdu/source"
+  },
+  "console": {
+    "node": "v24.21.0",
+    "npm": "11.19.0",
+    "sourceFingerprint": "4df95293576a4baaa63639d3540ae6657b89c0eae80b1e2e2f7f9e6412a32c73"
+  },
+  "consumerAcceptance": "NOT_RUN",
+  "contract": {
+    "definitionSha256": "bffe91e25a3c58db7626fadbb8333b5216ab293b7760dee033f2fdf974841687",
+    "documentationSha256": "f52c8ef1c31fa51b269da547139e72ba90e6131198e351ee3426b760b5e3db95",
+    "fingerprint": "bac1756a81f2d2ddf67ae094fc770bc67060482acab87da7d48b93d441ab8f88",
+    "revision": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+    "runtimeDocumentationSha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+    "runtimeFixtureSha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e",
+    "status": "PROPOSED"
+  },
+  "createdAtUtc": "2026-10-21T04:29:03.639529+00:00",
+  "environment": {
+    "architecture": "arm64",
+    "canonicalGateJavaObservation": "See canonical gate log and separately recorded build environment; not inferred from packaging runtime.",
+    "gradleWrapperVersion": "9.4.1",
+    "nodeSourceTestWorker": {
+      "activeProcessorCount": 4,
+      "heapMaxBytes": 1073741824,
+      "maxParallelForks": 1,
+      "productionSizingClaim": false
+    },
+    "nodeVersion": "24.21.0",
+    "npmVersion": "11.19.0",
+    "os": "macOS",
+    "osBuild": "25G83",
+    "osVersion": "26.6.2",
+    "packagingAndExternalRuntimeJavaVersionOutput": "openjdk version \"21.0.12.1\" 2026-08-18 LTS\nOpenJDK Runtime Environment Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.12.1+1 (build 21.0.12.1+1-LTS, mixed mode, sharing)"
+  },
+  "executions": {
+    "canonical": {
+      "attemptId": "rc2-qualified-canonical-20261021",
+      "command": [
+        "./gradlew",
+        ":nigo-block-sync:test",
+        ":nigo-transaction-gossip:test",
+        ":nigo-node:test",
+        ":nigo-native-tooling:test",
+        "verifyArchitectureBoundaries",
+        ":nigo-node:testEngineArtifactIdentity",
+        ":nigo-node:testEngineArtifact",
+        "-PconsoleNode=/private/tmp/nigo-console-toolchain.8IeDKL/node-v24.21.0-darwin-arm64/bin/node",
+        "--no-daemon",
+        "--max-workers=2",
+        "--no-parallel",
+        "--rerun-tasks",
+        "--console=plain",
+        "-Dorg.gradle.jvmargs=-Xmx1g -XX:ActiveProcessorCount=4"
+      ],
+      "costProcessId": 31656,
+      "costProcessStartedAtEpochMillis": 1792554222962,
+      "dirty": false,
+      "exitCode": 0,
+      "finishedAtUtc": "2026-10-21T04:08:26Z",
+      "harnessCommit": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+      "logSha256": "72910d96575d51509597106bb4a2c252bce38f4d766c6713e31d99c2f49bebcb",
+      "sourceCommit": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+      "startedAtUtc": "2026-10-21T03:42:50Z",
+      "timingEvidence": {
+        "finish": "CAPTURED_UTC",
+        "start": "CAPTURED_UTC"
+      }
+    },
+    "qbft": {
+      "attemptId": "rc2-qualified-focused-20261021",
+      "command": [
+        "./gradlew",
+        ":nigo-consensus-qbft:test",
+        ":nigo-storage-rdb:test",
+        "--tests",
+        "*Qbft*",
+        ":nigo-storage-rocksdb:test",
+        "--tests",
+        "*Qbft*",
+        "--no-daemon",
+        "--max-workers=2",
+        "--no-parallel",
+        "--rerun-tasks",
+        "--console=plain",
+        "-Dorg.gradle.jvmargs=-Xmx1g -XX:ActiveProcessorCount=4"
+      ],
+      "dirty": false,
+      "exitCode": 0,
+      "finishedAtUtc": "2026-10-21T03:40:54.323439Z",
+      "harnessCommit": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+      "logSha256": "ca3824ae9fbdf780eefebb0d8d885b6bb66cf75cc975b60db1167d43199d0d10",
+      "sourceCommit": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+      "startedAtUtc": "2026-10-21T03:40:08.595566Z",
+      "timingEvidence": {
+        "finish": "LOG_MTIME_AFTER_OBSERVED_EXIT",
+        "start": "LOG_BIRTHTIME_LOWER_BOUND"
+      }
+    },
+    "storageQbft": {
+      "attemptId": "rc2-qualified-focused-20261021",
+      "command": [
+        "./gradlew",
+        ":nigo-consensus-qbft:test",
+        ":nigo-storage-rdb:test",
+        "--tests",
+        "*Qbft*",
+        ":nigo-storage-rocksdb:test",
+        "--tests",
+        "*Qbft*",
+        "--no-daemon",
+        "--max-workers=2",
+        "--no-parallel",
+        "--rerun-tasks",
+        "--console=plain",
+        "-Dorg.gradle.jvmargs=-Xmx1g -XX:ActiveProcessorCount=4"
+      ],
+      "dirty": false,
+      "exitCode": 0,
+      "finishedAtUtc": "2026-10-21T03:40:54.323439Z",
+      "harnessCommit": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+      "logSha256": "ca3824ae9fbdf780eefebb0d8d885b6bb66cf75cc975b60db1167d43199d0d10",
+      "sourceCommit": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+      "startedAtUtc": "2026-10-21T03:40:08.595566Z",
+      "timingEvidence": {
+        "finish": "LOG_MTIME_AFTER_OBSERVED_EXIT",
+        "start": "LOG_BIRTHTIME_LOWER_BOUND"
+      }
+    }
+  },
+  "expectedPrereleaseUrl": "https://github.com/bwg-loonshots/nigo-protocol/releases/tag/nigo-engine-v0.1.0-rc.2",
+  "externalJreEvidence": "evidence/external-jre-summary.json",
+  "fixRegressionTasks": {
+    ":nigo-consensus-qbft:test": "EXECUTED",
+    ":nigo-storage-rdb:test": "EXECUTED",
+    ":nigo-storage-rocksdb:test": "EXECUTED"
+  },
+  "limitations": [
+    "Development RC only; not an official production release or customer-delivery approval.",
+    "Both historical canonical supplier gates FAILED a cost p95 ratio bound; direct cause remains UNRESOLVED. Current clean-source fresh-JVM contract PASS is not historical root-cause resolution.",
+    "BXDL receipt, lock selection, package/JRE/LaunchAgent acceptance are pending.",
+    "No source-free QBFT generator, consumer PKI, JRE, installer, DB or raw logs included.",
+    "NIGO P2/P3 late-authored modules, Type-2 examples and every carrier/recipe are not accepted here.",
+    "Linux/systemd, power-cut, long-run/performance and general DB migration/downgrade not checked.",
+    "Finite RC.1-to-RC.2 forward recovery uses only new supplier-owned DBs; not customer-data upgrade or rollback acceptance.",
+    "NIGO own-license/customer-delivery terms remain UNDECIDED; no customer-delivery license or permission is granted by this bundle.",
+    "No claim of reproducible build, signed provenance or server-enforced ref/asset immutability."
+  ],
+  "mandatoryTasks": {
+    ":nigo-block-sync:test": "EXECUTED",
+    ":nigo-native-tooling:test": "EXECUTED",
+    ":nigo-node:bootJar": "EXECUTED",
+    ":nigo-node:consoleBuild": "EXECUTED",
+    ":nigo-node:consoleBundle": "EXECUTED",
+    ":nigo-node:consoleCheckNode": "EXECUTED",
+    ":nigo-node:consoleCheckNpm": "EXECUTED",
+    ":nigo-node:consoleInstall": "EXECUTED",
+    ":nigo-node:consoleTest": "EXECUTED",
+    ":nigo-node:consoleTypecheck": "EXECUTED",
+    ":nigo-node:consoleVerify": "EXECUTED",
+    ":nigo-node:engineDistribution": "EXECUTED",
+    ":nigo-node:generateEngineBuildInfo": "EXECUTED",
+    ":nigo-node:test": "EXECUTED",
+    ":nigo-node:testEngineArtifact": "EXECUTED",
+    ":nigo-node:testEngineArtifactIdentity": "EXECUTED",
+    ":nigo-node:testUnifiedAssetCost": "EXECUTED",
+    ":nigo-node:verifyUnifiedAssetCost": "EXECUTED",
+    ":nigo-transaction-gossip:test": "EXECUTED",
+    ":verifyArchitectureBoundaries": "EXECUTED"
+  },
+  "manifestPolicy": "Original generated manifest preserved; NOT_RECORDED/NOT_CHECKED are not overwritten.",
+  "measurementContract": {
+    "activeProcessorCount": 4,
+    "cases": 4,
+    "className": "org.nigo.node.service.UnifiedAssetCostAcceptanceTests",
+    "cpuTimeSubstitution": false,
+    "forcedGc": false,
+    "forkEvery": 0,
+    "freshJvm": true,
+    "heapMaxBytes": 1073741824,
+    "maxParallelForks": 1,
+    "maxParallelP95Ratio": 10,
+    "metric": "RAW_ELAPSED_WALL_NANOS",
+    "outlierExclusion": false,
+    "p95Rule": "MAX_OF_FIVE_ACTUAL_SAMPLES",
+    "samples": 5,
+    "task": ":nigo-node:testUnifiedAssetCost",
+    "verifierTask": ":nigo-node:verifyUnifiedAssetCost",
+    "warmups": 1
+  },
+  "notRunOptIn": [
+    {
+      "className": "org.nigo.node.config.StandardProductPersistentNodeTests",
+      "gate": "NIGO_S3_NODE_RESTART=1",
+      "group": "node-source",
+      "name": "publicSupplyAndDefaultProductSurviveColdNodeRestartsAcrossBothBackendsAndFees()",
+      "reason": "Separate opt-in Node/SDK cold-restart product matrix is outside this supplier RC scope.",
+      "result": "NOT_RUN_OPT_IN"
+    },
+    {
+      "className": "org.nigo.protocol.blockchain.pool.PendingStateStoreViewAttributionTests",
+      "gate": "nigo.u4.pendingAttribution=true",
+      "group": "node-source",
+      "name": "attributePinnedConstructionWithoutWeakeningItsSnapshot(String)",
+      "reason": "Separate opt-in pending-view attribution/performance diagnostic remains deferred.",
+      "result": "NOT_RUN_OPT_IN"
+    }
+  ],
+  "packagingToolSha256": "daf7615ea8798f81e81ca0130316a16a0202824a8a94fb277d95c5ec9d6f0244",
+  "recoveryEvidence": "evidence/recovery-summary.json",
+  "recoveryQualification": {
+    "sha256": "85a7f8bf9b0c10facc30b1408b2317d06af2393145624c2005128910a315edc2",
+    "sizeBytes": 20454,
+    "sourcePath": "/private/tmp/nigo-engine-rc2-qualified.TEoMdu/recovery-proof/qualification.json"
+  },
+  "releaseBranch": "release/engine-0.1",
+  "remotePublication": "NOT_PERFORMED_BY_PACKAGING_SCRIPT",
+  "scope": {
+    "consumerTarget": "macOS arm64 / Java 21 / RocksDB",
+    "dataCompatibility": "FRESH_LIFECYCLE_AND_FINITE_RC1_TO_RC2_SAME_IDENTITY_TEST_DB_FORWARD_RECOVERY_ONLY",
+    "qbft": {
+      "observers": 1,
+      "repetitionsPerBackend": 1,
+      "scenarios": [
+        "source-failover",
+        "same-height-hash-root",
+        "same-db-key-restart",
+        "manual-follower",
+        "confirmed-normal-shutdown"
+      ],
+      "transport": "MTLS",
+      "validators": 4
+    },
+    "supplierBackends": [
+      "h2",
+      "rocksdb"
+    ]
+  },
+  "source": {
+    "commit": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+    "dirty": false
+  },
+  "sourceRegressionSelection": {
+    "fullStorageSuitesClaimed": false,
+    "qbft": "UNFILTERED",
+    "rdb": "*Qbft*",
+    "rocksdb": "*Qbft*"
+  },
+  "status": "SUPPLIER_VALIDATED_LOCAL_BUNDLE",
+  "supplierAttemptHistory": {
+    "conclusion": "NEW_SOURCE_AND_EXPLICIT_FRESH_JVM_CONTRACT_PASSED_NOT_HISTORICAL_CAUSE_RESOLUTION",
+    "diagnosticSubstitutedForFullGate": false,
+    "evidence": "evidence/supplier-attempt-history.json",
+    "firstCanonicalAttemptPassed": false,
+    "fixClaimed": false,
+    "originalFailureRootCause": "UNRESOLVED",
+    "sequence": [
+      "CANONICAL_ATTEMPT_1_FAIL",
+      "WHOLE_COST_CLASS_DIAGNOSTIC_1_PASS",
+      "CANONICAL_ATTEMPT_2_FAIL",
+      "NEW_CONTRACT_CANONICAL_PASS"
+    ]
+  },
+  "supplierLog": {
+    "rawLogIncluded": false,
+    "sha256": "72910d96575d51509597106bb4a2c252bce38f4d766c6713e31d99c2f49bebcb",
+    "sizeBytes": 5160003
+  },
+  "tests": [
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 1009,
+        "skipped": 2,
+        "tests": 1011
+      },
+      "executionKind": "SOURCE_CLASSPATH",
+      "gradleTask": ":nigo-node:test",
+      "id": "node-source"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 4,
+        "skipped": 0,
+        "tests": 4
+      },
+      "executionKind": "SOURCE_CLASSPATH",
+      "gradleTask": ":nigo-node:testUnifiedAssetCost",
+      "id": "node-cost"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 136,
+        "skipped": 0,
+        "tests": 136
+      },
+      "executionKind": "SOURCE_CLASSPATH",
+      "gradleTask": ":nigo-block-sync:test",
+      "id": "block-sync-source"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 34,
+        "skipped": 0,
+        "tests": 34
+      },
+      "executionKind": "SOURCE_CLASSPATH",
+      "gradleTask": ":nigo-transaction-gossip:test",
+      "id": "gossip-source"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 79,
+        "skipped": 0,
+        "tests": 79
+      },
+      "executionKind": "SOURCE_CLASSPATH",
+      "gradleTask": ":nigo-native-tooling:test",
+      "id": "native-tooling-source"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 9,
+        "skipped": 0,
+        "tests": 9
+      },
+      "executionKind": "PACKAGED_JAR",
+      "gradleTask": ":nigo-node:testEngineArtifact",
+      "id": "exact-jar"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 290,
+        "skipped": 0,
+        "tests": 290
+      },
+      "executionKind": "SOURCE_CLASSPATH",
+      "gradleTask": ":nigo-consensus-qbft:test",
+      "id": "qbft-source"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 24,
+        "skipped": 0,
+        "tests": 24
+      },
+      "executionKind": "SOURCE_CLASSPATH",
+      "gradleTask": ":nigo-storage-rdb:test",
+      "id": "rdb-qbft-source"
+    },
+    {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 34,
+        "skipped": 0,
+        "tests": 34
+      },
+      "executionKind": "SOURCE_CLASSPATH",
+      "gradleTask": ":nigo-storage-rocksdb:test",
+      "id": "rocksdb-qbft-source"
+    }
+  ]
+}

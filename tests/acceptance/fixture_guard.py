@@ -1,4 +1,4 @@
-"""Read-only input boundary for the fixed, test-only RC1 acceptance harness.
+"""Read-only input boundary for the pinned, test-only candidate acceptance harness.
 
 No node is started and no credential contents are read. Returned pins contain
 hashes and relative public-input names, never fixture documents or secret paths.
@@ -12,6 +12,7 @@ import re
 import stat
 
 import support as h
+from candidates import candidate_for
 
 ENGINE_SOURCE = "540a89f0814c01d2a4ec67da1087af35195882ca"
 JAR_SHA = "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45"
@@ -108,6 +109,8 @@ def _port(value):
 
 
 def _validate_inputs(args):
+    candidate = candidate_for(args)
+    candidate_name = getattr(args, "candidate", "rc1")
     root = Path(args.fixture).expanduser().resolve(strict=True)
     _require(root.is_dir(), "ROOT")
     public = {}
@@ -121,9 +124,12 @@ def _validate_inputs(args):
     _require(summary.get("schemaVersion") == 1
              and summary.get("purpose") == "EPHEMERAL_LOCAL_BXDL_PACKAGE_ACCEPTANCE_ONLY"
              and summary.get("status") == "PREPARED_NOT_EXECUTED"
-             and summary.get("engineSource") == ENGINE_SOURCE
-             and summary.get("engineJarSha256") == JAR_SHA
+             and summary.get("engineSource") == candidate["source"]
+             and summary.get("engineJarSha256") == candidate["jarSha256"]
              and summary.get("javaSha256") == JAVA_SHA, "PREPARATION_IDENTITY")
+    _require(summary.get("candidate", "rc1") == candidate_name, "CANDIDATE_IDENTITY")
+    if candidate_name == "rc2":
+        _require(summary.get("engineJarSizeBytes") == candidate["jarSizeBytes"], "JAR_SIZE")
     chain = public_json("chain.json")
     network = public_json("network.json")
     manifest = public_json("generated/devnet.json")
@@ -184,9 +190,9 @@ def _validate_inputs(args):
     }, "CHAIN_VALIDATORS")
     transaction_files = {}
     expected = summary.get("transactions")
-    _require(isinstance(expected, list) and len(expected) == 8, "EIGHT_TRANSACTIONS")
+    _require(isinstance(expected, list) and len(expected) == candidate["transactionCount"], "TRANSACTION_COUNT")
     transaction_hashes = set()
-    for nonce in range(8):
+    for nonce in range(candidate["transactionCount"]):
         relative = f"transactions/tx-{nonce}.json"
         tx, digest = _read_json(root / relative, TRANSACTION_LIMIT, root)
         _require(tx.get("schemaVersion") == 1 and type(tx.get("nonce")) is int
@@ -200,12 +206,16 @@ def _validate_inputs(args):
         transaction_hashes.add(tx["hash"])
         transaction_files[relative] = digest
     lock, lock_digest = _read_json(Path(args.lock).expanduser().resolve(strict=True))
-    _require(lock.get("jarSha256") == JAR_SHA and lock.get("javaSha256") == JAVA_SHA, "LOCK_ARTIFACT")
+    _require(lock.get("jarSha256") == candidate["jarSha256"]
+             and lock.get("javaSha256") == JAVA_SHA
+             and lock.get("jarSizeBytes") == candidate["jarSizeBytes"]
+             and lock.get("expected", {}).get("source", {}).get("commit") == candidate["source"], "LOCK_ARTIFACT")
     revision = getattr(args, "revision", TEST_REVISION)
     _require(isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision) is not None,
              "REVISION")
     return {
-        "schemaVersion": 1, "scope": "FIXED_RC1_TEST_FIXTURE_ONLY",
+        "schemaVersion": 1, "scope": "PINNED_TEST_CANDIDATE_FIXTURE_ONLY",
+        "candidate": candidate_name,
         "publicInputs": public, "transactionFiles": transaction_files,
         "transactionSetSha256": _set_digest(transaction_files),
         "engineLockSha256": lock_digest, "revision": revision,
@@ -233,6 +243,7 @@ def assert_inputs_unchanged(args, pins):
 def validate_legacy_continuation(args, old, pins):
     """Allow only the frozen B receipt-expectation failure with fixture A."""
     try:
+        _require(getattr(args, "candidate", "rc1") == "rc1", "LEGACY_RC1_ONLY")
         prior = Path(args.continue_from).expanduser().resolve(strict=True)
         observed, digest = _read_json(prior / "result.json", 2 * PUBLIC_LIMIT, prior)
         _require(digest == LEGACY_RESULT_SHA and observed == old, "LEGACY_RESULT")

@@ -1,11 +1,11 @@
 # 기존 키로 네트워크 설정 준비하기
 
-`setup --network`는 제품 설정과 공통 공개 목록을 받아 NIGO RC1의 `node.json`을 만든다. 승인된 chain과 기존 NGVK·TLS 자료를 사용한다. 키·인증서 발급이나 노드 실행은 수행하지 않는다.
+`setup --network`는 제품 설정과 공통 공개 목록을 받아 NIGO RC.1/RC.2가 공유하는 native 계약의 `node.json`을 만든다. 승인된 chain과 기존 NGVK·TLS 자료를 사용한다. 키·인증서 발급이나 노드 실행은 수행하지 않는다.
 
 ## 먼저 준비할 자료
 
 - 기존 [제품 설정](./setup.md)의 `instance.json`: canonical node ID(`0x` + 64자리 hex), 로컬 HTTP/P2P, chain·data·6개 secret 파일 참조.
-- 운영자가 승인한 RC1 chain JSON: QBFT validator membership를 포함한다. 이 도우미가 chain을 만들거나 보정하지 않는다.
+- 운영자가 승인한 선택 후보의 chain JSON: QBFT validator membership를 포함한다. 이 도우미가 chain을 만들거나 보정하지 않는다.
 - 전체 validator의 공개 목록: node ID, validator ID(`0x` + 40자리 hex), 연결 주소·port, 거래 권한, TLS leaf 인증서의 NIGO pin. 첫 버전은 validator만 1~128개 지원하며 chain membership와 정확히 같아야 한다.
 - NIGO NGVK v1 signer, PKCS12/JKS key/trust store, 각각의 비밀번호 파일. 비밀번호 원문을 문답에 입력하지 않는다. TLS store와 private-key entry는 같은 비밀번호를 사용해야 하며 단일 PrivateKeyEntry 자료를 권장한다.
 
@@ -64,15 +64,19 @@ bxdl setup --network --workspace ./network-session --resume \
 
 제품 설정으로 지정한 파일은 참조 검사를 위해 먼저 읽는다. 발견된 키·데이터 경로와 겹치는 network/chain은 내용을 읽기 전에 거부한다.
 
-제품·network·chain의 identity/hash를 고정하므로 원본이 바뀌면 같은 세션의 재개·출력을 거부한다. 원본을 변경한 경우 새 세션에서 다시 검토한다. 인증서·pin 교체는 기존 세션이나 실행 중 노드에 자동 적용되지 않으며 RC1에는 hot reload가 없다.
+제품·network·chain의 identity/hash를 고정하므로 원본이 바뀌면 같은 세션의 재개·출력을 거부한다. 원본을 변경한 경우 새 세션에서 다시 검토한다. 인증서·pin 교체는 기존 세션이나 실행 중 노드에 자동 적용되지 않으며 RC.1/RC.2에는 hot reload가 없다.
 
 workspace는 0700, checkpoint/native는 0600이다. native에는 secret **경로**가 들어가므로 공개 파일로 공유하지 않는다. 출력은 workspace 밖의 새 파일이어야 하고 product/network/chain/secret/data 경로와 겹치면 안 된다. 기존 파일을 덮어쓰지 않는다. 게시 도중 I/O나 입력 재검증이 실패하면 `UNKNOWN`/exit 6으로 남기며 출력 파일이 존재할 수 있다. 자동 삭제·재게시하지 말고 출력과 원본을 확인한다. 상대 참조는 제품 파일 위치에서, 문답의 상대 출력은 최초 실행 기준에서 해석한다. 명령줄 `--output`은 해당 명령의 작업 디렉터리 기준이다.
 
 ## Catch-up과 정족수 복구의 관측
 
-RC1의 snapshot catch-up은 canonical header·상태를 복원하며 과거 transaction body와 ETH receipt 전체를 복원하지 않는다. 뒤처진 노드에서 과거 receipt가 `null`이어도 해당 거래가 미확정이라고 바로 판단하지 않는다. 확정 높이의 block hash/state root와 이력을 가진 노드의 receipt를 함께 확인한다. 재합류 뒤 새 거래는 별도로 확정 여부를 검사한다.
+RC.1/RC.2 공통 snapshot catch-up 계약은 canonical header·상태를 복원하며 과거 transaction body와 ETH receipt 전체를 복원하지 않는다. 뒤처진 노드에서 과거 receipt가 `null`이어도 해당 거래가 미확정이라고 바로 판단하지 않는다. 확정 높이의 block hash/state root와 이력을 가진 노드의 receipt를 함께 확인한다. 재합류 뒤 새 거래는 별도로 확정 여부를 검사한다.
 
-같은 패키지의 로컬 4-validator 시험에서 거래 확정·canonical catch-up·pin 거부는 확인했다. 다만 두 노드만 남은 상태를 45초 유지한 뒤 정족수를 복구했을 때 합의가 재개되지 않았고, 네 노드를 같은 DB로 재시작하고 같은 거래를 명시 재제출해도 90초 내 확정되지 않았다. 로컬 READY만으로 복구 완료를 판단하지 않는다. [관측 결과와 NIGO 확인 사항](../results/2026-10-20-macos-qbft-package.md)을 따르며 DB·키·round 상태를 삭제하거나 초기화하는 우회 조치는 제공하지 않는다.
+RC.1의 2026-10-20 시험에서는 거래 확정·canonical catch-up·pin 거부를 확인했지만 45초 정족수 부족 후 실시간 복구와 네 노드 재시작 복구는 실패했다. [당시 결과](../results/2026-10-20-macos-qbft-package.md)는 그대로 보존한다.
+
+RC.2의 [2026-10-21 새 Mac package 시험](../results/2026-10-21-macos-rc2-package.md)에서는 두 노드만 남은45초 동안 미확정·라운드 증가를 확인한 뒤 3/4 복귀에서 원 거래가 재제출 없이 확정됐다. 별도로 라운드 차이를 만든 네 노드를 모두 정상 종료하고 같은 DB로 재시작한 뒤 원 거래를 명시적으로 한 번 재제출한 경우도 네 노드 확정과 후속 거래가 통과했다. 이는 새 RC.2 설치의 시험이며 기존 RC.1 설치 upgrade나 자동 재전송 기능이 아니다.
+
+로컬 READY만으로 네트워크 합의나 복구를 판정하지 않는다. 지정 거래의 receipt와 같은 확정 높이의 block hash/state root를 노드별로 대조하고 UNKNOWN은 그대로 보존한다. 실제 고객 네트워크·다중 호스트·장기운영의 복구 SLA로 해석하지 않는다.
 
 ## 설치로 이어가기
 

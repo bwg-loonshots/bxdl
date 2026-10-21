@@ -1,7 +1,8 @@
 CARGO ?= cargo
 RUSTUP ?= rustup
+PYTHON ?= python3
 
-.PHONY: check test fmt build build-macos check-linux build-linux
+.PHONY: check test test-acceptance fmt build build-macos check-linux build-linux
 
 fmt:
 	$(CARGO) fmt --all -- --check
@@ -9,7 +10,10 @@ fmt:
 test:
 	$(CARGO) test --locked
 
-check: fmt
+test-acceptance:
+	$(PYTHON) -B -m unittest discover -s tests/acceptance -p 'test_*.py'
+
+check: fmt test-acceptance
 	$(CARGO) clippy --locked --all-targets -- -D warnings
 	$(CARGO) test --locked
 

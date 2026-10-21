@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Prepare fresh test-only material from the pinned RC1 bytes; never run a node.
+"""Prepare fresh test-only material from explicitly selected pinned candidate bytes; never run a node.
 
 Preparation is separate from BXDL installation/acceptance. This script needs no
 NIGO checkout, Gradle, network access, or customer credentials. Its Java helper is
-the QbftDevnetGenerator already present in the unchanged RC1 distribution.
+the QbftDevnetGenerator already present in the unchanged selected candidate distribution.
 All output stays in a new private directory, including child diagnostics.
 """
 
@@ -17,6 +17,8 @@ import stat
 import subprocess
 import sys
 from urllib.parse import unquote, urlparse
+
+from candidates import CANDIDATES, candidate_for
 
 
 ENGINE_SOURCE = "540a89f0814c01d2a4ec67da1087af35195882ca"
@@ -40,7 +42,9 @@ import { join } from 'node:path';
 
 // No provider is constructed: signing is entirely offline.
 try {
-  const [moduleUrl, output] = process.argv.slice(2);
+  const [moduleUrl, output, countText] = process.argv.slice(2);
+  const count = Number(countText);
+  if (![8, 12].includes(count)) throw new Error('unsupported transaction count');
   const { Wallet, Transaction, keccak256, version } = await import(moduleUrl);
   if (version !== '6.17.0') throw new Error('unsupported ethers');
   const wallet = Wallet.createRandom();
@@ -54,7 +58,7 @@ try {
     privateKey: wallet.privateKey
   });
   const transactions = [];
-  for (let nonce = 0; nonce < 8; nonce++) {
+  for (let nonce = 0; nonce < count; nonce++) {
     const request = {
       type: 2, chainId: 11578, nonce, gasLimit: 21000n,
       maxFeePerGas: 0n, maxPriorityFeePerGas: 0n,
@@ -210,7 +214,7 @@ def checked_manifest(path, generated, http_base, p2p_base):
 
 
 def chain_properties(nodes, funded_address):
-    # Explicit canonical RC1 whitelist. QbftDevnetGenerator's generated YAML
+    # Explicit canonical RC1/RC2 whitelist. QbftDevnetGenerator's generated YAML
     # remains evidence; it is not an ambient configuration source.
     chain = {
         "nigo.protocol.chain-id": str(CHAIN_ID),
@@ -238,8 +242,11 @@ def chain_properties(nodes, funded_address):
 
 
 def prepare(args):
+    candidate = candidate_for(args)
     java = pinned_file(args.java, JAVA_SHA256)
-    jar = pinned_file(args.jar, JAR_SHA256)
+    jar = pinned_file(args.jar, candidate["jarSha256"])
+    if jar.stat().st_size != candidate["jarSizeBytes"]:
+        raise ValueError("pinned artifact size mismatch")
     node_executable = regular(args.node)
     ethers = module_path(args.ethers_module)
     if not os.access(java, os.X_OK) or not os.access(node_executable, os.X_OK):
@@ -285,7 +292,7 @@ def prepare(args):
     )
     write_new(root / "tooling" / "make-transactions.mjs", WALLET_SCRIPT)
     run_private(
-        [node_executable, root / "tooling" / "make-transactions.mjs", ethers.as_uri(), root],
+        [node_executable, root / "tooling" / "make-transactions.mjs", ethers.as_uri(), root, candidate["transactionCount"]],
         root,
         "sign-offline",
     )
@@ -354,7 +361,7 @@ def prepare(args):
             if expected != metadata["credentialFingerprint"]:
                 raise ValueError("exported certificate pin mismatch")
         certificate_export = "EXPORTED_PIN_MATCHED"
-    if sha256(jar) != JAR_SHA256 or sha256(java) != JAVA_SHA256:
+    if sha256(jar) != candidate["jarSha256"] or sha256(java) != JAVA_SHA256:
         raise ValueError("artifact changed during preparation")
     if any((root / "data" / f"n{i}").exists() for i in range(1, 5)):
         raise ValueError("unexpected node data creation")
@@ -362,8 +369,10 @@ def prepare(args):
         "schemaVersion": 1,
         "status": "PREPARED_NOT_EXECUTED",
         "purpose": "EPHEMERAL_LOCAL_BXDL_PACKAGE_ACCEPTANCE_ONLY",
-        "engineSource": ENGINE_SOURCE,
-        "engineJarSha256": JAR_SHA256,
+        "candidate": args.candidate,
+        "engineSource": candidate["source"],
+        "engineJarSha256": candidate["jarSha256"],
+        "engineJarSizeBytes": candidate["jarSizeBytes"],
         "javaSha256": JAVA_SHA256,
         "ethersVersion": wallet_public["ethersVersion"],
         "ethersEntrySha256": sha256(ethers),
@@ -385,18 +394,19 @@ def prepare(args):
             "mode": "join-network", "consensusAutoStart": True, "archiveEnabled": True,
             "keyStoreType": "PKCS12", "trustStoreType": "PKCS12",
         },
-        "submissionPolicy": "NODE_1_ONLY_ONCE_PER_PRECOMPUTED_HASH",
+        "submissionPolicy": "ONCE_PER_HASH_EXCEPT_EXPLICIT_SAME_DB_RESTART_RESUBMISSION",
         "nodeDataCreated": False,
         "nodeStarted": False,
         "networkTraffic": "NOT_PERFORMED",
         "runtimeAcceptance": "NOT_CHECKED",
     }
     write_json(root / "fixture-summary.json", summary)
-    return {"status": "PREPARED_NOT_EXECUTED", "validators": 4, "transactions": 8, "certificateExport": certificate_export}
+    return {"status": "PREPARED_NOT_EXECUTED", "validators": 4, "candidate": args.candidate, "transactions": candidate["transactionCount"], "certificateExport": certificate_export}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--candidate", choices=tuple(CANDIDATES), required=True)
     parser.add_argument("--java", required=True)
     parser.add_argument("--jar", required=True)
     parser.add_argument("--ethers-module", required=True)
