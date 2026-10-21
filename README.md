@@ -7,7 +7,8 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 2026-10-19에는 [NIGO RC1](./contracts/nigo/engine-rc1-2026-10-19/README.md)을 원격 수신하고 등록 모드 안내를 추가했다.
 실제 RC1·동일 CLI를 담은 서명 개발 package에서 전체 14문답·설치·초기화·정상 종료·같은 DB 재시작을 확인했다.
 [RC1 검증 결과](./results/2026-10-19-engine-rc1-adoption.md)를 보존하며 Temurin21.0.12.1+1 full JRE 고정과 NIGO J1~J3 검증 회신을 수용했다.
-2026-10-20 [동일 package의 4-validator 시험](./results/2026-10-20-macos-qbft-package.md)에서 거래 확정·catch-up·잘못된 pin 거부를 확인했다. 장시간 정족수 부족 이후 합의 복구는 INCOMPLETE이며 NIGO 확인이 필요하다. 정식 배포와 전체 G1-M 인수는 남아 있다.
+2026-10-20 [동일 package의 4-validator 시험](./results/2026-10-20-macos-qbft-package.md)에서 거래 확정·catch-up·잘못된 pin 거부를 확인했다. 당시 장시간 정족수 부족 이후 합의 복구는 INCOMPLETE로 보존했다.
+2026-10-21에는 [RC.2를 선택](./contracts/nigo/engine-rc2-2026-10-21/README.md)하고 새 Mac 패키지의 **4-validator·정족수 상실 후 실시간 복구·동일 네 DB 전체 재시작 복구·wrong-pin 격리**를 통과했다. [RC.2 실제 결과](./results/2026-10-21-macos-rc2-package.md)를 따른다. 기존 설치 upgrade와 전체 G1-M·정식 고객 배포는 남아 있다.
 
 ## 구현한 명령
 
@@ -24,7 +25,7 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 | `bxdl preflight --config <instance.json> --engine-config <node.json> ...` | 제품과 명시 QBFT 설정의 일치를 확인한 뒤 pinned 엔진 cold 검사 |
 | `bxdl setup [--workspace <dir>]` | 설정 입력·수정·저장·재개와 로컬 검사, 새 제품 JSON 내보내기 |
 | `bxdl config fingerprint --certificate <leaf.pem>` | 공개 인증서의 NIGO MTLS pin 계산 |
-| `bxdl setup --network --workspace <new-session> --from <instance.json> --network-file <network.json>` | RC1 native 설정 준비 및 재개 |
+| `bxdl setup --network --workspace <new-session> --from <instance.json> --network-file <network.json>` | RC.1/RC.2 공통 native 계약의 설정 준비 및 재개 |
 | `bxdl setup --install --workspace <new-session>` | Mac 터미널에서 자료·계획을 저장하고 설치/등록·초기화·시작을 각각 명시 선택. `--resume`으로 같은 세션 재검증 |
 | `bxdl instance register --instance <new-dir> ...` | 설치본·원본 archive·신뢰 key·제품/native 설정을 검증하고 private 등록 기록 생성 |
 | `bxdl instance show --instance <dir>` | 저장된 초기화 상태와 현재 작업 잠금 관측. 노드 health 검사가 아님 |
@@ -77,7 +78,7 @@ make build
 make build-macos
 ```
 
-`make check`는 fmt·Clippy·단위/통합 테스트다. 예시 설정은 파일 참조만 담고 실제 chain/key/DB를 제공하지 않으므로 preflight 실패가 정상이다. schema 통과는 엔진 기동 가능 여부가 아니다. macOS arm64 산출물은 `dist/bxdl-darwin-arm64`이며 `bin/bxdl`은 빌드 호스트의 실행파일이다.
+`make check`는 fmt·Clippy·Rust 단위/통합 테스트와 Python 3 표준 라이브러리 기반의 오프라인 인수 도구 회귀다. `make test-acceptance`는 이 Python 검사만 실행하며 노드를 시작하지 않는다. 예시 설정은 파일 참조만 담고 실제 chain/key/DB를 제공하지 않으므로 preflight 실패가 정상이다. schema 통과는 엔진 기동 가능 여부가 아니다. macOS arm64 산출물은 `dist/bxdl-darwin-arm64`이며 `bin/bxdl`은 빌드 호스트의 실행파일이다.
 
 Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux target type-check는 `make check-linux`로 가능하지만 먼저 해당 Rust target이 필요하다. 실제 Linux linking에는 적절한 Linux linker/sysroot가 필요하며 type-check를 실행 인수로 취급하지 않는다. 의존성을 미리 확보했다면 `cargo ... --locked --offline`을 사용할 수 있다.
 

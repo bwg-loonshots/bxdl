@@ -1,0 +1,14 @@
+{
+  "engine": "NIGO",
+  "status": "PROPOSED",
+  "commands": ["engine-info", "preflight", "init", "resume-init", "run"],
+  "configuration": "explicit-node-and-public-chain-json",
+  "backends": ["h2", "rocksdb"],
+  "httpAccess": "LOOPBACK_ONLY",
+  "qbftTransport": "MTLS",
+  "readiness": {"syncObservation": "MEMORY_ONLY_FOLLOWER_PHASE", "syncStatuses": ["UNKNOWN", "NEGOTIATING", "DOWNLOADING", "RETRYING", "FOLLOWING", "FAILED"], "recoveringFollower": "NOT_READY", "failedFollower": "FAILED", "followingGuaranteesCaughtUp": false, "disabledSync": "UNKNOWN", "activeValidatorUsesFollowerPhase": false},
+  "preflight": {"opensDatabase": false, "startsNetwork": false, "signs": false, "generatesKeys": false, "successStatus": "INCOMPLETE", "exitCode": 3},
+  "processReport": {"format": "JSONL", "requiredIdentity": ["attemptId", "command", "sequence", "pid", "observedAt"], "missingTerminalResult": "UNKNOWN", "qbftShutdownConfirmation": "OWNED_WORKER_DRAIN_AND_STORAGE_CLOSE", "qbftShutdownResult": "STOPPED_ONLY_WHEN_CONFIRMED", "unconfirmedShutdownResult": "UNKNOWN"},
+  "exitCodes": {"0": "ONE_SHOT_SUCCESS", "3": "INCOMPLETE", "64": "INVALID_CONFIGURATION", "74": "PRECONDITION_IO_OR_STARTUP_FAILURE"},
+  "distribution": {"channel": "development", "officialRelease": false, "consumerAcceptance": "NOT_RUN"}
+}

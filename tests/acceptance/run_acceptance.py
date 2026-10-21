@@ -16,6 +16,7 @@ import urllib.request
 
 import support as h
 import fixture_guard as fg
+from candidates import CANDIDATES, candidate_for
 
 JAR_SHA = "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45"
 JAVA_SHA = "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c"
@@ -49,6 +50,10 @@ class Acceptance:
                               if name == "output" else expanded.resolve(strict=True))
                 setattr(args, name, normalized)
         self.a = args
+        self.candidate = candidate_for(args)
+        self.candidate_name = getattr(args, "candidate", "rc1")
+        self.scenario = getattr(args, "scenario", "full")
+        h.require(self.scenario == "full" or self.candidate_name == "rc2", "RC2_RECOVERY_CASE_ONLY")
         self.input_pins = fg.validate_inputs(args)
         self.root = args.output
         self.root.mkdir(mode=0o700)
@@ -63,11 +68,60 @@ class Acceptance:
         self.running = set()
         self.unresolved_mutations = {}
         self.round = 0
-        self.results = {"fixtureInputPins": self.input_pins}
+        self.submissions = {}
+        self.recovery_resubmit_nonce = None
+        self.results = {"fixtureInputPins": self.input_pins,
+                        "candidate": self.candidate_name, "scenario": self.scenario,
+                        "submissionAttempts": []}
+        Acceptance.freeze_harness(self)
         self.fixture = h.document(args.fixture / "fixture-summary.json")
         self.manifest = h.document(args.fixture / "generated/devnet.json")
         self.transactions = [h.document(args.fixture / f"transactions/tx-{i}.json")
-                             for i in range(8)]
+                             for i in range(self.candidate["transactionCount"])]
+        for tx in self.transactions:
+            self.e.redactions.append(tx["rawTransaction"].encode())
+
+    def freeze_harness(self):
+        source = Path(__file__).resolve().parent
+        names = ("run_acceptance.py", "support.py", "fixture_guard.py",
+                 "prepare_fixture.py", "candidates.py")
+        self.harness_pins = {name: h.sha(source / name) for name in names}
+        snapshot = self.e.logs / "harness-source"
+        snapshot.mkdir(mode=0o700)
+        for name, digest in self.harness_pins.items():
+            h.copy_file(source / name, snapshot / name, 0o600)
+            h.require(h.sha(snapshot / name) == digest, "HARNESS_SNAPSHOT_CHANGED")
+        self.results["harnessSources"] = self.harness_pins
+
+    def harness_unchanged(self):
+        source = Path(__file__).resolve().parent
+        return all(h.sha(source / name) == digest for name, digest in self.harness_pins.items())
+
+    def check_free_ports(self):
+        reservations = []
+        try:
+            for node in self.fixture["nodes"]:
+                for field in ("httpPort", "p2pPort"):
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    reservations.append(sock)
+                    sock.bind(("127.0.0.1", node[field]))
+        finally:
+            for sock in reservations:
+                sock.close()
+
+    def start_all(self, nodes, label):
+        # Wait for every launch attempt before cleanup, even if one launch fails.
+        with ThreadPoolExecutor(max_workers=len(nodes)) as executor:
+            tasks = [executor.submit(self.start, node, node["label"] + "-" + label)
+                     for node in nodes]
+            failures = []
+            for task in tasks:
+                try:
+                    task.result()
+                except Exception as error:
+                    failures.append(error)
+            if failures:
+                raise failures[0]
 
     def command(self, node, args, label, expected=(0,), timeout=700):
         cli = self.cli if node is None else node["cli"]
@@ -87,8 +141,9 @@ class Acceptance:
         (payload / "bin").mkdir(mode=0o700)
         h.copy_file(self.cli, payload / "bin/bxdl", 0o755)
         lock = h.document(self.lock)
-        h.require(lock["jarSha256"] == h.sha(payload / "engine/nigo-node.jar") == JAR_SHA,
-                  "ENGINE_PIN")
+        h.require(lock["jarSha256"] == h.sha(payload / "engine/nigo-node.jar") == self.candidate["jarSha256"]
+                  and (payload / "engine/nigo-node.jar").stat().st_size
+                  == self.candidate["jarSizeBytes"], "ENGINE_PIN")
         h.require(lock["javaSha256"] == h.sha(payload / "runtime/bin/java") == JAVA_SHA,
                   "JAVA_PIN")
         runtime = h.document(payload / "docs/runtime-provenance.json")
@@ -119,7 +174,11 @@ class Acceptance:
         h.require(verified["data"]["authenticity"] == "verified-external-ed25519", "PACKAGE_SIGNATURE")
         self.results["package"] = {"archiveSha256": h.sha(self.archive),
                                   "manifestSha256": verified["data"]["manifestSha256"],
-                                  "cliSha256": h.sha(self.cli), "engineJarSha256": JAR_SHA,
+                                  "cliSha256": h.sha(self.cli),
+                                  "candidate": self.candidate_name,
+                                  "engineSource": self.candidate["source"],
+                                  "engineJarSha256": self.candidate["jarSha256"],
+                                  "engineJarSizeBytes": self.candidate["jarSizeBytes"],
                                   "javaSha256": JAVA_SHA, "runtimeFilesVerified": len(runtime["files"]),
                                   "revision": self.a.revision, "testOnlySigningKey": True}
         self.e.note("SIGNED_PACKAGE_FROZEN")
@@ -220,20 +279,35 @@ class Acceptance:
         self.running.discard(node["label"])
         self.e.note("STOPPED_" + label)
 
-    def submit(self, nonce, port):
+    def submit(self, nonce, port, explicit_resubmission=False):
         fg.assert_inputs_unchanged(self.a, self.input_pins)
         tx = self.transactions[nonce]
         expected = tx["hash"]
-        # Exactly one submission. If the response is lost, polling below uses
-        # the precomputed original hash and never signs or submits again.
-        response = {"submittedOnce": True, "expectedHash": expected, "nonce": nonce}
+        previous = self.submissions.get(nonce, 0)
+        h.require((previous == 0 and not explicit_resubmission)
+                  or (previous == 1 and explicit_resubmission
+                      and self.recovery_resubmit_nonce == nonce), "SUBMISSION_NOT_AUTHORIZED")
+        attempt = previous + 1
+        # Record a dispatch before I/O. An unknown response never becomes a new
+        # automatic attempt. Only the separate same-DB scenario authorizes #2.
+        self.submissions[nonce] = attempt
+        response = {"expectedHash": expected, "nonce": nonce, "attempt": attempt,
+                    "port": port, "unixTimeNs": time.time_ns(),
+                    "explicitSameDbRestartResubmission": explicit_resubmission}
         try:
             received = rpc(port, "eth_sendRawTransaction", [tx["rawTransaction"]])
-            h.require(received.lower() == expected.lower(), "SUBMIT_HASH_MISMATCH")
+            h.require(isinstance(received, str) and received.lower() == expected.lower(),
+                      "SUBMIT_HASH_MISMATCH")
             response["submission"] = "ACKNOWLEDGED"
         except (OSError, TimeoutError):
-            response["submission"] = "UNKNOWN"
-        h.write_json(self.e.logs / f"tx-{nonce}-submission.json", response)
+            response["submission"] = "UNKNOWN_OBSERVE_ORIGINAL_HASH"
+        except h.Failure as error:
+            response["submission"] = "RPC_ERROR_OBSERVE_ORIGINAL_HASH"
+            if not explicit_resubmission or str(error) != "RPC_ERROR_eth_sendRawTransaction":
+                raise
+        finally:
+            h.write_json(self.e.logs / f"tx-{nonce}-submission-{attempt}.json", response)
+            self.results["submissionAttempts"].append(response)
         return expected
 
     def receipt(self, node, txhash):
@@ -309,6 +383,7 @@ class Acceptance:
                                  {"transactionHash": txhash, "receipts": receipts,
                                   "rpcBlocks": blocks, "monitorBlocks": canonical})
                     h.write_json(self.e.logs / (label + "-finality.json"), last)
+                    h.write_json(self.e.logs / (label + "-observations.json"), observations)
                     self.results[label] = last
                     self.e.note("FINALITY_" + label, height=last["height"])
                     return last
@@ -339,7 +414,7 @@ class Acceptance:
                 result = {**expected, "nodes": [n["label"] for n in nodes],
                           "historicalReceiptPresent": [r is not None for r in receipts],
                           "historicalReceiptRequiredByThisCase": False,
-                          "contract": "RC1_SNAPSHOT_INSTALLS_HEADER_AND_STATE_WITHOUT_HISTORICAL_BODY"}
+                          "contract": "SNAPSHOT_INSTALLS_HEADER_AND_STATE_WITHOUT_HISTORICAL_BODY"}
                 h.write_json(self.e.logs / (label + "-canonical.json"), result)
                 self.results[label] = result
                 self.e.note("CANONICAL_CATCHUP_" + label, height=height)
@@ -348,23 +423,16 @@ class Acceptance:
         raise h.Failure("CANONICAL_CATCHUP_TIMEOUT_" + label)
 
     def run(self):
+        self.check_free_ports()
         self.package()
         good = [self.prepare_node(i) for i in range(1, 5)]
         h.require(len({n["genesisHash"] for n in good}) == 1, "GENESIS_DIVERGENCE")
-        # All sync-enabled nodes start together, following the pinned supplier
-        # exact-JAR scenario. The product configuration stays immutable.
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            tasks = [executor.submit(self.start, n, n["label"] + "-first-start") for n in good]
-            failures = []
-            for task in tasks:
-                try:
-                    task.result()
-                except Exception as error:
-                    failures.append(error)
-            if failures:
-                raise failures[0]
+        self.start_all(good, "first-start")
         tx0 = self.submit(0, good[0]["port"])
         self.finality(good, tx0, "four-validator")
+        if self.scenario == "same-db-recovery":
+            self.same_db_recovery(good, 1, 2)
+            return
         first_attempt = good[3]["lastAttempt"]
         first_instance = good[3]["nodeInstanceId"]
         self.stop(good[3], "n4-before-catchup-stop")
@@ -378,7 +446,11 @@ class Acceptance:
         tx2 = self.submit(2, good[0]["port"])
         self.finality(good, tx2, "after-rejoin")
         self.two_of_four(good)
-        self.wrong_pin(good)
+        if self.candidate_name == "rc2":
+            self.same_db_recovery(good, 5, 6)
+            self.wrong_pin(good, nonce=7)
+        else:
+            self.wrong_pin(good)
 
     def continue_existing(self):
         """Continue only the preserved, fully stopped receipt-expectation run."""
@@ -393,6 +465,8 @@ class Acceptance:
         self.public = prior / "test-package-public.pem"
         self.results = copy.deepcopy(old["results"])
         self.results["fixtureInputPins"] = self.input_pins
+        self.results["submissionAttempts"] = []
+        self.results["harnessSources"] = self.harness_pins
         self.results.pop("cleanup", None)
         h.require(h.sha(self.archive) == self.results["package"]["archiveSha256"]
                   and h.sha(self.cli) == self.results["package"]["cliSha256"],
@@ -435,11 +509,8 @@ class Acceptance:
         self.two_of_four(good)
         self.wrong_pin(good)
 
-    def two_of_four(self, good):
-        self.stop(good[2], "n3-no-quorum-stop")
-        self.stop(good[3], "n4-no-quorum-stop")
-        # Empty blocks are disabled. Last confirmed transaction is settled before
-        # stopping nodes; record a fresh baseline before new valid work arrives.
+    def observe_quorum_loss(self, good, nonce, label, result_key):
+        # Call only after n3/n4 have been normally stopped. Empty blocks are off.
         stable_deadline = time.monotonic() + 30
         while True:
             snapshots = [self.consensus(n) for n in good[:2]]
@@ -451,34 +522,53 @@ class Acceptance:
         blocks = [http(n["port"], "/monitor/api/blocks/" + str(baseline[0])) for n in good[:2]]
         h.require(len({(b["blockHash"], b["stateRoot"]) for b in blocks}) == 1,
                   "NO_QUORUM_BASELINE_DIVERGENCE")
-        tx3 = self.submit(3, good[0]["port"])
+        txhash = self.submit(nonce, good[0]["port"])
         observations = []
-        deadline = time.monotonic() + 45
+        held_from = time.monotonic()
+        deadline = held_from + 45
         initial_rounds = None
         round_changed = False
-        while time.monotonic() < deadline:
-            snapshots = [self.consensus(n) for n in good[:2]]
-            heads = [int(s["latestBlockNumber"]) for s in snapshots]
-            finalized = [int(s["finalizedBlockNumber"]) for s in snapshots]
-            receipts = [self.receipt(n, tx3) for n in good[:2]]
-            h.require(heads == baseline and finalized == baseline and all(r is None for r in receipts),
-                      "TWO_OF_FOUR_FINALIZED")
-            rounds = [(s.get("viewHeight"), s.get("viewRound")) for s in snapshots]
-            if all(r[0] is not None and r[1] is not None for r in rounds):
-                if initial_rounds is None:
-                    initial_rounds = rounds
-                elif all(r[0] == old[0] and int(r[1]) > int(old[1])
-                         for r, old in zip(rounds, initial_rounds)):
-                    round_changed = True
-            observations.append({"heads": heads, "finalized": finalized, "rounds": rounds})
-            time.sleep(0.5)
-        h.require(round_changed, "NO_QUORUM_ROUND_ADVANCE_NOT_OBSERVED")
-        h.write_json(self.e.logs / "two-of-four.json",
-                     {"seconds": 45, "transactionHash": tx3, "baseline": baseline,
-                      "observations": observations})
-        self.results["twoOfFour"] = {"seconds": 45, "newValidTransactionSubmitted": True,
-                                     "newFinality": False, "roundAdvanced": True,
-                                     "samples": len(observations)}
+        completed = False
+        try:
+            while time.monotonic() < deadline:
+                sample = self.diagnostic_sample(good[:2], txhash)
+                observations.append(sample)
+                snapshots = [item["consensus"] for item in sample["nodes"]]
+                receipts = [item["receipt"] for item in sample["nodes"]]
+                h.require(all("observationError" not in item["consensus"]
+                              and "observationError" not in item["progress"]
+                              and (item["receipt"] is None or "observationError" not in item["receipt"])
+                              for item in sample["nodes"]), "NO_QUORUM_OBSERVATION_UNAVAILABLE")
+                heads = [int(s["latestBlockNumber"]) for s in snapshots]
+                finalized = [int(s["finalizedBlockNumber"]) for s in snapshots]
+                h.require(heads == baseline and finalized == baseline and all(r is None for r in receipts),
+                          "TWO_OF_FOUR_FINALIZED")
+                rounds = [(s.get("viewHeight"), s.get("viewRound")) for s in snapshots]
+                if all(r[0] is not None and r[1] is not None for r in rounds):
+                    if initial_rounds is None:
+                        initial_rounds = rounds
+                    elif all(r[0] == old[0] and int(r[1]) > int(old[1])
+                             for r, old in zip(rounds, initial_rounds)):
+                        round_changed = True
+                time.sleep(0.5)
+            h.require(round_changed, "NO_QUORUM_ROUND_ADVANCE_NOT_OBSERVED")
+            completed = True
+        finally:
+            h.write_json(self.e.logs / (label + ".json"),
+                         {"seconds": 45, "elapsedSeconds": time.monotonic() - held_from,
+                          "transactionHash": txhash, "nonce": nonce, "baseline": baseline,
+                          "completed": completed, "observations": observations})
+            self.results[result_key] = {"seconds": 45, "completed": completed,
+                                       "transactionHash": txhash, "nonce": nonce,
+                                       "newValidTransactionSubmitted": True,
+                                       "newFinality": False if completed else "NOT_CONFIRMED",
+                                       "roundAdvanced": round_changed, "samples": len(observations)}
+        return txhash, observations[-1]
+
+    def two_of_four(self, good):
+        self.stop(good[2], "n3-no-quorum-stop")
+        self.stop(good[3], "n4-no-quorum-stop")
+        tx3, _ = self.observe_quorum_loss(good, 3, "two-of-four", "twoOfFour")
         self.start(good[3], "n4-quorum-restore")
         restored = self.finality([good[0], good[1], good[3]], tx3, "restored-quorum")
         self.start(good[2], "n3-quorum-restore")
@@ -486,7 +576,77 @@ class Acceptance:
         tx4 = self.submit(4, good[0]["port"])
         self.finality(good, tx4, "after-four-restored")
 
-    def wrong_pin(self, good):
+    def same_db_recovery(self, good, pending_nonce, followup_nonce):
+        h.require(self.candidate_name == "rc2", "RC2_RECOVERY_CASE_ONLY")
+        # A new, independent skew period follows a fully confirmed 4-node tx.
+        # There is no carry-over timeout adoption and no data/reset/re-register.
+        original = {node["label"]: {"attemptId": node["lastAttempt"],
+                                    "nodeInstanceId": node["nodeInstanceId"]} for node in good}
+        before = self.diagnostic_sample(good, self.transactions[pending_nonce]["hash"])
+        h.write_json(self.e.logs / "restart-recovery-before-skew.json", before)
+        self.stop(good[2], "n3-restart-skew-stop")
+        self.stop(good[3], "n4-restart-skew-stop")
+        txhash, after = self.observe_quorum_loss(good, pending_nonce,
+                                                "restart-two-of-four", "restartTwoOfFour")
+        stopped_views = [(item["consensus"].get("viewHeight"),
+                          item["consensus"].get("viewRound")) for item in before["nodes"][2:]]
+        active_views = [(item["consensus"].get("viewHeight"),
+                         item["consensus"].get("viewRound")) for item in after["nodes"]]
+        h.require(all(height is not None and round_number is not None
+                      for height, round_number in stopped_views + active_views)
+                  and len({height for height, _ in stopped_views + active_views}) == 1
+                  and min(int(value) for _, value in active_views)
+                  > max(int(value) for _, value in stopped_views), "RESTART_ROUND_SKEW_NOT_CONFIRMED")
+        self.results["restartRoundSkew"] = {"stoppedViews": stopped_views,
+                                             "activeViews": active_views, "confirmed": True}
+        for node in good[:2]:
+            self.stop(node, node["label"] + "-before-all-restart-stop")
+        preserved = {}
+        for node in good:
+            h.stopped(self.command(node, ["status", "--instance", node["control"]],
+                                   node["label"] + "-before-all-restart-status"), "ALL_STOPPED")
+            data = node["base"] / "data"
+            metadata = data.stat()
+            preserved[node["label"]] = {"dataDirectory": str(data),
+                                        "device": metadata.st_dev, "inode": metadata.st_ino,
+                                        "engineIdentitySha256": h.sha(data / "engine-instance.json"),
+                                        "productSha256": h.sha(node["product"]),
+                                        "nativeSha256": h.sha(node["native"])}
+        h.write_json(self.e.logs / "restart-data-preservation-before.json", preserved)
+        self.start_all(good, "same-db-skew-restart")
+        for node in good:
+            previous = original[node["label"]]
+            h.require(node["lastAttempt"] != previous["attemptId"]
+                      and node["nodeInstanceId"] != previous["nodeInstanceId"], "RESTART_IDENTITY_REUSED")
+            data = node["base"] / "data"
+            metadata = data.stat()
+            pin = preserved[node["label"]]
+            h.require((metadata.st_dev, metadata.st_ino) == (pin["device"], pin["inode"])
+                      and h.sha(data / "engine-instance.json") == pin["engineIdentitySha256"]
+                      and h.sha(node["product"]) == pin["productSha256"]
+                      and h.sha(node["native"]) == pin["nativeSha256"], "RESTART_DATA_OR_CONFIG_REPLACED")
+        h.write_json(self.e.logs / "restart-before-explicit-resubmission.json",
+                     self.diagnostic_sample(good, txhash))
+        self.recovery_resubmit_nonce = pending_nonce
+        try:
+            repeated = self.submit(pending_nonce, good[0]["port"], explicit_resubmission=True)
+        finally:
+            self.recovery_resubmit_nonce = None
+        h.require(repeated == txhash, "RESUBMITTED_HASH_CHANGED")
+        self.finality(good, txhash, "same-db-restart-recovered")
+        followup = self.submit(followup_nonce, good[0]["port"])
+        self.finality(good, followup, "same-db-restart-followup")
+        self.results["sameDbRestartRecovery"] = {
+            "outcome": "PASS", "sameFourDataDirectories": True,
+            "dataIdentityAndConfigsUnchanged": True, "newLaunchAttempts": True,
+            "pendingNonce": pending_nonce, "followupNonce": followup_nonce,
+            "pendingTransactionHash": txhash, "explicitResubmissionCount": 1,
+            "totalSubmissionAttemptsForPendingHash": self.submissions[pending_nonce],
+            "databaseOrRoundReset": False, "engineBytesReplaced": False,
+            "rc1ToRc2UpgradeTested": False,
+        }
+
+    def wrong_pin(self, good, nonce=5):
         # Smallest node ID initiates all three edges, making wrong expected
         # server pins an explicit outbound WRONG_PIN rather than an inbound
         # manifest-authorization failure.
@@ -518,7 +678,7 @@ class Acceptance:
             h.require(time.monotonic() < deadline, "WRONG_PIN_NOT_OBSERVED")
             time.sleep(0.5)
         h.write_json(self.e.logs / "wrong-pin-consensus.json", snapshot)
-        tx5 = self.submit(5, healthy[0]["port"])
+        tx5 = self.submit(nonce, healthy[0]["port"])
         self.finality(healthy, tx5, "healthy-quorum-during-wrong-pin")
         self.results["wrongPin"] = {"outboundWrongPinCount": count,
                                     "faultNodePeerCount": int(snapshot["peerCount"]),
@@ -550,6 +710,8 @@ class Acceptance:
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--run", action="store_true")
+    p.add_argument("--candidate", choices=tuple(CANDIDATES), required=True)
+    p.add_argument("--scenario", choices=("full", "same-db-recovery"), default="full")
     for name in ("cli", "fixture", "payload-source", "lock", "spec", "openssl", "output"):
         p.add_argument("--" + name, type=Path, required=True)
     p.add_argument("--revision", required=True)
@@ -562,6 +724,8 @@ def main():
     h.require(platform.system() == "Darwin" and platform.machine() == "arm64", "MAC_ARM64_REQUIRED")
     h.require(re.fullmatch(r"[0-9a-f]{40}", a.revision) is not None, "FULL_REVISION_REQUIRED")
     h.require(a.output.is_absolute() and not a.output.exists(), "NEW_ABSOLUTE_OUTPUT_REQUIRED")
+    h.require(not a.continue_from or (a.candidate == "rc1" and a.scenario == "full"),
+              "LEGACY_CONTINUATION_RC1_FULL_ONLY")
     acceptance = Acceptance(a)
     error = None
     try:
@@ -578,6 +742,10 @@ def main():
     except h.Failure as changed:
         error = error or str(changed)
         acceptance.results["inputGuardFinalError"] = str(changed)
+    preserved_harness = acceptance.harness_unchanged()
+    acceptance.results["harnessSourcesUnchanged"] = preserved_harness
+    if not preserved_harness:
+        error = error or "HARNESS_SOURCE_CHANGED_DURING_RUN"
     result = {"outcome": "PASS" if error is None and cleaned else "INCOMPLETE",
               "reason": error, "results": acceptance.results,
               "scope": "LOCAL_MAC_FOUR_VALIDATOR_PACKAGE_ACCEPTANCE", "steps": acceptance.e.steps,

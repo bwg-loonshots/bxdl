@@ -1,0 +1,493 @@
+{
+  "artifactDirectory": "/private/tmp/nigo-engine-rc2-qualified.TEoMdu/recovery-proof",
+  "auditedAt": "2026-10-21T04:22:48.540Z",
+  "candidate": {
+    "catchups": [
+      {
+        "blockHash": "0x8e5a22c2ac77aad865e818962e895b4e78c81ab7b8b8a3147b0669f8fca39adc",
+        "height": 2,
+        "historicalReceiptRequired": false,
+        "phase": "baseline-all4-catchup",
+        "stateRoot": "0xa0b743ec527be8bc629d8013d270fbf2269c9649772b6a23df3471ca491cd34e"
+      },
+      {
+        "blockHash": "0xf1366be8413ea606442f0e3639695350e2fd1b56567dc31e8576d72bed80d631",
+        "height": 4,
+        "historicalReceiptRequired": false,
+        "phase": "recovered-all4-catchup",
+        "stateRoot": "0x57c62fd0b863ced591270292b73fd26e04f23a3ba695a600bbe69ef1841e71d9"
+      }
+    ],
+    "checks": {
+      "cleanExpectedBuildIdentity": true,
+      "completeUniqueMembers": true,
+      "configOnlyDataDirectoryChanged": true,
+      "exactMtlsPeersAndPins": true,
+      "historicalCatchupIsHeaderOnly": true,
+      "newFinalityRequiresAllMemberReceiptBodyHashRoot": true,
+      "noObservationErrors": true,
+      "noObservedEquivocation": true,
+      "persistentJournalAndCanonicalHistoryUnchanged": true
+    },
+    "cleanup": {
+      "cleanStoppedCount": 11,
+      "evidence": "REAPED_CHILD_EXITS_AND_MATCHED_MANAGED_TERMINAL_REPORTS",
+      "forcedCount": 0,
+      "initCount": 4,
+      "osPidProbePerformed": false,
+      "ownedPids": [
+        38660,
+        38661,
+        38662,
+        38663,
+        38667,
+        38668,
+        38669,
+        38670,
+        39340,
+        39502,
+        39531,
+        39838,
+        39839,
+        39840,
+        39841
+      ],
+      "ownedProcessCount": 15,
+      "remainingPids": [],
+      "runCount": 11
+    },
+    "finalized": {
+      "baseline-3": {
+        "blockHash": "0x8e5a22c2ac77aad865e818962e895b4e78c81ab7b8b8a3147b0669f8fca39adc",
+        "elapsedSeconds": 1.5738623329999972,
+        "height": 2,
+        "stateRoot": "0xa0b743ec527be8bc629d8013d270fbf2269c9649772b6a23df3471ca491cd34e",
+        "unknownSamples": 0
+      },
+      "baseline-4": {
+        "blockHash": "0xca8e5bace661609d6465995ba8758b99e4c07d96078c64149154c6535c911c07",
+        "elapsedSeconds": 2.7877238340000003,
+        "height": 1,
+        "stateRoot": "0x0ac84470c3fa47776b591c4cbe670f2c63c56ec74ddaae94279afeecaab7afc6",
+        "unknownSamples": 1
+      },
+      "post-recovery-progress": {
+        "blockHash": "0x012f6f3623ac894745e13ac513cb3abde2ebccea29ec06b076b6b8375a8cf554",
+        "elapsedSeconds": 1.7903280830000003,
+        "height": 6,
+        "stateRoot": "0x7da151627f130bac8ccb42e89ccfd47c323ae4fba279cb87c8379e85a5156a7d",
+        "unknownSamples": 1
+      },
+      "rejoined-4": {
+        "blockHash": "0x2d15d249aca4d31c938c32089a86bcd8804558c4d30cd891e60cfbf0ba98c767",
+        "elapsedSeconds": 1.6891172920000026,
+        "height": 3,
+        "stateRoot": "0x681873dc628346cb7502efc7dd29f1fc089e36d64bc4d4ed0853260c9cf34bdf",
+        "unknownSamples": 1
+      },
+      "restored-3-no-resubmit": {
+        "blockHash": "0xf1366be8413ea606442f0e3639695350e2fd1b56567dc31e8576d72bed80d631",
+        "elapsedSeconds": 10.344517542000002,
+        "height": 4,
+        "stateRoot": "0x57c62fd0b863ced591270292b73fd26e04f23a3ba695a600bbe69ef1841e71d9",
+        "unknownSamples": 1
+      },
+      "skew-restart-4-explicit-resubmit": {
+        "blockHash": "0xbbaee0167c97cc0dd2f39fb8d815bc12f11ceb932b1a0fa179607c86a4142ccf",
+        "elapsedSeconds": 34.678511375,
+        "height": 5,
+        "stateRoot": "0x66f489c0407cf5fabca444edb7a8b59171c0be0d3f83f469b64ae57eb976b7f0",
+        "unknownSamples": 1
+      }
+    },
+    "harnessSha256": "b9a3ba53181762b38e99ed38c7847802e4497071fe62eaf3f5a7cbfb0b845567",
+    "helperSha256": "b9a3ba53181762b38e99ed38c7847802e4497071fe62eaf3f5a7cbfb0b845567",
+    "holds": [
+      {
+        "elapsedSeconds": 45.01131308300001,
+        "end": "2026-10-21T04:16:46.435Z",
+        "finalRounds": [
+          3,
+          3
+        ],
+        "maximumGapMillis": 772,
+        "phase": "hold-2-of-4-live-recovery",
+        "rawSpanMillis": 45010,
+        "samples": 60,
+        "start": "2026-10-21T04:16:01.425Z"
+      },
+      {
+        "elapsedSeconds": 45.01802133399999,
+        "end": "2026-10-21T04:17:49.874Z",
+        "finalRounds": [
+          3,
+          3
+        ],
+        "maximumGapMillis": 771,
+        "phase": "hold-2-of-4-skew-restart",
+        "rawSpanMillis": 45017,
+        "samples": 60,
+        "start": "2026-10-21T04:17:04.857Z"
+      }
+    ],
+    "managedReportHashes": {
+      "n1/n1-init-1/report.jsonl": "f2b3615ee46a93bdf34f69f6611104e9abcc07776b0161d9a8bddb3ad7e92018",
+      "n1/n1-run-2/report.jsonl": "5c2cee107a406d15f8292cb929b40366a9b17adabcd779b2b412ef4d05e98a33",
+      "n1/n1-run-3/report.jsonl": "968a3d118f48c318067cd29ca6b9a04e05a4703c4f3a51c5697d4897db7546f6",
+      "n2/n2-init-1/report.jsonl": "ad389de2832c3b88ce6e06dbcbe4c2a128d126f61d4c43d028747a9d0c628759",
+      "n2/n2-run-2/report.jsonl": "457546608c9bcdbbf18a9aefd8954c6d438bce1807f59bfdd4a6e86d0f8667bb",
+      "n2/n2-run-3/report.jsonl": "a7903beb7a0a874a49197317be1b7e1ffd8b97c7867af79595520e5f656adfd7",
+      "n3/n3-init-1/report.jsonl": "ff4fa3502190b6ba85d32050a98024154f13cfa4ca97a9de4a0490665e423ad7",
+      "n3/n3-run-2/report.jsonl": "363a56b1388f6cdb84e4daa598f2ab4968d774ea3cb06e3d76e53661049942da",
+      "n3/n3-run-3/report.jsonl": "db43eaef1eeb5a9d8407866e700b6ab18a25521ff9bf9fc946c90227fdfac689",
+      "n3/n3-run-4/report.jsonl": "2f715a0e532e345fd406bec779f9c089ae36ee336382c0c11ab827139ce4e2eb",
+      "n4/n4-init-1/report.jsonl": "840e145d9a32eb0f9530961642651caa31c7d559d00490eee1cfb92baea44518",
+      "n4/n4-run-2/report.jsonl": "82eb15e2db5ee15c275debfaa657e491910a144e85b434465c4280bc52cb56b0",
+      "n4/n4-run-3/report.jsonl": "970904a39ba46000824ee2478ec0320f425b4ba5d5c7fd7ed10a6518836640a5",
+      "n4/n4-run-4/report.jsonl": "1c9846a13ebe815246504293cf790975c638307299c44a233d5c9c6f98eaec93",
+      "n4/n4-run-5/report.jsonl": "d42ba06d88a7f155d3c0ec6c19ea5520c7ab1f046b6ff3e1cb206d1eff22833e"
+    },
+    "observationCount": 174,
+    "proofHashes": {
+      "events.jsonl": "3cc30da4ae323b2321660e77b86d23096fc41f6f0c9983eea3c2d54c9966fd1d",
+      "inputs.json": "44438a5e457a0ae568cf8777883a5815b8b4ad498ce1c8d1f39c665d2dc3e7cc",
+      "observations.jsonl": "3b7e710f0617f4a34c614e479b4b4f584a009e9d8ee35e136ae1358247d51f44",
+      "result.json": "906f0fe23f9b7626e6ceb5c14e972001414d85b027b8344ea8c58a4614eaa141"
+    },
+    "recoveryTimings": [
+      {
+        "launchToFinalMillis": 10342,
+        "phase": "restored-3-no-resubmit",
+        "reportedSecondsIncludingLaunch": 10.344517542000002
+      },
+      {
+        "launchToFinalMillis": 34676,
+        "phase": "skew-restart-4-explicit-resubmit",
+        "reportedSecondsIncludingLaunch": 34.678511375
+      }
+    ],
+    "reportedOutcome": "PASS_BOTH_RECOVERY_PATHS",
+    "runPath": "/private/tmp/nigo-qbft-candidate-rc2-20261021-a",
+    "storage": [
+      {
+        "configSha256": "9a079b487e20dc9d4fff668f3a22356a2f00a6dfc81ab776818f4e0cc3671513",
+        "dataDirectory": "/private/tmp/nigo-qbft-candidate-rc2-20261021-a/n1/data",
+        "journalSha256": "e608037addaa2614423bc3cb7245cf422cfab677c119e85614eb97da39725265",
+        "node": 1,
+        "runAttempts": [
+          "n1-run-2",
+          "n1-run-3"
+        ]
+      },
+      {
+        "configSha256": "92c025b79f156f14d16a43e1313ad0d763465fc0dc3681321cf824b9732b101d",
+        "dataDirectory": "/private/tmp/nigo-qbft-candidate-rc2-20261021-a/n2/data",
+        "journalSha256": "d4d373c42bf646691ee789d735be8dad8bad230e0a8b3965e3a7153a0418b225",
+        "node": 2,
+        "runAttempts": [
+          "n2-run-2",
+          "n2-run-3"
+        ]
+      },
+      {
+        "configSha256": "9cfbd1edcdf5200f498c47bc288eb87a174c7cb89b4f4f8ef6970cf3e026cb1a",
+        "dataDirectory": "/private/tmp/nigo-qbft-candidate-rc2-20261021-a/n3/data",
+        "journalSha256": "05f12f4543b7aa1c2db2a35f5b58c97ea2c1b13cc2ab8d345586f7b490325d03",
+        "node": 3,
+        "runAttempts": [
+          "n3-run-2",
+          "n3-run-3",
+          "n3-run-4"
+        ]
+      },
+      {
+        "configSha256": "8c3f9ad7a6f99a91b49a39479c8d54e85b71ed8d8bf7eb2cb9895c56a1f277cc",
+        "dataDirectory": "/private/tmp/nigo-qbft-candidate-rc2-20261021-a/n4/data",
+        "journalSha256": "1c8d34d6c449c7669abff373519717bafdd886cc5c1b98df9daf7c4c83e3a5a5",
+        "node": 4,
+        "runAttempts": [
+          "n4-run-2",
+          "n4-run-3",
+          "n4-run-4",
+          "n4-run-5"
+        ]
+      }
+    ],
+    "verdict": "PASS",
+    "verifierSha256": "02db9f40b6982ea5df799f92e99825229194a66742253313a400c57e83067f4c"
+  },
+  "cleanup": {
+    "cleanStoppedCount": 23,
+    "forcedCount": 0,
+    "osPidProbePerformed": false,
+    "ownedProcessCount": 31,
+    "remainingPids": []
+  },
+  "evidenceLimits": [
+    "Finite local four-node test; not long-soak, multi-host, power-cut, release-signing, or BXDL package acceptance.",
+    "Historical snapshot catchup promises headers, certificates and state root; historical receipts/bodies are not required.",
+    "UNKNOWN publication samples are retained, never used to qualify successful new-transaction finality.",
+    "RC.1 runs only on newly initialized test DBs, later reused without reinitialization by the final RC.2 bytes.",
+    "Cleanup is independently checked against reaped owned-child exits and terminal reports; no new OS PID probe is performed.",
+    "The old RC.1 identity inside fixture preparation provenance is not the tested RC.2 artifact identity."
+  ],
+  "forward": {
+    "catchups": [],
+    "checks": {
+      "cleanExpectedBuildIdentity": true,
+      "completeUniqueMembers": true,
+      "configOnlyDataDirectoryChanged": true,
+      "exactMtlsPeersAndPins": true,
+      "historicalCatchupIsHeaderOnly": false,
+      "newFinalityRequiresAllMemberReceiptBodyHashRoot": true,
+      "noObservationErrors": true,
+      "noObservedEquivocation": true,
+      "persistentJournalAndCanonicalHistoryUnchanged": true
+    },
+    "cleanup": {
+      "cleanStoppedCount": 12,
+      "evidence": "REAPED_CHILD_EXITS_AND_MATCHED_MANAGED_TERMINAL_REPORTS",
+      "forcedCount": 0,
+      "initCount": 4,
+      "osPidProbePerformed": false,
+      "ownedPids": [
+        40458,
+        40459,
+        40460,
+        40461,
+        40469,
+        40470,
+        40471,
+        40472,
+        40646,
+        40648,
+        40651,
+        40652,
+        40883,
+        40884,
+        40885,
+        40886
+      ],
+      "ownedProcessCount": 16,
+      "remainingPids": [],
+      "runCount": 12
+    },
+    "finalized": {
+      "candidate-forward-recovery": {
+        "blockHash": "0xdedf0427c72d62c26e933d6a61630e7db6cbe06241fc9b4ea8004c8129db2d82",
+        "elapsedSeconds": 32.80554541700002,
+        "height": 2,
+        "stateRoot": "0xa0b743ec527be8bc629d8013d270fbf2269c9649772b6a23df3471ca491cd34e",
+        "unknownSamples": 2
+      },
+      "candidate-post-recovery-progress": {
+        "blockHash": "0x68f0d15d6c495424eec1651909d2e2eae7d94a35aee540e2ed2eea626751fe07",
+        "elapsedSeconds": 1.6694968329999829,
+        "height": 3,
+        "stateRoot": "0x681873dc628346cb7502efc7dd29f1fc089e36d64bc4d4ed0853260c9cf34bdf",
+        "unknownSamples": 1
+      },
+      "rc1-baseline-4": {
+        "blockHash": "0x9447483919f146e748b19f4fdd9bdf8386cb19b3c1e320a9e5d9fc962f45ff2b",
+        "elapsedSeconds": 2.45003225,
+        "height": 1,
+        "stateRoot": "0x0ac84470c3fa47776b591c4cbe670f2c63c56ec74ddaae94279afeecaab7afc6",
+        "unknownSamples": 2
+      }
+    },
+    "harnessSha256": "8ef2f416bce03e7031a377bf5351e09b2bedcce56070463d23f94e3905ca325f",
+    "helperSha256": "b9a3ba53181762b38e99ed38c7847802e4497071fe62eaf3f5a7cbfb0b845567",
+    "holds": [
+      {
+        "elapsedSeconds": 45.01604141700001,
+        "end": "2026-10-21T04:20:12.881Z",
+        "finalRounds": [
+          3,
+          3
+        ],
+        "maximumGapMillis": 816,
+        "phase": "rc1-minority-45-seconds",
+        "rawSpanMillis": 45015,
+        "samples": 60,
+        "start": "2026-10-21T04:19:27.866Z"
+      },
+      {
+        "elapsedSeconds": 90.02579575,
+        "end": "2026-10-21T04:21:55.126Z",
+        "finalRounds": [
+          7,
+          7,
+          5,
+          5
+        ],
+        "maximumGapMillis": 791,
+        "phase": "rc1-qualified-stall-90-seconds",
+        "rawSpanMillis": 90027,
+        "samples": 118,
+        "start": "2026-10-21T04:20:25.099Z"
+      }
+    ],
+    "managedReportHashes": {
+      "n1/n1-candidate-run-4/report.jsonl": "faaf6149f37e9bdc6f7b462be1565e9d835ec3bf096cd2de8a0b75014e530764",
+      "n1/n1-rc1-init-1/report.jsonl": "71590a6aa5f7ba0b8379bbf63545570b0f67641cdecb2a500f77b23289c78c79",
+      "n1/n1-rc1-run-2/report.jsonl": "37869b79b4a151af05c9995c7b031e0af5da90becc7a4c143e72b97bc684cefa",
+      "n1/n1-rc1-run-3/report.jsonl": "765a6ea4c86477ff74412561e72089ebef35a3bc29b5a89b1cffcb113224fcd8",
+      "n2/n2-candidate-run-4/report.jsonl": "d44bbe5b501f5968685f5a155bbb546737f94c5094e4e84504b2fca40dc50335",
+      "n2/n2-rc1-init-1/report.jsonl": "668766f7139a1f2faef8e6c26ecdd154f897dd56f5119bbb82fa6c4f4a166e82",
+      "n2/n2-rc1-run-2/report.jsonl": "3235b4e43ca4217f2bf4031d1a0ef721ae9c0f7048c21ff95ee6a486dbe10f7f",
+      "n2/n2-rc1-run-3/report.jsonl": "72d50ffdbe8a83ba1a3f340ddadf140ba5a59671f3794c7b602a4db2f5fef3ac",
+      "n3/n3-candidate-run-4/report.jsonl": "b964f07221594b43e5b79c72fb61359d5b1cfe15574ae8ef97846ef826a7ffbf",
+      "n3/n3-rc1-init-1/report.jsonl": "24ed3d8181a3eb81edd5a8259fc39ed1610a41b9e768f2bca6d9b7a2e2e07d38",
+      "n3/n3-rc1-run-2/report.jsonl": "05eb2639500377448b07c501b1f42914a5539cf333b619625b3e07f305a46c58",
+      "n3/n3-rc1-run-3/report.jsonl": "bd2506392ed6e5bea48267d3c5775556fbd4f68e587cffba6ae9295053889e83",
+      "n4/n4-candidate-run-4/report.jsonl": "14561405f96e8645ab49dd451e9435e0ddadfa6f9ce11b4be12592361dcd53ef",
+      "n4/n4-rc1-init-1/report.jsonl": "7a094f11f062dbb8f3611ba3a6bdd089e505c36ab5f7e4669d43ef4d6b6aaed9",
+      "n4/n4-rc1-run-2/report.jsonl": "df061c247498189331790e2e3086d684d89c994439898ebad45061ad607b493b",
+      "n4/n4-rc1-run-3/report.jsonl": "cd3146325e62b8c0c95277a720d971245f9c1511857215aaffb10bc81e429446"
+    },
+    "observationCount": 218,
+    "proofHashes": {
+      "events.jsonl": "c54603b7a84067aad5fe8c61c80b11b975b66eb5f1ad95665db713db35144c87",
+      "inputs.json": "237432229e35747f1b0e44993bab834c6e42d124350227ee86352a1ec1015826",
+      "observations.jsonl": "a9c82c47bcc5eeb2475791c1ed84bcad6c3d9a33bab26e165e95e70d48b4f61b",
+      "result.json": "786e68b89d5979262da68a726ae25f0392348aaee793e980c92fad38ac6a1bb0"
+    },
+    "recoveryTimings": [
+      {
+        "launchToFinalMillis": 32708,
+        "phase": "candidate-forward-recovery",
+        "reportedSecondsIncludingLaunch": 32.80554541700002
+      }
+    ],
+    "reportedOutcome": "PASS_RC1_STALL_TO_CANDIDATE_FORWARD_RECOVERY",
+    "runPath": "/private/tmp/nigo-qbft-forward-rc1-to-rc2-20261021-a",
+    "storage": [
+      {
+        "configSha256": "699b1276399f944013116f3eedea3423e50cd1a4686a24453e3ad7206a359a9d",
+        "dataDirectory": "/private/tmp/nigo-qbft-forward-rc1-to-rc2-20261021-a/n1/data",
+        "journalSha256": "2a2be1bcd1cd3638d602b9b6e0b0250ede1d72e5696e8c765ec06417bb609978",
+        "node": 1,
+        "runAttempts": [
+          "n1-rc1-run-2",
+          "n1-rc1-run-3",
+          "n1-candidate-run-4"
+        ]
+      },
+      {
+        "configSha256": "be2b1c9f9b147c93e20947e0726ca310cefd9f8e6e45ee52ad0829ac9d78cd30",
+        "dataDirectory": "/private/tmp/nigo-qbft-forward-rc1-to-rc2-20261021-a/n2/data",
+        "journalSha256": "f6a0bfdd5d2251d8db322bfbbad2941de6c144ae3e4ca84a960dd1ec2d6a4d0f",
+        "node": 2,
+        "runAttempts": [
+          "n2-rc1-run-2",
+          "n2-rc1-run-3",
+          "n2-candidate-run-4"
+        ]
+      },
+      {
+        "configSha256": "c57a2d024bbd6ecb35c2a20d11d0142ebb12eca9de6170b1a93d9c2c662edb04",
+        "dataDirectory": "/private/tmp/nigo-qbft-forward-rc1-to-rc2-20261021-a/n3/data",
+        "journalSha256": "70247a81e42b52cf4bfe550a069302e199352f2f2943561039f4729afb6b4a78",
+        "node": 3,
+        "runAttempts": [
+          "n3-rc1-run-2",
+          "n3-rc1-run-3",
+          "n3-candidate-run-4"
+        ]
+      },
+      {
+        "configSha256": "39e81e5a44128d79f58f58682276290e1fb856d97d7e7b92f17eaa15f0ce6295",
+        "dataDirectory": "/private/tmp/nigo-qbft-forward-rc1-to-rc2-20261021-a/n4/data",
+        "journalSha256": "0c33bca0aad01b03dc2539eb7ff410b5bd5dafedbe49a862755c7bf03efe6efd",
+        "node": 4,
+        "runAttempts": [
+          "n4-rc1-run-2",
+          "n4-rc1-run-3",
+          "n4-candidate-run-4"
+        ]
+      }
+    ],
+    "verdict": "PASS",
+    "verifierSha256": "02db9f40b6982ea5df799f92e99825229194a66742253313a400c57e83067f4c"
+  },
+  "frozenTools": [
+    {
+      "path": "/private/tmp/nigo-qbft-recovery-diag.yAh8nn/candidate-managed-recovery.mjs",
+      "sha256": "b9a3ba53181762b38e99ed38c7847802e4497071fe62eaf3f5a7cbfb0b845567"
+    },
+    {
+      "path": "/private/tmp/nigo-qbft-recovery-diag.yAh8nn/forward-managed-recovery.mjs",
+      "sha256": "8ef2f416bce03e7031a377bf5351e09b2bedcce56070463d23f94e3905ca325f"
+    },
+    {
+      "path": "/private/tmp/nigo-qbft-recovery-diag.yAh8nn/candidate-managed-recovery.test.mjs",
+      "sha256": "4b0f16618325c64c3bdc965bde0b37747afe581916c29002a46e11de7a70b2fe"
+    },
+    {
+      "path": "/private/tmp/nigo-qbft-recovery-diag.yAh8nn/forward-managed-recovery.test.mjs",
+      "sha256": "0b01db4771046a39464e3bcd8d6b61f49e8e89f4126b75c10dd9df5f273b0ff6"
+    },
+    {
+      "path": "/private/tmp/nigo-qbft-recovery-diag.yAh8nn/reproduce-managed.mjs",
+      "sha256": "485111d6769693a9e63be49f166b28337fbad9a6cbb70ac5d14d61102eb8eaca"
+    },
+    {
+      "path": "/private/tmp/nigo-qbft-recovery-diag.yAh8nn/qualify-managed.mjs",
+      "sha256": "0ca4233a2a9415c199e5f53b20beb649e11d9bfa784f93eb9fdd59a07e70cd2d"
+    },
+    {
+      "path": "/private/tmp/nigo-engine-rc2-qualified.TEoMdu/verify-and-preserve-rc2-recovery.mjs",
+      "sha256": "02db9f40b6982ea5df799f92e99825229194a66742253313a400c57e83067f4c"
+    }
+  ],
+  "method": "INDEPENDENT_RAW_EVIDENCE_AUDIT_WITHOUT_SHARED_ORACLE_IMPORT",
+  "priorRelease": {
+    "jar": "/private/tmp/bxdl-qbft-acceptance-20261020-b/payload/engine/nigo-node.jar",
+    "jarSha256": "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45",
+    "sourceCommit": "540a89f0814c01d2a4ec67da1087af35195882ca"
+  },
+  "release": {
+    "buildIdentity": {
+      "buildInfoStatus": "AVAILABLE",
+      "console": {
+        "node": "v24.21.0",
+        "npm": "11.19.0",
+        "sourceFingerprint": "4df95293576a4baaa63639d3540ae6657b89c0eae80b1e2e2f7f9e6412a32c73"
+      },
+      "contract": {
+        "definitionSha256": "bffe91e25a3c58db7626fadbb8333b5216ab293b7760dee033f2fdf974841687",
+        "documentationSha256": "f52c8ef1c31fa51b269da547139e72ba90e6131198e351ee3426b760b5e3db95",
+        "fingerprint": "bac1756a81f2d2ddf67ae094fc770bc67060482acab87da7d48b93d441ab8f88",
+        "revision": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+        "runtimeDocumentationSha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+        "runtimeFixtureSha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e",
+        "status": "PROPOSED"
+      },
+      "distribution": {
+        "channel": "development",
+        "officialRelease": false
+      },
+      "engine": "NIGO",
+      "java": {
+        "requiredMajor": 21
+      },
+      "source": {
+        "commit": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b",
+        "dirty": false
+      },
+      "version": "0.0.1-SNAPSHOT"
+    },
+    "jar": "/private/tmp/nigo-engine-rc2-qualified.TEoMdu/frozen-engine/nigo-node-0.0.1-SNAPSHOT.jar",
+    "jarSha256": "b1aa84cbacf1057746bc5936308345cfdddb8f3fc78b63377af59da05dc0ce10",
+    "jarSize": 164085159,
+    "sourceCommit": "67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b"
+  },
+  "schema": "nigo.qbft.rc2.independent-qualification.v1",
+  "schemaVersion": 1,
+  "scope": "FINITE_LOCAL_RC2_ROCKSDB_MTLS_RECOVERY_AND_FRESH_RC1_DB_FORWARD_UPGRADE",
+  "selectedJava": {
+    "path": "/private/tmp/bxdl-qbft-acceptance-20261020-b/payload/runtime/bin/java",
+    "sha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c"
+  },
+  "verdict": "PASS"
+}
