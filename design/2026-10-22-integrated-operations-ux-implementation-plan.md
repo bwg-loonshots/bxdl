@@ -1,15 +1,15 @@
 # 통합 설치·운용 UX 단계별 구현 계획
 
-- 작성일: 2026-10-22 / 상태: **UX-01~07 모두 PLAN. 이 문서 작성은 구현 완료가 아니다.**
+- 작성일: 2026-10-22 / 상태: **UX-01 IMPLEMENTED (로컬 검증 완료), UX-02~07 PLAN. 통합 console은 아직 미구현이다.**
 - 기준: [통합 설계](./2026-10-22-integrated-operations-ux.md), [화면 명세 S01~S11](./2026-10-22-integrated-operations-ux-screens.md), [화면 시안](./prototypes/integrated-operations-ux.html).
 - 기존 M/BX 작업 ID와 G1/G2를 대체하지 않는다. UX ID는 이번 개선을 나눠 구현·검토하기 위한 하위 추적이다.
-- 실제 코드 기준은 PR #15의 `870ca72`. 아래 새 `src/operator/`와 테스트 파일명은 제안이다.
+- 최초 설계 코드 기준은 PR #15의 `870ca72`, 설계 merge는 PR #16의 `a8fd55a`다. UX-01의 `operator/{prompt,help,view}.rs`는 구현했고, 나머지 모듈·테스트 파일명은 후속 제안이다.
 
 ## 1. 순서와 단계별 결과
 
 | 단계 | 사용자가 얻는 변화 | 화면 | 기존 작업 | 선행 | 상태 |
 | --- | --- | --- | --- | --- | --- |
-| UX-01 | 도움말·뒤로·취소·항목 수정·상태 설명이 일관됨 | 공통, S03/S10 | BX-010/030/032 | 없음 | PLAN |
+| UX-01 | 도움말·뒤로·취소·항목 수정·상태 설명이 일관됨 | 공통, S03/S10 | BX-010/030/032 | 없음 | IMPLEMENTED |
 | UX-02 | 홈과 내 노드/설치 목록에서 대상을 찾음 | S01/S06/S07 | BX-010/030 | UX-01 상태 모델 | PLAN |
 | UX-03 | 자료 확인부터 제품·network 설정을 연결 | S02/S03/S04 | BX-020/021/023/030 | UX-01; 관리 루트는 UX-02 | PLAN |
 | UX-04 | 하나의 설치 흐름에서 명시 실행·재개 | S04/S05/S06 | BX-022/030 | UX-02/03 | PLAN |
@@ -24,9 +24,10 @@
 ## 2. 공통 구조
 
 ```text
-src/operator/                 # 신규 제안; 실제 파일 분리는 PR에서 확정
+src/operator/                 # prompt/help/view 구현, 나머지는 후속 제안
   mod.rs                      # console 진입과 화면 전환
   prompt.rs                   # 메타 입력·확인·항목 편집
+  help.rs                     # 명령별 help-only 호출 안내
   view.rs                     # 사람이 읽는 상태와 허용/권장 행동
   catalog.rs                  # private 탐색용 목록, authoritative 아님
   home.rs                     # 관리 루트·안전한 새 부모 준비
@@ -40,6 +41,8 @@ src/operator/                 # 신규 제안; 실제 파일 분리는 PR에서 
 카탈로그와 새 console 조정 기록은 별도 버전형 저장소다. 기존 Draft/Network/Workflow/binding의 인코딩과 replay를 암묵적으로 바꾸지 않는다. 새 조정 기록은 하위 세션의 경로·종류·revision·소유 identity를 참조하고 작업 결과를 임의로 완료 처리하지 않는다. 중단 뒤 조정 기록과 실제 하위 결과의 불일치는 reconciliation 대상으로 보존한다.
 
 ## UX-01. 공통 문답·도움말·상태 표현
+
+**진행 상태:** 기존 세 setup 모드의 공통 문답·단일 항목 편집·공개 검토·문맥 도움말·상태 안내를 구현했다. `make check`(Rust 383/Python 50·fmt·Clippy)와 실제 PTY 초안 수정/출력 거절을 통과했다. [검증 기록](../results/2026-10-22-ux01-common-prompts.md)을 따른다. 기존 RC.3 package 결과를 변경 CLI의 새 인수로 재사용하지 않는다.
 
 **산출물:** 공통 입력/확인/화면 투영, 명령별 도움말, 현 가이드의 RC.3/V1/V2 설명 정리. 이 PR에서 통합 설치 완료를 주장하지 않는다.
 

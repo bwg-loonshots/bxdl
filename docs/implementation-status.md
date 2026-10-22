@@ -2,6 +2,14 @@
 
 Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후 **R2의 Mac 새 폴더 패키지 설치**와 **R3의 NIGO 개발 후보 정보·cold 사전검사**를 추가했다. clean NIGO 후보를 별도로 수신하고 제품 설정과 명시 native QBFT 설정을 연결하는 preflight를 추가했다. 이후 설치본·설정을 등록해 `--instance`로 preflight와 명시 init/resume-init을 호출하고, Mac 사용자 LaunchAgent의 start/status/stop을 연결했다. 이번에는 `setup --install`에서 이 단계를 선택하고 재개하는 A~C 흐름을 구현했다. 기존 package의 단일 validator 서비스 근거와 새 setup의 exact package·TTY 인수, 전체 G1-M을 구분한다.
 
+## 통합 UX 1단계 — 공통 문답·수정·안내
+
+[통합 UX 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)의 UX-01을 구현했다. 기존 제품·네트워크·설치 도우미의 모든 질문·출력·확인에서 `:help`·`:back`·`:cancel`을 공통 처리하고, 번호로 항목 하나를 수정한 뒤 검토로 돌아간다. 공개 식별자·주소·포트는 검토하되 자격 자료의 원문 경로는 검토 목록에 표시하지 않는다. 변경 없는 답·잘못된 값·취소는 기존 설치 계획을 보존하고 유효한 실제 변경만 계획을 무효화한다.
+
+명령별 `--help`와 공통 상태 안내를 추가했다. 알려진 cold `INCOMPLETE`, 관측 기한 만료, 실제 실패, 상태 불명, 정상 종료 확인 필요/완료를 구별하며 JSON envelope·exit code·저장 schema와 실행 승인 조건은 유지한다. `make check`(Rust 383개·Python 50개·fmt·Clippy)와 실제 PTY 초안 수정·출력 거절 검증을 통과했다. [UX-01 검증 기록](../results/2026-10-22-ux01-common-prompts.md)을 따른다.
+
+별도 통합 홈 `bxdl console`은 UX-02 이후이며 아직 제공하지 않는다. NIGO/engine lock/JRE·기존 accepted archive는 바꾸지 않는다. 변경 CLI를 기존 package에 덮어쓰지 않으며 새 archive의 실제 서비스·네트워크 인수는 UX-07에서 별도로 수행한다.
+
 ## 등록 자료 보관과 시작 진단 — 2026-10-22
 
 [새 설계](../design/2026-10-22-managed-supply-and-start-diagnostics.md)에 따라 새 등록 V2는 검증한 archive·engine lock·선택 외부 공개키를 control의 private `trust/`에 보관한다. 등록 이후 worker와 setup 재개는 원본 경로를 다시 읽지 않고 보관본을 검증한다. 원래 경로/hash는 출처로 남기고 설치 inventory·서명·엔진 pin 대조는 유지한다. 기존 V1은 자동 변환하지 않으며 native·제품·chain·키 참조와 설치/control/data는 계속 필요하다.

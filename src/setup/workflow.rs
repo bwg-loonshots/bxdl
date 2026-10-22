@@ -260,8 +260,12 @@ impl Workflow {
         if !self.pristine() {
             return Err(locked_plan());
         }
+        if self.journal.inputs == inputs {
+            return Ok(());
+        }
         self.journal.plan = None;
         self.journal.plan_sha256 = None;
+        self.observed_initialization = "NOT_OBSERVED".into();
         self.journal.inputs = inputs;
         self.save()
     }
@@ -277,7 +281,7 @@ impl Workflow {
     }
 
     pub(super) fn set_field(&mut self, name: &str, answer: &str) -> Result<()> {
-        if !self.pristine() || self.journal.plan.is_some() {
+        if !self.pristine() {
             return Err(locked_plan());
         }
         if matches!(
@@ -296,6 +300,15 @@ impl Workflow {
                 "SETUP_PATH_CONFLICT",
                 "데이터·체인·키 자료는 설치 작업 폴더 밖에 두세요.",
             ));
+        }
+        // Invalid, canceled and unchanged edits retain the reviewed plan. A
+        // real accepted change invalidates it before the new draft is saved.
+        self.draft.validate_answer(name, answer)?;
+        if self.draft.answer_matches(name, answer) {
+            return Ok(());
+        }
+        if self.has_plan() {
+            self.edit()?;
         }
         self.draft.set(name, answer)
     }

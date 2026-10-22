@@ -24,7 +24,7 @@ bxdl instance register \
 
 등록은 원본 archive의 서명/전체 inventory, 설치 receipt와 **설치된 전체 manifest 파일**, engine lock·engine-info identity, 제품/native 일치와 cold 결과를 검사한다. 등록 시에도 data는 없거나 빈 디렉터리여야 하며 부모는 존재해야 한다. 기존/외부 DB를 새 등록에 채택하지 않는다. 검사 뒤 새 0700 제어 폴더에 등록 정보와 journal을 저장한다. 기존 폴더에는 등록하지 않는다. 데이터 디렉터리는 만들거나 초기화하지 않는다.
 
-등록 성공은 exit 0, `INSTANCE_REGISTERED`, `initialization=NOT_STARTED`다. 그 안에 사용한 cold 결과는 여전히 INCOMPLETE이며 service/readiness를 완료로 올리지 않는다. 원본 archive·공개 key·제품/native·chain·참조 키 자료는 이후 preflight/init에도 같은 위치와 내용으로 필요하다. 등록 정보에 경로와 내용 hash를 고정하고, private credential 내용의 hash도 포함한다. 원문 credential을 등록 정보에 저장하거나 hash/secret 경로를 명령 결과로 표시하지 않는다.
+등록 성공은 exit 0, `INSTANCE_REGISTERED`, `initialization=NOT_STARTED`다. 그 안에 사용한 cold 결과는 여전히 INCOMPLETE이며 service/readiness를 완료로 올리지 않는다. 새 V2 등록은 archive·engine lock·선택 외부 공개키의 검증된 사본을 `trust/`에 보관하고 이후 preflight/init에서 이 보관본을 사용한다. 등록 완료 전 원본과 완료 후 보관본은 유지한다. 제품/native·chain·credential 참조는 계속 같은 위치와 내용으로 필요하다. 기존 V1 등록은 원본 공급 파일도 계속 필요하며 자동 전환하지 않는다. 등록 정보에 경로와 내용 hash를 고정하고, private credential 내용의 hash도 포함한다. 원문 credential을 등록 정보에 저장하거나 hash/secret 경로를 명령 결과로 표시하지 않는다.
 
 ## 등록 상태와 사전 검사
 
@@ -35,7 +35,7 @@ bxdl preflight --instance "/absolute/bxdl/instances/validator-a" --json
 
 `show`는 저장된 상태를 읽고 `operationBusy`로 그 순간의 advisory 작업 잠금을 관측한다. exit 0은 조회 성공이다. `operationBusy=false`는 노드 종료·정상·포트 상태의 증명이 아니다. `initialization=UNKNOWN`인 기록도 조회 자체는 성공한다.
 
-등록 후 preflight는 원본 archive·입력 hash·설치된 전체 파일을 다시 검증하고 기존 제품/native 결합 cold를 수행한다. 정상 결과는 exit 5/INCOMPLETE다. `--instance` 방식과 `--config/--engine-config/--jar/--java/--lock` 방식은 섞지 않는다. 이 명령은 초기화 상태를 고치거나 UNKNOWN을 성공으로 바꾸지 않는다.
+등록 후 preflight는 V2의 관리 보관본 또는 V1의 원본 archive와 입력 hash·설치된 전체 파일을 다시 검증하고 기존 제품/native 결합 cold를 수행한다. 정상 결과는 exit 5/INCOMPLETE다. `--instance` 방식과 `--config/--engine-config/--jar/--java/--lock` 방식은 섞지 않는다. 이 명령은 초기화 상태를 고치거나 UNKNOWN을 성공으로 바꾸지 않는다.
 
 ## 새 데이터의 명시 초기화
 
@@ -93,6 +93,20 @@ start timeout은 기본 120초(1~600초)다. 시작 전 cold 명령에는 최대
 
 status는 해당 attempt의 launchd·report·로컬 bootstrap/health를 대조한다. 로컬 READY/exit 0은 전역 quorum·거래 확정·4-validator 정상의 증명이 아니다. STOPPED 조회도 exit 0일 수 있으므로 `engineState/runtimeReadiness/reason`을 확인한다. INCOMPLETE는 exit 5, 관측된 FAILED는 4, 관측 불명은 6이며 입력·사전 조건 거부는 3이다. `instance show`는 초기화 기록과 advisory busy만 보여주므로 노드 상태에는 `status`를 사용한다.
 
+사람용 상태 안내는 원래 outcome/reason과 함께 현재 의미와 다음 행동을 보여준다. 안내 문구는 기록을 변경하거나 작업을 자동 실행하지 않는다.
+
+| 관측 | 해석과 다음 행동 |
+| --- | --- |
+| 시작 준비 중·실행 중이지만 NOT_READY | 같은 시도를 `status --wait`로 관측. 지속되면 `logs`·`diagnose` 확인 |
+| 시작/상태 대기 만료 | 실행은 계속될 수 있음. 자동 start 없이 같은 시도를 다시 관측 |
+| 로컬 READY | 로컬 준비 상태만 확인됨. 전역 합의·거래 확정은 별도 검사 |
+| 종료 관측·정상 종료 확인 필요 | `status` 성공만으로 재시작하지 않음. 명시 `stop`으로 정상 종료 근거 확인 |
+| 종료 대기 만료 | 종료 미확정. 상태와 명시 `stop` 결과를 확인하고 새 start는 보류 |
+| 정상 종료 검증됨 | 별도 명시 start를 선택할 수 있음. 실행 직전 기존 조건 재검사 |
+| GUI 세션 없음 | 해당 사용자 GUI 세션과 상태 확인. SSH 접속만으로 GUI 세션이 생기지 않음 |
+| 실패·UNKNOWN·시도/보고서 불일치 | 정제 로그·진단과 상태 확인. init/start를 반복해 자동 복구하지 않음 |
+| 실행 CLI 불일치 | 검증된 설치 package의 동일 bytes CLI 사용. 기존 설치 바이너리를 덮어쓰지 않음 |
+
 다음 start는 이전 시도가 `STOPPED_VERIFIED`여야 한다. stop이 **동일 시도의 정상 STOPPED report + launchd의 살아 있는 프로세스 부재 + control 잠금 획득**을 함께 확인해 이를 먼저 게시한다. 이후 프로세스 부재를 재확인하고 job 등록을 정리한다. status만으로는 이 기록을 게시하지 않는다. 검증 뒤 등록 정리만 실패했다면 종료 근거는 보존하며, 명시 stop 재호출로 정리를 다시 확인한다. 다음 start도 이전 job의 비활성과 등록 정리를 확인한 뒤 새 시도를 준비한다.
 
 gate 거부·bootstrap 불명·부적합 report·정상 종료 미확인은 시도 자료와 함께 보존한다. 새 start, init/resume-init, 잠금 파일 삭제, plist 수정으로 자동 복구하지 않는다. gate 전에 실패해 엔진이 시작하지 않은 경우도 별도 수동 조정 기능은 아직 없다. 로그아웃·OS 종료 시 launchd가 자체 종료 또는 강제 종료할 수 있으며 `ExitTimeOut=60`은 CLI timeout과 별개다. 로그인/로그아웃·sleep/wake·전체 G1-M 인수는 아직 남아 있다.
@@ -111,7 +125,7 @@ diagnose의 출력 부모는 미리 존재해야 하고 control/data/package·�
 
 ## 등록 자료 보관과 시작 진단
 
-새 등록은 V2 binding을 사용하며 `trust/` 아래 archive·engine lock·선택 외부 공개키의 검증된 사본을 보관한다. 서명·전체 package inventory·engine identity 검사는 매번 유지한다. 등록이 완료된 뒤 원본 세 파일은 실행 입력으로 다시 열지 않지만, 보관본과 제품/native/chain/키 참조·설치본·data·control은 계속 필요하다. 등록 중 실패한 부분 자료는 보존하며 덮어쓰거나 원본으로 자동 fallback하지 않는다. 기존 V1 등록은 원본 참조 동작을 유지한다. archive 한 벌의 추가 디스크 공간을 확보한다.
+새 등록은 V2 binding을 사용하며 `trust/` 아래 archive·engine lock·선택 외부 공개키의 검증된 사본을 보관한다. 서명·전체 package inventory·engine identity 검사는 매번 유지한다. 등록이 완료된 뒤 원본 세 파일은 실행 입력으로 다시 열지 않지만, 보관본과 제품/native/chain/키 참조·설치본·data·control은 계속 필요하다. 등록 중 실패한 부분 자료는 보존하며 덮어쓰거나 원본으로 자동 fallback하지 않는다. 기존 V1 등록은 원본 참조 동작을 유지한다. archive 한 벌의 추가 디스크 공간을 확보한다. `setup --install`이 만든 완료 세션의 `generated/` 제품 JSON도 운용 binding의 입력이므로 완료 세션을 임시 파일로 보고 삭제·이동하지 않는다.
 
 `status`와 `diagnose`는 마지막 시작 검사 단계 `startupStage`와 gate 거부 시 공개 가능한 실패 코드 `startupFailureReason`를 표시한다. 입력 pin·패키지 검증·cold·설정·snapshot·최종 재검사·exec 전환 중 어디에 진입했는지를 나타내며, 현재 작업 완료나 TCC 원인을 확정하지 않는다. 단계가 없는 과거 기록은 임의 추론하지 않는다. `UNKNOWN`이면 같은 attempt의 status와 정제 진단을 확인한다. 자동 재시작하지 않는다.
 

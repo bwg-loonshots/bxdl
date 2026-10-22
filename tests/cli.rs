@@ -455,3 +455,104 @@ fn status_wait_keeps_json_failure_as_a_single_document_without_notices() {
         assert_ne!(value["reasonCode"], "INVALID_ARGUMENTS");
     }
 }
+
+#[test]
+fn contextual_help_is_read_only_and_matches_human_and_json_usage() {
+    use std::io::{BufRead, Read};
+    struct NoInput;
+    impl Read for NoInput {
+        fn read(&mut self, _: &mut [u8]) -> io::Result<usize> {
+            panic!("help must not read stdin")
+        }
+    }
+    impl BufRead for NoInput {
+        fn fill_buf(&mut self) -> io::Result<&[u8]> {
+            panic!("help must not read stdin")
+        }
+        fn consume(&mut self, _: usize) {
+            panic!("help must not read stdin")
+        }
+    }
+    for topic in [
+        vec!["setup"],
+        vec!["setup", "--install"],
+        vec!["setup", "--network"],
+        vec!["start"],
+        vec!["status"],
+        vec!["stop"],
+        vec!["init"],
+        vec!["resume-init"],
+        vec!["logs"],
+        vec!["diagnose"],
+        vec!["preflight"],
+        vec!["install"],
+        vec!["instance", "register"],
+        vec!["instance", "show"],
+        vec!["config", "validate"],
+        vec!["config", "fingerprint"],
+        vec!["engine", "inspect"],
+        vec!["engine", "preflight"],
+        vec!["package", "verify"],
+        vec!["package", "build"],
+        vec!["runtime", "stage"],
+        vec!["version"],
+    ] {
+        let mut args = topic.clone();
+        args.push("--help");
+        let (mut out, mut err) = (Vec::new(), Vec::new());
+        let strings: Vec<String> = args.iter().map(|s| (*s).into()).collect();
+        assert_eq!(
+            cli::run_with_input(&strings, &mut NoInput, false, &mut out, &mut err),
+            0,
+            "{topic:?}"
+        );
+        assert!(err.is_empty());
+        let text = String::from_utf8(out).unwrap();
+        assert!(text.contains("사용법:"));
+        let (json, exit) = run(&args);
+        assert_eq!(exit, 0);
+        assert_eq!(json["command"], "help");
+        assert_eq!(json["data"]["usage"], text);
+        let mut prefix = vec!["help"];
+        prefix.extend(topic);
+        assert_eq!(run(&prefix).0["data"]["usage"], text);
+        *args.last_mut().unwrap() = "-h";
+        assert_eq!(run(&args).0["data"]["usage"], text);
+    }
+}
+
+#[test]
+fn help_named_paths_and_options_are_not_intercepted() {
+    for args in [
+        vec![
+            "package",
+            "verify",
+            "--allow-unsigned-development",
+            "--",
+            "--help",
+        ],
+        vec![
+            "package",
+            "verify",
+            "/missing-bxdl-ux-help-archive",
+            "--public-key",
+            "--help",
+        ],
+        vec!["instance", "show", "--instance", "--help"],
+    ] {
+        let (result, exit) = run(&args);
+        assert_ne!(exit, 0);
+        assert_ne!(result["command"], "help");
+    }
+    for args in [
+        vec!["help", "PRIVATE-CANARY"],
+        vec!["PRIVATE-CANARY", "--help"],
+        vec!["setup", "--install", "--network", "--help"],
+        vec!["start", "--instance", "PRIVATE-CANARY", "--help"],
+    ] {
+        let (result, exit) = run(&args);
+        assert_eq!(exit, 2);
+        assert_eq!(result["reasonCode"], "INVALID_ARGUMENTS");
+        assert!(!result.to_string().contains("PRIVATE-CANARY"));
+    }
+}

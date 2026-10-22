@@ -51,13 +51,13 @@ pub const FIELDS: &[Field] = &[
     },
     Field {
         name: "httpAddress",
-        label: "로컬 콘솔 IP",
+        label: "노드 HTTP IP",
         hint: "127.0.0.1 또는 ::1",
         default: Some("127.0.0.1"),
     },
     Field {
         name: "httpPort",
-        label: "로컬 콘솔 포트",
+        label: "노드 HTTP 포트",
         hint: "1~65535, P2P 포트와 달라야 합니다",
         default: Some("18080"),
     },
@@ -70,7 +70,7 @@ pub const FIELDS: &[Field] = &[
     Field {
         name: "p2pPort",
         label: "P2P 포트",
-        hint: "1~65535, 로컬 콘솔 포트와 달라야 합니다",
+        hint: "1~65535, 노드 HTTP 포트와 달라야 합니다",
         default: Some("19090"),
     },
     Field {
@@ -117,7 +117,7 @@ pub const FIELDS: &[Field] = &[
     },
 ];
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Draft {
     schema_version: u32,
@@ -264,7 +264,14 @@ impl Session {
         field.default.map(str::to_owned)
     }
 
-    pub fn set(&mut self, name: &str, value: &str) -> Result<()> {
+    pub(super) fn answer_matches(&self, name: &str, value: &str) -> bool {
+        self.draft
+            .answers
+            .get(name)
+            .is_some_and(|answer| answer == value)
+    }
+
+    pub(super) fn validate_answer(&self, name: &str, value: &str) -> Result<()> {
         if !FIELDS.iter().any(|field| field.name == name)
             || value.is_empty()
             || value.len() > 4096
@@ -275,9 +282,44 @@ impl Session {
                 "입력값은 비어 있지 않은 일반 텍스트여야 합니다.",
             ));
         }
+        let mut next = self.draft.clone();
+        next.answers.insert(name.into(), value.into());
+        check_draft(&next, self.store.path())
+    }
+
+    pub(super) fn review_rows(&self) -> Vec<(&'static str, String)> {
+        FIELDS
+            .iter()
+            .map(|field| {
+                let value = match self.draft.answers.get(field.name) {
+                    None => "미입력".into(),
+                    Some(value)
+                        if matches!(
+                            field.name,
+                            "instanceId"
+                                | "nodeId"
+                                | "httpAddress"
+                                | "httpPort"
+                                | "p2pAddress"
+                                | "p2pPort"
+                        ) =>
+                    {
+                        value.clone()
+                    }
+                    Some(_) => "선택됨".into(),
+                };
+                (field.label, value)
+            })
+            .collect()
+    }
+
+    pub fn set(&mut self, name: &str, value: &str) -> Result<()> {
+        self.validate_answer(name, value)?;
+        if self.answer_matches(name, value) {
+            return Ok(());
+        }
         let old = self.draft.answers.insert(name.into(), value.into());
-        if let Err(failure) = check_draft(&self.draft, self.store.path()).and_then(|_| self.save())
-        {
+        if let Err(failure) = self.save() {
             match old {
                 Some(value) => {
                     self.draft.answers.insert(name.into(), value);

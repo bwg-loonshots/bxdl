@@ -540,3 +540,86 @@ fn cancel_at_apply_confirmation_exits_without_consuming_later_commands() {
     assert!(!finished);
     f.no_outputs();
 }
+
+fn latest_checkpoint(directory: &Path) -> Value {
+    let mut paths: Vec<_> = fs::read_dir(directory)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| {
+            path.file_name()
+                .unwrap()
+                .to_string_lossy()
+                .starts_with("revision")
+                && path.extension().is_some_and(|ext| ext == "json")
+        })
+        .collect();
+    paths.sort();
+    serde_json::from_slice(&fs::read(paths.last().unwrap()).unwrap()).unwrap()
+}
+
+#[test]
+fn supply_help_and_back_are_commands_and_do_not_become_saved_paths() {
+    let _scenario = scenario();
+    let f = Fixture::new(true);
+    let mut workflow = f.create();
+    let input = format!(
+        ":help\n{}\n:help\n:back\n\nsigned\n:help\n{}\n:help\n{}\n:help\n{}\n:help\n{}\n:help\n{}\n:cancel\n",
+        f.archive.display(),
+        f.public_key.display(),
+        f.lock.display(),
+        f.native.display(),
+        f.destination.display(),
+        f.instance.display()
+    );
+    let (finished, output) = interact(&mut workflow, &input);
+    assert!(!finished);
+    assert!(output.contains("./:help"));
+    assert_eq!(workflow.summary().plan_revision, 1);
+    let journal = latest_checkpoint(&f.workspace.join("workflow"));
+    assert_eq!(journal["inputs"]["archive"], path(&f.archive));
+    assert_eq!(journal["inputs"]["publicKey"], path(&f.public_key));
+    assert!(!journal["inputs"].to_string().contains(":help"));
+    assert!(!journal["inputs"].to_string().contains(":back"));
+    f.no_outputs();
+}
+
+#[test]
+fn unchanged_and_invalid_edits_preserve_plan_and_declined_apply_has_no_engine_work() {
+    let _scenario = scenario();
+    let f = Fixture::new(true);
+    let mut workflow = f.create();
+    interact(&mut workflow, &f.inputs("finish\n"));
+    let before = latest_checkpoint(&f.workspace.join("workflow"));
+    let draft = latest_checkpoint(&f.workspace.join("draft"));
+    let input = ":help\n:back\ninputs\n:help\n:back\ninputs\n1\n:help\n:back\ninputs\n1\n\nedit\n:help\n:back\nedit\n5\n99999\n:help\n:back\nedit\n5\n\napply\n:help\n\napply\n:back\nfinish\n";
+    let (finished, output) = interact(&mut workflow, input);
+    assert!(finished);
+    assert!(output.contains("PORTS_INVALID"));
+    let after = latest_checkpoint(&f.workspace.join("workflow"));
+    assert_eq!(after["plan"], before["plan"]);
+    assert_eq!(after["planSha256"], before["planSha256"]);
+    assert_eq!(after["inputs"], before["inputs"]);
+    assert_eq!(latest_checkpoint(&f.workspace.join("draft")), draft);
+    f.no_outputs();
+}
+
+#[test]
+fn one_field_edit_invalidates_only_reviewed_plan_and_preserves_other_answers() {
+    let _scenario = scenario();
+    let f = Fixture::new(true);
+    let mut workflow = f.create();
+    interact(&mut workflow, &f.inputs("finish\n"));
+    let before = latest_checkpoint(&f.workspace.join("workflow"));
+    let mut expected = latest_checkpoint(&f.workspace.join("draft"));
+    let (finished, output) = interact(&mut workflow, "edit\n1\nnode-renamed\nfinish\n");
+    assert!(finished);
+    assert!(output.contains("인스턴스 이름: node-renamed"));
+    expected["answers"]["instanceId"] = "node-renamed".into();
+    assert_eq!(latest_checkpoint(&f.workspace.join("draft")), expected);
+    let after = latest_checkpoint(&f.workspace.join("workflow"));
+    assert!(after["plan"].is_null());
+    assert!(after["planSha256"].is_null());
+    assert_eq!(after["inputs"], before["inputs"]);
+    assert_eq!(after["revision"], before["revision"]);
+    f.no_outputs();
+}

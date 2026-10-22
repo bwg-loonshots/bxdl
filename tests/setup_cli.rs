@@ -255,3 +255,82 @@ fn machine_mode_never_reads_stdin_and_errors_do_not_echo_import_contents() {
     assert!(!String::from_utf8_lossy(&out).contains("PRIVATE-CANARY"));
     assert!(!root.join("setup").exists());
 }
+
+#[test]
+fn shared_commands_edit_one_public_field_and_never_publish_on_default_confirmation() {
+    let temporary = tempfile::tempdir().unwrap();
+    let root = temporary.path().canonicalize().unwrap();
+    let source = root.join("input.json");
+    let mut imported: Value = serde_json::from_slice(include_bytes!(
+        "../config/examples/instance.development.json"
+    ))
+    .unwrap();
+    imported["secrets"]["validatorPasswordFile"] = "./PRIVATE-REVIEW-CANARY/password.txt".into();
+    fs::write(&source, serde_json::to_vec(&imported).unwrap()).unwrap();
+    let workspace = root.join("setup");
+    let target = root.join("not-exported.json");
+    let mut session = bxdl::setup::Session::create(&workspace, Some(&source)).unwrap();
+    let before: Value = serde_json::from_slice(&session.config_bytes().unwrap()).unwrap();
+    let text = format!(
+        ":help\nedit\n:help\n5\n:help\n99999\n18081\nexport\n:help\n:back\nexport\n{}\n:help\n\nexport\n{}\n:back\nsave\n",
+        target.display(),
+        target.display()
+    );
+    let mut output = Vec::new();
+    assert!(matches!(
+        bxdl::setup::interact(&mut session, &mut Cursor::new(text), &mut output, None).unwrap(),
+        bxdl::setup::Finish::Saved
+    ));
+    let mut expected = before;
+    expected["http"]["port"] = 18081.into();
+    assert_eq!(
+        serde_json::from_slice::<Value>(&session.config_bytes().unwrap()).unwrap(),
+        expected
+    );
+    let output = String::from_utf8(output).unwrap();
+    assert!(output.contains("노드 HTTP 포트: 18081"));
+    assert!(output.contains("PORTS_INVALID"));
+    assert!(output.contains("./:help"));
+    assert!(!output.contains("PRIVATE-REVIEW-CANARY"));
+    assert!(!target.exists());
+    assert!(!workspace.join("instance.json").exists());
+    assert!(!root.join("data").exists());
+}
+
+#[test]
+fn edit_back_cancel_eof_and_explicit_reserved_filename_preserve_checkpoint_answers() {
+    let temporary = tempfile::tempdir().unwrap();
+    let root = temporary.path().canonicalize().unwrap();
+    example(&root);
+    let workspace = root.join("setup");
+    let mut session =
+        bxdl::setup::Session::create(&workspace, Some(&root.join("input.json"))).unwrap();
+    let before = session.config_bytes().unwrap();
+    for text in [
+        "edit\n:help\n:back\nsave\n",
+        "edit\n5\n:help\n:back\nsave\n",
+        "edit\n5\n\nsave\n",
+        "edit\n:cancel\n",
+        "export\n:help\n",
+        "export\n:cancel\n",
+    ] {
+        bxdl::setup::interact(&mut session, &mut Cursor::new(text), &mut Vec::new(), None).unwrap();
+        assert_eq!(session.config_bytes().unwrap(), before);
+        assert!(!workspace.join("instance.json").exists());
+    }
+    let text = "edit\n8\n./:help\nsave\n";
+    assert!(matches!(
+        bxdl::setup::interact(&mut session, &mut Cursor::new(text), &mut Vec::new(), None).unwrap(),
+        bxdl::setup::Finish::Saved
+    ));
+    let after: Value = serde_json::from_slice(&session.config_bytes().unwrap()).unwrap();
+    assert!(
+        after["chainDescription"]
+            .as_str()
+            .unwrap()
+            .ends_with("/:help")
+    );
+    let mut expected: Value = serde_json::from_slice(&before).unwrap();
+    expected["chainDescription"] = after["chainDescription"].clone();
+    assert_eq!(after, expected);
+}

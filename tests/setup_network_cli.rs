@@ -461,3 +461,67 @@ fn uncertain_native_publication_stays_unknown_in_cli() {
     assert!(!stderr.contains("SETUP_NETWORK_SAVED"));
     fixture.assert_sources_unchanged();
 }
+
+#[test]
+fn network_help_single_field_edit_and_output_back_do_not_publish_or_echo_private_refs() {
+    let fixture = Fixture::new();
+    let mut arguments = fixture.arguments(false);
+    arguments.truncate(arguments.len() - 2); // Exercise the output path prompt.
+    let text = ":help\nJKS\n:back\n\nPKCS12\nnew-network\nyes\nno\n:help\nedit\n:help\n5\n:help\nyes\nexport\n:help\n:back\nexport\n\n:help\n\nsave\n";
+    let (exit, stdout, stderr) = invoke(&arguments, &mut Cursor::new(text), true);
+    assert_eq!(exit, 0, "{stdout}\n{stderr}");
+    assert!(stdout.contains("SETUP_NETWORK_SAVED"));
+    assert!(stderr.contains("아카이브: yes"));
+    assert!(!format!("{stdout}{stderr}").contains(CANARY));
+    assert!(!fixture.root.join("network session-node.json").exists());
+    fixture.assert_sources_unchanged();
+
+    // One edit changed only archiveEnabled; earlier answers survive resume.
+    let (exit, stdout, stderr) = invoke(
+        &fixture.arguments(true),
+        &mut Cursor::new("export\n:help\nyes\n"),
+        true,
+    );
+    assert_eq!(exit, 0, "{stdout}\n{stderr}");
+    let value: Value =
+        serde_json::from_slice(&fs::read(fixture.root.join("native output.json")).unwrap())
+            .unwrap();
+    let node = &value["node"];
+    assert_eq!(
+        node["nigo.protocol.consensus.qbft.node.mtls-key-store-type"],
+        "JKS"
+    );
+    assert_eq!(
+        node["nigo.protocol.consensus.qbft.node.mtls-trust-store-type"],
+        "PKCS12"
+    );
+    assert_eq!(node["nigo.protocol.consensus.qbft.sync.enabled"], false);
+    assert_eq!(node["nigo.protocol.consensus.auto-start"], true);
+    assert_eq!(
+        node["nigo.protocol.consensus.qbft.sync.archive.enabled"],
+        true
+    );
+    fixture.assert_sources_unchanged();
+}
+
+#[test]
+fn network_edit_cancel_and_confirmation_back_leave_native_absent() {
+    let fixture = Fixture::new();
+    let (exit, _, stderr) = invoke(
+        &fixture.arguments(false),
+        &mut Cursor::new("\n\n\n\n\nsave\n"),
+        true,
+    );
+    assert_eq!(exit, 0, "{stderr}");
+    for text in [
+        "edit\n:help\n:back\nexport\n:back\nsave\n",
+        "edit\n3\n:help\n:back\nsave\n",
+        "edit\n:cancel\n",
+        "export\n:help\n",
+    ] {
+        let (_, stdout, stderr) = invoke(&fixture.arguments(true), &mut Cursor::new(text), true);
+        assert!(!format!("{stdout}{stderr}").contains(CANARY));
+        assert!(!fixture.root.join("native output.json").exists());
+        fixture.assert_sources_unchanged();
+    }
+}

@@ -11,7 +11,7 @@
 
 ## 통합 설치·운용 UX 후속 설계 — 2026-10-22
 
-현재 Mac 설치·운용의 기능 인수와 처음 사용자의 사용성 인수는 구분한다. [통합 UX 설계안](./2026-10-22-integrated-operations-ux.md)은 별도 `bxdl console` 진입점에서 새 설치·이어하기·내 노드 관리·지원 보고서를 연결한다. **설계와 시안만 작성했으며 제품 기능은 아직 구현하지 않았다.** 기존 CLI/JSON·저장 포맷·명시 확인·UNKNOWN 보존·LaunchAgent 범위를 유지한다.
+현재 Mac 설치·운용의 기능 인수와 처음 사용자의 사용성 인수는 구분한다. [통합 UX 설계안](./2026-10-22-integrated-operations-ux.md)은 별도 `bxdl console` 진입점에서 새 설치·이어하기·내 노드 관리·지원 보고서를 연결한다. **UX-01 공통 문답·항목 수정·상태 안내를 구현·로컬 검증했으며, 통합 `console` 홈은 아직 제공하지 않는다.** 기존 CLI/JSON·저장 포맷·명시 확인·UNKNOWN 보존·LaunchAgent 범위를 유지한다.
 
 [화면 명세](./2026-10-22-integrated-operations-ux-screens.md)와 [클릭 가능한 시안](./prototypes/integrated-operations-ux.html), [UX-01~07 구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md)을 다음 구현의 기준으로 먼저 읽는다. 순서는 공통 문답 → 홈·목록 → 자료·설정 연결 → 설치·재개 → 반복 운용 → 오류·지원 → 새 package/사용자 과업 인수다. 안전 제거 REM-01과 나머지 Mac lifecycle은 G1-M의 별도 필수 항목이며 A7·업데이트는 G2로 구분한다. 이 계획 작성만으로 기존 요구 상태나 release gate를 완료 처리하지 않는다.
 
@@ -28,6 +28,7 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 | [통합 설치·운용 UX 설계안](./2026-10-22-integrated-operations-ux.md) | 새 진입점·자료/경로·상태·안전 경계·기존 CLI 호환 |
 | [통합 UX 화면 명세](./2026-10-22-integrated-operations-ux-screens.md) | S01~S11 문구·입력·상태별 다음 행동 |
 | [통합 UX 화면 시안](./prototypes/integrated-operations-ux.html) | 실제 명령을 실행하지 않는 화면·상태 탐색 모형 |
+| [통합 UX 터미널 체험판](./prototypes/integrated-operations-ux-demo.md) | 번호·입력·개별 승인·운용·오류 동선을 메모리 예시로 체험하는 독립 데모 |
 | [통합 UX 구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md) | UX-01~07의 코드 접점·선행·검증·완료 기준 |
 | [RC.3 선택·Mac 패키지 재인수](./2026-10-22-rc3-package-reacceptance.md) | 새 lock/spec·동일 archive의4-validator/원본 부재 setup 인수, A7 별도 |
 | [등록 자료 보관·시작 진단](./2026-10-22-managed-supply-and-start-diagnostics.md) | V2 관리 사본·V1 유지·setup 재개·시작 단계 관측 |

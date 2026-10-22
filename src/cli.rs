@@ -1,5 +1,5 @@
 //! Operator interface. Mutations require a registered instance and explicit intent.
-use crate::{artifact, config, engine, error::BxdlError, install, runtime, setup};
+use crate::{artifact, config, engine, error::BxdlError, install, operator, runtime, setup};
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::{
@@ -14,7 +14,7 @@ pub const REVISION: &str = match option_env!("BXDL_REVISION") {
     Some(v) => v,
     None => "development",
 };
-pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl runtime stage --source <extracted-java-home> --lock <json> --output <new-dir> [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl config fingerprint --certificate <leaf.pem|leaf.der> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup --network --workspace <new-session> --from <instance.json>\n      --network-file <network.json> [--output <new-node.json>]\n  bxdl setup --network --workspace <session> --resume [--output <new-node.json>]\n  bxdl setup --install --workspace <new-session> [--from <instance.json>]\n  bxdl setup --install --workspace <session> --resume\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl status --instance <dir> --wait [--timeout-seconds <1..600>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl logs --instance <dir> [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n  bxdl diagnose --instance <dir> --output <new.json>\n      [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\n기본 setup은 설정 초안·로컬 검사·파일 저장만 수행합니다.\nsetup --network는 기존 제품 설정·공개 네트워크 자료로 RC1 native 설정을 준비합니다. 키 생성·엔진 실행은 하지 않습니다.\nsetup --install은 터미널에서 설치·등록·초기화·시작을 각각 명시 선택합니다. 기존 DB 업그레이드는 제공하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nstatus --wait는 현재 시작 시도만 최대 120초(기본) 관측하며 초기화·시작·중지는 실행하지 않습니다.\nlogs는 최신 초기화·서비스 시도의 정제한 저장 기록만 읽습니다. raw stdout/stderr나 실시간 follow는 제공하지 않습니다.\ndiagnose는 같은 기록을 새 JSON 지원 보고서에 저장합니다. JVM·네트워크·서비스 호출이나 현재 상태 검증은 수행하지 않습니다.\nstatus/diagnose의 시작 단계는 마지막 진입 기록입니다. 완료 여부나 파일 접근 지연의 원인을 확정하지 않습니다.\nlogs/diagnose 기본 한도는 tail 50개, 읽기 262144 bytes, 시간 5초입니다. 누락·예산 초과는 partial로 표시합니다.\nupgrade/uninstall은 아직 제공하지 않습니다.\n";
+pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl runtime stage --source <extracted-java-home> --lock <json> --output <new-dir> [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl config fingerprint --certificate <leaf.pem|leaf.der> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup --network --workspace <new-session> --from <instance.json>\n      --network-file <network.json> [--output <new-node.json>]\n  bxdl setup --network --workspace <session> --resume [--output <new-node.json>]\n  bxdl setup --install --workspace <new-session> [--from <instance.json>]\n  bxdl setup --install --workspace <session> --resume\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl status --instance <dir> --wait [--timeout-seconds <1..600>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl logs --instance <dir> [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n  bxdl diagnose --instance <dir> --output <new.json>\n      [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\n기본 setup은 설정 초안·로컬 검사·파일 저장만 수행합니다.\nsetup --network는 기존 제품 설정·공개 네트워크 자료로 RC.3 호환 native 설정을 준비합니다. 키 생성·엔진 실행은 하지 않습니다.\nsetup --install은 터미널에서 설치·등록·초기화·시작을 각각 명시 선택합니다. 기존 DB 업그레이드는 제공하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nstatus --wait는 현재 시작 시도만 최대 120초(기본) 관측하며 초기화·시작·중지는 실행하지 않습니다.\nlogs는 최신 초기화·서비스 시도의 정제한 저장 기록만 읽습니다. raw stdout/stderr나 실시간 follow는 제공하지 않습니다.\ndiagnose는 같은 기록을 새 JSON 지원 보고서에 저장합니다. JVM·네트워크·서비스 호출이나 현재 상태 검증은 수행하지 않습니다.\nstatus/diagnose의 시작 단계는 마지막 진입 기록입니다. 완료 여부나 파일 접근 지연의 원인을 확정하지 않습니다.\nlogs/diagnose 기본 한도는 tail 50개, 읽기 262144 bytes, 시간 5초입니다. 누락·예산 초과는 partial로 표시합니다.\nupgrade/uninstall은 아직 제공하지 않습니다.\n명령별 안내: bxdl <명령> --help (예: bxdl start --help, bxdl setup --install --help).\n";
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -105,7 +105,8 @@ pub fn run_with_input<'a>(
     stderr: &'a mut dyn Write,
 ) -> i32 {
     let (json_mode, args) = take_json(args);
-    if !json_mode {
+    let help = operator::help::for_args(&args);
+    if !json_mode && help.is_none() {
         if let Some(notice) = service_wait_notice(&args) {
             if writeln!(stderr, "{notice}")
                 .and_then(|_| stderr.flush())
@@ -115,7 +116,18 @@ pub fn run_with_input<'a>(
             }
         }
     }
-    let (mut response, exit) = if args.first().is_some_and(|arg| arg == "setup") {
+    let (mut response, exit) = if let Some(usage) = help {
+        (
+            result(
+                "help",
+                "SUCCEEDED",
+                "HELP",
+                "BXDL 명령 안내",
+                Some(json!({"usage": usage})),
+            ),
+            0,
+        )
+    } else if args.first().is_some_and(|arg| arg == "setup") {
         dispatch_setup(&args[1..], json_mode, interactive, input, stderr)
     } else {
         dispatch(&args)
@@ -134,7 +146,12 @@ pub fn run_with_input<'a>(
         };
     }
     if response.command == "help" && exit == 0 {
-        return if stdout.write_all(HELP.as_bytes()).is_ok() {
+        let usage = response
+            .data
+            .as_ref()
+            .and_then(|data| data["usage"].as_str())
+            .unwrap_or(HELP);
+        return if stdout.write_all(usage.as_bytes()).is_ok() {
             0
         } else {
             7
@@ -143,6 +160,14 @@ pub fn run_with_input<'a>(
     let out = if exit == 0 { stdout } else { stderr };
     if writeln!(out, "{} [{}]", response.message, response.reason_code).is_err() {
         return 7;
+    }
+    if !matches!(response.command.as_str(), "start" | "status" | "stop") || response.data.is_none()
+    {
+        if let Some(view) = operator::view::command(&response.outcome, &response.reason_code) {
+            if print_guidance(out, &view).is_err() {
+                return 7;
+            }
+        }
     }
     if let Some(data) = response.data {
         if response.command == "setup network" {
@@ -178,6 +203,14 @@ pub fn run_with_input<'a>(
         }
     }
     exit
+}
+
+fn print_guidance(out: &mut dyn Write, view: &operator::view::View) -> std::io::Result<()> {
+    writeln!(out, "{}", view.description)?;
+    for action in view.next_actions {
+        writeln!(out, "다음 조치: {action}")?;
+    }
+    Ok(())
 }
 
 fn print_network_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
@@ -318,41 +351,7 @@ pub(crate) fn print_service_summary(out: &mut dyn Write, data: &Value) -> std::i
         writeln!(out, "마지막 관측 사유: {last}")?;
     }
     print_startup_summary(out, data)?;
-    match reason {
-        "SERVICE_START_WAIT_EXPIRED" | "SERVICE_STATUS_WAIT_EXPIRED" => {
-            writeln!(
-                out,
-                "관측 시간이 끝났습니다. 실행은 계속될 수 있으며, 시작 실패가 확정된 것은 아닙니다."
-            )?;
-            writeln!(
-                out,
-                "다음 조치: bxdl status --instance <인스턴스> --wait로 같은 시작 시도의 준비 상태를 이어서 확인하세요."
-            )?;
-        }
-        "SERVICE_STATUS_QUERY_EXPIRED" => {
-            writeln!(
-                out,
-                "이번 상태 조회의 관측 시간이 끝났습니다. 실행 여부를 확정하지 못했습니다."
-            )?;
-            writeln!(
-                out,
-                "다음 조치: bxdl status --instance <인스턴스> --wait로 현재 시도를 다시 확인하세요."
-            )?;
-        }
-        _ if data["engineState"] == "FAILED" || data["outcome"] == "FAILED" => {
-            writeln!(
-                out,
-                "실패가 관측됐습니다. logs 또는 diagnose의 정제한 기록을 확인하세요. 자동으로 다시 시작하지 않습니다."
-            )?;
-        }
-        _ if data["engineState"] == "STARTING" => {
-            writeln!(
-                out,
-                "엔진이 준비 중입니다. status --wait로 같은 시작 시도를 이어서 확인할 수 있습니다."
-            )?;
-        }
-        _ => {}
-    }
+    print_guidance(out, &operator::view::service(data))?;
     writeln!(
         out,
         "네트워크 합의: 미검사 (로컬 READY만으로 quorum·거래 확정을 보장하지 않음)"
@@ -455,18 +454,6 @@ fn dispatch_setup(
     input: &mut dyn BufRead,
     prompts: &mut dyn Write,
 ) -> (ResultEnvelope, i32) {
-    if args.len() == 1 && matches!(args[0].as_str(), "--help" | "-h") {
-        return (
-            result(
-                "help",
-                "SUCCEEDED",
-                "HELP",
-                "BXDL 설정 도우미 안내",
-                Some(json!({"usage": HELP})),
-            ),
-            0,
-        );
-    }
     let Some((flags, positions)) = parse(
         args,
         &[

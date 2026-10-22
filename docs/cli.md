@@ -14,6 +14,14 @@
 
 engine 명령과 결합/등록형 preflight는 고정한 JVM의 cold 명령을 실행한다. cold timeout은 직접 child를 종료·회수하고 UNKNOWN/exit 6을 반환한다. 쓰기 작업인 init/resume-init은 TERM 후 최대 5초를 더 기다리며 SIGKILL하지 않는다. child가 살아 있거나 잠금을 보유할 수 있으므로 UNKNOWN을 종료 완료로 해석하지 않는다. 두 경로 모두 자동 재시도하지 않는다.
 
+## 명령별 도움말과 대화형 입력
+
+`bxdl help`와 인자 없는 실행의 전체 도움말을 유지한다. `bxdl start --help`, `bxdl setup --install --help`, `bxdl setup --network --help`처럼 해당 명령·모드의 사용법을 직접 볼 수 있다. 도움말 조회는 질문을 읽거나 설치·초기화·서비스를 실행하지 않는다. 도움말 호출에는 해당 명령·모드와 도움말 옵션만 지정하며 실행 옵션·파일 경로를 함께 넣지 않는다.
+
+제품·설치·네트워크 문답의 모든 입력 단계에서 `:help`, `:back`, `:cancel`을 공통으로 사용한다. 도움말은 현재 질문으로 돌아오고, 뒤로가기는 앞 질문 또는 이전 검토 단계로 돌아가며, 취소/EOF는 저장한 checkpoint를 보존한다. 예약 문자가 파일명이라면 `./:help` 같은 명시 경로로 지정한다. 항목 편집은 번호 하나를 고르고 저장한 뒤 검토로 돌아간다. 파일 출력·apply·init·start의 대화형 확인은 `y`/`yes`만 승인하며 빈 Enter는 거절이다.
+
+통합 터미널 진입점 `bxdl console`은 [UX-02 이후 구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)이며 아직 제공하지 않는다. HTML 화면은 설계 검토용 시안이고 웹서버를 실행하지 않는다.
+
 ## JSON envelope
 
 `schemaVersion`, `command`, `outcome`, `reasonCode`, `message`, `observedAt`, 선택 `data`로 구성된다. outcome은 SUCCEEDED/FAILED/INCOMPLETE/UNSUPPORTED/UNKNOWN이다. Rust 이식 후에도 명령·exit·envelope를 유지한다. `version`은 CLI build와 capability만 표시하며 설치된 bundle을 탐색하지 않는다. data에 implementation=rust, primaryTarget=darwin-arm64, macosServiceAcceptance=NOT_CHECKED를 추가하고 기존 linuxServiceAcceptance도 유지한다.
@@ -46,11 +54,11 @@ bxdl setup --network --workspace <new-session> --from <instance.json>
 bxdl setup --network --workspace <session> --resume [--output <new-node.json>]
 ```
 
-`config fingerprint`는 공개 leaf DER의 NIGO MTLS pin을 계산한다. 일반 인증서 SHA256이나 인증서 신뢰 검증이 아니다. `setup --network`는 공통 공개 목록과 기존 제품 설정으로 RC1 native를 준비하는 별도 터미널 모드다. 출력 파일 생성도 cold/실행 검증을 뜻하지 않는다. `--json`, `--non-interactive`, `--install` 혼용은 거부한다. 사용법과 입력 계약은 [네트워크 가이드](./network.md)를 따른다.
+`config fingerprint`는 공개 leaf DER의 NIGO MTLS pin을 계산한다. 일반 인증서 SHA256이나 인증서 신뢰 검증이 아니다. `setup --network`는 공통 공개 목록과 기존 제품 설정으로 RC.1~RC.3 공통 계약의 native를 준비하는 별도 터미널 모드다. 출력 파일 생성도 cold/실행 검증을 뜻하지 않는다. `--json`, `--non-interactive`, `--install` 혼용은 거부한다. 사용법과 입력 계약은 [네트워크 가이드](./network.md)를 따른다.
 
 ## 제품 설정 v1
 
-현재는 JSON을 사용하며 schema는 `contracts/bxdl/instance.schema.json`이다. NIGO는 별도 native node/chain JSON 계약을 제공했다. 제품 schema는 유지하며 peer/pin/validator 상세 자료는 별도 공개 network 입력으로 받아 `setup --network`에서 RC1 native를 생성한다. `engine preflight --config`는 이 제품 JSON이 아닌 NIGO node.json을 받는다.
+현재는 JSON을 사용하며 schema는 `contracts/bxdl/instance.schema.json`이다. NIGO는 별도 native node/chain JSON 계약을 제공했다. 제품 schema는 유지하며 peer/pin/validator 상세 자료는 별도 공개 network 입력으로 받아 `setup --network`에서 RC.1~RC.3 공통 계약의 native를 생성한다. `engine preflight --config`는 이 제품 JSON이 아닌 NIGO node.json을 받는다.
 
 - schemaVersion 1, validator role, RocksDB backend를 명시한다.
 - HTTP는 127.0.0.1 또는 ::1, P2P는 명시한 unicast IP다. 두 port는 1~65535 범위의 서로 다른 값이다.
@@ -117,7 +125,7 @@ bxdl resume-init --instance <control-dir> --confirm-resume
 
 `--instance`는 instanceId가 아닌 제어 폴더 경로다. 절대경로를 사용하며 등록 대상은 새 폴더여야 한다. 등록/초기 운용은 macOS arm64 개발 profile을 대상으로 한다. package의 `engine/nigo-node.jar`와 `runtime/bin/java`를 사용하므로 후속 호출에는 JAR/Java를 지정하지 않는다. `--instance` 방식은 기존 preflight의 제품/native/engine 옵션과 섞지 않는다.
 
-register는 필수 옵션 전부와 `--public-key` 또는 `--allow-unsigned-development` 중 하나를 요구한다. 원본 archive·신뢰 key·engine lock은 설치 package 밖에 있어야 한다. 개발용 선택은 등록에 저장되며 init/resume에는 작업별 확인 flag만 추가한다. archive/key·설정·chain·참조 credential은 이후에도 원래 위치와 내용으로 필요하다. 등록은 private credential 내용의 hash도 private binding에 고정하며 원문/hash/secret 경로를 공개 Summary에 표시하지 않는다.
+register는 필수 옵션 전부와 `--public-key` 또는 `--allow-unsigned-development` 중 하나를 요구한다. 원본 archive·신뢰 key·engine lock은 설치 package 밖에 있어야 한다. 개발용 선택은 등록에 저장되며 init/resume에는 작업별 확인 flag만 추가한다. 새 V2 등록은 archive·engine lock·선택 외부 공개키의 검증된 보관본을 control의 `trust/`에 만든다. 등록 완료 전에는 원본을 보존하고 이후에는 보관본을 유지한다. 제품/native 설정·chain·참조 credential은 이후에도 원래 위치와 내용으로 필요하다. 완료된 설치 세션의 `generated/` 제품 JSON도 이 운용 입력에 포함하므로 세션을 삭제·이동하지 않는다. 기존 V1 등록은 원본 공급 파일 참조를 유지하며 자동 전환하지 않는다. 등록은 private credential 내용의 hash도 private binding에 고정하며 원문/hash/secret 경로를 공개 Summary에 표시하지 않는다.
 
 등록 전과 등록 후 작업에서 archive 신뢰 검증·전체 설치 manifest 검증·제품/native 대응·고정 engine identity를 확인한다. 등록에는 없거나 빈 data와 존재하는 부모가 필요하며 기존/외부 DB를 채택하지 않는다. 등록 성공은 INSTANCE_REGISTERED/exit 0이며 데이터는 초기화하지 않는다. 등록 preflight는 정상 cold라도 INCOMPLETE/exit 5다. 이 경로의 입력 변경·local 조건 미충족·잠금 중은 exit 3이며 local 전용 `preflight --config`의 FAIL/exit 4와 구분한다.
 
