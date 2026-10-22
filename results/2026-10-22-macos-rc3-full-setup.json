@@ -1,0 +1,350 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-22",
+  "scope": "RC3_FULL_INSTALL_DIALOG_LOCAL_LIFECYCLE",
+  "outcome": "PASS",
+  "candidate": "nigo-engine-v0.1.0-rc.3",
+  "nigoReply": {
+    "pullRequest": "https://github.com/bwg-loonshots/nigo-protocol/pull/230",
+    "mergeRevision": "cd3e3e08fca915934d5a8af5da0af518059f57d2",
+    "documentRevision": "f3f94e14cb996c5d7f027598aa64aa30a2c9ee5d",
+    "fullSetupStatusAtReply": "NOT_RUN_PRESERVED_AS_HISTORY",
+    "runAfterReplyMerged": true
+  },
+  "product": {
+    "repositoryRevision": "9eb097aeba435979a473949b3085bb945fa9bac1",
+    "rustProductBaseRevision": "53bb11b90d9d51aba5a7b509074046fd6ee78401",
+    "rustSourceFilesCompared": 65,
+    "rustSourcesMatchBase": true,
+    "productCodeChanged": false,
+    "packageRebuilt": false,
+    "cliSha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+    "productSourceInventorySha256": "69805a3d84048f5d7b5b22f5e9b267e30c52d7b7cb5d1b1e1e494dd575dcd394"
+  },
+  "environment": {
+    "os": "macOS",
+    "version": "26.6.2",
+    "build": "25G83",
+    "architecture": "arm64",
+    "serviceProfile": "USER_GUI_LAUNCHAGENT"
+  },
+  "package": {
+    "archiveSha256": "8a45cb8bf3482333ad43e8c29ad24c2adde8d6fe778eaf27fe2f5c2c842eb017",
+    "manifestSha256": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+    "cliSha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+    "jarSha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "testOnlySigningKey": true,
+    "filesVerified": 270,
+    "authenticity": "verified-external-ed25519",
+    "archiveSizeBytes": 207160872,
+    "bytesVerified": 325299323,
+    "sameAsPriorFourValidatorAndSetupThirteenCaseRun": true
+  },
+  "engine": {
+    "source": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1",
+    "jarSizeBytes": 164088530
+  },
+  "runtime": {
+    "vendor": "Eclipse Adoptium Temurin",
+    "version": "21.0.12.1+1-LTS",
+    "kind": "full JRE",
+    "files": 259,
+    "modules": 49,
+    "inventorySha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761"
+  },
+  "profile": {
+    "freshDatabase": true,
+    "testCredentials": "COPIED_FROM_RC3_FULL_ACCEPTANCE_N1",
+    "nativePreparation": "BXDL_SETUP_NETWORK_PTY_THEN_EXPLICIT_LOCAL_PROFILE",
+    "consensusAutoStart": false,
+    "syncEnabled": false,
+    "peers": 0,
+    "globalConsensus": "NOT_CHECKED",
+    "priorFourValidatorAcceptanceReexecuted": false,
+    "productSettingsImported": false,
+    "fullFourteenProductQuestions": true
+  },
+  "harness": {
+    "sourceRevision": "PRIVATE_TEST_HARNESS_PINNED_BEFORE_RUN",
+    "sources": {
+      "run_setup_acceptance.py": "703fd31bddd400f984ec93d22b10f6995a0ef4bbe439970b21c147cda3c2254b",
+      "prepare_inputs.py": "de71df39830e00ef737b9da3e8040bdf6820091da03dd143b11d02a5f195262d",
+      "support.py": "f7625dd79cf9827f3f14c4d8f9acea0278a089933fba80f553c70ea7e513f0b8"
+    },
+    "independentAuditSha256": "782b9ffc2f226782f36e0ab6565ebfb2cff46fb9b3d6fcd22696c869a0954905",
+    "executionPinsSha256": "e79f5f4ab21a2679001e20ca4ea538b6a715b8de3c7016ab691ef57683a3f22e",
+    "sourceFilesUnchanged": true,
+    "retryRunPerformed": false
+  },
+  "cases": [
+    {
+      "case": "EXACT_ARCHIVE_AND_FRESH_LOCAL_PROFILE_FROZEN",
+      "outcome": "PASS"
+    },
+    {
+      "case": "SUPPLY_CANCEL_EXIT5_NO_OUTPUTS",
+      "outcome": "PASS"
+    },
+    {
+      "case": "HELP_INVALID_INPUT_BACK_EDIT_AND_EOF_EXIT5_CHECKPOINT",
+      "outcome": "PASS"
+    },
+    {
+      "case": "DRAFT_TERMINAL_HANGUP_SIGHUP_PRESERVED_CHECKPOINT",
+      "outcome": "PASS"
+    },
+    {
+      "case": "FULL14_INPUTS_AND_RC3_PLAN_VERIFIED",
+      "outcome": "PASS"
+    },
+    {
+      "case": "EDIT14_PRESERVED_VALUES_INVALIDATED_PLAN_AND_EXPLICIT_REPLAN",
+      "outcome": "PASS"
+    },
+    {
+      "case": "APPLY_DECLINE_CREATED_NO_OUTPUTS",
+      "outcome": "PASS"
+    },
+    {
+      "case": "APPLY_CONFIRMATION_EOF_EXIT5_NO_OUTPUTS",
+      "outcome": "PASS"
+    },
+    {
+      "case": "APPLY_CONFIRMATION_CANCEL_EXIT5_NO_OUTPUTS",
+      "outcome": "PASS"
+    },
+    {
+      "case": "EXPLICIT_APPLY_INSTALLED_REGISTERED_AND_COLD_INCOMPLETE",
+      "outcome": "PASS"
+    },
+    {
+      "case": "INIT_DECLINE_AND_FINISH_DID_NOT_INITIALIZE",
+      "outcome": "PASS"
+    },
+    {
+      "case": "V2_EXACT_MANAGED_COPIES_AND_ORIGINAL_SUPPLY_PATHS_ABSENT",
+      "outcome": "PASS"
+    },
+    {
+      "case": "EXPLICIT_INIT_AND_GENESIS_VERIFIED",
+      "outcome": "PASS"
+    },
+    {
+      "case": "START_DECLINE_AND_FINISH_DID_NOT_START",
+      "outcome": "PASS"
+    },
+    {
+      "case": "EXPLICIT_START_AND_SETUP_WAIT_READY_SAME_ATTEMPT",
+      "outcome": "PASS"
+    },
+    {
+      "case": "IDLE_RUNNING_SETUP_TERMINAL_HANGUP_SERVICE_CONTINUES",
+      "outcome": "PASS"
+    },
+    {
+      "case": "RUNNING_RESUME_CHECK_FINISH_OBSERVES_EXISTING_ATTEMPT",
+      "outcome": "PASS"
+    },
+    {
+      "case": "FIRST_NORMAL_STOP_VERIFIED",
+      "outcome": "PASS"
+    },
+    {
+      "case": "SAME_DATA_RESTART_AND_SETUP_WAIT_NEW_IDENTITY_SAME_GENESIS",
+      "outcome": "PASS"
+    },
+    {
+      "case": "SECOND_NORMAL_STOP_VERIFIED",
+      "outcome": "PASS"
+    },
+    {
+      "case": "FINAL_STOPPED_RESUME_NO_NEW_ATTEMPT",
+      "outcome": "PASS"
+    }
+  ],
+  "temporalUx": {
+    "outcome": "PASS",
+    "observations": 21,
+    "controllerResults": 12,
+    "controllerExitCounts": {
+      "0": 6,
+      "5": 4,
+      "-1": 2
+    },
+    "controllerHangups": 2,
+    "hangupPhase": "IDLE_PROMPT_ONLY",
+    "draftAnswerCheckpointCounts": [
+      3,
+      5,
+      14
+    ],
+    "planRevisions": [
+      1,
+      2
+    ],
+    "allFourteenAnswersMatchProduct": true,
+    "noUnconfirmedMutationObserved": true,
+    "noExtraOperationOnResumeObserved": true,
+    "dataIdentityPreservedInEveryPostInitObservation": true
+  },
+  "lifecycle": {
+    "initializations": 1,
+    "serviceAttempts": 2,
+    "normalStops": 2,
+    "sameDataDirectoryIdentityPreserved": true,
+    "controllerHangupKeepsSameAttemptNodeAndPid": true,
+    "finalResumeCreatesNoAttempt": true,
+    "startupSequencesVerified": 2,
+    "expectedStartupStages": [
+      "INPUT_PINS",
+      "PACKAGE_VERIFICATION",
+      "COLD_PREFLIGHT",
+      "NATIVE_CONFIGURATION",
+      "SNAPSHOT_VERIFICATION",
+      "FINAL_RECHECK",
+      "ENGINE_EXEC"
+    ],
+    "liveReadiness": "READY_OBSERVED_BY_STATUS_AND_SETUP_WAIT",
+    "forcedNodeTermination": false
+  },
+  "managedSupply": {
+    "bindingSchema": 2,
+    "managedCopies": 3,
+    "originalSupplyPathsAbsent": 3,
+    "originalBytesPreservedByRename": true,
+    "managedCopiesRechecked": true,
+    "frozenInputsRechecked": 17,
+    "frozenInputsUnchanged": true,
+    "generatedProductAndRegistrationBindingUnchanged": true,
+    "sessionCheckpointPermissionsVerified": true
+  },
+  "diagnostics": {
+    "outcome": "PASS",
+    "startupStage": "ENGINE_EXEC",
+    "readinessClaim": "NOT_OBSERVED",
+    "supportSha256": "9d33fde4a9444ad4fff8eb15cf12b56a5d6dd08272441b5eb252afa94135abe6",
+    "readinessObservedSeparately": true
+  },
+  "cleanup": {
+    "outcome": "PASS",
+    "recordedPidsChecked": 28,
+    "remainingPids": 0,
+    "launchAgentsNotLoaded": 2,
+    "testedPorts": 2,
+    "remainingTcpListenSockets": 0,
+    "bindProbeUsed": false,
+    "independentCleanupMutationPerformed": false,
+    "activeMutationUnresolved": false,
+    "unresolvedControllerCount": 0
+  },
+  "independentAudit": {
+    "scope": "RC3_FULL_SETUP_INDEPENDENT_POSTFLIGHT",
+    "outcome": "PASS",
+    "observedAt": "2026-10-22T03:54:14.467255+00:00",
+    "checks": [
+      {
+        "check": "raw_contract",
+        "outcome": "PASS"
+      },
+      {
+        "check": "package_inventory",
+        "outcome": "PASS"
+      },
+      {
+        "check": "supply_binding",
+        "outcome": "PASS"
+      },
+      {
+        "check": "lifecycle",
+        "outcome": "PASS"
+      },
+      {
+        "check": "diagnostics",
+        "outcome": "PASS"
+      },
+      {
+        "check": "source_identity",
+        "outcome": "PASS"
+      },
+      {
+        "check": "temporal_ux",
+        "outcome": "PASS"
+      },
+      {
+        "check": "os_cleanup",
+        "outcome": "PASS"
+      }
+    ],
+    "rawResultUnchanged": true,
+    "installedPayloadFiles": 270,
+    "installedPayloadBytes": 325299323,
+    "runtimeFiles": 259,
+    "nodeReexecutionPerformed": false
+  },
+  "automatedChecks": {
+    "rerunForThisEvidenceOnlyChange": false,
+    "reason": "PRODUCT_SOURCE_AND_PACKAGE_UNCHANGED",
+    "priorReference": "2026-10-22-macos-rc3-package.md",
+    "priorRustTests": 363,
+    "priorPythonTests": 50,
+    "priorFormatClippyMacBuild": "PASS_AT_PRIOR_PACKAGE_ACCEPTANCE",
+    "priorPullRequest": "https://github.com/bwg-loonshots/bxdl/pull/14",
+    "priorCiNotClaimedAsNewRun": true
+  },
+  "evidence": {
+    "rawResultSha256": "ffe6dc87ef9720d854ce767ce9cac36eca46e372ba0001f262b8c9f49cfe8dc5",
+    "independentPostflightSha256": "9c6ab18c3332c347eab2bf088caba6a5ebf72ba6f8f029095459e5c2bc1180a8",
+    "rawEvidenceInventorySha256": "3cca59368a16a301bd3a704db6a0a25c62a4e3ddd9a8ef5980aaeee171eded38",
+    "rawEvidenceFiles": 133,
+    "rawEvidenceBytes": 412583,
+    "preservedInventorySha256": "319cb674969861208dbd292b80b985cce619c3ee007c45baccb3f80a8b54322a",
+    "preservedFiles": 141,
+    "preservedBytes": 486191,
+    "preservedMembershipHashSizeModeVerified": true,
+    "uxObservationsSha256": "b7ad33fa64165d64e636eaa644cddb9db93265bea90f00e48f3282d3c75569f0",
+    "processResultsSha256": "2ab1643af3d54093ad4c7db07b364e0d718b357ca4f0362cd5e9494a70cb0b1e",
+    "rawMaterialsCommitted": false
+  },
+  "historicalRecords": {
+    "rc3SetupThirteenCasesFullDialogNotRun": "PRESERVED_AS_PRIOR_RUN_SCOPE",
+    "rc3PackageFullDialogNotRun": "PRESERVED_AS_PRIOR_RUN_SCOPE",
+    "nigoPr230FullDialogNotRun": "PRESERVED_AS_REPLY_TIME_HISTORY",
+    "rc2RunsOriginalIncomplete": "UNCHANGED",
+    "historicalPathRootCause": "UNRESOLVED"
+  },
+  "notTested": [
+    "APPLY_INIT_MID_MUTATION_CRASH",
+    "POWER_LOSS",
+    "LOGIN_LOGOUT_SLEEP_WAKE",
+    "SAFE_UNINSTALL",
+    "A7_OFFLINE_STORAGE",
+    "RC2_TO_RC3_PRODUCT_UPGRADE",
+    "V1_BINDING_MIGRATION",
+    "FULL_G1_M",
+    "J5_CUSTOMER_DISTRIBUTION",
+    "MINIMUM_MACOS",
+    "MULTI_HOST_LINUX_SYSTEMD_DOCKER",
+    "LONG_SOAK_PERFORMANCE",
+    "NETWORK_QUORUM_IN_THIS_RUN"
+  ],
+  "sanitization": {
+    "selection": "EXPLICIT_ALLOWLIST_FIELDS_ONLY",
+    "caseFields": [
+      "case",
+      "outcome"
+    ],
+    "excluded": [
+      "ABSOLUTE_PRIVATE_PATHS",
+      "PID_VALUES",
+      "JOB_LABELS",
+      "ATTEMPT_AND_NODE_IDS",
+      "RAW_CONFIGURATION",
+      "CREDENTIALS_AND_KEYS",
+      "RAW_STDOUT_STDERR_AND_PTY",
+      "DATABASE_CONTENTS",
+      "PACKAGE_BINARY"
+    ],
+    "rawEvidenceStoredPrivately": true
+  }
+}
