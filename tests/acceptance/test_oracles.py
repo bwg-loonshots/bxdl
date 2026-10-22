@@ -20,6 +20,10 @@ class AcceptanceOracles(unittest.TestCase):
         self.run.running = set()
         self.run.unresolved_mutations = {}
         self.run.nodes = [{"label": "n1", "port": 1}]
+        self.run.fixture = {"nodes": [{"httpPort": 28080 + i, "p2pPort": 29080 + i} for i in range(4)]}
+        listener = patch.object(h, "observe_listeners", return_value={"outcome": "PASS", "scope": "TCP_LISTEN", "listeners": []})
+        self.listener = listener.start()
+        self.addCleanup(listener.stop)
         self.tx = "0x" + "1" * 64
         self.block_hash = "0x" + "2" * 64
         self.root = "0x" + "3" * 64
@@ -99,6 +103,34 @@ class AcceptanceOracles(unittest.TestCase):
         self.assertFalse(self.run.cleanup())
         self.assertEqual(self.run.results["cleanup"]["remaining"], ["n1"])
         self.assertEqual(self.run.results["cleanup"]["errors"][0]["childPids"], [12345])
+
+    def test_clean_bookkeeping_requires_independent_listener_pass(self):
+        self.assertTrue(self.run.cleanup())
+        self.assertEqual(self.run.results["cleanup"], {"remaining": [], "errors": []})
+        self.listener.assert_called_once_with(list(range(28080, 28084)) + list(range(29080, 29084)))
+        self.assertEqual(self.run.results["cleanupListeners"]["outcome"], "PASS")
+
+    def test_listener_found_or_unknown_never_means_clean(self):
+        for outcome in ("FAIL", "UNKNOWN"):
+            with self.subTest(outcome=outcome):
+                self.listener.return_value = {"outcome": outcome, "scope": "TCP_LISTEN", "listeners": []}
+                self.assertFalse(self.run.cleanup())
+                self.assertEqual(self.run.results["cleanup"], {"remaining": [], "errors": []})
+                self.assertEqual(self.run.results["cleanupListeners"]["outcome"], outcome)
+
+    def test_listener_exception_preserves_unknown_without_repair(self):
+        self.listener.side_effect = OSError("unavailable")
+        self.assertFalse(self.run.cleanup())
+        self.assertEqual(self.run.results["cleanupListeners"]["outcome"], "UNKNOWN")
+        self.assertEqual(self.listener.call_count, 1)
+
+    def test_listener_pass_cannot_hide_unverified_service_stop(self):
+        self.run.running.add("n1")
+        self.run.stop = lambda *args: (_ for _ in ()).throw(h.Failure("STOP_UNKNOWN"))
+        self.assertFalse(self.run.cleanup())
+        self.assertEqual(self.run.results["cleanup"]["remaining"], ["n1"])
+        self.assertEqual(self.run.results["cleanup"]["errors"][0]["error"], "STOP_UNKNOWN")
+        self.assertEqual(self.run.results["cleanupListeners"]["outcome"], "PASS")
 
 
 if __name__ == "__main__":

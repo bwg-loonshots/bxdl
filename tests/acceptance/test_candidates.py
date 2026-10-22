@@ -156,6 +156,43 @@ class CandidateBoundary(unittest.TestCase):
         with self.assertRaisesRegex(h.Failure, "LEGACY_RC1_ONLY"):
             fg.validate_legacy_continuation(SimpleNamespace(candidate="rc2"), {}, {})
 
+    def test_rc3_validates_all_twelve_transactions_and_candidate_pin(self):
+        args = self.fixture("rc3")
+        pins = fg.validate_inputs(args)
+        self.assertEqual(pins["candidate"], "rc3")
+        self.assertEqual(len(pins["transactionFiles"]), 12)
+        fg.assert_inputs_unchanged(args, pins)
+
+    def test_rc3_cannot_use_rc2_label_or_lock(self):
+        args = self.fixture("rc3")
+        args.candidate = "rc2"
+        with self.assertRaisesRegex(h.Failure, "PREPARATION_IDENTITY"):
+            fg.validate_inputs(args)
+        args.candidate = "rc3"
+        lock = h.document(args.lock)
+        lock["jarSha256"] = CANDIDATES["rc2"]["jarSha256"]
+        self.write("lock.json", lock)
+        with self.assertRaisesRegex(h.Failure, "LOCK_ARTIFACT"):
+            fg.validate_inputs(args)
+
+    def test_rc3_without_explicit_candidate_is_not_inferred(self):
+        args = self.fixture("rc3")
+        del args.candidate
+        with self.assertRaisesRegex(h.Failure, "PREPARATION_IDENTITY"):
+            fg.validate_inputs(args)
+
+    def test_rc3_summary_size_is_checked_before_acceptance(self):
+        args = self.fixture("rc3")
+        summary = h.document(args.fixture / "fixture-summary.json")
+        summary["engineJarSizeBytes"] += 1
+        self.write("fixture-summary.json", summary)
+        with self.assertRaisesRegex(h.Failure, "JAR_SIZE"):
+            fg.validate_inputs(args)
+
+    def test_rc3_never_enters_legacy_continuation(self):
+        with self.assertRaisesRegex(h.Failure, "LEGACY_RC1_ONLY"):
+            fg.validate_legacy_continuation(SimpleNamespace(candidate="rc3"), {}, {})
+
 
 class SubmissionBoundary(unittest.TestCase):
     def setUp(self):
@@ -309,6 +346,52 @@ class SameDbRecoveryBoundary(unittest.TestCase):
         self.assertEqual(self.run.submit.call_count, 1)
         self.assertNotIn("sameDbRestartRecovery", self.run.results)
         self.assertIsNone(self.run.recovery_resubmit_nonce)
+
+
+class SameDbRecoveryRC3Boundary(SameDbRecoveryBoundary):
+    """Run the same skew, DB identity and no-automatic-retry checks for RC3."""
+    def setUp(self):
+        super().setUp()
+        self.run.candidate_name = "rc3"
+
+
+class ScenarioRouting(unittest.TestCase):
+    def test_full_candidates_keep_their_required_recovery_and_wrong_pin_nonces(self):
+        for candidate in ("rc1", "rc2", "rc3"):
+            with self.subTest(candidate=candidate):
+                run = runner.Acceptance.__new__(runner.Acceptance)
+                run.candidate_name, run.scenario = candidate, "full"
+                nodes = [{"label": f"n{i}", "genesisHash": "same", "port": i,
+                          "lastAttempt": "first", "nodeInstanceId": "first"} for i in range(4)]
+                run.check_free_ports, run.package = Mock(), Mock()
+                run.prepare_node = Mock(side_effect=nodes)
+                run.start_all, run.stop = Mock(), Mock()
+                run.submit = Mock(side_effect=lambda nonce, port: str(nonce))
+                run.finality = Mock(return_value={"blockHash": "fixed"})
+                run.canonical_at = Mock(return_value={"blockHash": "fixed"})
+                run.start = Mock(side_effect=lambda node, label: node.update(lastAttempt="second", nodeInstanceId="second"))
+                run.two_of_four, run.same_db_recovery, run.wrong_pin = Mock(), Mock(), Mock()
+                run.run()
+                run.two_of_four.assert_called_once_with(nodes)
+                if candidate in ("rc2", "rc3"):
+                    run.same_db_recovery.assert_called_once_with(nodes, 5, 6)
+                    run.wrong_pin.assert_called_once_with(nodes, nonce=7)
+                else:
+                    run.same_db_recovery.assert_not_called()
+                    run.wrong_pin.assert_called_once_with(nodes)
+
+    def test_independent_rc3_recovery_ends_without_other_fault_cases(self):
+        run = runner.Acceptance.__new__(runner.Acceptance)
+        run.candidate_name, run.scenario = "rc3", "same-db-recovery"
+        nodes = [{"genesisHash": "same", "port": i} for i in range(4)]
+        run.check_free_ports, run.package = Mock(), Mock()
+        run.prepare_node = Mock(side_effect=nodes)
+        run.start_all, run.submit, run.finality = Mock(), Mock(return_value="tx0"), Mock()
+        run.same_db_recovery, run.two_of_four, run.wrong_pin = Mock(), Mock(), Mock()
+        run.run()
+        run.same_db_recovery.assert_called_once_with(nodes, 1, 2)
+        run.two_of_four.assert_not_called()
+        run.wrong_pin.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -31,9 +31,11 @@ JRE의 공급 서명, 엔진 호환성, source archive 수신 또는 완성 제�
 ## 3. 패키지 조립
 
 같은 stage에 Rust CLI `bin/bxdl`, 선택한 고정 엔진 `engine/nigo-node.jar`를 준비한다.
-현재 RC.2 개발 후보에는 `package-spec.rc2-temurin.example.json`과 `engine-lock.rc2-temurin-development.json`을 사용한다.
-[RC.2 수신·선택 기록](../contracts/nigo/engine-rc2-2026-10-21/README.md)의 정확한 source/JAR를 대조한다.
-기존 RC.1 spec/lock은 당시 후보의 재현용으로 보존하며 서로 혼용하지 않는다.
+현재 RC.3 개발 후보에는 [package spec](../packaging/package-spec.rc3-temurin.example.json)과
+[engine lock](../packaging/engine-lock.rc3-temurin-development.json)을 사용한다.
+[RC.3 수신 기록](../contracts/nigo/engine-rc3-2026-10-22/README.md)의 정확한 source/JAR를 대조하고,
+수신 이후의 [명시 선택과 Mac 재인수 설계](../design/2026-10-22-rc3-package-reacceptance.md)를 따른다.
+기존 RC.1/RC.2 spec/lock은 당시 후보의 재현용으로 보존하며 서로 혼용하지 않는다.
 engine lock은 실제 JAR/Java hash를 채운 development lock이다. 별도 제품 revision은 빌드할 CLI에 맞게 설정한다.
 
 - `packaging/runtime-notices.temurin-21.txt` → `licenses/THIRD_PARTY_NOTICES`
@@ -51,6 +53,6 @@ source-supply.json의 고정 입력과 함께 별도 배포 kit에 포함하거�
 ## 검증 경계
 
 full JRE에 필요한 알려진 모듈이 포함되어도 NIGO 전체 호환성 확인을 대신하지 않는다.
-RC.1의 기존 lifecycle 기록과 RC.2의 [새 Mac package 재인수](../results/2026-10-21-macos-rc2-package.md)를 구분한다. 각 후보의 JAR를 재빌드하지 않고 소비자 lifecycle·합의/복구와 공급자 engine/crypto/QBFT 검증을 각각 기록한다.
+RC.1의 기존 lifecycle 기록과 RC.2의 [Mac package 재인수 이력](../results/2026-10-21-macos-rc2-package.md)을 보존한다. 현재 선택한 RC.3의 같은 새 서명 archive에서 [4-validator·두 복구·wrong-pin](../results/2026-10-22-macos-rc3-package.md)과 [원본 공급 경로 부재 setup13사례](../results/2026-10-22-macos-rc3-setup.md)가 PASS다. setup은 제품 설정을 가져온 범위이며 전체14문답·cancel/hangup은 이번에 재실행하지 않았다. offline Storage A7은 NOT_RUN이고 기존 설치 upgrade·전체 G1-M은 후속이다. 각 후보의 JAR를 재빌드하지 않고 소비자 lifecycle·합의/복구와 공급자 engine/crypto/QBFT 검증을 각각 기록한다.
 JRE를 교체하면 같은 JAR여도 새 제품 패키지의 영향 범위를 다시 시험한다.
 원본 macOS bundle 서명, Apple notarization, 지원 최소 OS, Linux/Docker 지원은 여기서 확정하지 않는다.

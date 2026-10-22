@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "scope": "RC3_SAME_ARCHIVE_SETUP_MANAGED_SUPPLY_LOCAL_LIFECYCLE",
+  "engine": "nigo-engine-v0.1.0-rc.3",
+  "outcome": "PASS",
+  "harness": {
+    "run_rc3_setup.py": "1dda1b0578d7de50d553728f0580db8745904943b4d59f8a36d0a44edcd20423",
+    "support.py": "f7625dd79cf9827f3f14c4d8f9acea0278a089933fba80f553c70ea7e513f0b8"
+  },
+  "cases": [
+    {
+      "case": "SAME_SIGNED_RC3_PACKAGE",
+      "outcome": "PASS",
+      "archiveSha256": "8a45cb8bf3482333ad43e8c29ad24c2adde8d6fe778eaf27fe2f5c2c842eb017",
+      "manifestSha256": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+      "filesVerified": 270,
+      "bytesVerified": 325299323,
+      "authenticity": "verified-external-ed25519"
+    },
+    {
+      "case": "V2_REGISTERED_EXACT_PRIVATE_COPIES",
+      "outcome": "PASS"
+    },
+    {
+      "case": "ORIGINAL_THREE_INPUT_PATHS_ABSENT",
+      "outcome": "PASS",
+      "preservedBytes": true
+    },
+    {
+      "case": "INSTALL_RESUME_AND_CHECK_WITHOUT_ORIGINALS",
+      "outcome": "PASS"
+    },
+    {
+      "case": "COLD_PREFLIGHT_MATCHED_INCOMPLETE",
+      "outcome": "PASS"
+    },
+    {
+      "case": "EXPLICIT_INIT_WITHOUT_ORIGINALS",
+      "outcome": "PASS"
+    },
+    {
+      "case": "EXPLICIT_START_READY_WITH_ENGINE_EXEC_STAGE",
+      "outcome": "PASS",
+      "attemptId": "bxdl-64073-18e0bc0388824948-0"
+    },
+    {
+      "case": "DIAGNOSE_EXPOSES_SAFE_START_STAGE",
+      "outcome": "PASS"
+    },
+    {
+      "case": "FIRST_NORMAL_STOP_VERIFIED",
+      "outcome": "PASS"
+    },
+    {
+      "case": "SAME_DATABASE_RESTART_READY",
+      "outcome": "PASS",
+      "attemptId": "bxdl-64202-18e0bc07bbd83c68-0"
+    },
+    {
+      "case": "SECOND_NORMAL_STOP_VERIFIED",
+      "outcome": "PASS"
+    },
+    {
+      "case": "TCP_LISTEN_ABSENT_AFTER_STOP",
+      "outcome": "PASS"
+    },
+    {
+      "case": "SOURCE_MANAGED_COPY_OPERATIONAL_INPUT_INTEGRITY",
+      "outcome": "PASS"
+    }
+  ],
+  "newDatabase": true,
+  "testCredentials": "COPIED_FROM_SAME_RC3_PACKAGE_ACCEPTANCE_FIXTURE",
+  "testOnlySigningKey": true,
+  "globalConsensus": "NOT_CHECKED",
+  "notTested": [
+    "RC3_A7",
+    "FULL_14_QUESTION_CANCEL_HANGUP_MATRIX",
+    "HISTORICAL_PATH_ROOT_CAUSE",
+    "LOGIN_LOGOUT",
+    "POWER_LOSS",
+    "CUSTOMER_UPGRADE",
+    "QUORUM"
+  ],
+  "package": {
+    "archiveSha256": "8a45cb8bf3482333ad43e8c29ad24c2adde8d6fe778eaf27fe2f5c2c842eb017",
+    "manifestSha256": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+    "filesVerified": 270,
+    "bytesVerified": 325299323,
+    "authenticity": "verified-external-ed25519"
+  },
+  "cleanup": {
+    "listeners": {
+      "outcome": "PASS",
+      "listeners": [],
+      "scope": "TCP_LISTEN"
+    },
+    "serviceState": "NOT_LOADED",
+    "engineState": "STOPPED"
+  },
+  "sameArchiveAsFourValidatorRun": true,
+  "packageRebuilt": false,
+  "product": {
+    "baseRevision": "53bb11b90d9d51aba5a7b509074046fd6ee78401",
+    "rustSourcesMatchBase": true,
+    "cliSha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+    "adoptionHarnessRevision": "UNCOMMITTED_WORKTREE_PINNED_BY_FILE_HASHES",
+    "sameArchiveAsFourValidatorRun": true
+  },
+  "automatedChecks": {
+    "rust": 363,
+    "python": 50,
+    "format": "PASS",
+    "clippy": "PASS",
+    "macReleaseBuild": "PASS",
+    "newLinuxRuntimeTest": "NOT_RUN",
+    "logSha256": "2bb99de2d58daec79c23bbac6ee0bff51e91cba3672f43a473f144076c6df461"
+  },
+  "independentPostflight": {
+    "schemaVersion": 1,
+    "outcome": "PASS",
+    "observedAt": "2026-10-22T03:24:04.841094+00:00",
+    "recordedPids": 14,
+    "remainingPids": 0,
+    "listeners": {
+      "outcome": "PASS",
+      "listeners": [],
+      "scope": "TCP_LISTEN"
+    },
+    "installedPayloadFiles": 270,
+    "installedInventory": "MATCHED",
+    "rawResultSha256": "ab1c9de6587aec2c0d8937fd27cc1876b0c3580d9bd46a4937880720fbf489b5",
+    "sameArchiveAsFourValidatorRun": true,
+    "launchAgentsNotLoaded": 2,
+    "startupSequences": 2,
+    "everySequence": [
+      "INPUT_PINS",
+      "PACKAGE_VERIFICATION",
+      "COLD_PREFLIGHT",
+      "NATIVE_CONFIGURATION",
+      "SNAPSHOT_VERIFICATION",
+      "FINAL_RECHECK",
+      "ENGINE_EXEC"
+    ]
+  },
+  "evidence": {
+    "rawFiles": 26,
+    "preservedFiles": 29,
+    "rawResultSha256": "ab1c9de6587aec2c0d8937fd27cc1876b0c3580d9bd46a4937880720fbf489b5",
+    "postflightSha256": "37549a8f1d85410bccbc640a1fe7e9e91505c1104bd0c8268f337394b8b09cac",
+    "rawInventorySha256": "500237b64db8b665959f8884f8dedccb4bd2e00e830f610c4463e51a31128536",
+    "preservedInventorySha256": "c575de6a481d21b98d5270ac71af4ebf4735a917e7ce20c91cfcd46aa93d1b8a",
+    "diagnosticSha256": "0111d05f2fce7718d3e463df21b63d69514e8192fd4c945d3c504a911153fda6",
+    "sourceInventorySha256": "e3b4355d91e8d09db7ad67c732c92f159b07b31e20263ce5e1ffae21fea3d8d5"
+  },
+  "separateScopes": {
+    "fourValidatorPackageAcceptance": "PASS_SEPARATE_REPORT",
+    "A7": "NOT_RUN",
+    "fullFourteenQuestionsCancelHangupMatrix": "NOT_RUN",
+    "upgrade": "NOT_RUN",
+    "G1M": "INCOMPLETE",
+    "historicalPathRootCause": "UNRESOLVED"
+  }
+}
