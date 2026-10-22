@@ -333,6 +333,38 @@ impl NativeInput {
 pub fn digest(raw: &[u8]) -> String {
     hex::encode(Sha256::digest(raw))
 }
+/// Stream one pinned non-executable input into a newly owned file. The caller
+/// owns creation, permissions and fsync; failures leave an incomplete copy.
+pub(super) fn copy_pinned(
+    path: &Path,
+    expected: &str,
+    maximum: u64,
+    output: &mut impl Write,
+) -> Result<()> {
+    let path = absolute(path)?;
+    let (mut input, stamp) = open(&path, maximum, false)?;
+    let mut hasher = Sha256::new();
+    let mut copied = 0u64;
+    let mut buffer = [0u8; 64 * 1024];
+    loop {
+        let count = input.read(&mut buffer).map_err(|_| io_error())?;
+        if count == 0 {
+            break;
+        }
+        copied += count as u64;
+        if copied > maximum || copied > stamp.size {
+            return Err(changed());
+        }
+        hasher.update(&buffer[..count]);
+        output.write_all(&buffer[..count]).map_err(|_| io_error())?;
+    }
+    recheck(&path, &input, &stamp)?;
+    if copied != stamp.size || hex::encode(hasher.finalize()) != expected {
+        return Err(pin_mismatch());
+    }
+    Ok(())
+}
+
 fn hash_file(file: &mut File, maximum: u64) -> Result<String> {
     let mut hasher = Sha256::new();
     let mut total = 0u64;

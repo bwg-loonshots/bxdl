@@ -1,0 +1,11 @@
+{
+  "completedAt": "2026-10-21T10:07:16.582Z",
+  "observedAt": "2026-10-21T10:07:16.497Z",
+  "ownedPidsChecked": 622,
+  "portsChecked": 87,
+  "remainingListeners": 0,
+  "remainingPids": 0,
+  "scope": "POINT_IN_TIME_OBSERVATION_NO_NEW_SIGNAL_OR_PROBE_DURING_PACKAGING",
+  "sourceProofSha256": "24ac6d5db31b82af90151da96a955b4b892b31ee9f480dc6f4ec2d8436208580",
+  "status": "PASS"
+}

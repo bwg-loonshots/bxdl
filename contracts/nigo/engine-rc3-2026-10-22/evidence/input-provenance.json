@@ -1,0 +1,33 @@
+{
+  "canonicalHarnessCommit": "3dcd0d505b18475867e92ad937d0edcc650d0912",
+  "documents": {
+    "nigo-java/nigo-crypto/PROVIDERS.md": "b22675857989d681dc1bbb325445e56f92476732f545e2eb610dbe0acc9f28c9",
+    "nigo-java/nigo-node/ENGINE_CONTRACT.md": "a284e1502b298dd755704378e168811373b860665dfba14ed3069d0f6c8431d6",
+    "nigo-java/nigo-node/ENGINE_RUNTIME_CONTRACT.md": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+    "nigo-java/nigo-node/ROCKSDB_OPERATIONS.md": "e82ae404321e69dcb6d8606b5397a38457f81d7420a83d28c5b074382bbd6286",
+    "nigo-java/nigo-node/STORAGE_INTEGRITY.md": "5c79ffdf2598a28b1328283b3961e2862c1d5f84221949dabe6b08226dad4555",
+    "nigo-java/nigo-node/src/main/resources/engine/contract.json": "988648d06b95d372cfc36a88fbf4a88ae7deb4a3477ad8629163daa03f902e49",
+    "nigo-java/nigo-node/src/test/resources/engine-contract/health-cases.json": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e"
+  },
+  "externalHarnessCommit": "d6c022282753e94e94764d0e23e034e2f4757ce8",
+  "jarSha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+  "jarSizeBytes": 164088530,
+  "originalManifestSha256": "7aada98c54f21ca9ad326c4a0120455675fd9ad6ffe4cc7c0017d3578d67e407",
+  "packagingToolSha256": "14e4b0229f0da9167f3c9466b2222f49ec254b4e62d41c03cbcf87510df4c8e5",
+  "policy": "EXACT_QUALIFIED_BYTES_AND_EXPLICIT_PUBLIC_FIELD_PROJECTIONS_NO_PRIVATE_ARCHIVE_COPY",
+  "privatePreservationChecksumsSha256": "56066d24154655c7a738a1bfc3e80a1c521b44a98ee8f776bd48dbd3070d0c53",
+  "privatePreservationManifestSha256": "884500cc0fdf958bd1a26b655a80958cef14b97b198714ae9b1afc1ca14c74dc",
+  "privatePreservedFiles": 288,
+  "reusedRc2PrimitivesSha256": "daf7615ea8798f81e81ca0130316a16a0202824a8a94fb277d95c5ec9d6f0244",
+  "source": {
+    "commit": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1",
+    "dirty": false
+  },
+  "terminalGatePins": {
+    "canonical/canonical-execution.json": "f293d6ec859a6eb125fbf154071272438e27cff5597d22ee16af5e8baf782357",
+    "console/result.json": "0305847b7ea35aae12a5911266768fbeb01eb95c417bd95ace6785e7381a226d",
+    "external/external-final.json": "ef92d2503fe43a4bc245d47668b5c97d244f60a0e45e93ce70c9d4f38fe81c71",
+    "final-cleanup.json": "24ac6d5db31b82af90151da96a955b4b892b31ee9f480dc6f4ec2d8436208580",
+    "recovery/controller-result.json": "c3fddde1f865c19bccffcb8e9c7b445a153879bd41c7a891910085c8eaee4322"
+  }
+}

@@ -11,6 +11,7 @@ finish_command returns the original JSON envelope without upgrading its outcome.
 """
 import errno
 import hashlib
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -248,3 +249,74 @@ def stopped(result, label):
     data = result.get('data', {})
     require(result.get('outcome') == 'SUCCEEDED' and data.get('reason') == 'SERVICE_STOPPED_VERIFIED', label + '_NOT_VERIFIED')
     require(data.get('engineState') == 'STOPPED' and data.get('operationBusy') is False, label + '_NOT_STOPPED')
+
+
+def parse_listeners(returncode, stdout, stderr, ports):
+    """Interpret only explicit TCP LISTEN records, never bind availability.
+
+    Empty lsof exit 1 means no matching sockets. A diagnostic, timeout, malformed
+    result, or inconsistent exit remains UNKNOWN rather than a clean shutdown.
+    """
+    wanted = set(ports)
+    if not wanted or any(type(p) is not int or not 1 <= p <= 65535 for p in wanted):
+        raise Failure('LISTENER_PORTS_INVALID')
+    unknown = {'outcome': 'UNKNOWN', 'listeners': [], 'scope': 'TCP_LISTEN'}
+    if stderr or returncode not in (0, 1):
+        return unknown
+    if returncode == 1:
+        return {'outcome': 'PASS', 'listeners': [], 'scope': 'TCP_LISTEN'} if not stdout else unknown
+    try:
+        text = stdout.decode('ascii', errors='strict')
+    except UnicodeError:
+        return unknown
+    current_pid = None
+    current_fd = False
+    process_has_socket = False
+    found = set()
+    for line in text.splitlines():
+        if line.startswith('p') and line[1:].isdigit() and int(line[1:]) > 0:
+            if current_fd or current_pid is not None and not process_has_socket:
+                return unknown
+            process_has_socket = False
+            current_pid = int(line[1:])
+            current_fd = False
+        elif line.startswith('f') and line[1:].isdigit() and current_pid is not None and not current_fd:
+            current_fd = True
+        elif line.startswith('n') and current_pid is not None and current_fd:
+            endpoint = line[1:]
+            address, separator, port = endpoint.rpartition(':')
+            if not separator or not address or not port.isdigit() or int(port) not in wanted:
+                return unknown
+            try:
+                if address != '*':
+                    ipaddress.ip_address(address[1:-1] if address.startswith('[') and address.endswith(']') else address)
+            except ValueError:
+                return unknown
+            process_has_socket = True
+            found.add((current_pid, int(port)))
+            current_fd = False
+        else:
+            return unknown
+    if not found or current_fd or not process_has_socket:
+        return unknown
+    return {'outcome': 'FAIL', 'scope': 'TCP_LISTEN',
+            'listeners': [{'pid': pid, 'port': port} for pid, port in sorted(found)]}
+
+
+def observe_listeners(ports, timeout=5):
+    """Read-only OS observation; does not connect, reserve a port, or stop a node."""
+    wanted = sorted(set(ports))
+    if not wanted or any(type(p) is not int or not 1 <= p <= 65535 for p in wanted):
+        raise Failure('LISTENER_PORTS_INVALID')
+    program = shutil.which('lsof')
+    if program is None:
+        return {'outcome': 'UNKNOWN', 'listeners': [], 'scope': 'TCP_LISTEN',
+                'reason': 'LSOF_UNAVAILABLE'}
+    try:
+        result = subprocess.run([program, '-nP', '-iTCP:' + ','.join(map(str, wanted)),
+                                 '-sTCP:LISTEN', '-F', 'pfn'],
+                                capture_output=True, timeout=timeout, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return {'outcome': 'UNKNOWN', 'listeners': [], 'scope': 'TCP_LISTEN',
+                'reason': 'LISTENER_OBSERVATION_UNAVAILABLE'}
+    return parse_listeners(result.returncode, result.stdout, result.stderr, wanted)

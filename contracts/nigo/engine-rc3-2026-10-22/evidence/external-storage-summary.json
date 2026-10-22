@@ -1,0 +1,210 @@
+{
+  "artifact": {
+    "sha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+    "sizeBytes": 164088530,
+    "sourceCommit": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1"
+  },
+  "cases": [
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "rdb",
+      "caseName": "officialEntryBlocksIncompleteIdentityInsteadOfInitializingOrRepairing",
+      "childCommands": {
+        "engine-info": 1,
+        "storage-integrity": 4
+      },
+      "children": 5,
+      "displayName": "[1] backend = \"rdb\"",
+      "fixtureExecutionScope": "HARNESS_SOURCE_CLASSPATH",
+      "operations": 4,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "rdb",
+      "caseName": "officialEntryRejectsAbsentForeignAndUntrustedArgumentsWithoutInitialization",
+      "childCommands": {
+        "engine-info": 1,
+        "storage-integrity": 8
+      },
+      "children": 9,
+      "displayName": "[1] backend = \"rdb\"",
+      "fixtureExecutionScope": "HARNESS_SOURCE_CLASSPATH",
+      "operations": 8,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "rocksdb",
+      "caseName": "offlineBalanceCliRebuildsOnlyDerivedIndexAndAllowsNormalNodeRestart",
+      "childCommands": {
+        "engine-info": 1,
+        "storage-integrity": 10
+      },
+      "children": 11,
+      "displayName": "[2] backend = \"rocksdb\"",
+      "fixtureExecutionScope": "HARNESS_SOURCE_CLASSPATH",
+      "operations": 10,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "rocksdb",
+      "caseName": "managedOfflineRepairPreservesInstanceAndLedger",
+      "childCommands": {
+        "engine-info": 1,
+        "init": 1,
+        "run": 3,
+        "storage-integrity": 18
+      },
+      "children": 23,
+      "displayName": "\"rocksdb\", managed offline storage repair",
+      "operations": 18,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "rocksdb",
+      "caseName": "offlineCliInspectsRepairsAndAllowsNormalNodeRestart",
+      "childCommands": {
+        "engine-info": 1,
+        "storage-integrity": 10
+      },
+      "children": 11,
+      "displayName": "[2] backend = \"rocksdb\"",
+      "fixtureExecutionScope": "HARNESS_SOURCE_CLASSPATH",
+      "operations": 10,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "rocksdb",
+      "caseName": "officialEntryRejectsAbsentForeignAndUntrustedArgumentsWithoutInitialization",
+      "childCommands": {
+        "engine-info": 1,
+        "storage-integrity": 8
+      },
+      "children": 9,
+      "displayName": "[2] backend = \"rocksdb\"",
+      "fixtureExecutionScope": "HARNESS_SOURCE_CLASSPATH",
+      "operations": 8,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "rdb",
+      "caseName": "offlineBalanceCliRebuildsOnlyDerivedIndexAndAllowsNormalNodeRestart",
+      "childCommands": {
+        "engine-info": 1,
+        "storage-integrity": 10
+      },
+      "children": 11,
+      "displayName": "[1] backend = \"rdb\"",
+      "fixtureExecutionScope": "HARNESS_SOURCE_CLASSPATH",
+      "operations": 10,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "rocksdb",
+      "caseName": "officialEntryBlocksIncompleteIdentityInsteadOfInitializingOrRepairing",
+      "childCommands": {
+        "engine-info": 1,
+        "storage-integrity": 4
+      },
+      "children": 5,
+      "displayName": "[2] backend = \"rocksdb\"",
+      "fixtureExecutionScope": "HARNESS_SOURCE_CLASSPATH",
+      "operations": 4,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "rdb",
+      "caseName": "offlineCliInspectsRepairsAndAllowsNormalNodeRestart",
+      "childCommands": {
+        "engine-info": 1,
+        "storage-integrity": 10
+      },
+      "children": 11,
+      "displayName": "[1] backend = \"rdb\"",
+      "fixtureExecutionScope": "HARNESS_SOURCE_CLASSPATH",
+      "operations": 10,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "h2",
+      "caseName": "managedOfflineRepairPreservesInstanceAndLedger",
+      "childCommands": {
+        "engine-info": 1,
+        "init": 1,
+        "run": 3,
+        "storage-integrity": 18
+      },
+      "children": 23,
+      "displayName": "\"h2\", managed offline storage repair",
+      "operations": 18,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    }
+  ],
+  "engineRebuilt": false,
+  "finishedAt": "2026-10-21T09:58:20.692Z",
+  "harnessCommit": "d6c022282753e94e94764d0e23e034e2f4757ce8",
+  "rawCommandsPropertiesLogsAndCaseJsonIncluded": false,
+  "runtime": {
+    "files": 259,
+    "inventoryDocumentSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+    "inventorySha256": "08df9e7b86a4c9a31f710c5b947c4ddf58ac776a8eaa7d30e6b8416b2cb1b9f5",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "moduleCount": 49,
+    "properties": {
+      "java.runtime.version": "21.0.12.1+1-LTS",
+      "java.specification.version": "21",
+      "java.vendor": "Eclipse Adoptium",
+      "java.version": "21.0.12.1",
+      "os.arch": "aarch64",
+      "os.name": "Mac OS X"
+    }
+  },
+  "scope": "STORAGE",
+  "sourceProofSha256": "87d68ceb9cf6e81d3d86c8da0e82dcc8560f636a50c641277c47a60fba8f6237",
+  "startedAt": "2026-10-21T09:55:19.991Z",
+  "status": "PASS",
+  "summary": {
+    "cases": 10,
+    "failed": 0,
+    "passed": 10,
+    "skipped": 0
+  }
+}

@@ -12,6 +12,10 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 
 같은 RC.2 archive의 [전체 설치 UX 재검증](./results/2026-10-21-macos-rc2-setup.md)에서는 지정 시험 경로의 20개 문답·중단/재개·운용 사례가 통과했다. 원본 자동 집계는 INCOMPLETE로 보존하며 후속 독립 검사에서 잔존 프로세스·리스너가 없음을 확인했다. 별도 Documents 참조 실행의 시작 전 지연은 미해결이다.
 
+2026-10-22 후속 변경은 새 등록의 archive·engine lock·선택 신뢰 공개키를 private `trust/`에 보관하고, 시작 worker가 마지막으로 진입한 검사 단계를 status/setup/diagnose에 표시한다. 기존 V1 등록은 자동 변환하지 않는다. [등록 자료 보관과 시작 진단 설계](./design/2026-10-22-managed-supply-and-start-diagnostics.md)를 따르며 **새 RC.2 시험 package의 지정 로컬 13사례 PASS**이며, 원본 공급 경로 부재 상태의 재개·init/start/stop·동일 DB 재시작과 진단을 확인했다. [검증 결과](./results/2026-10-22-macos-managed-supply.md)에 정확한 범위를 기록했다. 이 변경으로 위 지연의 원인이나 모든 자료 경로의 접근 문제가 해결됐다고 주장하지 않는다.
+
+별도로 [NIGO RC.3 수신](./contracts/nigo/engine-rc3-2026-10-22/README.md)의 archive22파일·계약·선정 Temurin 실제 `engine-info` 대조를 통과했다. **RC.3는 아직 제품에 선택하지 않았고 package/A7 인수는 NOT_RUN**이다. 현재 선택한 RC.2 lock과 기존 인수 이력을 유지한다.
+
 ## 구현한 명령
 
 | 명령 | 실제 동작 |
@@ -29,13 +33,13 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 | `bxdl config fingerprint --certificate <leaf.pem>` | 공개 인증서의 NIGO MTLS pin 계산 |
 | `bxdl setup --network --workspace <new-session> --from <instance.json> --network-file <network.json>` | RC.1/RC.2 공통 native 계약의 설정 준비 및 재개 |
 | `bxdl setup --install --workspace <new-session>` | Mac 터미널에서 자료·계획을 저장하고 설치/등록·초기화·시작을 각각 명시 선택. `--resume`으로 같은 세션 재검증 |
-| `bxdl instance register --instance <new-dir> ...` | 설치본·원본 archive·신뢰 key·제품/native 설정을 검증하고 private 등록 기록 생성 |
+| `bxdl instance register --instance <new-dir> ...` | 설치본·원본 archive·신뢰 key·제품/native 설정을 검증하고, 새 V2 등록의 공급 자료 보관본과 private 기록 생성 |
 | `bxdl instance show --instance <dir>` | 저장된 초기화 상태와 현재 작업 잠금 관측. 노드 health 검사가 아님 |
 | `bxdl preflight --instance <dir>` | 등록한 입력·설치본을 다시 검증하고 결합 cold 검사 |
 | `bxdl init --instance <dir> --confirm-initialize` | 새/빈 데이터에 명시 초기화, 프로세스 종료·출력·report·엔진 journal 대조 |
 | `bxdl resume-init --instance <dir> --confirm-resume` | 같은 identity의 INITIALIZING journal과 기존 ledger가 있는 미완료 시도만 명시 재개 |
 | `bxdl start --instance <dir>` | 초기화한 인스턴스를 시도별 LaunchAgent로 명시 시작. gate를 통과한 worker가 같은 PID로 Java 실행 |
-| `bxdl status --instance <dir>` | 해당 시도의 launchd·report·로컬 HTTP 상태 조회. 전역 quorum 검사가 아님 |
+| `bxdl status --instance <dir>` | 해당 시도의 launchd·report·로컬 HTTP와 마지막 시작 검사 단계 조회. 전역 quorum 검사가 아님 |
 | `bxdl status --instance <dir> --wait` | 현재 시도의 준비 상태를 기본120초 읽기 관측. 기한 만료·실제 실패·시도 변경 구분 |
 | `bxdl stop --instance <dir>` | 소유 job에 TERM 요청 후 엔진 정상 종료 보고·프로세스 부재·잠금 해제를 함께 확인 |
 | `bxdl logs --instance <dir>` | 최신 초기화·서비스 시도의 정제한 저장 이벤트와 누락 사유를 제한해 조회 |
@@ -65,7 +69,7 @@ Mac 터미널에서 `bxdl setup`을 실행하면 이름·경로·포트·기존 
 
 입력 완료 후 `save`는 초안 저장, `export`는 확인 후 새 설정 JSON 저장이다. 참조 파일 누락이 있더라도 초안은 저장할 수 있으며 검사 결과에 실패가 남는다. 자동화의 `--from`/`--resume`·`--non-interactive`·`--json`과 경로·출력 규칙은 [setup 사용 가이드](./docs/setup.md)를 따른다.
 
-개별 명령을 사용할 때는 설정과 native QBFT 자료를 준비하고 package를 설치한 뒤 [인스턴스 등록·초기화 가이드](./docs/instance.md)에 따라 한 번 등록한다. 이후에는 같은 `--instance` 제어 폴더를 사용한다. 설치 도우미의 작업 폴더와 등록 때 지정한 원본 archive·외부 신뢰 key·설정·키 자료도 계속 필요하다. UNKNOWN은 보존된 불명 상태이며 자동 init 재시도나 데이터 삭제로 해결하지 않는다.
+개별 명령을 사용할 때는 설정과 native QBFT 자료를 준비하고 package를 설치한 뒤 [인스턴스 등록·초기화 가이드](./docs/instance.md)에 따라 한 번 등록한다. 이후에는 같은 `--instance` 제어 폴더를 사용한다. 설치 도우미 작업 폴더와 운용 설정·키 참조는 계속 필요하다. 새 V2 등록 완료 후 archive·engine lock·선택 신뢰 공개키는 `trust/` 보관본으로 검증하며, 기존 V1 등록은 원본 자료도 계속 필요하다. UNKNOWN은 보존된 불명 상태이며 자동 init 재시도나 데이터 삭제로 해결하지 않는다.
 
 ## 개발과 실행
 
@@ -103,6 +107,9 @@ Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux targe
 - [인스턴스 등록·초기화 설계](./design/2026-09-18-instance-initialization.md)
 - [Mac LaunchAgent의 시작·관측·종료 설계](./design/2026-09-18-macos-launchagent.md)
 - [setup 설치 흐름·소유 결과·재개 설계](./design/2026-09-27-setup-install-flow.md)
+- [등록 자료 보관과 시작 진단 설계](./design/2026-10-22-managed-supply-and-start-diagnostics.md)
+- [원본 공급 경로 부재 상태의 Mac 검증](./results/2026-10-22-macos-managed-supply.md)
+- [RC.3 수신 검증과 미선택 범위](./contracts/nigo/engine-rc3-2026-10-22/README.md)
 - [현재 구현·검증 상태](./docs/implementation-status.md)
 - [설치 도우미·설정 초안 저장과 재개](./docs/setup.md)
 - [패키지 입력·서명·형식](./docs/package-format.md)

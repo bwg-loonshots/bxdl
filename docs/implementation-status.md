@@ -1,8 +1,22 @@
-# 구현 상태 — 2026-10-21
+# 구현 상태 — 2026-10-22
 
 Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후 **R2의 Mac 새 폴더 패키지 설치**와 **R3의 NIGO 개발 후보 정보·cold 사전검사**를 추가했다. clean NIGO 후보를 별도로 수신하고 제품 설정과 명시 native QBFT 설정을 연결하는 preflight를 추가했다. 이후 설치본·설정을 등록해 `--instance`로 preflight와 명시 init/resume-init을 호출하고, Mac 사용자 LaunchAgent의 start/status/stop을 연결했다. 이번에는 `setup --install`에서 이 단계를 선택하고 재개하는 A~C 흐름을 구현했다. 기존 package의 단일 validator 서비스 근거와 새 setup의 exact package·TTY 인수, 전체 G1-M을 구분한다.
 
-## 최신 엔진 후보와 Mac 패키지 — 2026-10-21 RC.2
+## 등록 자료 보관과 시작 진단 — 2026-10-22
+
+[새 설계](../design/2026-10-22-managed-supply-and-start-diagnostics.md)에 따라 새 등록 V2는 검증한 archive·engine lock·선택 외부 공개키를 control의 private `trust/`에 보관한다. 등록 이후 worker와 setup 재개는 원본 경로를 다시 읽지 않고 보관본을 검증한다. 원래 경로/hash는 출처로 남기고 설치 inventory·서명·엔진 pin 대조는 유지한다. 기존 V1은 자동 변환하지 않으며 native·제품·chain·키 참조와 설치/control/data는 계속 필요하다.
+
+시작 journal의 `startupStage`와 허용된 `startupFailureReason`를 status/setup/diagnose에 표시한다. 마지막 진입 단계이며 완료 증거나 특정 파일/TCC 원인의 확정이 아니다. timeout/UNKNOWN을 자동 성공·재시작으로 바꾸지 않는다. 인수 helper는 bind 가능 여부와 실제 OS LISTEN 관측을 분리하도록 보완한다.
+
+**새 RC.2 시험 package의 지정 로컬 lifecycle 13사례가 PASS**다. 원본 공급 세 경로 부재 상태의 재개·init/start/stop·진단·동일 DB 재시작을 확인했다. 독립 검사에서 기록된15 PID 잔존0·두 job NOT_LOADED·시험2포트 LISTEN0·설치 inventory270파일 일치를 확인했다. Rust363개·Python34개·fmt/clippy·Mac release build·Linux 타입 검사도 PASS다. [새 검증 기록](../results/2026-10-22-macos-managed-supply.md)을 따른다. RC.2 Run A/B와 기존 package PASS/INCOMPLETE는 당시 bytes의 이력으로 보존한다.
+
+## 새 RC.3 수신 — 제품 선택 전
+
+[RC.3 snapshot](../contracts/nigo/engine-rc3-2026-10-22/README.md)은 source `7ec5abd8…`·JAR `05a38bd1…`의 별도 수신 기록이다. 원격 archive22파일/21checksum, 원본 manifest·계약과 고정 source, Console fingerprint/assets를 대조했고 선정 Temurin의 실제 `engine-info` 전체 identity가 일치했다. JRE259파일·49모듈을 확인하고 실행 후 공급22파일의 불변을 검사했다.
+
+**수신 검증 PASS / 명시 제품 lock 선택 미수행 / package·A7 NOT_RUN**이다. 노드·init·Storage inspect/repair·서비스를 실행하지 않았다. RC.2 선택과 제품 인수 이력을 유지하며 RC.3의 공급자 Storage/QBFT 결과를 소비자 제품 인수로 승계하지 않는다. RC.3 계약·Console fingerprint 변경과 offline Storage orchestration은 별도 채택·구현·인수 대상이다.
+
+## 선택한 엔진과 Mac 패키지 인수 이력 — 2026-10-21 RC.2
 
 NIGO `nigo-engine-v0.1.0-rc.2`(source `67c9f8e5`, JAR `b1aa84cb…`)를 명시 선택했다.
 [수신 snapshot](../contracts/nigo/engine-rc2-2026-10-21/README.md)과 RC.2 전용 lock/spec을 추가하고,
@@ -23,7 +37,7 @@ Rust343개와 Python28개 회귀·Mac release build가 통과했다. 후보 혼�
 
 [새 결과](../results/2026-10-21-macos-rc2-setup.md)의 run B는 14문답·수정·취소/EOF·실제 터미널 hangup·재개, apply/init/start의 거절/승인, 같은 attempt의 READY, 정상 stop2회·동일 DB 재시작 등 **20개 사례 PASS**다. 다만 정리 시 포트 bind 실패로 원본 자동 최종 집계는 **INCOMPLETE**이며 그대로 보존한다. 후속 독립 검사에서 설치 inventory270파일·입력15개가 일치하고 기록된26 PID·두 LaunchAgent·두 포트의 listener가 없음을 확인했다.
 
-앞선 run A는 Documents의 원본 archive/key/lock 참조를 사용했고 초기화 이후 start worker의 파일 열기 대기·UNKNOWN으로 INCOMPLETE였다. 명시 종료 요청 뒤 worker가 취소로 종료했고 잔존 등록만 정리했다. TCC를 포함한 원인은 미확정이며 B 통과로 해결됐다고 판단하지 않는다. 입력의 영구 보존/서비스 접근 사전진단과 인수 도구의 실제 LISTEN 검사를 후속으로 남긴다. 이 두 실행은 단일 노드 로컬 lifecycle이며 이전 4-validator 근거와 구분한다. 전체 G1-M은 아직 완료하지 않았다.
+앞선 run A는 Documents의 원본 archive/key/lock 참조를 사용했고 초기화 이후 start worker의 파일 열기 대기·UNKNOWN으로 INCOMPLETE였다. 명시 종료 요청 뒤 worker가 취소로 종료했고 잔존 등록만 정리했다. TCC를 포함한 원인은 미확정이며 B 통과로 해결됐다고 판단하지 않는다. 위 후속 변경에서 공급 자료 보관과 마지막 시작 단계·실제 LISTEN 관측을 보완했으며 새 package의 지정 로컬 시험은 별도 기록했다. 이 진단은 모든 경로의 접근 권한 사전 검사를 보장하지 않는다. 이 두 실행은 단일 노드 로컬 lifecycle이며 이전 4-validator 근거와 구분한다. 전체 G1-M은 아직 완료하지 않았다.
 
 ## 이전 엔진 후보 — 2026-10-19 RC1
 
@@ -101,10 +115,10 @@ TLS 저장소 형식과 새 네트워크/참가·합의·archive 정책 선택, 
 - `config fingerprint` / `setup --network`: 공개 leaf 인증서 pin 계산·공통 validator/peer 목록에서 RC.1/RC.2 공통 native 계약의 설정 준비. 엔진·네트워크 검증과 구분한다.
 - `setup`: 14개 제품 설정 입력·수정·checkpoint·재개·기존 JSON 가져오기·새 JSON 출력. 파일 저장 성공은 engine/service 준비 완료가 아니다.
 - `setup --install --workspace`: Mac arm64 TTY에서 archive·신뢰 key·lock·native 입력과 제품 설정을 계획으로 고정하고, apply/init/start를 각각 확인한 뒤 기존 API로 연결한다. 별도 세션 잠금·소유 증거·완료 결과를 확인해 명시 재개한다. 기본 초안 모드는 유지한다.
-- `instance register/show`: archive·외부 key·engine lock·전체 설치 manifest·제품/native/cold 결과를 고정해 private 등록 journal 생성, 저장 상태와 advisory busy 조회. 등록 후에도 원본 archive/key와 참조 자료가 필요하다.
+- `instance register/show`: archive·외부 key·engine lock·전체 설치 manifest·제품/native/cold 결과를 고정해 private 등록 journal 생성, 저장 상태와 advisory busy 조회. 새 V2 등록은 archive/lock/선택 공개키 보관본을 사용하고 V1은 원본 참조를 유지한다. 운용 설정·chain·키 참조는 계속 필요하다.
 - `preflight --instance`: 등록 입력 hash·전체 설치본을 재검증하고 기존 결합 cold 실행. 정상도 INCOMPLETE다.
 - `init/resume-init`: 작업별 확인 flag, durable intent, inherited advisory lock, 단발 NIGO 호출, process exit/stdout/동일 attempt report/engine journal 대조. 불명 결과와 시도 자료를 보존한다.
-- `start/status/stop`: Mac 사용자 GUI 세션의 시도별 LaunchAgent, 일회 gate와 같은 PID의 Java exec, report·launchd·로컬 HTTP 관측, 정상 종료 증명 후 등록 정리. `status --wait`와 설치 도우미 `wait`는 같은 시도의 READY·실패·종료를 읽기 관측하고 시간 초과를 구분한다. 로그인 자동 시작·자동 재시작은 제공하지 않는다.
+- `start/status/stop`: Mac 사용자 GUI 세션의 시도별 LaunchAgent, 일회 gate와 같은 PID의 Java exec, report·launchd·로컬 HTTP 관측, 정상 종료 증명 후 등록 정리. `status --wait`와 설치 도우미 `wait`는 같은 시도의 READY·실패·종료를 읽기 관측하고 시간 초과를 구분한다. `startupStage`는 마지막 진입 검사이며 완료로 추정하지 않는다. 로그인 자동 시작·자동 재시작은 제공하지 않는다.
 
 `upgrade/uninstall`은 미구현이다. `logs/diagnose`는 아래 오프라인 범위로 제공한다. 제품 config에서 NIGO QBFT peer/pin/validator 상세 설정을 추측 렌더링하지 않는다. `setup`의 instance.json과 `engine preflight`의 node.json을 구별한다.
 
@@ -118,7 +132,7 @@ TLS 저장소 형식과 새 네트워크/참가·합의·archive 정책 선택, 
 
 새 경로의 실제 테스트·실행·중단 주입 결과는 [인스턴스 초기화 검증 기록](../results/2026-09-18-instance-initialization.md)에 별도로 기록한다. 위 이전 cold 결과를 DB 초기화·runtime·전체 G1-M 증거로 소급하지 않는다. 공급 source는 같은 clean `303e163a`이며 새로운 NIGO 계약/원장 변경은 없다.
 
-초기화의 exit 0은 저장소 초기화와 종료 확인이다. launchd 등록·노드 시작·네트워크 정상·4-validator 인수가 아니다. timeout은 TERM 후 최대 5초 대기하며 SIGKILL하지 않아 child와 잠금이 남을 수 있다. UNKNOWN 뒤 자동 재시도·INITIALIZED 자동 채택은 없다. 원본 archive/key와 credential hash 고정, 매 작업의 전체 설치본 재검증을 유지한다.
+초기화의 exit 0은 저장소 초기화와 종료 확인이다. launchd 등록·노드 시작·네트워크 정상·4-validator 인수가 아니다. timeout은 TERM 후 최대 5초 대기하며 SIGKILL하지 않아 child와 잠금이 남을 수 있다. UNKNOWN 뒤 자동 재시도·INITIALIZED 자동 채택은 없다. V1 원본 또는 V2 관리 보관본의 archive/key와 credential hash 고정, 매 작업의 전체 설치본 재검증을 유지한다.
 
 제어 기록은 같은 UID의 로컬 파일이며 암호학적 상태 로그가 아니다. inode에 고정한 control 복사/이동·복원 절차와 수동 결과 채택은 미구현이다. 각 시도의 약 160 MB JAR snapshot·report는 남고 자동 GC는 없다. 세부 사용법은 [인스턴스 가이드](./instance.md), 상태 전이와 실패 정책은 [설계](../design/2026-09-18-instance-initialization.md)를 따른다.
 
@@ -159,12 +173,12 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 | BX-001/005 | IN_PROGRESS | 첫 Mac profile, 최소 OS/JRE/native·launchd 인수 |
 | BX-002/010 | DONE | Rust 기반·CLI envelope·고정 toolchain/lock |
 | BX-003 | IN_PROGRESS | Temurin21.0.12.1+1 full JRE 고정·runtime stage·runtime BOM/source 확보와 NIGO J1~J3 수용. 전체 제품 NOTICE/SBOM/소스 전달·출시 인수 후속 |
-| BX-004 | IN_PROGRESS | RC.1 이력 보존·RC.2 수신/선택·lock/snapshot·Mac 4-validator package 재인수 PASS, BXDL PR #11/NIGO PR #225 공유. 전체 제품 인수 후속 |
+| BX-004 | IN_PROGRESS | RC.1 이력·RC.2 선택/지정 package PASS 보존, BXDL PR #11/#12·NIGO PR #225/#229 공유. RC.3 수신/engine-info PASS이나 제품 미선택·package/A7 NOT_RUN. 전체 제품 인수 후속 |
 | BX-011~014 | IN_PROGRESS | build/verify/새 폴더 설치 구현, 정식 공급·릴리스/업데이트 후속 |
 | BX-020 | IN_PROGRESS | v1 제품/native 대조와 validator network/peer/pin 입력·공통 native 렌더 구현. RC.2 4-validator 거래/catch-up·두 정족수 복구 경로·pin 거부 PASS. observer 등 확장 후속 |
-| BX-021/022/024 | IN_PROGRESS | instance journal·명시 init/resume·결과 대조, gated run·정상 종료/같은 DB 재시작 확인. 전체 실패·복구/운영 인수 후속 |
+| BX-021/022/024 | IN_PROGRESS | instance journal·명시 init/resume·gated run과 기존 정상 종료/같은 DB 재시작 근거 유지. 새 V2 등록 자료 보관·시작 단계 진단의 RC.2 로컬13사례 PASS. 전체 실패·복구/운영 인수 후속 |
 | BX-023 | IN_PROGRESS | 제품/native cold·실제 RocksDB 단발 초기화 확인. 지속 runtime·DB/WAL 복구·service 인수 후속 |
-| BX-030 | IN_PROGRESS | RC.2 지정 경로의 전체14문답·수정/취소/EOF/터미널 hangup·재개 등20사례 PASS. 원본 자동 집계 INCOMPLETE·독립 정리 PASS와 Documents 참조 지연 OPEN 구분. mutation 중단·전체 인수 후속 |
+| BX-030 | IN_PROGRESS | RC.2 지정 경로20사례 PASS·원본 INCOMPLETE·독립 정리 PASS와 자료 경로 문제 OPEN 보존. 새 V2 보관본을 쓰는 setup 재개·원본 부재 상태 로컬 인수 PASS. mutation 중단·전체 인수 후속 |
 | BX-031/032 | IN_PROGRESS | 수동 LaunchAgent·status·정상 stop·restart와 같은 시도 관측 대기 구현. 로그인/로그아웃·sleep/wake와 전체 사용자 lifecycle 인수 후속 |
 | BX-033 | IN_PROGRESS | 오프라인 최신 시도 logs/diagnose·정제·bounded partial 출력 구현. 전체 시도 조회·보존/용량 정책 후속 |
 | BX-034 | PLAN | 데이터·키를 보존하는 안전한 제거 |
@@ -174,9 +188,10 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 
 ## 다음 순서
 
-1. RC.2 전체 설치 UX에서 발견한 서비스 원본 자료 접근 지연을 조사하고 영구 입력 보존·실행 전 접근 진단을 설계한다. 실제 LISTEN 기반 인수 정리 검사를 보강하며 run A/B의 원본 INCOMPLETE는 보존한다. 지정 경로20사례와 후속 독립 정리 PASS를 전체 경로/G1-M 지원으로 확대하지 않는다. 기존 RC.1→RC.2 제품 upgrade는 별도 기능·호환성 인수로 계획한다.
+1. 완료한 V2 보관본·시작 진단의 실제 Mac 시험 근거를 검토·커밋한다. 과거 원자료 접근 지연의 원인 조사는 계속하며 run A/B 원본 INCOMPLETE를 보존한다. 운용 참조 경로의 사전 접근 검사·기존 설치의 binding 변환/upgrade와 전체 G1-M 지원은 별도다.
 2. Mac 중단·실패 경계·로그인/로그아웃·sleep/wake와 데이터·키를 보존하는 안전한 제거를 구현·검증한다. 제거(REM-01)는 G1-M 완료 전 필수 항목이다. 저장 기록과 실제 health를 구분하며 UNKNOWN 뒤 자동 재시작하지 않는다. 기존 DB migration은 별도다.
 3. J5의 upstream SBOM archive hash 불일치·서명 출처 확인·전체 제품 NOTICE/SBOM·대응 소스 전달·최소 macOS를 확정한다. NIGO J1~J3와 RC.2 공급·복구 회신은 수용했으며, 이 실행 호환성 근거를 공급망 승인으로 전용하지 않는다.
-4. 검증한 바이트의 정식 릴리스 pipeline과 나머지 공통·Mac 인수를 완료해 G1-M을 확정한다. 이후 버전 쌍 업데이트·offline 유지보수·지원 진단/보존 정책을 확장한다. Linux/systemd G1-L, Docker G1-D는 Mac과 분리해 검증한다.
+4. RC.3 채택 여부·범위를 정한 뒤 별도 lock/spec과 package 재인수를 진행한다. offline A7은 서비스 중지·자동 재기동 차단·backend/경로 매핑·백업·명시 repair 확인·UNKNOWN·재시작을 구현하고 검증해야 한다. 수신 PASS는 이 작업의 완료가 아니다.
+5. 검증한 바이트의 정식 릴리스 pipeline과 나머지 공통·Mac 인수를 완료해 G1-M을 확정한다. 이후 버전 쌍 업데이트·지원 진단/보존 정책을 확장한다. Linux/systemd G1-L, Docker G1-D는 Mac과 분리해 검증한다.
 
 R2 파일 receipt는 instance 등록·NIGO journal이 아니며 전체 R2/R3 완료라고 표시하지 않는다. 현재 Mac 사용자 profile의 CLI·엔진은 같은 UID다. 파일 권한만으로 강한 격리를 보장하지 않는다. 기존 사용자 node/data/key는 시험하지 않는다.

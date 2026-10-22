@@ -1,0 +1,71 @@
+{
+  "artifact": {
+    "fileName": "nigo-node-0.0.1-SNAPSHOT.jar",
+    "sha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+    "sizeBytes": 164088530
+  },
+  "authorization": {
+    "customerDeliveryGrant": "NOT_GRANTED",
+    "nigoOwnLicenseTerms": "UNDECIDED"
+  },
+  "candidateId": "nigo-engine-v0.1.0-rc.3",
+  "canonicalIncludingPackaged": {
+    "errors": 0,
+    "failures": 0,
+    "passed": 1297,
+    "skipped": 2,
+    "tests": 1299
+  },
+  "console": {
+    "node": "v24.21.0",
+    "npm": "11.19.0",
+    "sourceFingerprint": "a76e634dacf728b81cd446cdeaa2b6a250e1a2a91c505153dd424fd46431e99e"
+  },
+  "consoleMock": {
+    "passed": 69,
+    "retries": 0,
+    "skipped": 0
+  },
+  "consumerAcceptance": "NOT_RUN",
+  "contract": {
+    "definitionSha256": "988648d06b95d372cfc36a88fbf4a88ae7deb4a3477ad8629163daa03f902e49",
+    "documentationSha256": "a284e1502b298dd755704378e168811373b860665dfba14ed3069d0f6c8431d6",
+    "fingerprint": "c604b1d24097015b2839d97f2bc9d45e3fff91ed6984665d1aa827a155c7b6e8",
+    "revision": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1",
+    "runtimeDocumentationSha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+    "runtimeFixtureSha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e",
+    "status": "PROPOSED"
+  },
+  "limitations": [
+    "Development candidate, not an official production release or customer-delivery permission.",
+    "BXDL receipt, explicit lock choice, A7 wrapper and package/JRE/service acceptance remain separate.",
+    "No JRE, installer, customer PKI, source-free QBFT generator, raw proof, source archive or DB is included.",
+    "No general DB migration/downgrade, Linux, multi-host, power-cut, long-soak, performance or signed-build claim."
+  ],
+  "manifestPolicy": "Original NOT_RECORDED/NOT_CHECKED/PROPOSED values are not rewritten.",
+  "packagedCasesWithinCanonical": {
+    "engine": 9,
+    "storage": 8
+  },
+  "recovery": "PASS_BOTH_PATHS",
+  "remotePublication": "NOT_PERFORMED_BY_PACKAGING_SCRIPT",
+  "selectedJavaCases": {
+    "engine": {
+      "cases": 9,
+      "failed": 0,
+      "passed": 9,
+      "skipped": 0
+    },
+    "storage": {
+      "cases": 10,
+      "failed": 0,
+      "passed": 10,
+      "skipped": 0
+    }
+  },
+  "source": {
+    "commit": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1",
+    "dirty": false
+  },
+  "status": "SUPPLIER_VALIDATED_LOCAL_BUNDLE"
+}

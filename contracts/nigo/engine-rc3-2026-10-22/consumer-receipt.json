@@ -1,0 +1,227 @@
+{
+  "status": "REMOTE_RECEIPT_AND_ENGINE_INFO_VERIFIED",
+  "candidate": "nigo-engine-v0.1.0-rc.3",
+  "verifiedAtDate": "2026-10-22",
+  "handoffDocumentRevision": "75c2666c2719ff39499f4772821f71d0a425d90e",
+  "source": {
+    "commit": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1",
+    "dirty": false
+  },
+  "archiveSha256": "c080b0366a43b755868d359533712bb64122187d361497689501c7a5910c02a3",
+  "archiveSize": 157657740,
+  "manifestSha256": "7aada98c54f21ca9ad326c4a0120455675fd9ad6ffe4cc7c0017d3578d67e407",
+  "artifact": {
+    "fileName": "nigo-node-0.0.1-SNAPSHOT.jar",
+    "sha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+    "sizeBytes": 164088530
+  },
+  "contract": {
+    "status": "PROPOSED",
+    "revision": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1",
+    "documentationSha256": "a284e1502b298dd755704378e168811373b860665dfba14ed3069d0f6c8431d6",
+    "definitionSha256": "988648d06b95d372cfc36a88fbf4a88ae7deb4a3477ad8629163daa03f902e49",
+    "runtimeDocumentationSha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+    "runtimeFixtureSha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e",
+    "fingerprint": "c604b1d24097015b2839d97f2bc9d45e3fff91ed6984665d1aa827a155c7b6e8"
+  },
+  "console": {
+    "node": "v24.21.0",
+    "npm": "11.19.0",
+    "sourceFingerprint": "a76e634dacf728b81cd446cdeaa2b6a250e1a2a91c505153dd424fd46431e99e"
+  },
+  "payloadFiles": 22,
+  "inventoryEntries": 21,
+  "archiveStructure": "REGULAR_FILES_ONLY_NO_DUPLICATES_OR_ALIASES",
+  "gzipChecksum": "PASS",
+  "trustedArchiveIdentity": "MATCHED",
+  "suppliedArchiveChecksum": "MATCHED",
+  "remoteAssetIdentity": "MATCHED",
+  "fullPayloadInventoryAndChecksums": "MATCHED",
+  "embeddedBuildSuppliedEngineInfoAndManifest": "MATCHED",
+  "embeddedConsole": "MATCHED",
+  "contractSourceArchiveJarAndFingerprint": "MATCHED",
+  "operatingDocumentsVsSource": "MATCHED",
+  "operatingDocumentsCount": 3,
+  "consoleSourceFingerprintRecomputed": "MATCHED",
+  "consoleSourceFiles": 156,
+  "consoleAssetsMatched": 20,
+  "supplierSummaryRecount": {
+    "canonicalSourcePassed": 1280,
+    "canonicalSourceNotRunOptIn": 2,
+    "canonicalPackagedEnginePassed": 9,
+    "canonicalPackagedStoragePassed": 8,
+    "externalSelectedJavaEnginePassed": 9,
+    "externalSelectedJavaStoragePassed": 10,
+    "externalStorageChildren": 118,
+    "externalStorageCommands": 100,
+    "recoveryPathsReportedPass": 3
+  },
+  "supplierTestCountPolicy": "Recount and consistency check of supplied sanitized summaries; no supplier test execution or independent raw-proof audit by this receipt verifier. Source, exact-JAR and selected-JRE counts are separate scopes.",
+  "jvmExecution": "ENGINE_INFO_ONLY_PASS",
+  "actualEngineInfoExitCode": 0,
+  "actualEngineInfoStdoutSha256": "ba8e1bf796c59015db6adfe5c8541271b56d2aaad923cecda60a20e1182c602e",
+  "actualEngineInfoFullIdentity": "MATCHED",
+  "actualEngineInfoStderrBytes": 0,
+  "runtime": {
+    "vendor": "Eclipse Adoptium Temurin",
+    "version": "21.0.12.1+1-LTS",
+    "platform": "macOS-arm64",
+    "kind": "full JRE",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "inventoryDocumentSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+    "filesVerifiedBeforeAndAfter": 259,
+    "modules": 49,
+    "properties": {
+      "java.runtime.version": "21.0.12.1+1-LTS",
+      "java.specification.version": "21",
+      "java.vendor": "Eclipse Adoptium",
+      "java.version": "21.0.12.1",
+      "os.arch": "aarch64",
+      "os.name": "Mac OS X"
+    }
+  },
+  "payloadAfterEngineInfo": "ALL_22_FILES_MEMBERSHIP_HASH_SIZE_MODE_UNCHANGED",
+  "engineRebuilt": false,
+  "remoteReleaseId": 420224820,
+  "remoteArchiveAssetId": 664355408,
+  "remoteChecksumAssetId": 664355411,
+  "remoteTagObject": "aef61783e7d3e34b83189264be2221d1d782ede3",
+  "remoteTagPeeledCommit": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1",
+  "remoteMetadataBasis": "DIRECT_GITHUB_READ_API_AND_DIRECT_RELEASE_DOWNLOAD_2026_10_22",
+  "remotePublishedAt": "2026-10-22T01:46:24Z",
+  "serverEnforcedReleaseImmutability": false,
+  "serverBranchProtected": false,
+  "tagCryptographicVerification": {
+    "githubVerified": false,
+    "githubReason": "unsigned",
+    "localSignatureVerification": "NOT_PERFORMED"
+  },
+  "explicitCandidateAdoption": "NOT_PERFORMED",
+  "selectedLock": null,
+  "consumerPackageAcceptance": "NOT_RUN",
+  "consumerA7Acceptance": "NOT_RUN",
+  "nodeInitRunOrStorageCommandsExecuted": false,
+  "serviceActionsExecuted": false,
+  "existingCandidateRecords": "RC.1/RC.2 lock, snapshots, package specs, results and services unchanged by this receipt verification",
+  "originalSupplierFiles": [
+    {
+      "source": "README.md",
+      "snapshotPath": "supplier-README.md",
+      "sha256": "d430f692d9657124dc8cb7dfb3fef990835a0da67374fa0e08969365b699da69"
+    },
+    {
+      "source": "SHA256SUMS",
+      "snapshotPath": "supplier-SHA256SUMS",
+      "sha256": "7b01f60c1f25387bfcbc9ee7581b4b2833b041af0053e0156a7b29d0a403e6c4"
+    },
+    {
+      "source": "engine-manifest.json",
+      "snapshotPath": "engine-manifest.json",
+      "sha256": "7aada98c54f21ca9ad326c4a0120455675fd9ad6ffe4cc7c0017d3578d67e407"
+    },
+    {
+      "source": "evidence/canonical-summary.json",
+      "snapshotPath": "evidence/canonical-summary.json",
+      "sha256": "a0eaab3950c5779ad26365e7e7b0db3cf027564d2d5c5a3436a9fa3b943b782c"
+    },
+    {
+      "source": "evidence/cleanup-summary.json",
+      "snapshotPath": "evidence/cleanup-summary.json",
+      "sha256": "62bf78e37a2470e1f6f2f3e765b79af9b66d82a9dd5fb7507ceef493fbe50d37"
+    },
+    {
+      "source": "evidence/console-summary.json",
+      "snapshotPath": "evidence/console-summary.json",
+      "sha256": "b926cd89314ab09406d6330e60dbc89545ac1d7d272e33c819fdadbf994037ce"
+    },
+    {
+      "source": "evidence/engine-info.json",
+      "snapshotPath": "evidence/engine-info.json",
+      "sha256": "ab29d3cf253f4f069bb3f60768ba643beac16c527433f11ad0a782600693bda8"
+    },
+    {
+      "source": "evidence/external-engine-summary.json",
+      "snapshotPath": "evidence/external-engine-summary.json",
+      "sha256": "fc50b862bbe281caf384a28f9d9138c528bc11200bbe132ee8ceb382a0846bc4"
+    },
+    {
+      "source": "evidence/external-storage-summary.json",
+      "snapshotPath": "evidence/external-storage-summary.json",
+      "sha256": "8b176ba95d6d49f71da969aa54c219db544ac72bf22b79a4d803b56577d1444e"
+    },
+    {
+      "source": "evidence/input-provenance.json",
+      "snapshotPath": "evidence/input-provenance.json",
+      "sha256": "eb690f6577ae2e10c97f5e77aacb4a83334e64f64a8988b841f7a0f0b7d66061"
+    },
+    {
+      "source": "evidence/recovery-summary.json",
+      "snapshotPath": "evidence/recovery-summary.json",
+      "sha256": "7f95419f3dcb4c4f1722b136f8b6897e6fa75fc4cd0eb4a13820e422428d48f1"
+    },
+    {
+      "source": "evidence/supplier-attempt-history.json",
+      "snapshotPath": "evidence/supplier-attempt-history.json",
+      "sha256": "653b36b7d1b9d2ed4a81f1ad0be83d172ac9d16fe7ca02f255c7a4cba829dcc5"
+    },
+    {
+      "source": "evidence/supplier-evidence.json",
+      "snapshotPath": "evidence/supplier-evidence.json",
+      "sha256": "30b43442c8bf1aa68951ec539e00377226b839fdc197c95e1ec67ed5bba797fa"
+    },
+    {
+      "source": "nigo-java/nigo-crypto/PROVIDERS.md",
+      "snapshotPath": "PROVIDERS.md",
+      "sha256": "b22675857989d681dc1bbb325445e56f92476732f545e2eb610dbe0acc9f28c9"
+    },
+    {
+      "source": "nigo-java/nigo-node/ENGINE_CONTRACT.md",
+      "snapshotPath": "ENGINE_CONTRACT.md",
+      "sha256": "a284e1502b298dd755704378e168811373b860665dfba14ed3069d0f6c8431d6"
+    },
+    {
+      "source": "nigo-java/nigo-node/ENGINE_RUNTIME_CONTRACT.md",
+      "snapshotPath": "ENGINE_RUNTIME_CONTRACT.md",
+      "sha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e"
+    },
+    {
+      "source": "nigo-java/nigo-node/ROCKSDB_OPERATIONS.md",
+      "snapshotPath": "ROCKSDB_OPERATIONS.md",
+      "sha256": "e82ae404321e69dcb6d8606b5397a38457f81d7420a83d28c5b074382bbd6286"
+    },
+    {
+      "source": "nigo-java/nigo-node/STORAGE_INTEGRITY.md",
+      "snapshotPath": "STORAGE_INTEGRITY.md",
+      "sha256": "5c79ffdf2598a28b1328283b3961e2862c1d5f84221949dabe6b08226dad4555"
+    },
+    {
+      "source": "nigo-java/nigo-node/src/main/resources/engine/contract.json",
+      "snapshotPath": "contract.json",
+      "sha256": "988648d06b95d372cfc36a88fbf4a88ae7deb4a3477ad8629163daa03f902e49"
+    },
+    {
+      "source": "nigo-java/nigo-node/src/test/resources/engine-contract/health-cases.json",
+      "snapshotPath": "health-cases.json",
+      "sha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e"
+    }
+  ],
+  "verificationEvidence": {
+    "staticIdentitySha256": "ff158c91dbae9471296f4998d2c587420110befd0e0c6e17fcd6e6c243ab33b6",
+    "runtimeBeforeSha256": "e429a93d72da02b7cb5290fdb2c6994bdc9040ebceed093c7cd9596a6f528edf",
+    "runtimeAfterSha256": "e429a93d72da02b7cb5290fdb2c6994bdc9040ebceed093c7cd9596a6f528edf",
+    "payloadInventorySha256": "ed4337976a4eb2d7d89a4acad4773c4706889bfd67adf9d1ccd64c4241173415",
+    "payloadAfterSha256": "27d5ec2cf8a5b921b5fe76809d7b71fed32939b0d7ffa131f78f3b48cc01f87d",
+    "verifierSha256": "71bfd184aa34281312963f9276ee21616513d4eb0717b5ca15bad1132a20c6e6",
+    "verifierAttemptHistorySha256": "99893f90f2a033c181aea24d89accd5648ad784bbcd80324e1666fc78f49836a"
+  },
+  "limitations": [
+    "Receipt and engine-info only; not explicit RC.3 product lock selection or package/A7 acceptance.",
+    "Supplier sanitized evidence is byte-preserved; supplier source/runtime/mock UI/recovery PASS is not a BXDL result.",
+    "No node start/init, storage inspect/repair, DB, service, key, existing install, or lock mutation was performed.",
+    "Original manifest NOT_RECORDED/NOT_RUN/NOT_CHECKED/PROPOSED and prior failed supplier attempts are preserved.",
+    "Development candidate; NIGO own license terms remain UNDECIDED and customer delivery is NOT_GRANTED.",
+    "J5 SBOM/source/license/signature matters, upgrade/downgrade, Linux/systemd, Docker, multi-host and long-running acceptance remain separate.",
+    "Earlier cost-gate root cause remains UNRESOLVED; receipt success does not resolve it.",
+    "A local verifier parsing error on an empty Java property was corrected before engine-info ran; attempt evidence is retained separately and is not an engine candidate failure."
+  ]
+}

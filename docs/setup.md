@@ -80,9 +80,9 @@ RC.1/RC.2 공개 chain에는 `nigo.protocol.native-assets.registration-mode`를 
 
 `finish`의 exit 0은 **현재 설치 세션 저장 성공**이다. 설치만 하거나 초기화 전 종료해도 정상이며 화면의 단계별 상태를 확인한다. 취소/EOF는 exit 5, 잘못된 옵션·비터미널 입력은 exit 2다. 단계 실패는 도우미에서 사유를 표시하고 보존하며, 파일 저장·세션 오류와 안내 출력 실패는 별도 오류로 반환할 수 있다.
 
-작업 폴더의 제품 JSON, 원본 archive·신뢰 공개키·engine lock·native/chain·credential 참조는 등록 후에도 필요하다. 임시 설치 자료라고 삭제하지 않는다. 정상 종료는 `bxdl stop --instance <등록폴더>`로 확인하며 후속 관측은 `status`, `logs`, `diagnose`를 사용한다.
+새 등록(V2)은 원본 archive·신뢰 공개키·engine lock을 인스턴스의 `trust/`에 보관한다. 등록 완료 후 서비스와 설치 세션 재개는 이 보관본을 검증하므로 원본 세 파일의 위치에 의존하지 않는다. 등록 완료 전 원본과 완료 후 `trust/`는 보존해야 하며 archive 한 벌만큼 추가 공간이 필요하다. 작업 폴더의 제품 JSON, 설치본·control·data·native/chain·credential 참조는 계속 필요하다. 기존 V1 등록은 원본 세 파일도 계속 보존하며 자동 변환하지 않는다. 정상 종료는 `bxdl stop --instance <등록폴더>`로 확인하며 후속 관측은 `status`, `logs`, `diagnose`를 사용한다.
 
-2026-10-21 인수에서는 `Documents` 아래 원자료를 참조한 설치의 LaunchAgent가 시작 전 파일 열기에서 대기했다. 경로 접근과 macOS 보호 폴더 권한의 관련성은 원인 미확정이며, 현재 CLI에는 서비스 관점의 보호 경로 사전 진단이 없다. 원자료의 영구 보관 위치·서비스 접근 확인·시작 실패 안내를 보완해야 한다. 시험에 사용한 임시 경로는 장기 운영 경로 권고가 아니다.
+2026-10-21 인수에서는 `Documents` 아래 원자료를 참조한 설치의 LaunchAgent가 시작 전 파일 열기에서 대기했다. 경로 접근과 macOS 보호 폴더 권한의 관련성은 원인 미확정이며, 현재 CLI에는 서비스 관점의 보호 경로 사전 진단이 없다. 후속 변경은 위 자료 보관과 시작 단계 진단을 제공한다. `status`·setup·`diagnose`의 `startupStage`는 마지막 진입 검사 단계이며, 완료나 권한 문제의 원인 확정을 뜻하지 않는다. 설치본·control·운용 설정 자체의 보호 경로 접근은 별도 확인해야 한다. 시험에 사용한 임시 경로는 장기 운영 경로 권고가 아니다.
 
 [RC.2 설치 UX 재검증](../results/2026-10-21-macos-rc2-setup.md)에서 전체 14문답·수정·취소/EOF·재개, 대기 중인 TTY 접속 종료, 명시 설치·초기화·시작·정상 종료·동일 DB 재시작의 20개 사례를 확인했다. 해당 실행의 자동 집계는 마지막 포트 확인 때문에 `INCOMPLETE`이며, 후속 독립 관측에서 서비스·프로세스·listener 정리를 확인했다. 앞선 원자료 경로 문제는 별도로 남아 있다. apply/init 진행 중 강제 중단·실패 주입, 로그아웃·sleep/wake와 전체 G1-M은 후속이다. [구현 설계](../design/2026-09-27-setup-install-flow.md), [최초 검증 기록](../results/2026-09-27-setup-install-flow.md)도 보존한다.
 

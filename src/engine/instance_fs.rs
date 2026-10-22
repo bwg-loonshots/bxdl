@@ -264,6 +264,71 @@ impl Control {
         Ok(())
     }
 
+    /// Create the immutable trust directory only for a fresh registration.
+    /// Every write uses the anchored directory; partial copies are preserved.
+    pub(super) fn retain_supply(&self, inputs: &[(&str, &Path, &str, u64)]) -> Result<()> {
+        self.recheck()?;
+        if inputs.len() < 2
+            || inputs.len() > 3
+            || inputs.iter().map(|(name, _, _, _)| *name).ne([
+                "package.tar.gz",
+                "engine-lock.json",
+                "public-key.pem",
+            ]
+            .into_iter()
+            .take(inputs.len()))
+        {
+            return Err(unsafe_state());
+        }
+        let mut options = DirBuilder::new();
+        options.mode(0o700);
+        self.root
+            .create_dir_with("trust", &options)
+            .map_err(|_| exists())?;
+        sync_dir(&self.root)?;
+        let (directory, identity) = open_private(&self.root, "trust")?;
+        for (name, source, expected, maximum) in inputs {
+            let mut options = OpenOptions::new();
+            options
+                .write(true)
+                .create_new(true)
+                .mode(0o600)
+                .custom_flags(
+                    (OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC).bits() as i32,
+                );
+            let mut output = directory
+                .open_with(name, &options)
+                .map_err(|_| io_error())?;
+            let created = output.metadata().map_err(|_| unsafe_state())?;
+            if !created.is_file() || created.nlink() != 1 || created.mode() & 0o7777 != 0o600 {
+                return Err(unsafe_state());
+            }
+            super::files::copy_pinned(source, expected, *maximum, &mut output)?;
+            output.sync_all().map_err(|_| io_error())?;
+            let visible = directory
+                .symlink_metadata(name)
+                .map_err(|_| unsafe_state())?;
+            if !Identity::of(&created).matches(&visible)
+                || visible.nlink() != 1
+                || visible.mode() & 0o7777 != 0o600
+            {
+                return Err(unsafe_state());
+            }
+        }
+        sync_dir(&directory)?;
+        sync_dir(&self.root)?;
+        self.recheck()?;
+        let visible = self
+            .root
+            .symlink_metadata("trust")
+            .map_err(|_| unsafe_state())?;
+        require_private(&visible)?;
+        if !identity.matches(&visible) {
+            return Err(unsafe_state());
+        }
+        Ok(())
+    }
+
     pub(super) fn lock(&self) -> Result<OperationLock> {
         self.recheck()?;
         let mut options = OpenOptions::new();

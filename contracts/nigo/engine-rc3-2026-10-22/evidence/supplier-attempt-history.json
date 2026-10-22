@@ -1,0 +1,30 @@
+{
+  "clarification": "launcher-prefix-raw is a witness of the first external Storage failure, not an additional product attempt.",
+  "records": [
+    {
+      "id": "failed-candidate-39f00ee1",
+      "manifestSha256": "0c9a6ced48726b04abf770021ba8055c09f4cefb4bf7794c430b9aec53f6065a",
+      "qualificationStatus": "FAIL",
+      "rawEvidenceIncluded": false
+    },
+    {
+      "id": "failed-external-storage-3dcd0d5",
+      "manifestSha256": "31cce3485df0d281a3139a27fe16a61f08accc23594cfe2980970ea962ce50fb",
+      "qualificationStatus": "FAIL",
+      "rawEvidenceIncluded": false
+    },
+    {
+      "id": "failed-storage-launcher-prefix-raw",
+      "manifestSha256": "b2882deb28540e1d4dbe2d4e0dad46291a91934b6f2651edb0cbec788289a367",
+      "qualificationStatus": "FAIL",
+      "rawEvidenceIncluded": false
+    },
+    {
+      "id": "failed-external-validator-5ab7158c",
+      "manifestSha256": "d54c782be7ac61e67d48fd0c11e5400943edd9001af8b4bdc29697d16220a671",
+      "qualificationStatus": "FAIL",
+      "rawEvidenceIncluded": false
+    }
+  ],
+  "scope": "SEPARATE_PRIOR_FAILED_ATTEMPTS_NOT_REPLACED_BY_FINAL_PASS"
+}

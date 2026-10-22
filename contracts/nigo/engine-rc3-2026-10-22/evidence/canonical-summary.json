@@ -1,0 +1,83 @@
+{
+  "completedAt": "2026-10-21T09:20:29.923Z",
+  "groups": [
+    {
+      "errors": 0,
+      "failures": 0,
+      "module": "nigo-block-sync",
+      "passed": 136,
+      "skipped": 0,
+      "task": "test",
+      "tests": 136,
+      "xmlFiles": 17
+    },
+    {
+      "errors": 0,
+      "failures": 0,
+      "module": "nigo-transaction-gossip",
+      "passed": 34,
+      "skipped": 0,
+      "task": "test",
+      "tests": 34,
+      "xmlFiles": 9
+    },
+    {
+      "errors": 0,
+      "failures": 0,
+      "module": "nigo-node",
+      "passed": 1027,
+      "skipped": 2,
+      "task": "test",
+      "tests": 1029,
+      "xmlFiles": 164
+    },
+    {
+      "errors": 0,
+      "failures": 0,
+      "module": "nigo-node",
+      "passed": 4,
+      "skipped": 0,
+      "task": "testUnifiedAssetCost",
+      "tests": 4,
+      "xmlFiles": 1
+    },
+    {
+      "errors": 0,
+      "failures": 0,
+      "module": "nigo-native-tooling",
+      "passed": 79,
+      "skipped": 0,
+      "task": "test",
+      "tests": 79,
+      "xmlFiles": 10
+    },
+    {
+      "errors": 0,
+      "failures": 0,
+      "module": "nigo-node",
+      "passed": 9,
+      "skipped": 0,
+      "task": "testEngineArtifact",
+      "tests": 9,
+      "xmlFiles": 1
+    },
+    {
+      "errors": 0,
+      "failures": 0,
+      "module": "nigo-node",
+      "passed": 8,
+      "skipped": 0,
+      "task": "testEngineStorageArtifact",
+      "tests": 8,
+      "xmlFiles": 1
+    }
+  ],
+  "rawXmlLogsAndPropertiesIncluded": false,
+  "source": {
+    "commit": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1",
+    "dirty": false
+  },
+  "sourceProofSha256": "f293d6ec859a6eb125fbf154071272438e27cff5597d22ee16af5e8baf782357",
+  "startedAt": "2026-10-21T08:55:33.785Z",
+  "status": "PASS"
+}

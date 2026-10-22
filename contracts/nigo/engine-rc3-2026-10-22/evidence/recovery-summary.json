@@ -1,0 +1,107 @@
+{
+  "cleanup": {
+    "cleanStoppedCount": 23,
+    "forcedCount": 0,
+    "osPidProbePerformed": false,
+    "ownedProcessCount": 31,
+    "remainingPids": []
+  },
+  "controllerSha256": "c3fddde1f865c19bccffcb8e9c7b445a153879bd41c7a891910085c8eaee4322",
+  "paths": {
+    "candidate": {
+      "finalHeight": 6,
+      "holds": [
+        {
+          "elapsedSeconds": 45.008163167000006,
+          "end": "2026-10-21T10:01:41.703Z",
+          "finalRounds": [
+            3,
+            3
+          ],
+          "maximumGapMillis": 773,
+          "phase": "hold-2-of-4-live-recovery",
+          "rawSpanMillis": 45009,
+          "samples": 60,
+          "start": "2026-10-21T10:00:56.694Z"
+        },
+        {
+          "elapsedSeconds": 45.00962237499999,
+          "end": "2026-10-21T10:02:44.704Z",
+          "finalRounds": [
+            3,
+            3
+          ],
+          "maximumGapMillis": 774,
+          "phase": "hold-2-of-4-skew-restart",
+          "rawSpanMillis": 45011,
+          "samples": 60,
+          "start": "2026-10-21T10:01:59.693Z"
+        }
+      ],
+      "recoveryTimings": [
+        {
+          "launchToFinalMillis": 10322,
+          "phase": "restored-3-no-resubmit",
+          "reportedSecondsIncludingLaunch": 10.323243709000002
+        },
+        {
+          "launchToFinalMillis": 32668,
+          "phase": "skew-restart-4-explicit-resubmit",
+          "reportedSecondsIncludingLaunch": 32.66837937499999
+        }
+      ],
+      "verdict": "PASS"
+    },
+    "forward": {
+      "finalHeight": 3,
+      "holds": [
+        {
+          "elapsedSeconds": 45.02465058300001,
+          "end": "2026-10-21T10:04:30.038Z",
+          "finalRounds": [
+            3,
+            3
+          ],
+          "maximumGapMillis": 777,
+          "phase": "rc1-minority-45-seconds",
+          "rawSpanMillis": 45025,
+          "samples": 60,
+          "start": "2026-10-21T10:03:45.013Z"
+        },
+        {
+          "elapsedSeconds": 90.025793834,
+          "end": "2026-10-21T10:06:11.663Z",
+          "finalRounds": [
+            7,
+            7,
+            5,
+            5
+          ],
+          "maximumGapMillis": 807,
+          "phase": "rc1-qualified-stall-90-seconds",
+          "rawSpanMillis": 90031,
+          "samples": 118,
+          "start": "2026-10-21T10:04:41.632Z"
+        }
+      ],
+      "recoveryTimings": [
+        {
+          "launchToFinalMillis": 33019,
+          "phase": "candidate-forward-recovery",
+          "reportedSecondsIncludingLaunch": 33.11765441700001
+        }
+      ],
+      "verdict": "PASS"
+    }
+  },
+  "proofManifestSha256": "79c9a60769107550bfd80356915421f215b27a50783fbfab88e6133e5cc4ca27",
+  "qualificationSha256": "55d7a5347b8d986d7031f7c45732135712fa3a75c78afd3b26e80168d258c54f",
+  "rawEventsObservationsManagedReportsConfigurationsAndDatabasesIncluded": false,
+  "release": {
+    "jarSha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+    "jarSize": 164088530,
+    "sourceCommit": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1"
+  },
+  "scope": "FINITE_FRESH_TEST_DB_RECOVERY_AND_RC1_TO_RC3_FORWARD_ONLY",
+  "verdict": "PASS"
+}

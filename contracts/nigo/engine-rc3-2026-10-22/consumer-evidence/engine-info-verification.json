@@ -1,0 +1,32 @@
+{
+  "outcome": "PASS",
+  "startedAt": "2026-10-22T02:28:48.954425+00:00",
+  "completedAt": "2026-10-22T02:28:50.034945+00:00",
+  "command": [
+    "<selected-temurin>/bin/java",
+    "-jar",
+    "<received-rc3-jar>",
+    "engine-info"
+  ],
+  "exitCode": 0,
+  "strictSingleJson": true,
+  "stderrBytes": 0,
+  "fullIdentityMatched": true,
+  "stdoutSha256": "ba8e1bf796c59015db6adfe5c8541271b56d2aaad923cecda60a20e1182c602e",
+  "runtimeProperties": {
+    "java.runtime.version": "21.0.12.1+1-LTS",
+    "java.specification.version": "21",
+    "java.vendor": "Eclipse Adoptium",
+    "java.version": "21.0.12.1",
+    "os.arch": "aarch64",
+    "os.name": "Mac OS X"
+  },
+  "moduleCount": 49,
+  "runtimeFilesVerifiedBeforeAndAfter": 259,
+  "payloadFilesUnchanged": 22,
+  "engineRebuilt": false,
+  "nodeInitRunOrStorageCommandsExecuted": false,
+  "serviceActionsExecuted": false,
+  "packageAcceptance": "NOT_RUN",
+  "explicitLockSelection": "NOT_PERFORMED"
+}

@@ -29,6 +29,10 @@ pub struct Report {
     pub initialization_record: &'static str,
     pub initialization_reason: &'static str,
     pub service_record: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub startup_stage: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub startup_failure_reason: Option<String>,
     pub runtime_readiness: &'static str,
     pub global_consensus: &'static str,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -83,6 +87,8 @@ impl Collector {
                 initialization_record: "UNAVAILABLE",
                 initialization_reason: "NOT_OBSERVED",
                 service_record: "UNAVAILABLE",
+                startup_stage: None,
+                startup_failure_reason: None,
                 runtime_readiness: "NOT_OBSERVED",
                 global_consensus: "NOT_CHECKED",
                 operation_busy: None,
@@ -257,7 +263,7 @@ fn collect(instance: &Path, options: &Options) -> Result<(Collector, Control, Op
     let binding = binding_raw
         .as_deref()
         .and_then(|raw| json::decode::<Binding>(raw).ok())
-        .filter(valid_binding);
+        .filter(|binding| valid_binding(root.path(), binding));
     // Keep enough budget to revalidate the registration before an export even
     // when an oversized report exhausts the ordinary collection allowance.
     let reserved = binding_raw
@@ -315,10 +321,17 @@ fn collect(instance: &Path, options: &Options) -> Result<(Collector, Control, Op
             );
         } else if let Some((store, raw)) = c.journal("service.journal", &service_path) {
             match service::diagnostic_record(&root, state, &raw) {
-                Ok((attempt, phase)) => {
-                    c.report.service_record = phase;
-                    let dir = root.path().join("operations").join(&attempt);
-                    c.events("service.report", &dir.join("report.jsonl"), "run", &attempt);
+                Ok(record) => {
+                    c.report.service_record = record.phase;
+                    c.report.startup_stage = record.startup_stage;
+                    c.report.startup_failure_reason = record.startup_failure_reason;
+                    let dir = root.path().join("operations").join(&record.attempt);
+                    c.events(
+                        "service.report",
+                        &dir.join("report.jsonl"),
+                        "run",
+                        &record.attempt,
+                    );
                     c.raw_log("service.stdout", &dir.join("service.stdout.json"));
                     c.raw_log("service.stderr", &dir.join("service.stderr.private"));
                 }
@@ -368,8 +381,9 @@ fn recorded_reason(reason: &str) -> &'static str {
         _ => "DETAIL_WITHHELD",
     }
 }
-fn valid_binding(b: &Binding) -> bool {
-    b.schema_version == 1
+fn valid_binding(control: &Path, b: &Binding) -> bool {
+    binding_schema_valid(b)
+        && supply::validate_layout(control, b).is_ok()
         && b.backend == "rocksdb"
         && b.pins.len() <= 128
         && [
@@ -396,6 +410,21 @@ fn valid_state(b: &Binding, raw: &[u8], state: &State) -> bool {
         })
 }
 fn check_output(output: &Path, control: &Path, b: &Binding) -> Result<()> {
+    // V2 origins are provenance only. Do not stat or open them during an
+    // offline export; conservatively protect their normalized lexical names.
+    if let Some(origin) = &b.supply {
+        for pin in [&origin.archive, &origin.lock]
+            .into_iter()
+            .chain(origin.public_key.iter())
+        {
+            if provenance_overlaps(output, &pin.path) {
+                return Err(error(
+                    "DIAGNOSTIC_OUTPUT_OVERLAP",
+                    "진단 출력은 공급 원본 참조와 분리한 새 경로를 사용하세요.",
+                ));
+            }
+        }
+    }
     for protected in [
         control,
         b.package.as_path(),
@@ -418,6 +447,30 @@ fn check_output(output: &Path, control: &Path, b: &Binding) -> Result<()> {
     }
     Ok(())
 }
+fn provenance_overlaps(a: &Path, b: &Path) -> bool {
+    fn names(path: &Path) -> Vec<String> {
+        path.components()
+            .map(|part| {
+                let name = part.as_os_str().to_string_lossy();
+                #[cfg(target_os = "macos")]
+                {
+                    use unicode_normalization::UnicodeNormalization;
+                    name.nfd()
+                        .flat_map(char::to_uppercase)
+                        .flat_map(char::to_lowercase)
+                        .nfd()
+                        .collect()
+                }
+                #[cfg(not(target_os = "macos"))]
+                name.into_owned()
+            })
+            .collect()
+    }
+    let a = names(a);
+    let b = names(b);
+    a.starts_with(&b) || b.starts_with(&a)
+}
+
 fn finish(report: &mut Report, options: &Options) -> Result<()> {
     if report.events.len() > options.tail {
         let count = report.events.len() - options.tail;
@@ -444,6 +497,9 @@ fn finish(report: &mut Report, options: &Options) -> Result<()> {
         report
             .next_actions
             .push("불명 시도의 기록과 데이터를 보존하세요. 자동 초기화·재시작·삭제하지 마세요.");
+    }
+    if report.startup_stage.is_some() {
+        report.next_actions.push("startupStage는 마지막 진입 기록이며 완료 여부나 지연 원인을 뜻하지 않습니다. 같은 시작 시도의 현재 상태는 status --wait로 확인하세요.");
     }
     if report.partial {
         report.next_actions.push("sources의 누락 이유를 확인하세요. 수집 중 변경은 재조회하고 제한 초과는 수집 범위를 조정하세요.");
