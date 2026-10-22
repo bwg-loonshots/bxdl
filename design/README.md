@@ -9,6 +9,12 @@
 
 2026-10-22 [RC.3 수신 검증](../contracts/nigo/engine-rc3-2026-10-22/README.md) 이후 [명시 선택과 Mac 재인수 설계](./2026-10-22-rc3-package-reacceptance.md)를 추가했다. 새 lock/spec으로 후보를 선택했고 같은 archive의 [4-validator 재인수](../results/2026-10-22-macos-rc3-package.md)와 [원본 부재 setup 13사례](../results/2026-10-22-macos-rc3-setup.md), 각 독립 사후 검사가 PASS했다. [NIGO PR #230](https://github.com/bwg-loonshots/nigo-protocol/pull/230) 정식 회신을 머지한 뒤 [같은 archive의 전체14문답·수정·취소/EOF·대기 중 HUP·재개21사례](../results/2026-10-22-macos-rc3-full-setup.md)와 독립 검사8항목도 PASS했다. 앞선 결과/회신의 당시 NOT_RUN은 보존한다. HUP은 대기 중 PTY 범위이며 mutation crash·Mac 로그아웃 인수가 아니다. offline Storage A7·기존 설치 upgrade·안전 제거·전체 G1-M/J5는 남아 있다.
 
+## 통합 설치·운용 UX 후속 설계 — 2026-10-22
+
+현재 Mac 설치·운용의 기능 인수와 처음 사용자의 사용성 인수는 구분한다. [통합 UX 설계안](./2026-10-22-integrated-operations-ux.md)은 별도 `bxdl console` 진입점에서 새 설치·이어하기·내 노드 관리·지원 보고서를 연결한다. **설계와 시안만 작성했으며 제품 기능은 아직 구현하지 않았다.** 기존 CLI/JSON·저장 포맷·명시 확인·UNKNOWN 보존·LaunchAgent 범위를 유지한다.
+
+[화면 명세](./2026-10-22-integrated-operations-ux-screens.md)와 [클릭 가능한 시안](./prototypes/integrated-operations-ux.html), [UX-01~07 구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md)을 다음 구현의 기준으로 먼저 읽는다. 순서는 공통 문답 → 홈·목록 → 자료·설정 연결 → 설치·재개 → 반복 운용 → 오류·지원 → 새 package/사용자 과업 인수다. 안전 제거 REM-01과 나머지 Mac lifecycle은 G1-M의 별도 필수 항목이며 A7·업데이트는 G2로 구분한다. 이 계획 작성만으로 기존 요구 상태나 release gate를 완료 처리하지 않는다.
+
 ## 목표
 
 Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 고정된 NIGO 엔진을 담은 오프라인 설치 패키지로 영속 QBFT 노드를 구성하고, 정상 종료·동일 데이터 재시작·상태 확인·진단을 재현한다. 설치와 운영은 소스 checkout, Gradle, Rust/Cargo, Node/npm, GitHub token 또는 인터넷을 요구하지 않는다.
@@ -19,6 +25,10 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 
 | 문서 | 내용 |
 | --- | --- |
+| [통합 설치·운용 UX 설계안](./2026-10-22-integrated-operations-ux.md) | 새 진입점·자료/경로·상태·안전 경계·기존 CLI 호환 |
+| [통합 UX 화면 명세](./2026-10-22-integrated-operations-ux-screens.md) | S01~S11 문구·입력·상태별 다음 행동 |
+| [통합 UX 화면 시안](./prototypes/integrated-operations-ux.html) | 실제 명령을 실행하지 않는 화면·상태 탐색 모형 |
+| [통합 UX 구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md) | UX-01~07의 코드 접점·선행·검증·완료 기준 |
 | [RC.3 선택·Mac 패키지 재인수](./2026-10-22-rc3-package-reacceptance.md) | 새 lock/spec·동일 archive의4-validator/원본 부재 setup 인수, A7 별도 |
 | [등록 자료 보관·시작 진단](./2026-10-22-managed-supply-and-start-diagnostics.md) | V2 관리 사본·V1 유지·setup 재개·시작 단계 관측 |
 | [RC.2 선택·Mac 패키지 재인수](./2026-10-21-rc2-package-reacceptance.md) | 지정 후보의 두 정족수 복구 경로와 기존 결과 보존 |

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; font-src 'none'; form-action 'none'; base-uri 'none'">
+<title>BXDL 통합 설치·운용 UX — 설계 시안</title>
+<style>
+  :root{color-scheme:dark;--bg:#0d1117;--panel:#151b23;--line:#303b49;--muted:#a7b3c2;--text:#e7edf4;--mint:#8bdcc0;--blue:#a2c8ff;--amber:#f0c67b;--red:#ffaca6;--surface:#1b2430}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Apple SD Gothic Neo",monospace;line-height:1.65;font-size:14px}button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.46}button,input,select{border:1px solid var(--line);border-radius:7px}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--mint);outline-offset:3px}a{color:var(--blue)}.wrap{max-width:1280px;margin:0 auto;padding:28px 28px 40px}.notice{background:#242118;border:1px solid #675330;border-radius:8px;padding:10px 16px;color:#f1d5a5;font-family:system-ui,sans-serif;font-size:13px}.masthead{display:flex;align-items:center;justify-content:space-between;padding:26px 0 22px;gap:20px}.brand{letter-spacing:.16em;font-size:24px;font-weight:800}.subbrand{font-size:13px;color:var(--muted);letter-spacing:0;margin-left:16px;font-weight:400}.command{color:var(--mint);font-size:13px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:20px;align-items:start}.terminal{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel);box-shadow:0 12px 45px #0003}.terminalbar{padding:12px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;color:var(--muted);background:#1a212c;font-size:12px}.dots{color:#7e8c9e;letter-spacing:5px;margin-right:10px}.terminalmain{padding:30px 34px 26px;min-height:640px}.breadcrumb{font-size:12px;color:var(--muted);margin-bottom:22px}.screenid{color:var(--mint);margin-right:10px}h1{font-size:26px;line-height:1.4;margin:0 0 10px;letter-spacing:-.05em;outline:none}h2{font-size:16px;margin:24px 0 10px}p{margin:10px 0}.lead{color:var(--muted);max-width:62ch;margin-bottom:24px}.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin:14px 0}.label{font-size:12px;color:var(--muted)}.value{font-size:17px;margin-top:3px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid .card{margin:0}.tag{font-size:12px;padding:3px 8px;border:1px solid var(--line);border-radius:4px;display:inline-block;color:var(--muted)}.tag.ok{color:var(--mint);border-color:#3a6d5e}.tag.warn{color:var(--amber);border-color:#66563b}.tag.info{color:var(--blue);border-color:#3c597a}.muted{color:var(--muted)}.small{font-size:12px}.callout{padding:13px 16px;border-left:3px solid var(--blue);background:#1a2636;margin:18px 0;color:#cee0f8}.callout.warn{border-color:var(--amber);background:#2b261d;color:#ecd3a9}.callout.error{border-color:var(--red);background:#2a2026;color:#f5c1bd}.actions{display:flex;flex-direction:column;gap:9px;margin-top:24px}.actions button{text-align:left;padding:12px 15px;background:#202a37;color:var(--text);border-color:#3b495b;line-height:1.45}.actions button:hover:not(:disabled){background:#2b394b}.actions button.primary{background:#1e3f38;border-color:#4d8b77;color:#c2f6df}.actions button.secondary{background:transparent;color:var(--muted)}.num{display:inline-block;min-width:28px;color:var(--mint)}.desc{display:block;padding-left:28px;color:var(--muted);font-size:12px;margin-top:3px}.footer{border-top:1px solid var(--line);padding:13px 20px;color:var(--muted);font-size:11px;display:flex;justify-content:space-between;gap:12px}.side{border:1px solid var(--line);border-radius:10px;padding:20px;background:#121821}.side h2{margin:0 0 6px;font-size:14px}.side p{font-size:12px;color:var(--muted)}.side select{width:100%;background:#1b2430;color:var(--text);padding:9px;margin:8px 0 18px}.screenlinks{display:flex;flex-direction:column;gap:4px;margin:16px 0 20px}.screenlinks button{text-align:left;background:transparent;color:var(--muted);border-color:transparent;padding:7px 9px;font-size:12px}.screenlinks button:hover{background:#202a37}.screenlinks button[aria-current="page"]{color:var(--mint);background:#1b302b;border-color:#345e50}.sidehr{border:0;border-top:1px solid var(--line);margin:20px 0}.step{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid #293441}.step:last-child{border-bottom:0}.stepmark{color:var(--muted);min-width:20px}.stepmark.active{color:var(--mint)}.stepbody{flex:1}.steptitle{display:flex;justify-content:space-between;gap:12px}.meta{font-size:12px;color:var(--muted);margin-top:4px}.kv{display:grid;grid-template-columns:138px minmax(0,1fr);gap:10px 20px;font-size:13px}.kv dt{color:var(--muted)}.kv dd{margin:0;overflow-wrap:anywhere}.formrow{margin:16px 0}.formrow label{display:block;margin-bottom:6px;color:var(--muted);font-size:12px}.formrow input{width:100%;background:#0f151e;color:var(--text);padding:11px 13px}.confirm{border:1px solid #927744;background:#29251d;padding:18px;border-radius:8px;margin:18px 0}.confirm strong{color:var(--amber)}.confirm .actions{margin-top:16px}.consolelines{white-space:pre-wrap;font-size:12px;line-height:1.9;color:#b9c8d9;margin:0;overflow-wrap:anywhere}.afterword{margin-top:18px;color:var(--muted);font-size:12px;font-family:system-ui,sans-serif}.chiprow{display:flex;gap:7px;flex-wrap:wrap;margin:18px 0}.visuallyhidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  @media(max-width:980px){.layout{grid-template-columns:1fr}.side{order:2}.screenlinks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.terminalmain{min-height:0}.side select{max-width:440px}}@media(max-width:600px){.wrap{padding:14px}.masthead{display:block}.command{margin-top:8px}.subbrand{display:block;margin-left:0;font-size:12px}.terminalmain{padding:24px 20px}.grid{grid-template-columns:1fr}.kv{grid-template-columns:1fr;gap:3px}.kv dd{margin-bottom:9px}.screenlinks{grid-template-columns:1fr 1fr}.footer{display:block}.steptitle{display:block}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="notice" role="note"><strong>설계 시안 · 미구현 · 모든 데이터는 예시 · 실제 명령을 실행하지 않습니다</strong></div>
+  <header class="masthead"><div class="brand">BXDL<span class="subbrand">통합 설치·운용 콘솔</span></div><div class="command">제안 진입점&nbsp; $ bxdl console</div></header>
+  <div class="layout">
+    <main class="terminal" aria-label="터미널 화면 시안">
+      <div class="terminalbar"><span><span class="dots" aria-hidden="true">●●●</span>BXDL / 예시 세션</span><span>macOS · LaunchAgent</span></div>
+      <div class="terminalmain" id="screen"></div>
+      <div class="footer"><span>번호키·버튼으로 선택 · 승인 화면 Enter = N · Tab으로 이동</span><span>Enter로 실행 승인하지 않습니다</span></div>
+    </main>
+    <aside class="side" aria-label="시안 탐색">
+      <h2>화면과 상태 살펴보기</h2><p>버튼으로 흐름을 따라가거나 원하는 화면으로 바로 이동하세요.</p>
+      <nav class="screenlinks" id="navigation" aria-label="화면 목록"></nav>
+      <label for="scenario" class="label">현재 화면의 보기 모드</label><select id="scenario"></select>
+      <div class="small muted" id="scenario-note"></div>
+      <hr class="sidehr"><h2>시안의 약속</h2>
+      <p>설치, 초기화, 시작은 각각 확인합니다. 취소와 화면 종료는 이미 끝난 작업을 되돌리지 않습니다.</p>
+      <p>상태를 읽지 못하면 마지막 관측 시각을 보여줍니다. 결과 불명 상태는 자동으로 풀지 않습니다. 완료된 설치의 product JSON은 임시 캐시가 아니며 보존합니다.</p>
+      <p>기존 CLI·JSON·help·setup은 유지합니다. 이 화면은 제안된 별도 진입점입니다.</p>
+    </aside>
+  </div>
+  <div class="afterword">설계 검토용 화면 전환만 제공합니다. 파일 접근, 명령 실행, 네트워크 요청, 서비스 제어, 다운로드, 브라우저 저장소를 사용하지 않습니다.</div>
+</div>
+<script>
+'use strict';
+const screenDefinitions = [
+  ['S01','홈',[['home','기본 홈'],['help','도움말·지원 범위']]],
+  ['S02','준비자료 확인',[['missing','자격 자료 미제공'],['ready','자료 확인 후 계속']]],
+  ['S03','내 노드 설정',[['summary','기본 설정'],['edit','저장 위치 수정']]],
+  ['S04','설치 계획 확인',[['review','검토'],['confirm','설치 별도 확인']]],
+  ['S05','설치·초기화·시작',[['installed','설치 후 초기화 대기'],['init-confirm','초기화 별도 확인'],['initialized','초기화 후 시작 대기'],['start-confirm','시작 별도 확인'],['ready','로컬 준비 완료 예시']]],
+  ['S06','중단한 설치 이어하기',[['paused','정상 중단 기록'],['reconcile','상태 다시 확인'],['unknown','작업 결과 불명']]],
+  ['S07','내 노드 목록',[['cached','아직 조회하지 않음'],['observed','이번 화면에서 조회한 예시'],['missing','등록 경로에 접근할 수 없음']]],
+  ['S08','노드 운영 요약',[['unobserved','미조회·과거 관측만 표시'],['ready','실행 중·로컬 준비 완료'],['stale','현재 상태 조회 실패'],['waiting','시작 중·대기 시간 만료'],['stopped','정상 중지 확인']]],
+  ['S09','중지·같은 DB 재시작',[['stop-confirm','중지 별도 확인'],['stopping','종료 확인 중'],['stopped','정상 종료 확인 후'],['restart-confirm','새 시작 별도 확인']]],
+  ['S10','오류와 다음 행동',[['missing','준비자료 누락'],['timeout','대기 시간 만료'],['read-failure','현재 상태 조회 실패'],['cli-mismatch','설치 CLI 바이트·해시 불일치'],['stop-unconfirmed','정상 종료 확인 필요'],['unknown','지원 검토가 필요한 결과 불명']]],
+  ['S11','지원 보고서',[['preview','수집 전 범위 확인'],['redacted','정제 보고서 예시'],['saved','저장 안내 예시']]]
+];
+const state={screen:'S01',mode:'home',nodeName:'validator-a',location:'기본 위치 · 사용자 영역',draftLocation:'',notice:''};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function tag(text,kind=''){return `<span class="tag ${kind}">${esc(text)}</span>`;}
+function action(n,label,fn,{primary=false,secondary=false,description='',disabled=false,approval=false,enterDefault=false}={}){return `<button type="button" data-action="${esc(fn)}" data-shortcut="${n}" ${primary?'data-primary="true"':''} ${approval?'data-approval="true"':''} ${enterDefault?'data-enter-default="true"':''} class="${primary?'primary ':''}${secondary?'secondary':''}" ${disabled?'disabled':''}><span class="num">${n}.</span>${esc(label)}${enterDefault?' <span class="small muted">· Enter 기본 N</span>':''}${approval?'<span class="desc">승인하려면 번호 또는 버튼을 명시적으로 선택 · Enter는 승인하지 않음</span>':''}${description?`<span class="desc">${esc(description)}</span>`:''}</button>`;}
+function actions(...buttons){return `<div class="actions">${buttons.join('')}</div>`;}
+function card(label,value,detail=''){return `<div class="card"><div class="label">${esc(label)}</div><div class="value">${value}</div>${detail?`<div class="meta">${esc(detail)}</div>`:''}</div>`;}
+function callout(content,kind=''){return `<div class="callout ${kind}">${content}</div>`;}
+function kv(rows){return `<dl class="kv">${rows.map(([a,b])=>`<dt>${esc(a)}</dt><dd>${b}</dd>`).join('')}</dl>`;}
+function title(text,lead){return `<h1 tabindex="-1" id="screen-title">${text}</h1><p class="lead">${lead}</p>`;}
+function step(number,text,status,detail,active=false){return `<div class="step"><span class="stepmark ${active?'active':''}">${number}</span><div class="stepbody"><div class="steptitle"><span>${text}</span>${tag(status,active?'info':'')}</div><div class="meta">${detail}</div></div></div>`;}
+function go(screen,mode){const d=screenDefinitions.find(x=>x[0]===screen);state.screen=screen;state.mode=mode||d[2][0][0];state.notice='';render();}
+function render(){
+ const id=state.screen,m=state.mode;
+ const definition=screenDefinitions.find(x=>x[0]===id);
+ let html='';
+ if(id==='S01'){
+  html=title('어떤 작업을 할까요?','받은 자료로 설치하고, 등록한 노드를 같은 화면에서 관리합니다.');
+  html+=`<div class="chiprow">${tag('등록 노드 1 · 예시')}${tag('이어갈 설치 1 · 예시')}${tag('실제 상태 조회 안 함','warn')}</div>`;
+  html+=actions(action(1,'새 노드 설치','new',{primary:true,description:'받은 준비자료 확인부터 시작'}),action(2,'중단한 설치 이어하기','resume',{description:'남은 단계와 현재 상태부터 확인'}),action(3,'내 노드 관리','nodes',{description:'등록 목록에서 선택 · 목록 진입만으로 시작하지 않음'}),action(4,'도움말','help'));
+  if(m==='help')html+=callout('<strong>설치 담당자</strong>는 승인된 자료와 별도로 전달받은 신뢰키를 준비합니다. 네트워크·키 자료를 새로 만드는 일은 네트워크 관리자 절차로 안내합니다.<br><br>현재 우선 범위: macOS 사용자 LaunchAgent, 설치·조회·중지·새 시작·지원 보고서.<br>후속 범위: Linux/systemd, Docker, LaunchDaemon, 제거·업그레이드·저장소 복구. 지원되지 않는 작업은 실행 메뉴에 넣지 않습니다.');
+ }
+ if(id==='S02'){
+  html=title('설치 준비자료를 확인합니다','승인된 자료를 받아 설치하는 담당자 흐름입니다. 아직 설치하거나 키를 만들지 않습니다.');
+  html+=kv([['공급 패키지','bxdl-macos-arm64.tar.gz <span class="muted">· 예시 이름</span>'],['신뢰 기준','별도 경로로 받은 신뢰키 + 승인된 engine lock'],['네트워크 자료','승인된 네트워크·노드 설정'],['자격 자료',m==='ready'?'선택한 노드에 필요한 자료가 있는 예시':'<span style="color:var(--amber)">미제공 · 네트워크 관리자에게 요청</span>']]);
+  html+=callout('패키지 안의 키를 그 패키지의 신뢰 근거로 사용하지 않습니다. 자료 검사 결과와 출처를 구분해 표시합니다.');
+  if(m==='missing')html+=callout('<strong>계속하려면 자격 자료가 필요합니다.</strong><br>요청할 항목: 선택할 노드의 승인된 설정·자격 자료와 전달 안내. 비밀키를 이 화면에 직접 입력하도록 요구하지 않습니다.','warn');
+  else html+=card('검사 결과 화면의 예시',tag('필수 자료 확인 상태','ok'),'이 시안은 자료를 읽거나 검증하지 않습니다. 실제 구현은 서명·해시·노드 대응·경로 접근을 검사해야 합니다.');
+  html+=actions(action(1,m==='ready'?'내 노드 설정으로 계속':'자료가 갖춰진 사례 보기',m==='ready'?'settings':'supply-ready',{primary:true}),action(2,'어떤 자료를 요청해야 하나요?','supply-help'),action(3,'여기서 나중에 계속','pause',{secondary:true}));
+  if(state.notice)html+=callout(esc(state.notice));
+ }
+ if(id==='S03'){
+  html=title('내 노드와 저장 위치를 확인합니다','승인 자료의 체인·노드 값을 보여줍니다. 설치 담당자는 허용된 설정만 바꿉니다.');
+  html+=kv([['설치할 노드',esc(state.nodeName)+' · 승인 목록에서 선택'],['네트워크','사내 검증망 · 예시'],['데이터 위치',esc(state.location)],['서비스 방식','macOS · 현재 사용자 LaunchAgent'],['고급 설정','포트·TLS 형식·archive·참여 방식 — 승인 범위 안에서만 수정']]);
+  html+=callout('기본 위치는 실행 전에 실제 접근 가능 여부를 검사합니다. Mac 로그인 세션이 끝나면 서비스도 유지된다고 보장하지 않습니다. 장기 무인 운영은 후속 범위입니다.');
+  if(m==='edit')html+=`<div class="card"><div class="formrow"><label for="location">저장 위치 표시명 · 시안 입력, 경로 접근 없음</label><input id="location" maxlength="120" value="${esc(state.location)}" autocomplete="off"></div><p class="small muted">항목 하나를 수정해도 다시 문답 처음으로 돌아가지 않습니다. 영향받은 계획은 재검토합니다.</p></div>`;
+  html+=actions(action(1,m==='edit'?'수정한 설정 검토':'설치 계획 보기',m==='edit'?'save-location':'review',{primary:true}),action(2,m==='edit'?'수정 취소':'저장 위치 수정',m==='edit'?'settings':'edit'),action(3,'여기서 나중에 계속','pause',{secondary:true}));
+ }
+ if(id==='S04'){
+  html=title('이 계획으로 설치할까요?','자료와 설정을 연결해 실행 전에 한 번 더 보여줍니다.');
+  html+=kv([['노드',esc(state.nodeName)],['설치·등록','검증한 패키지 설치 + 해당 노드 등록'],['보관할 자료','V2 등록에 필요한 공급 자료를 관리 영역에 고정'],['데이터 위치',esc(state.location)],['이 단계의 범위','설치·등록까지 · 초기화와 시작은 다음에 각각 확인']]);
+  html+=callout('취소는 이번 설치 실행을 하지 않는 선택입니다. 이미 완료된 작업을 되돌리는 기능이 아닙니다.','warn');
+  if(m==='confirm')html+=`<div class="confirm"><strong>설치·등록 확인 · 기본 N</strong><p>선택한 노드와 저장 위치로 설치·등록을 진행합니다. 이 시안에서는 다음 화면만 표시합니다.</p>${actions(action(1,'설치·등록 승인 예시','installed',{approval:true}),action(2,'승인하지 않고 검토로','review',{primary:true,enterDefault:true}))}</div>`;
+  else html+=actions(action(1,'설치·등록 확인으로','install-confirm',{primary:true}),action(2,'설정 항목 수정','settings'),action(3,'나중에 계속','pause',{secondary:true}));
+ }
+ if(id==='S05'){
+  const initialized=['initialized','start-confirm','ready'].includes(m),ready=m==='ready';
+  html=title(ready?'로컬 노드가 준비된 예시입니다':'다음 단계는 별도 승인이 필요합니다','각 단계의 실행 범위와 완료 기록을 구분합니다. 아래 상태는 화면 설명용입니다.');
+  html+=step('1','설치·등록','완료 예시','관리 영역에 자료 고정 · 아직 시작하지 않음');
+  html+=step('2','노드 초기화',initialized?'완료 예시':'승인 대기',initialized?'초기 데이터와 genesis 기록이 생성된 예시':'데이터를 생성하는 작업 · 별도 확인 필요',!initialized);
+  html+=step('3','노드 시작',ready?'로컬 준비 예시':'미실행',ready?'로컬 READY · 네트워크 합의는 아직 확인하지 않음':'서비스를 실행하는 작업 · 별도 확인 필요',initialized&&!ready);
+  if(m==='init-confirm')html+=`<div class="confirm"><strong>초기화를 승인할까요? · 기본 N</strong><p>${esc(state.nodeName)}의 데이터 위치에 초기 데이터를 생성합니다. 기존 데이터가 있거나 결과를 모르면 자동 재초기화하지 않습니다.</p>${actions(action(1,'초기화 승인 예시','initialized',{approval:true}),action(2,'지금은 초기화하지 않기','installed',{primary:true,enterDefault:true}))}</div>`;
+  else if(m==='start-confirm')html+=`<div class="confirm"><strong>노드 시작을 승인할까요? · 기본 N</strong><p>서비스와 엔진을 실행하고 로컬 준비 상태를 기다립니다. 이 Mac의 사용자 로그인 세션에 연결됩니다.</p>${actions(action(1,'시작 승인 → 준비 완료 사례 보기','running',{approval:true}),action(2,'지금은 시작하지 않기','initialized',{primary:true,enterDefault:true}))}</div>`;
+  else if(ready)html+=actions(action(1,'이 노드 관리로 이동','operations',{primary:true}),action(2,'다른 준비 상태 사례 보기','wait-error'));
+  else html+=actions(action(1,initialized?'노드 시작 확인으로':'초기화 확인으로',initialized?'start-confirm':'init-confirm',{primary:true}),action(2,'여기서 나중에 계속','pause',{secondary:true}));
+  html+=callout('화면을 종료해도 이미 완료된 설치·초기화는 되돌아가지 않습니다. 다음 진입 때 실제 작업 기록과 상태를 다시 확인합니다.');
+ }
+ if(id==='S06'){
+  html=title('중단한 지점부터 이어갑니다','남아 있는 기록과 현재 상태를 대조한 뒤 다음 행동을 제시합니다.');
+  html+=kv([['설치 기록','validator-a · 예시 기록'],['마지막 기록','설치·등록 완료 예시'],['다음 예정','초기화 승인'],['보존할 자료','완료 후에도 product JSON과 작업 기록 보존 · 캐시 삭제 대상 아님'],['현재 조회',m==='paused'?'아직 조회하지 않음':m==='unknown'?'실행 결과를 확정할 수 없음':'실제 상태와 대조한 결과의 예시']]);
+  if(m==='unknown')html+=callout('<strong>이전 작업 결과를 확인할 수 없습니다.</strong><br>다시 초기화하거나 강제로 잠금을 해제하지 않습니다. 조회 또는 지원 보고서로 이어갑니다.','error');
+  else html+=callout(m==='paused'?'중단한 기록만으로 다음 작업을 실행하지 않습니다. 먼저 설치 자료·등록·작업 상태를 확인합니다.':'재개 가능한 상태의 예시입니다. 초기화는 다시 명시적으로 승인해야 합니다.');
+  html+=actions(action(1,m==='unknown'?'지원 검토 화면으로':m==='paused'?'현재 상태 다시 확인하는 사례 보기':'초기화 대기로 계속',m==='unknown'?'unknown-error':m==='paused'?'reconcile':'installed',{primary:true}),action(2,'홈으로 돌아가기','home',{secondary:true}));
+ }
+ if(id==='S07'){
+  html=title('관리할 노드를 선택하세요','목록의 등록 정보와 이번에 조회한 실행 상태를 구분합니다.');
+  const status=m==='cached'?'미조회':m==='missing'?'경로 접근 불가':'실행 중 · 로컬 준비 완료 예시';
+  html+=`<div class="card"><div class="steptitle"><strong>${esc(state.nodeName)}</strong>${tag(status,m==='observed'?'ok':'warn')}</div><p class="small muted">사내 검증망 · macOS LaunchAgent</p><div class="meta">${m==='cached'?'등록 캐시만 표시 · 마지막 실행 상태는 현재 상태가 아닙니다.':m==='missing'?'등록은 남아 있음 · 파일이 없다고 등록을 자동 삭제하지 않습니다.':'현재 조회 시각 예시 10:20:00 · 합의 상태 미확인'}</div></div>`;
+  html+=actions(action(1,'노드 열기',m==='observed'?'operations':m==='missing'?'path-error':'operations-unobserved',{primary:true}),action(2,'실행 상태 조회 사례 보기','list-refresh'),action(3,'기존 등록 위치 연결 안내','relink'),action(4,'홈으로','home',{secondary:true}));
+  if(state.notice)html+=callout(esc(state.notice),'warn');
+ }
+ if(id==='S08'){
+  html=title(esc(state.nodeName),'현재 상태와 지금 할 수 있는 행동을 먼저 보여줍니다.');
+  const unobserved=m==='unobserved',stale=m==='stale',waiting=m==='waiting',stopped=m==='stopped';
+  html+=`<div class="grid">${card('현재 노드 상태',unobserved?'아직 조회하지 않음':stale?'조회할 수 없음':waiting?'시작 확인 중':stopped?'정상 중지 확인 예시':'실행 중 예시',unobserved?'등록 캐시만 표시 · 현재 실행 상태 미확인':stale?'현재 READY라고 판단하지 않음':'조회 시각 예시 10:20:00')}${card('로컬 준비 상태',unobserved||stale?'현재 상태 미확인':waiting?'아직 준비되지 않음':stopped?'해당 없음':'준비 완료 예시',unobserved||stale?'마지막 관측: 10:05:00 · 당시 READY · 현재 상태 아님':'네트워크 합의 여부와 별개')}</div>`;
+  html+=kv([['네트워크 합의','아직 확인하지 않음 · 로컬 READY로 합의를 추정하지 않음'],['운용 방식','현재 Mac 로그인 세션 · LaunchAgent'],['기록 범위','노드·서비스·로컬 준비 상태의 관측 시각을 구분']]);
+  if(unobserved)html+=callout('노드를 선택했지만 실행 상태는 아직 조회하지 않았습니다. 새로 확인한 뒤 가능한 작업을 안내합니다.');
+  if(stale)html+=callout('현재 상태를 읽지 못했습니다. 먼저 다시 조회하거나 진단 정보를 확인하세요. 마지막 READY는 과거 관측입니다.','warn');
+  if(waiting)html+=callout('화면의 대기 시간이 끝났습니다. 노드 시작 실패로 확정하지 않으며 다시 시작하지 않습니다. 상태를 다시 확인할 수 있습니다.','warn');
+  html+=actions(action(1,'상태 새로 확인하는 사례 보기','refresh',{primary:true}),action(2,unobserved?'상태 확인 후 노드 제어 가능':stopped?'같은 DB로 새 시작 확인':stale?'조회 실패 원인과 다음 행동':'노드 중지 확인',stopped?'restart-confirm':stale?'read-error':'stop-confirm',{disabled:unobserved}),action(3,'최근 기록 보기','logs'),action(4,'지원 보고서','report'),action(5,'상세 정보','details'),action(6,'노드 목록으로','nodes',{secondary:true}));
+  if(state.notice)html+=callout(esc(state.notice));
+ }
+ if(id==='S09'){
+  html=title('정상 종료를 확인한 뒤 새로 시작합니다','같은 데이터를 유지합니다. 별도 운영 절차에서 중지와 새 시작을 나누어 확인합니다.');
+  html+=kv([['노드',esc(state.nodeName)],['데이터','기존 DB와 genesis 유지'],['설치 기록','완료 기록 유지 · 설치 journal을 Pending으로 되돌리지 않음'],['현재 단계',m==='stop-confirm'?'중지 승인 전':m==='stopping'?'종료 확인 중 · 새 시작 불가':'정상 종료 확인 예시']]);
+  if(m==='stop-confirm')html+=`<div class="confirm"><strong>노드를 중지할까요? · 기본 N</strong><p>선택한 노드의 실행 시도에 정상 종료를 요청합니다. 승인 뒤 다른 실행 시도로 바뀌면 승인을 폐기하고 다시 확인합니다. 화면 종료와 노드 중지는 다른 행동입니다.</p>${actions(action(1,'중지 승인 예시','stopping',{approval:true}),action(2,'중지하지 않고 돌아가기','operations',{primary:true,enterDefault:true}))}</div>`;
+  if(m==='stopping'){
+   html+=callout('선택한 실행 시도의 종료 요청 후 프로세스와 서비스 상태를 확인합니다. 아직 종료가 확인되지 않아 새 시작을 허용하지 않습니다.','warn');
+   html+=callout('시안 탐색 안내: 정상 종료가 관측된 별도 사례는 우측 보기 모드에서 “정상 종료 확인 후”를 선택하세요. 사용자가 완료 상태를 강제로 확정하는 조작이 아닙니다.');
+   html+=actions(action(1,'종료 상태 재조회 예시','stop-recheck',{primary:true}),action(2,'같은 DB로 새 시작','restart-confirm',{disabled:true}),action(3,'지원 보고서','report'));
+   if(state.notice)html+=callout(esc(state.notice));
+  }
+  if(m==='stopped')html+=actions(action(1,'같은 DB로 새 시작 확인','restart-confirm',{primary:true}),action(2,'중지한 상태로 관리 화면으로','operations-stopped'));
+  if(m==='restart-confirm')html+=`<div class="confirm"><strong>같은 DB로 새 시작을 승인할까요? · 기본 N</strong><p>새 실행 시도를 만듭니다. 초기화는 수행하지 않습니다. 시작 직전에 기존 실행 부재와 잠금 상태를 다시 확인합니다.</p>${actions(action(1,'새 시작 승인 → 준비 완료 사례 보기','operations',{approval:true}),action(2,'새 시작 취소 · 중지 상태 유지','stopped',{primary:true,enterDefault:true}))}</div>`;
+ }
+ if(id==='S10'){
+  const missing=m==='missing',timeout=m==='timeout',mismatch=m==='cli-mismatch',stopPending=m==='stop-unconfirmed';
+  if(m==='read-failure'){
+   html=title('현재 상태를 읽을 수 없습니다','조회 실패만으로 이전 작업을 결과 불명(UNKNOWN)으로 바꾸지 않습니다.');
+   html+=kv([['문제','서비스·엔진의 최신 관측을 가져오지 못함'],['이미 한 일','조회 요청만 수행한 사례 · 새로운 시작·중지 요청 없음'],['지금 할 수 있는 일','재조회·접근 권한 확인·정제 보고서 확인']]);
+   html+=callout('마지막 READY는 과거 관측으로만 남깁니다. 현재 상태를 확인하기 전 시작이나 중지를 임의 실행하지 않습니다.','warn');
+   html+=actions(action(1,'현재 상태를 다시 확인하는 사례 보기','refresh',{primary:true}),action(2,'지원 보고서 범위 확인','report'),action(3,'노드 목록으로','nodes',{secondary:true}));
+  } else {
+  html=title(missing?'필요한 자료를 찾을 수 없습니다':timeout?'정해진 대기 시간이 끝났습니다':mismatch?'설치된 CLI와 실행 파일이 일치하지 않습니다':stopPending?'정상 종료를 먼저 확인해야 합니다':'작업 결과를 확인할 수 없습니다',missing?'문제가 있는 항목만 수정할 수 있습니다.':timeout?'서비스 실패 여부와 화면의 대기 종료는 다른 상태입니다.':mismatch?'설치된 CLI와 바이트·해시가 같다고 확인하지 못하면 시작하지 않습니다.':stopPending?'종료 요청을 보냈다는 사실만으로 새로 시작하지 않습니다.':'안전한 재실행 여부를 판단할 근거가 부족합니다.');
+  html+=kv([['문제',missing?'자격 자료 미제공 또는 원본 경로 접근 불가':timeout?'시작 시도는 있지만 제한 시간 안에 로컬 READY를 관측하지 못함':mismatch?'현재 console CLI와 설치된 CLI의 바이트·SHA-256 불일치 또는 동일성 미확인':stopPending?'프로세스·서비스의 종료가 아직 확인되지 않음':'기존 작업의 완료·실행 상태가 일치하지 않음'],['이미 한 일',missing?'자료 확인까지만 · 설치·초기화·시작 안 함':timeout?'시작 승인과 요청 완료 · 실행 결과는 추가 조회 필요':mismatch?'등록 정보 조회까지 · 새로운 실행 요청 안 함':stopPending?'정상 종료 요청까지 · 새 시작 안 함':'확실히 확인된 완료 기록만 표시 · 불명 단계는 그대로 유지'],['지금 할 수 있는 일',missing?'자료 위치 수정 또는 관리자에게 요청':timeout?'상태 재조회·추가 대기·최근 기록 확인':mismatch?'설치된 패키지의 CLI 위치·사용 방법 안내 확인':stopPending?'정상 종료 상태 재조회 또는 지원 보고서':'조회·정제 보고서 생성·지원 검토']]);
+  html+=callout(missing?'등록 후 고정된 입력이 정상이라면 원본 경로 부재만으로 이 오류를 만들지 않습니다. 이 사례는 필요한 입력 자체가 없는 상황입니다.':timeout?'대기 만료만으로 같은 작업을 다시 시작하거나 기존 시도를 실패 처리하지 않습니다.':mismatch?'버전 문자열이 같아도 바이트·해시가 다르면 허용하지 않습니다. 기존 설치 CLI 사용 방법을 안내하며, 임의 실행 파일 자동 실행·패키지 자동 업그레이드는 하지 않습니다.':stopPending?'정상 종료를 확인하기 전 새 시작은 차단합니다. 강제 종료나 잠금 해제를 기본 복구 행동으로 제안하지 않습니다.':'자동 재초기화·강제 잠금 해제·DB 삭제를 제안하지 않습니다. 지원 검토가 끝나기 전 실행을 막습니다.',missing||timeout||stopPending?'warn':'error');
+  html+=actions(action(1,missing?'해당 자료 항목으로 이동':timeout?'현재 상태 다시 조회하는 사례 보기':mismatch?'기존 설치 CLI 안내':stopPending?'종료 확인 중 화면으로':'지원 보고서 범위 확인',missing?'new':timeout?'operations-waiting':mismatch?'cli-help':stopPending?'stopping':'report',{primary:true}),action(2,missing?'나중에 계속':timeout?'추가 대기 안내':mismatch||stopPending?'지원 보고서':'현재 기록 다시 조회 안내',missing?'pause':timeout?'wait-more':mismatch||stopPending?'report':'unknown-check'),action(3,missing?'홈으로':'노드 목록으로',missing?'home':'nodes',{secondary:true}));
+  if(state.notice)html+=callout(esc(state.notice));
+  }
+ }
+ if(id==='S11'){
+  html=title('지원에 전달할 내용을 먼저 확인하세요','비밀값과 원본 경로를 제외한 보고서 범위를 설명합니다. 전송은 자동으로 하지 않습니다.');
+  html+=kv([['포함 예정','제품·엔진 버전, 단계별 결과 코드, 관측 시각, 정제된 진단'],['제외 예정','비밀키·토큰·원본 설정·원본 로그·전체 경로'],['주의','기존 진단 원문을 그대로 내보내지 않음 · 허용한 항목만 구성'],['저장·전달','내용을 확인하고 별도로 저장 승인 · 외부 자동 전송 없음']]);
+  if(m!=='preview')html+=`<div class="card"><div class="label">정제 보고서 표시 예시 · 실제 자료 아님</div><pre class="consolelines">product: BXDL (example)
+engine: RC.3 (example)
+operation: start
+result: WAIT_TIMEOUT
+currentReadiness: NOT_OBSERVED
+observedAt: EXAMPLE_TIME
+secretValues: OMITTED
+sourcePaths: OMITTED</pre></div>`;
+  if(m==='saved')html+=callout('실제 구현의 저장 완료 안내 예시입니다. 이 HTML 시안에서는 파일을 만들거나 내려받지 않았습니다.');
+  html+=actions(action(1,m==='preview'?'정제 보고서 예시 확인':m==='redacted'?'저장 안내 예시 보기':'노드 관리로 돌아가기',m==='preview'?'report-preview':m==='redacted'?'report-saved':'operations',{primary:true}),action(2,'저장하지 않고 돌아가기','operations',{secondary:true}));
+ }
+ $('screen').innerHTML=`<div class="breadcrumb"><span class="screenid">${id}</span>BXDL / ${esc(definition[1])} / <span class="muted">예시</span></div>${html}`;
+ $('navigation').innerHTML=screenDefinitions.map(([key,name])=>`<button type="button" data-screen="${key}" ${key===id?'aria-current="page"':''}>${key} · ${esc(name)}</button>`).join('');
+ $('scenario').innerHTML=definition[2].map(([mode,label])=>`<option value="${mode}" ${mode===m?'selected':''}>${esc(label)}</option>`).join('');
+ $('scenario-note').textContent='이 선택은 화면 사례만 바꿉니다. 완료·조회·승인 표시는 실제 수행 기록이 아닙니다.';
+ $('screen-title').focus({preventScroll:true});
+ window.scrollTo({top:0,left:0,behavior:'instant'});
+}
+function act(name){
+ const routes={home:['S01','home'],help:['S01','help'],new:['S02','missing'],'supply-ready':['S02','ready'],settings:['S03','summary'],edit:['S03','edit'],review:['S04','review'],'install-confirm':['S04','confirm'],installed:['S05','installed'],'init-confirm':['S05','init-confirm'],initialized:['S05','initialized'],'start-confirm':['S05','start-confirm'],running:['S05','ready'],pause:['S06','paused'],resume:['S06','paused'],reconcile:['S06','reconcile'],nodes:['S07','cached'],'list-refresh':['S07','observed'],operations:['S08','ready'],'operations-unobserved':['S08','unobserved'],'operations-stale':['S08','stale'],'operations-waiting':['S08','waiting'],'operations-stopped':['S08','stopped'],refresh:['S08','ready'],'stop-confirm':['S09','stop-confirm'],stopping:['S09','stopping'],stopped:['S09','stopped'],'restart-confirm':['S09','restart-confirm'],'path-error':['S07','missing'],'wait-error':['S10','timeout'],'read-error':['S10','read-failure'],'unknown-error':['S10','unknown'],report:['S11','preview'],'report-preview':['S11','redacted'],'report-saved':['S11','saved']};
+ if(routes[name])return go(...routes[name]);
+ if(name==='save-location'){state.location=$('location').value.trim()||'기본 위치 · 사용자 영역';return go('S04','review');}
+ const notes={
+  'supply-help':'요청 목록 예시: 승인된 네트워크·노드 자료, 해당 노드의 자격 자료, 별도로 검증할 신뢰키와 engine lock. 현재 담당자가 새 키를 생성하거나 승인된 체인을 수정하는 흐름은 아닙니다.',
+  relink:'기존 등록 연결은 새 설치가 아닙니다. 구현 시 등록 마커·소유권·스키마를 검증하고 연결합니다. 등록 경로를 찾지 못해도 데이터나 등록을 자동 삭제하지 않습니다.',
+  logs:'최근 기록 표시 예시: 10:20:00 로컬 준비 상태 관측. 실제 구현에서는 출처와 시각을 붙이고 비밀값을 정제합니다. 전체 로그 보존·검색 정책은 후속 설계입니다.',
+  details:'상세 정보 예시: 서비스 등록, 엔진 실행, 로컬 준비, 네트워크 합의, 관측 시각을 따로 표시합니다. attempt와 nodeInstance 같은 식별자는 이 화면에서만 확장합니다.',
+  'stop-recheck':'종료 상태를 다시 읽었지만 아직 종료가 확정되지 않은 예시입니다. 새 시작은 계속 차단합니다. 정상 종료 관측 사례는 우측 보기 모드에서 별도로 선택합니다.',
+  'cli-help':'설치된 패키지의 신뢰된 CLI 위치와 그 버전에서 지원하는 명령을 안내할 자리입니다. 이 시안은 실제 경로·명령을 만들거나 실행하지 않습니다. 시작하지 않은 상태를 유지합니다.',
+  'wait-more':'추가 대기는 기존 시작 시도의 상태만 확인합니다. 새 시작 요청을 보내지 않으며 대기 취소도 노드를 중지하지 않습니다.',
+  'unknown-check':'추가 조회로도 실행 결과를 확인하지 못한 사례입니다. 상태를 자동 해제하지 않습니다. 지원 보고서를 만들거나 이후 다시 조회할 수 있습니다.'
+ };
+ state.notice=notes[name]||'';render();
+}
+document.addEventListener('click',event=>{const b=event.target.closest('button');if(!b||b.disabled)return;if(b.dataset.screen)go(b.dataset.screen);else if(b.dataset.action)act(b.dataset.action);});
+$('scenario').addEventListener('change',event=>go(state.screen,event.target.value));
+document.addEventListener('keydown',event=>{
+ if(event.altKey||event.ctrlKey||event.metaKey||event.repeat)return;
+ if(['INPUT','TEXTAREA','SELECT'].includes(event.target.tagName)||event.target.isContentEditable)return;
+ let button=null;
+ if(/^[1-9]$/.test(event.key))button=$('screen').querySelector(`[data-shortcut="${event.key}"]:not(:disabled)`);
+ else if(event.key==='Enter'){
+  const safeDefault=$('screen').querySelector('[data-enter-default="true"]:not(:disabled)');
+  if(safeDefault)button=safeDefault;
+  else if(event.target.tagName!=='BUTTON')button=$('screen').querySelector('[data-primary="true"]:not([data-approval="true"]):not(:disabled)');
+  else if(event.target.dataset.approval==='true')event.preventDefault();
+ }
+ if(button){event.preventDefault();button.click();}
+});
+render();
+</script>
+</body>
+</html>
