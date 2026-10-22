@@ -1,0 +1,520 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-22",
+  "outcome": "PASS",
+  "scope": "LOCAL_MAC_RC3_FOUR_VALIDATOR_PACKAGE_REACCEPTANCE",
+  "candidate": "nigo-engine-v0.1.0-rc.3",
+  "supplierHandoffRevision": "75c2666c2719ff39499f4772821f71d0a425d90e",
+  "product": {
+    "baseRevision": "53bb11b90d9d51aba5a7b509074046fd6ee78401",
+    "sourceFilesVerified": 65,
+    "rustSourcesMatchBase": true,
+    "cliSha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+    "cliSizeBytes": 3024064,
+    "adoptionHarnessRevision": "UNCOMMITTED_WORKTREE_PINNED_BY_FILE_HASHES",
+    "candidateAndHarnessChangesSeparate": true,
+    "harnessSources": {
+      "run_acceptance.py": "8bc56f35dad2cd3f6b5950ef5aea026a4332b37f45946ba35f0d0f04b9f96618",
+      "support.py": "f7625dd79cf9827f3f14c4d8f9acea0278a089933fba80f553c70ea7e513f0b8",
+      "fixture_guard.py": "6916dacf8d3a77aa983117e2681f5f0a941bf1554065fbd157ee51638d8f15de",
+      "prepare_fixture.py": "76e0480590c3e6d16179970d8fb6bf0ae1efb06f5ce89e49e7b6814421201fa5",
+      "candidates.py": "5fb65469750f922bd3c36472453923326be3972a83f687d64204a8a2ac161781"
+    },
+    "harnessSourcesUnchanged": true,
+    "buildIdentitySha256": "e11a16633e8ee506de509e16591401071b592be561c1070be29f8ef7a8438c56"
+  },
+  "environment": {
+    "os": "macOS",
+    "version": "26.6.2",
+    "build": "25G83",
+    "arch": "arm64",
+    "service": "USER_LAUNCHAGENT"
+  },
+  "package": {
+    "archiveSha256": "8a45cb8bf3482333ad43e8c29ad24c2adde8d6fe778eaf27fe2f5c2c842eb017",
+    "manifestSha256": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+    "cliSha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+    "candidate": "rc3",
+    "engineSource": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1",
+    "engineJarSha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+    "engineJarSizeBytes": 164088530,
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "runtimeFilesVerified": 259,
+    "revision": "53bb11b90d9d51aba5a7b509074046fd6ee78401",
+    "testOnlySigningKey": true,
+    "archiveSizeBytes": 207160872,
+    "filesVerified": 270,
+    "bytesVerified": 325299323,
+    "authenticity": "verified-external-ed25519",
+    "externalPublicKeySha256": "0f03b13417dbb9c362a8762afc7e45bedbf20a983024105b2dcbf55b4dc40f17",
+    "engineLockSha256": "2d6ebff73f8f9c741922b3324fc1d5fc162be64e53ce830cb546ee6fb5d8c344"
+  },
+  "engineInspect": {
+    "outcome": "PASS",
+    "fullIdentityMatched": true,
+    "jarRebuilt": false,
+    "rawSha256": "9516f7985d82d83f8d9a6b8f8e849d40fbfed930d1a2ba647e154c51d3cf62c1"
+  },
+  "runtime": {
+    "vendor": "Eclipse Adoptium Temurin",
+    "version": "21.0.12.1+1-LTS",
+    "kind": "full JRE",
+    "files": 259,
+    "modules": 49,
+    "lockSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+    "inventoryOrigin": "UNCHANGED_SELECTED_RUNTIME",
+    "installedCopiesRechecked": [
+      {
+        "node": "n1",
+        "runtimeFiles": 259,
+        "jarAndCliMatched": true
+      },
+      {
+        "node": "n2",
+        "runtimeFiles": 259,
+        "jarAndCliMatched": true
+      },
+      {
+        "node": "n3",
+        "runtimeFiles": 259,
+        "jarAndCliMatched": true
+      },
+      {
+        "node": "n4",
+        "runtimeFiles": 259,
+        "jarAndCliMatched": true
+      },
+      {
+        "node": "wrong-pin",
+        "runtimeFiles": 259,
+        "jarAndCliMatched": true
+      }
+    ]
+  },
+  "managedSupply": {
+    "outcome": "PASS",
+    "bindingSchema": 2,
+    "installedCopies": [
+      {
+        "node": "n1",
+        "payloadFiles": 270,
+        "bindingSchema": 2,
+        "trustCopiesMatched": true,
+        "startupSequences": 2
+      },
+      {
+        "node": "n2",
+        "payloadFiles": 270,
+        "bindingSchema": 2,
+        "trustCopiesMatched": true,
+        "startupSequences": 2
+      },
+      {
+        "node": "n3",
+        "payloadFiles": 270,
+        "bindingSchema": 2,
+        "trustCopiesMatched": true,
+        "startupSequences": 3
+      },
+      {
+        "node": "n4",
+        "payloadFiles": 270,
+        "bindingSchema": 2,
+        "trustCopiesMatched": true,
+        "startupSequences": 4
+      },
+      {
+        "node": "wrong-pin",
+        "payloadFiles": 270,
+        "bindingSchema": 2,
+        "trustCopiesMatched": true,
+        "startupSequences": 1
+      }
+    ],
+    "trustDirectoryMode": "0700",
+    "trustFileMode": "0600",
+    "trustEntries": [
+      "package.tar.gz",
+      "public-key.pem",
+      "engine-lock.json"
+    ],
+    "completePackagePayloadFilesPerCopy": 270,
+    "packageMembershipIncludesManifestSignatureAndInstallReceipt": true,
+    "startupSequencesVerified": 12,
+    "expectedStartupStages": [
+      "INPUT_PINS",
+      "PACKAGE_VERIFICATION",
+      "COLD_PREFLIGHT",
+      "NATIVE_CONFIGURATION",
+      "SNAPSHOT_VERIFICATION",
+      "FINAL_RECHECK",
+      "ENGINE_EXEC"
+    ],
+    "originalSupplyAbsentInThisFullRun": false,
+    "originalSupplyAbsenceAcceptanceReport": "2026-10-22-macos-rc3-setup.md"
+  },
+  "transactions": [
+    {
+      "id": "four-validator",
+      "outcome": "PASS",
+      "validatorCount": 4,
+      "height": 1,
+      "blockHash": "0x80d0f9ddf3afdaf96be6dc3f389d7af33c70f410f4cb30231a2d4d60a6272cb7",
+      "stateRoot": "0x706f4aea4156103336a01ccb1101ced27f3be90f13b029d99e8c10f47d924163",
+      "transactionHash": "0x08cfc76115615d3bc797d1d2c9c1f67cfbb86c394c9836aa2747e2af7073a781",
+      "nodes": [
+        "n1",
+        "n2",
+        "n3",
+        "n4"
+      ],
+      "receiptIdentityAndBlockMembershipVerified": true,
+      "rawProofSha256": "c216decc67ebeef4132d729f93045b3875e1b8abd692564738343d1bfe59301f"
+    },
+    {
+      "id": "three-validator-while-n4-stopped",
+      "outcome": "PASS",
+      "validatorCount": 3,
+      "height": 2,
+      "blockHash": "0x46e70e5701d7dba068dd82fe3df7ffd9a85164572cb6dec22c182485f5c891cb",
+      "stateRoot": "0xc91de8ee7f923554b6b0a1fdb67bb5d537555a7055a71b8034ab608a4f7246e5",
+      "transactionHash": "0x38af147da6156da8fe061425b33803c05eceb6c220aa2559fa4a10c47fbdf3f4",
+      "nodes": [
+        "n1",
+        "n2",
+        "n3"
+      ],
+      "receiptIdentityAndBlockMembershipVerified": true,
+      "rawProofSha256": "23b8f4e4e87808179dbd05229d4d5f24d6b49fd1ffdbbdef61a5347cde8c17a5"
+    },
+    {
+      "id": "after-rejoin",
+      "outcome": "PASS",
+      "validatorCount": 4,
+      "height": 3,
+      "blockHash": "0xbc0e0595a1de0d14ef9559feb759ff42f994c7dbcc734de080020e0a2513caed",
+      "stateRoot": "0xcb3c22e03778bc76468acdec001ff166a2a6da385c7b1254bbf702b7127f9a6a",
+      "transactionHash": "0x2bbfd811ae92267fab5a5db1d87b164bfbe4c23a65ec23dae6c9c8794a9e36f6",
+      "nodes": [
+        "n1",
+        "n2",
+        "n3",
+        "n4"
+      ],
+      "receiptIdentityAndBlockMembershipVerified": true,
+      "rawProofSha256": "69726753d91d565b60bf95c58e050522eb98471e1d14b7f9ba387ab863f5cfb7"
+    },
+    {
+      "id": "restored-quorum",
+      "outcome": "PASS",
+      "validatorCount": 3,
+      "height": 4,
+      "blockHash": "0xd1c60815b35cf6019d6c1cc4cfd682b731dd7ce00e1451895bc14388f261113e",
+      "stateRoot": "0xc6230b4da23a1a99975d6fe0e8eb89be7bf91fdebbc415fc9a7a5b1477f2f7e0",
+      "transactionHash": "0x9fe18169cfabb74fa3ae649c4c716dc5d052bfbb05e63d14a90ab29dee748dfd",
+      "nodes": [
+        "n1",
+        "n2",
+        "n4"
+      ],
+      "receiptIdentityAndBlockMembershipVerified": true,
+      "rawProofSha256": "8ff9741a79aa1757751fe9b311e7753730ff32a5f6df2b15b170fbc89164402b"
+    },
+    {
+      "id": "after-four-restored",
+      "outcome": "PASS",
+      "validatorCount": 4,
+      "height": 5,
+      "blockHash": "0xe9be8bfbba78aabd987523e30b369281847c30ff7bee0682877108c4f525c209",
+      "stateRoot": "0x7fcda0ba68d7d77fcb64e26eed878cbc804d30a1adec2487f2b75a4bc2fd9ced",
+      "transactionHash": "0x06e87d817582a658930f0162e2ed6348e61504526d47ad7b1060997554dc4b4a",
+      "nodes": [
+        "n1",
+        "n2",
+        "n3",
+        "n4"
+      ],
+      "receiptIdentityAndBlockMembershipVerified": true,
+      "rawProofSha256": "d98385b1e847540153d239f4492a95496e030254091487aa15b281cb660e5941"
+    },
+    {
+      "id": "same-db-restart-recovered",
+      "outcome": "PASS",
+      "validatorCount": 4,
+      "height": 6,
+      "blockHash": "0x37c5ec538ced6cfe373bbca7e56422c49796a4aad79c1b1949f94f497bc36249",
+      "stateRoot": "0xbd45c5449fb9bbf74db554ee68c4c4a3e8c933ccb45367b63f2b35d1bd92a1d0",
+      "transactionHash": "0xaf5e50edfe81fc563092d853d14789df785d65c218e6039c65deb4ef25650c11",
+      "nodes": [
+        "n1",
+        "n2",
+        "n3",
+        "n4"
+      ],
+      "receiptIdentityAndBlockMembershipVerified": true,
+      "rawProofSha256": "4b35e14d98ecfe38cd7fe4ed6af34d9525d64ad1604c3ade6c6e457d84f6e911"
+    },
+    {
+      "id": "same-db-restart-followup",
+      "outcome": "PASS",
+      "validatorCount": 4,
+      "height": 7,
+      "blockHash": "0xa30ace5b687b43c738eec488215c42b39d4f2d1f05c0ad99864c6b50c51cc8fc",
+      "stateRoot": "0xe900e533bd274574822e6f35278cba700c79c7144046b48d874c70893e9ebb01",
+      "transactionHash": "0xa13c2366f19b2c29fb0dabbb1dfa183346436dcf73edaa8d5abed4f14898483e",
+      "nodes": [
+        "n1",
+        "n2",
+        "n3",
+        "n4"
+      ],
+      "receiptIdentityAndBlockMembershipVerified": true,
+      "rawProofSha256": "cdff172944af13b63cce242f3752cda697debe9b10dd7628aabca3ec0c88984e"
+    },
+    {
+      "id": "healthy-quorum-during-wrong-pin",
+      "outcome": "PASS",
+      "validatorCount": 3,
+      "height": 8,
+      "blockHash": "0x1f011dded1a8c245c12678ffa6fdd2a886f65be4986856d9f609f2fc6deafbcc",
+      "stateRoot": "0x163149164b392c5557f55b12ab82ff880062abb7546bd81d927f4f757bb4c86c",
+      "transactionHash": "0x54e91c0846a4fe9675be0e6ed64a02878a1214c64dfa044b86c1bcc5b102267b",
+      "nodes": [
+        "n1",
+        "n2",
+        "n4"
+      ],
+      "receiptIdentityAndBlockMembershipVerified": true,
+      "rawProofSha256": "ee8ac79eea5fd7f3d162f074b52d80c9f9740628240e01e8399add67ccff820e"
+    }
+  ],
+  "submissionSummary": {
+    "uniqueTransactions": 8,
+    "totalAttempts": 9,
+    "allAcknowledged": true,
+    "explicitResubmissionNonce": 5,
+    "explicitResubmissionCount": 1,
+    "liveQuorumRecoveryNonce": 3,
+    "liveQuorumRecoveryResubmissions": 0,
+    "automaticRetries": 0,
+    "reservedNoncesNotSubmitted": [
+      8,
+      9,
+      10,
+      11
+    ]
+  },
+  "catchup": [
+    {
+      "id": "same-db-catchup",
+      "outcome": "PASS",
+      "height": 2,
+      "blockHash": "0x46e70e5701d7dba068dd82fe3df7ffd9a85164572cb6dec22c182485f5c891cb",
+      "stateRoot": "0xc91de8ee7f923554b6b0a1fdb67bb5d537555a7055a71b8034ab608a4f7246e5",
+      "nodes": [
+        "n1",
+        "n2",
+        "n3",
+        "n4"
+      ],
+      "historicalReceiptPresent": [
+        true,
+        true,
+        true,
+        false
+      ],
+      "historicalReceiptRequiredByThisCase": false,
+      "contract": "SNAPSHOT_INSTALLS_HEADER_AND_STATE_WITHOUT_HISTORICAL_BODY",
+      "canonicalHeaderAndStateVerified": true,
+      "historicalTransactionBodyReplicationClaimed": false
+    },
+    {
+      "id": "four-restored",
+      "outcome": "PASS",
+      "height": 4,
+      "blockHash": "0xd1c60815b35cf6019d6c1cc4cfd682b731dd7ce00e1451895bc14388f261113e",
+      "stateRoot": "0xc6230b4da23a1a99975d6fe0e8eb89be7bf91fdebbc415fc9a7a5b1477f2f7e0",
+      "nodes": [
+        "n1",
+        "n2",
+        "n3",
+        "n4"
+      ],
+      "historicalReceiptPresent": [
+        true,
+        true,
+        false,
+        true
+      ],
+      "historicalReceiptRequiredByThisCase": false,
+      "contract": "SNAPSHOT_INSTALLS_HEADER_AND_STATE_WITHOUT_HISTORICAL_BODY",
+      "canonicalHeaderAndStateVerified": true,
+      "historicalTransactionBodyReplicationClaimed": false
+    }
+  ],
+  "quorumObservations": [
+    {
+      "id": "twoOfFour",
+      "outcome": "PASS",
+      "seconds": 45,
+      "completed": true,
+      "transactionHash": "0x9fe18169cfabb74fa3ae649c4c716dc5d052bfbb05e63d14a90ab29dee748dfd",
+      "nonce": 3,
+      "newValidTransactionSubmitted": true,
+      "newFinality": false,
+      "roundAdvanced": true,
+      "samples": 85,
+      "elapsedSeconds": 45.31733824999998,
+      "unchangedFinalizedHeight": 3,
+      "firstRounds": [
+        0,
+        0
+      ],
+      "lastRounds": [
+        3,
+        3
+      ],
+      "unknownSamples": 0,
+      "rawObservationsSha256": "a43ba4dd7fee0fc26865835c67111578e32314ca7c8a913e6eff99ada7caeec5"
+    },
+    {
+      "id": "restartTwoOfFour",
+      "outcome": "PASS",
+      "seconds": 45,
+      "completed": true,
+      "transactionHash": "0xaf5e50edfe81fc563092d853d14789df785d65c218e6039c65deb4ef25650c11",
+      "nonce": 5,
+      "newValidTransactionSubmitted": true,
+      "newFinality": false,
+      "roundAdvanced": true,
+      "samples": 86,
+      "elapsedSeconds": 45.38106620799999,
+      "unchangedFinalizedHeight": 5,
+      "firstRounds": [
+        0,
+        0
+      ],
+      "lastRounds": [
+        3,
+        3
+      ],
+      "unknownSamples": 0,
+      "rawObservationsSha256": "749eb1d81d3e7faaa4ec01211c78537fe138aa8fcc7f4270859f6bc54e15303c"
+    }
+  ],
+  "restartRoundSkew": {
+    "stoppedViews": [
+      [
+        6,
+        0
+      ],
+      [
+        6,
+        0
+      ]
+    ],
+    "activeViews": [
+      [
+        6,
+        3
+      ],
+      [
+        6,
+        3
+      ]
+    ],
+    "confirmed": true
+  },
+  "sameDbRestartRecovery": {
+    "outcome": "PASS",
+    "sameFourDataDirectories": true,
+    "dataIdentityAndConfigsUnchanged": true,
+    "newLaunchAttempts": true,
+    "pendingNonce": 5,
+    "followupNonce": 6,
+    "pendingTransactionHash": "0xaf5e50edfe81fc563092d853d14789df785d65c218e6039c65deb4ef25650c11",
+    "explicitResubmissionCount": 1,
+    "totalSubmissionAttemptsForPendingHash": 2,
+    "databaseOrRoundReset": false,
+    "engineBytesReplaced": false,
+    "rc1ToRc2UpgradeTested": false,
+    "engineUpgradeTested": false
+  },
+  "wrongPin": {
+    "outcome": "PASS",
+    "outboundWrongPinCount": 9,
+    "faultNodePeerCount": 0,
+    "healthyValidatorCount": 3,
+    "faultNodeSyncEnabled": false,
+    "duplicateSignerRunning": false
+  },
+  "cleanup": {
+    "outcome": "PASS",
+    "normalServiceStops": 12,
+    "remaining": [],
+    "errors": [],
+    "recordedPidsChecked": 62,
+    "remainingPids": [],
+    "launchAgentsNotLoaded": 12,
+    "listeners": {
+      "outcome": "PASS",
+      "listeners": [],
+      "scope": "TCP_LISTEN",
+      "ports": [
+        28780,
+        28781,
+        28782,
+        28783,
+        29780,
+        29781,
+        29782,
+        29783
+      ]
+    },
+    "independentOsAuditOutcome": "PASS",
+    "forcedTerminationUsed": false,
+    "databaseOrRoundDeletionUsed": false
+  },
+  "automatedChecks": {
+    "outcome": "PASS",
+    "rustTests": 363,
+    "pythonTests": 50,
+    "makeCheckLogSha256": "2bb99de2d58daec79c23bbac6ee0bff51e91cba3672f43a473f144076c6df461",
+    "macReleaseBuild": "PASS",
+    "system": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.2\nBuildVersion:\t\t25G83\n",
+    "architecture": "arm64",
+    "rawSha256": "6d079f31bfe6fe1f5263a6420d9e07b8a7593887e53ef792b4eaff581161643d"
+  },
+  "independentAudit": {
+    "outcome": "PASS",
+    "rawSha256": "b31e184099d564235270ed1d05268f90243edb263f10a2dea547ef12a34d2205",
+    "independentNodeExecution": false,
+    "scope": "READ_ONLY_RECHECK_OF_TRANSACTION_PROOFS_INSTALLED_PAYLOAD_MANAGED_SUPPLY_STARTUP_STAGES_AND_OS_CLEANUP"
+  },
+  "evidence": {
+    "rawResultSha256": "5d4da75d79b96d8ed119741a71bb21cfa1825f84cd507920ed7812216a4f0d9b",
+    "preservedFiles": 154,
+    "preservedFileBytes": 208355475,
+    "preservedInventorySha256": "fb6dd4cac340f4d1f086d7126d7ebcf87291695ef2930a0b628134e317237fdd",
+    "preservedMembershipHashSizeModeVerified": true,
+    "rawMaterialsCommitted": false
+  },
+  "historicalRecords": {
+    "supplierReceiptPackageAcceptanceNotRun": "PRESERVED_AS_RECEIPT_TIME_HISTORY",
+    "supplierReceiptA7NotRun": "UNCHANGED",
+    "rc1AndRc2SnapshotsLocksSpecsAndResults": "PRESERVED",
+    "nigoRepositoryChangedByThisTask": false
+  },
+  "boundaries": {
+    "existingRc2DatabaseUpgradeTested": false,
+    "fullFourteenQuestionCancelEofHangupRerun": false,
+    "separateTargetedSetupReport": "2026-10-22-macos-rc3-setup.md",
+    "a7Complete": false,
+    "g1MComplete": false,
+    "j5Cleared": false,
+    "customerReleaseAuthorized": false,
+    "multiHostLinuxDockerLaunchDaemonSoakPerformanceTested": false,
+    "supplierCostGateHistoricalRootCause": "UNRESOLVED",
+    "scopeNote": "Fresh RC.3 databases, local Mac user LaunchAgent, development ZERO fee and test keys; READY/globalConsensus NOT_CHECKED is distinct from the transaction finality proofs."
+  }
+}

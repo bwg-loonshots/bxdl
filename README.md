@@ -14,7 +14,9 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 
 2026-10-22 후속 변경은 새 등록의 archive·engine lock·선택 신뢰 공개키를 private `trust/`에 보관하고, 시작 worker가 마지막으로 진입한 검사 단계를 status/setup/diagnose에 표시한다. 기존 V1 등록은 자동 변환하지 않는다. [등록 자료 보관과 시작 진단 설계](./design/2026-10-22-managed-supply-and-start-diagnostics.md)를 따르며 **새 RC.2 시험 package의 지정 로컬 13사례 PASS**이며, 원본 공급 경로 부재 상태의 재개·init/start/stop·동일 DB 재시작과 진단을 확인했다. [검증 결과](./results/2026-10-22-macos-managed-supply.md)에 정확한 범위를 기록했다. 이 변경으로 위 지연의 원인이나 모든 자료 경로의 접근 문제가 해결됐다고 주장하지 않는다.
 
-별도로 [NIGO RC.3 수신](./contracts/nigo/engine-rc3-2026-10-22/README.md)의 archive22파일·계약·선정 Temurin 실제 `engine-info` 대조를 통과했다. **RC.3는 아직 제품에 선택하지 않았고 package/A7 인수는 NOT_RUN**이다. 현재 선택한 RC.2 lock과 기존 인수 이력을 유지한다.
+별도로 [NIGO RC.3 수신](./contracts/nigo/engine-rc3-2026-10-22/README.md)의 archive22파일·계약·선정 Temurin 실제 `engine-info` 대조를 통과했다. 이후 **RC.3를 새 Mac 개발 패키지 후보로 명시 선택**하고 [전용 engine lock](./packaging/engine-lock.rc3-temurin-development.json)·[package spec](./packaging/package-spec.rc3-temurin.example.json)을 추가했다. [재인수 설계](./design/2026-10-22-rc3-package-reacceptance.md)에 따른 같은 새 서명 archive의 **4-validator·두 정족수 복구·wrong-pin과 원본 공급 경로 부재 상태의 setup 13사례가 PASS**다. [네트워크·복구 결과](./results/2026-10-22-macos-rc3-package.md)와 [setup 결과](./results/2026-10-22-macos-rc3-setup.md)에 실제 identity·정상 종료·독립 정리 검증을 기록했다.
+
+이번 setup은 제품 설정을 가져온 뒤 공급 자료 문답과 재개·초기화·운용을 시험했으며 전체 14문답·cancel/hangup 경로를 다시 실행하지 않았다. **offline Storage A7은 NOT_RUN**, 기존 설치 upgrade와 전체 G1-M은 후속이다. RC.2 결과와 RC.3 수신 당시의 미선택 기록은 각 시점의 이력으로 보존한다.
 
 ## 구현한 명령
 
@@ -31,7 +33,7 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 | `bxdl preflight --config <instance.json> --engine-config <node.json> ...` | 제품과 명시 QBFT 설정의 일치를 확인한 뒤 pinned 엔진 cold 검사 |
 | `bxdl setup [--workspace <dir>]` | 설정 입력·수정·저장·재개와 로컬 검사, 새 제품 JSON 내보내기 |
 | `bxdl config fingerprint --certificate <leaf.pem>` | 공개 인증서의 NIGO MTLS pin 계산 |
-| `bxdl setup --network --workspace <new-session> --from <instance.json> --network-file <network.json>` | RC.1/RC.2 공통 native 계약의 설정 준비 및 재개 |
+| `bxdl setup --network --workspace <new-session> --from <instance.json> --network-file <network.json>` | RC.1~RC.3 공통 native 계약의 설정 준비 및 재개 |
 | `bxdl setup --install --workspace <new-session>` | Mac 터미널에서 자료·계획을 저장하고 설치/등록·초기화·시작을 각각 명시 선택. `--resume`으로 같은 세션 재검증 |
 | `bxdl instance register --instance <new-dir> ...` | 설치본·원본 archive·신뢰 key·제품/native 설정을 검증하고, 새 V2 등록의 공급 자료 보관본과 private 기록 생성 |
 | `bxdl instance show --instance <dir>` | 저장된 초기화 상태와 현재 작업 잠금 관측. 노드 health 검사가 아님 |
@@ -109,7 +111,8 @@ Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux targe
 - [setup 설치 흐름·소유 결과·재개 설계](./design/2026-09-27-setup-install-flow.md)
 - [등록 자료 보관과 시작 진단 설계](./design/2026-10-22-managed-supply-and-start-diagnostics.md)
 - [원본 공급 경로 부재 상태의 Mac 검증](./results/2026-10-22-macos-managed-supply.md)
-- [RC.3 수신 검증과 미선택 범위](./contracts/nigo/engine-rc3-2026-10-22/README.md)
+- [RC.3 수신 검증과 당시 범위](./contracts/nigo/engine-rc3-2026-10-22/README.md)
+- [RC.3 선택과 Mac 패키지 재인수](./design/2026-10-22-rc3-package-reacceptance.md)
 - [현재 구현·검증 상태](./docs/implementation-status.md)
 - [설치 도우미·설정 초안 저장과 재개](./docs/setup.md)
 - [패키지 입력·서명·형식](./docs/package-format.md)

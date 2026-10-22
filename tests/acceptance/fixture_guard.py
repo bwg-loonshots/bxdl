@@ -128,7 +128,7 @@ def _validate_inputs(args):
              and summary.get("engineJarSha256") == candidate["jarSha256"]
              and summary.get("javaSha256") == JAVA_SHA, "PREPARATION_IDENTITY")
     _require(summary.get("candidate", "rc1") == candidate_name, "CANDIDATE_IDENTITY")
-    if candidate_name == "rc2":
+    if candidate_name in ("rc2", "rc3"):
         _require(summary.get("engineJarSizeBytes") == candidate["jarSizeBytes"], "JAR_SIZE")
     chain = public_json("chain.json")
     network = public_json("network.json")

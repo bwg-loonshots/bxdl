@@ -53,7 +53,7 @@ class Acceptance:
         self.candidate = candidate_for(args)
         self.candidate_name = getattr(args, "candidate", "rc1")
         self.scenario = getattr(args, "scenario", "full")
-        h.require(self.scenario == "full" or self.candidate_name == "rc2", "RC2_RECOVERY_CASE_ONLY")
+        h.require(self.scenario == "full" or self.candidate_name in ("rc2", "rc3"), "RC2_OR_RC3_RECOVERY_CASE_ONLY")
         self.input_pins = fg.validate_inputs(args)
         self.root = args.output
         self.root.mkdir(mode=0o700)
@@ -446,7 +446,7 @@ class Acceptance:
         tx2 = self.submit(2, good[0]["port"])
         self.finality(good, tx2, "after-rejoin")
         self.two_of_four(good)
-        if self.candidate_name == "rc2":
+        if self.candidate_name in ("rc2", "rc3"):
             self.same_db_recovery(good, 5, 6)
             self.wrong_pin(good, nonce=7)
         else:
@@ -577,7 +577,7 @@ class Acceptance:
         self.finality(good, tx4, "after-four-restored")
 
     def same_db_recovery(self, good, pending_nonce, followup_nonce):
-        h.require(self.candidate_name == "rc2", "RC2_RECOVERY_CASE_ONLY")
+        h.require(self.candidate_name in ("rc2", "rc3"), "RC2_OR_RC3_RECOVERY_CASE_ONLY")
         # A new, independent skew period follows a fully confirmed 4-node tx.
         # There is no carry-over timeout adoption and no data/reset/re-register.
         original = {node["label"]: {"attemptId": node["lastAttempt"],
@@ -644,6 +644,7 @@ class Acceptance:
             "totalSubmissionAttemptsForPendingHash": self.submissions[pending_nonce],
             "databaseOrRoundReset": False, "engineBytesReplaced": False,
             "rc1ToRc2UpgradeTested": False,
+            "engineUpgradeTested": False,
         }
 
     def wrong_pin(self, good, nonce=5):
@@ -704,7 +705,17 @@ class Acceptance:
                            "childPids": children})
         remaining = sorted(self.running | set(self.unresolved_mutations))
         self.results["cleanup"] = {"remaining": remaining, "errors": errors}
-        return not errors and not remaining
+        # Keep legacy cleanup shape unchanged. A missing/failed OS observation
+        # must not turn absent bookkeeping into evidence of released listeners.
+        try:
+            ports = sorted({node[field] for node in self.fixture["nodes"]
+                            for field in ("httpPort", "p2pPort")})
+            listeners = {**h.observe_listeners(ports), "ports": ports}
+        except Exception:
+            listeners = {"outcome": "UNKNOWN", "scope": "TCP_LISTEN", "listeners": [],
+                         "reason": "LISTENER_OBSERVATION_FAILED"}
+        self.results["cleanupListeners"] = listeners
+        return not errors and not remaining and listeners["outcome"] == "PASS"
 
 
 def main():

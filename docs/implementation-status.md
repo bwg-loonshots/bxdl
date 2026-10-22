@@ -10,13 +10,21 @@ Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후
 
 **새 RC.2 시험 package의 지정 로컬 lifecycle 13사례가 PASS**다. 원본 공급 세 경로 부재 상태의 재개·init/start/stop·진단·동일 DB 재시작을 확인했다. 독립 검사에서 기록된15 PID 잔존0·두 job NOT_LOADED·시험2포트 LISTEN0·설치 inventory270파일 일치를 확인했다. Rust363개·Python34개·fmt/clippy·Mac release build·Linux 타입 검사도 PASS다. [새 검증 기록](../results/2026-10-22-macos-managed-supply.md)을 따른다. RC.2 Run A/B와 기존 package PASS/INCOMPLETE는 당시 bytes의 이력으로 보존한다.
 
-## 새 RC.3 수신 — 제품 선택 전
+## 현재 선택한 RC.3 — 지정 Mac 패키지 재인수 PASS
 
 [RC.3 snapshot](../contracts/nigo/engine-rc3-2026-10-22/README.md)은 source `7ec5abd8…`·JAR `05a38bd1…`의 별도 수신 기록이다. 원격 archive22파일/21checksum, 원본 manifest·계약과 고정 source, Console fingerprint/assets를 대조했고 선정 Temurin의 실제 `engine-info` 전체 identity가 일치했다. JRE259파일·49모듈을 확인하고 실행 후 공급22파일의 불변을 검사했다.
 
-**수신 검증 PASS / 명시 제품 lock 선택 미수행 / package·A7 NOT_RUN**이다. 노드·init·Storage inspect/repair·서비스를 실행하지 않았다. RC.2 선택과 제품 인수 이력을 유지하며 RC.3의 공급자 Storage/QBFT 결과를 소비자 제품 인수로 승계하지 않는다. RC.3 계약·Console fingerprint 변경과 offline Storage orchestration은 별도 채택·구현·인수 대상이다.
+수신 검증은 **PASS**이며 당시에는 제품 후보를 선택하거나 노드·init·Storage inspect/repair·서비스를 실행하지 않았다. snapshot의 미선택·package/A7 NOT_RUN은 그 시점의 기록으로 보존한다.
 
-## 선택한 엔진과 Mac 패키지 인수 이력 — 2026-10-21 RC.2
+이후 사용자 요청으로 RC.3를 명시 선택하고 [전용 engine lock](../packaging/engine-lock.rc3-temurin-development.json)·[package spec](../packaging/package-spec.rc3-temurin.example.json)을 추가했다. 제품 source는 PR #13의 `53bb11b9`이며 선정 Temurin full JRE를 유지한다. [재인수 설계](../design/2026-10-22-rc3-package-reacceptance.md)에 따른 같은 새 서명 archive의 **4-validator·두 정족수 복구 경로·wrong-pin과 원본 공급 경로 부재 상태의 setup 13사례가 PASS**다.
+
+[4-validator 결과](../results/2026-10-22-macos-rc3-package.md)는 거래8개·제출9회, 독립된 두45초 정족수 상실 후 실시간 무재제출 복구와 같은 네 DB 전체 재시작·명시1회 재제출 복구를 포함한다. 정상 stop12회와 독립 검사에서 기록된62 PID 잔존0·12개 job NOT_LOADED·8포트 LISTEN0을 확인했다. 5개 설치본의 각270파일과 V2 보관 자료도 대조했다.
+
+[같은 archive의 setup 결과](../results/2026-10-22-macos-rc3-setup.md)는 원본 archive·lock·공개키 세 경로가 없는 상태의 재개·init/start·진단·정상 stop·같은 DB 재시작 13사례다. 정상 stop2회와 기록된14 PID 잔존0·2개 job NOT_LOADED·2포트 LISTEN0을 확인했다. 제품 설정을 가져온 뒤 공급 자료 문답을 진행했으며 전체14문답·cancel/hangup 경로는 이번에 재실행하지 않았다. Rust363개·Python50개·fmt·Clippy·Mac release build가 PASS다.
+
+RC.2 결과와 공급자의 RC.3 Storage/QBFT 검증은 각 이력으로 보존한다. **offline Storage A7은 별도 구현·인수 대상이며 NOT_RUN**이다. 기존 설치 upgrade와 전체 G1-M도 후속이다.
+
+## 이전 엔진 선택과 Mac 패키지 인수 이력 — 2026-10-21 RC.2
 
 NIGO `nigo-engine-v0.1.0-rc.2`(source `67c9f8e5`, JAR `b1aa84cb…`)를 명시 선택했다.
 [수신 snapshot](../contracts/nigo/engine-rc2-2026-10-21/README.md)과 RC.2 전용 lock/spec을 추가하고,
@@ -112,7 +120,7 @@ TLS 저장소 형식과 새 네트워크/참가·합의·archive 정책 선택, 
 - `engine preflight`: 명시 NIGO native config/chain을 입력받는 cold JVM 검사. timeout/출력 한도·환경 분리, engine exit 3을 BXDL INCOMPLETE/exit 5로 보존.
 - `config validate`/기본 `preflight`: BXDL 제품 설정·로컬 metadata 검사. 엔진 옵션이 없는 preflight는 엔진을 실행하지 않는다.
 - 결합 `preflight`: 제품/local 검사, 명시 QBFT VALIDATOR/MTLS 설정과 ID·경로·endpoint·키 참조 일치, 같은 native snapshot의 pinned engine cold 검사. 제품/설정/chain hash와 결과를 연결한다. 로컬 FAIL·불일치는 JVM 실행 전에 거부한다.
-- `config fingerprint` / `setup --network`: 공개 leaf 인증서 pin 계산·공통 validator/peer 목록에서 RC.1/RC.2 공통 native 계약의 설정 준비. 엔진·네트워크 검증과 구분한다.
+- `config fingerprint` / `setup --network`: 공개 leaf 인증서 pin 계산·공통 validator/peer 목록에서 RC.1~RC.3 공통 native 계약의 설정 준비. 엔진·네트워크 검증과 구분한다.
 - `setup`: 14개 제품 설정 입력·수정·checkpoint·재개·기존 JSON 가져오기·새 JSON 출력. 파일 저장 성공은 engine/service 준비 완료가 아니다.
 - `setup --install --workspace`: Mac arm64 TTY에서 archive·신뢰 key·lock·native 입력과 제품 설정을 계획으로 고정하고, apply/init/start를 각각 확인한 뒤 기존 API로 연결한다. 별도 세션 잠금·소유 증거·완료 결과를 확인해 명시 재개한다. 기본 초안 모드는 유지한다.
 - `instance register/show`: archive·외부 key·engine lock·전체 설치 manifest·제품/native/cold 결과를 고정해 private 등록 journal 생성, 저장 상태와 advisory busy 조회. 새 V2 등록은 archive/lock/선택 공개키 보관본을 사용하고 V1은 원본 참조를 유지한다. 운용 설정·chain·키 참조는 계속 필요하다.
@@ -173,25 +181,25 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 | BX-001/005 | IN_PROGRESS | 첫 Mac profile, 최소 OS/JRE/native·launchd 인수 |
 | BX-002/010 | DONE | Rust 기반·CLI envelope·고정 toolchain/lock |
 | BX-003 | IN_PROGRESS | Temurin21.0.12.1+1 full JRE 고정·runtime stage·runtime BOM/source 확보와 NIGO J1~J3 수용. 전체 제품 NOTICE/SBOM/소스 전달·출시 인수 후속 |
-| BX-004 | IN_PROGRESS | RC.1 이력·RC.2 선택/지정 package PASS 보존, BXDL PR #11/#12·NIGO PR #225/#229 공유. RC.3 수신/engine-info PASS이나 제품 미선택·package/A7 NOT_RUN. 전체 제품 인수 후속 |
+| BX-004 | IN_PROGRESS | RC.1 이력·RC.2 지정 package PASS 보존, BXDL PR #11/#12·NIGO PR #225/#229 공유. RC.3 전용 lock/spec 선택 후 동일 Mac archive의 4-validator·두 복구·wrong-pin·setup13 및 독립 정리 PASS. A7 NOT_RUN·전체 제품 인수 후속 |
 | BX-011~014 | IN_PROGRESS | build/verify/새 폴더 설치 구현, 정식 공급·릴리스/업데이트 후속 |
-| BX-020 | IN_PROGRESS | v1 제품/native 대조와 validator network/peer/pin 입력·공통 native 렌더 구현. RC.2 4-validator 거래/catch-up·두 정족수 복구 경로·pin 거부 PASS. observer 등 확장 후속 |
-| BX-021/022/024 | IN_PROGRESS | instance journal·명시 init/resume·gated run과 기존 정상 종료/같은 DB 재시작 근거 유지. 새 V2 등록 자료 보관·시작 단계 진단의 RC.2 로컬13사례 PASS. 전체 실패·복구/운영 인수 후속 |
+| BX-020 | IN_PROGRESS | v1 제품/native 대조와 validator network/peer/pin 입력·공통 native 렌더 구현. RC.2 이력 보존, 새 RC.3 archive의 4-validator 거래/catch-up·두 정족수 복구 경로·pin 거부 PASS. observer 등 확장 후속 |
+| BX-021/022/024 | IN_PROGRESS | instance journal·명시 init/resume·gated run과 기존 정상 종료/같은 DB 재시작 근거 유지. 새 V2 등록 자료 보관·시작 단계 진단의 RC.2 로컬13사례와 새 RC.3 동일 archive의 setup13사례 PASS. 전체 실패·복구/운영 인수 후속 |
 | BX-023 | IN_PROGRESS | 제품/native cold·실제 RocksDB 단발 초기화 확인. 지속 runtime·DB/WAL 복구·service 인수 후속 |
-| BX-030 | IN_PROGRESS | RC.2 지정 경로20사례 PASS·원본 INCOMPLETE·독립 정리 PASS와 자료 경로 문제 OPEN 보존. 새 V2 보관본을 쓰는 setup 재개·원본 부재 상태 로컬 인수 PASS. mutation 중단·전체 인수 후속 |
+| BX-030 | IN_PROGRESS | RC.2 지정 경로20사례 PASS·원본 INCOMPLETE·독립 정리 PASS와 자료 경로 문제 OPEN 보존. RC.3 동일 archive의 V2 보관본·원본 부재 setup13사례 PASS. 전체14문답·cancel/hangup 재시험과 mutation 중단·전체 인수 후속 |
 | BX-031/032 | IN_PROGRESS | 수동 LaunchAgent·status·정상 stop·restart와 같은 시도 관측 대기 구현. 로그인/로그아웃·sleep/wake와 전체 사용자 lifecycle 인수 후속 |
 | BX-033 | IN_PROGRESS | 오프라인 최신 시도 logs/diagnose·정제·bounded partial 출력 구현. 전체 시도 조회·보존/용량 정책 후속 |
 | BX-034 | PLAN | 데이터·키를 보존하는 안전한 제거 |
-| BX-040~043 | IN_PROGRESS | RC.2 4-validator 거래/catch-up·두 정족수 복구 경로·pin 거부 PASS. G1-M 전체 사용자 흐름·Linux/Docker 후속 |
+| BX-040~043 | IN_PROGRESS | RC.2 이력 보존, 새 RC.3 동일 archive의 4-validator 거래/catch-up·두 복구·pin 거부·setup13사례 PASS. G1-M 전체 사용자 흐름·Linux/Docker 후속 |
 | BX-044 | IN_PROGRESS | LaunchAgent PR #5 fast CI 통과. 진단 변경의 로컬 검사는 연결된 결과 기록을 따르며 원격 CI는 해당 PR 기록 참조. 전체 package 인수·릴리스 pipeline 후속 |
 | BX-050~053/M6 | PLAN | 버전 쌍 업데이트·offline 유지보수·고객 운영 확대 |
 
 ## 다음 순서
 
-1. 완료한 V2 보관본·시작 진단의 실제 Mac 시험 근거를 검토·커밋한다. 과거 원자료 접근 지연의 원인 조사는 계속하며 run A/B 원본 INCOMPLETE를 보존한다. 운용 참조 경로의 사전 접근 검사·기존 설치의 binding 변환/upgrade와 전체 G1-M 지원은 별도다.
+1. RC.3 선택·동일 archive의 4-validator/복구·setup13사례와 독립 정리 근거를 NIGO에 정식 소비자 인수 회신으로 전달한다. 지정 범위의 PASS와 A7 NOT_RUN을 구분하고, NIGO 변경은 전용 worktree·별도 PR에서 진행한다. 과거 run A/B 원본 INCOMPLETE와 원자료 접근 지연의 미확정 원인은 보존한다. 운용 참조 경로의 사전 접근 검사·기존 설치의 binding 변환/upgrade와 전체 G1-M 지원은 별도다.
 2. Mac 중단·실패 경계·로그인/로그아웃·sleep/wake와 데이터·키를 보존하는 안전한 제거를 구현·검증한다. 제거(REM-01)는 G1-M 완료 전 필수 항목이다. 저장 기록과 실제 health를 구분하며 UNKNOWN 뒤 자동 재시작하지 않는다. 기존 DB migration은 별도다.
 3. J5의 upstream SBOM archive hash 불일치·서명 출처 확인·전체 제품 NOTICE/SBOM·대응 소스 전달·최소 macOS를 확정한다. NIGO J1~J3와 RC.2 공급·복구 회신은 수용했으며, 이 실행 호환성 근거를 공급망 승인으로 전용하지 않는다.
-4. RC.3 채택 여부·범위를 정한 뒤 별도 lock/spec과 package 재인수를 진행한다. offline A7은 서비스 중지·자동 재기동 차단·backend/경로 매핑·백업·명시 repair 확인·UNKNOWN·재시작을 구현하고 검증해야 한다. 수신 PASS는 이 작업의 완료가 아니다.
+4. RC.3의 offline Storage A7을 별도 구현·인수한다. 서비스 중지·자동 재기동 차단·backend/경로 매핑·백업·명시 repair 확인·UNKNOWN·재시작을 구현하고 검증해야 한다. 수신 PASS와 이번 package 재인수는 A7 완료를 뜻하지 않는다.
 5. 검증한 바이트의 정식 릴리스 pipeline과 나머지 공통·Mac 인수를 완료해 G1-M을 확정한다. 이후 버전 쌍 업데이트·지원 진단/보존 정책을 확장한다. Linux/systemd G1-L, Docker G1-D는 Mac과 분리해 검증한다.
 
 R2 파일 receipt는 instance 등록·NIGO journal이 아니며 전체 R2/R3 완료라고 표시하지 않는다. 현재 Mac 사용자 profile의 CLI·엔진은 같은 UID다. 파일 권한만으로 강한 격리를 보장하지 않는다. 기존 사용자 node/data/key는 시험하지 않는다.

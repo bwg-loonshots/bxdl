@@ -1,6 +1,6 @@
 # BXDL Mac 4-validator 패키지 인수 도구
 
-실제 RC.2 full 실행은 [2026-10-21 결과](../../results/2026-10-21-macos-rc2-package.md)를 따른다. 도구 사용법과 실행별 판정은 구분한다.
+실제 RC.2 full 실행은 [2026-10-21 결과](../../results/2026-10-21-macos-rc2-package.md)를 따른다. RC.3도 같은 full 범위를 선택할 수 있으며, 도구 지원과 후보별 실제 실행 판정은 구분한다.
 
 이 도구는 새 시험 자료와 격리된 로컬 인스턴스로 BXDL 패키지를 검증한다. 고객 설치기나 고객용 키·CA 발급기가 아니다. 이 문서는 실행 절차와 판정 범위를 설명하며, 현재 시험의 PASS를 선언하지 않는다.
 
@@ -10,9 +10,9 @@
 
 | 파일 | 역할 | 실행하지 않는 것 |
 | --- | --- | --- |
-| `prepare_fixture.py` | 명시 선택한 고정 RC1/RC2 JAR의 `QbftDevnetGenerator`로 새 시험용 NGVK·개별 mTLS·신뢰 자료 생성, 공개 목록과 제품 설정 작성, 새 거래 지갑과 미리 서명한 Type-2 거래 준비 | BXDL 설치·등록·초기화·노드 기동·거래 제출 |
+| `prepare_fixture.py` | 명시 선택한 고정 RC1/RC2/RC3 JAR의 `QbftDevnetGenerator`로 새 시험용 NGVK·개별 mTLS·신뢰 자료 생성, 공개 목록과 제품 설정 작성, 새 거래 지갑과 미리 서명한 Type-2 거래 준비 | BXDL 설치·등록·초기화·노드 기동·거래 제출 |
 | `run_acceptance.py` | 새 시험 서명키로 실제 archive 조립·검증, 같은 archive의 네 설치본 준비, 네트워크 설정 도우미·등록·초기화·LaunchAgent·거래/합의 관측 | 고객 인스턴스 인수, 기존 설치본 덮어쓰기, 운영 키 발급 |
-| `candidates.py` | RC1/RC2의 source·JAR hash/크기·거래 개수 고정 | 움직이는 branch HEAD나 재빌드 JAR 채택 |
+| `candidates.py` | RC1/RC2/RC3의 source·JAR hash/크기·거래 개수 고정 | 움직이는 branch HEAD나 재빌드 JAR 채택 |
 | `test_candidates.py` | 후보/lock 혼합, 거래 입력 변경, 자동 재시도, 동일 DB 복구의 거짓 성공 방지 회귀 | 실제 엔진·서비스 실행 |
 | `test_oracles.py` | 잘못된 receipt/block의 거짓 성공, historical receipt 제한, init 불명 cleanup의 오프라인 회귀 | 실제 엔진·서비스 실행 |
 | `fixture_guard.py` | 선택 후보 시험 fixture의 identity·loopback·파일 범위·입력 hash와 legacy B 재개 allowlist 검사 | credential 내용 읽기·암호학적 거래 재검증 |
@@ -26,7 +26,7 @@ Node와 ethers는 준비 단계의 오프라인 거래 서명에만 필요하다
 
 ## 고정 공급물과 사전 조건
 
-`prepare_fixture.py`와 `run_acceptance.py`는 `--candidate rc1|rc2`를 필수로 받는다. 후보를 파일명·움직이는 branch HEAD에서 추정하지 않는다. RC1의 기존 이력·lock·legacy 진단 allowlist는 보존하며, RC2 fixture/lock과 섞어 실행할 수 없다. hash가 다른 JAR/Java를 최신 버전이라는 이유로 대신 넣지 않는다.
+`prepare_fixture.py`와 `run_acceptance.py`는 `--candidate rc1|rc2|rc3`를 필수로 받는다. 후보를 파일명·움직이는 branch HEAD에서 추정하지 않는다. RC1의 기존 이력·lock·legacy 진단 allowlist는 보존하며, 서로 다른 후보의 fixture/lock과 섞어 실행할 수 없다. hash가 다른 JAR/Java를 최신 버전이라는 이유로 대신 넣지 않는다.
 
 | 대상 | 고정 값 |
 | --- | --- |
@@ -36,6 +36,9 @@ Node와 ethers는 준비 단계의 오프라인 거래 서명에만 필요하다
 | RC2 NIGO source | `67c9f8e5100f6ce0df7fc8271eb9d56a8ee7a36b` |
 | RC2 JAR SHA-256 | `b1aa84cbacf1057746bc5936308345cfdddb8f3fc78b63377af59da05dc0ce10` |
 | RC2 JAR 크기 | `164085159` bytes |
+| RC3 NIGO source | `7ec5abd8c98e1cf070763a16f815e9281b74a5c1` |
+| RC3 JAR SHA-256 | `05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f` |
+| RC3 JAR 크기 | `164088530` bytes |
 | Temurin Java launcher SHA-256 | `9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c` |
 | 선택 runtime | Temurin `21.0.12.1+1-LTS`, macOS arm64 full JRE |
 | 준비용 ethers | `6.17.0` |
@@ -53,7 +56,7 @@ Python 3와 준비용 Node/ethers는 미리 확보한다. 실행에는 macOS arm
 
 ```sh
 python3 ./prepare_fixture.py \
-  --candidate rc2 \
+  --candidate rc3 \
   --java /path/to/verified-payload/runtime/bin/java \
   --jar /path/to/verified-payload/engine/nigo-node.jar \
   --node /path/to/node \
@@ -63,7 +66,7 @@ python3 ./prepare_fixture.py \
   --p2p-base-port 29090
 ```
 
-준비기는 새 validator 네 개의 시험 자료, `chain.json`, `network.json`, `products/n1.json`부터 `n4.json`, 새 지갑, RC2에서는 nonce 0~11, RC1에서는 기존대로 nonce 0~7의 미리 서명한 거래를 만든다. 자료는 새 private 폴더에 보관한다. 생성된 `application.yml`은 공급자 생성기 근거로 남기며, 실행 설정으로 자동 채택하지 않는다.
+준비기는 새 validator 네 개의 시험 자료, `chain.json`, `network.json`, `products/n1.json`부터 `n4.json`, 새 지갑, RC2/RC3에서는 nonce 0~11, RC1에서는 기존대로 nonce 0~7의 미리 서명한 거래를 만든다. 자료는 새 private 폴더에 보관한다. 생성된 `application.yml`은 공급자 생성기 근거로 남기며, 실행 설정으로 자동 채택하지 않는다.
 
 고정 keytool이 있으면 공개 leaf 인증서를 내보내 NIGO domain hash와 manifest pin을 대조한다. 없으면 `certificateExport=NOT_AVAILABLE`로 기록한다. 실패한 준비 폴더는 덮어쓰거나 재사용하지 않고 보존한다. 성공 여부와 생성 범위는 `fixture-summary.json`으로 확인한다.
 
@@ -76,14 +79,14 @@ python3 ./prepare_fixture.py \
 ```sh
 python3 ./run_acceptance.py \
   --run \
-  --candidate rc2 \
+  --candidate rc3 \
   --scenario full \
   --cli /path/to/release/bxdl \
   --revision FULL_40_HEX_BXDL_COMMIT \
   --fixture /path/to/new-fixture \
   --payload-source /path/to/verified-payload \
-  --lock /path/to/engine-lock.rc2-temurin-development.json \
-  --spec /path/to/package-spec.rc2-temurin.example.json \
+  --lock /path/to/engine-lock.rc3-temurin-development.json \
+  --spec /path/to/package-spec.rc3-temurin.example.json \
   --openssl /path/to/openssl \
   --output /path/to/new-acceptance-run
 ```
@@ -101,16 +104,16 @@ python3 ./run_acceptance.py \
 1. 네 validator가 같은 archive로 실행된 상태에서 Type-2 거래를 한 ingress에 한 번 제출한다. 각 노드의 성공 receipt, 확정 높이, 해당 높이의 block hash/state root를 RPC와 monitor에서 대조한다.
 2. 네 번째 노드를 정상 종료하고 나머지 셋에서 다음 거래를 확정한다. 같은 DB/key로 네 번째 노드를 재시작해 새 attempt·nodeInstanceId, 동일 genesis와 놓친 높이의 canonical block hash/state root를 확인한다. 과거 receipt 존재 여부는 별도로 기록한다. 재합류 후 새 거래는 네 노드 모두의 성공 receipt와 같은 높이/hash/root를 요구한다.
 3. 두 노드를 정상 종료한 뒤 두 생존 노드의 peer 수와 공통 확정 높이를 기준으로 삼는다. 새 유효 거래를 한 번 제출하고 45초 동안 receipt가 없고 latest/finalized 높이가 그대로인지, 같은 view height에서 round가 증가하는지 관측한다. 세 번째 노드를 복구해 원래 거래 hash의 성공 receipt와 확정을 확인한다. 네 번째 노드는 그 높이의 canonical hash/root로 catch-up을 확인하고, 다시 새 거래를 제출해 네 노드 모두의 성공 receipt를 요구한다. 유한 관측 구간의 no-finality 시험이다.
-4. RC2에서는 새로운 별도 2/4 구간에서 미확정 거래를 한 번 제출하고 45초 round skew를 형성한다. active 두 노드의 round가 정지한 두 노드의 같은 view height에서 관측한 round보다 실제로 높아야 한다. 네 노드 모두의 정상 종료를 확인한 뒤 같은 설치본·control·DB로 동시에 재시작한다. 새 attempt/nodeInstanceId, data 디렉터리 identity·엔진 초기화 journal·product/native 설정 보존을 확인하고, 원래 signed transaction의 같은 bytes를 정확히 한 번 명시 재제출한다. 네 노드 모두의 성공 receipt/확정과 후속 새 거래의 확정을 요구한다. 이 단계는 DB/WAL 삭제·재등록·재초기화·엔진 JAR 교체를 하지 않는다.
+4. RC2/RC3에서는 새로운 별도 2/4 구간에서 미확정 거래를 한 번 제출하고 45초 round skew를 형성한다. active 두 노드의 round가 정지한 두 노드의 같은 view height에서 관측한 round보다 실제로 높아야 한다. 네 노드 모두의 정상 종료를 확인한 뒤 같은 설치본·control·DB로 동시에 재시작한다. 새 attempt/nodeInstanceId, data 디렉터리 identity·엔진 초기화 journal·product/native 설정 보존을 확인하고, 원래 signed transaction의 같은 bytes를 정확히 한 번 명시 재제출한다. 네 노드 모두의 성공 receipt/확정과 후속 새 거래의 확정을 요구한다. 이 단계는 DB/WAL 삭제·재등록·재초기화·엔진 JAR 교체를 하지 않는다.
 5. node ID가 가장 작은 정상 노드를 먼저 정상 종료한다. 같은 시험 identity를 별도 설치·control·새 data에서 사용하되 세 peer의 expected pin을 모두 틀리게 만든다. 이 부정 노드만 `new-network`로 설정해 sync를 끄고 archive는 켠다. catch-up 대기로 인증 거부 관측이 가려지지 않도록 한 별도 시험이며 정상 네 노드의 all-join 설정은 바꾸지 않는다. 해당 노드의 `OUTBOUND / CREDENTIAL_PIN / WRONG_PIN` audit와 peer 0, 정상 세 노드의 새 거래 확정을 확인한다. 동일 signer의 두 프로세스를 함께 시작하지 않는다.
 
 현재 부정 시험은 잘못된 expected pin에 따른 격리다. 잘못된 role/validator, 만료·폐기 인증서, unknown CA 전체 행렬이나 부정 시험 뒤 원래 네 노드의 full-mesh 복원까지 완료했다고 표시하지 않는다.
 
-거래는 준비 단계에서 서명한 원 bytes를 사용한다. live 2/4→3/4 복구에서는 첫 제출 이후 재제출하지 않는다. RC2 전체 동일 DB 재시작 시나리오만 원 거래의 두 번째 제출을 명시적으로 허용하고, 세 번째 제출이나 타 nonce의 무단 재시도를 거부한다. 제출 응답 유실은 `UNKNOWN_OBSERVE_ORIGINAL_HASH`로 남기고 원 hash를 조회한다. 하네스가 다시 서명하거나 자동 재전송하지 않는다. 각 제출의 nonce·hash·포트·차수와 명시 재제출 여부를 별도 evidence에 기록한다. legacy 복구 probe의 재제출은 아래에 명시한 진단 단계다. 서로 다른 노드의 finality certificate hash는 quorum seal 구성에 따라 다를 수 있으므로 동일성 조건에 넣지 않는다.
+거래는 준비 단계에서 서명한 원 bytes를 사용한다. live 2/4→3/4 복구에서는 첫 제출 이후 재제출하지 않는다. RC2/RC3 전체 동일 DB 재시작 시나리오만 원 거래의 두 번째 제출을 명시적으로 허용하고, 세 번째 제출이나 타 nonce의 무단 재시도를 거부한다. 제출 응답 유실은 `UNKNOWN_OBSERVE_ORIGINAL_HASH`로 남기고 원 hash를 조회한다. 하네스가 다시 서명하거나 자동 재전송하지 않는다. 각 제출의 nonce·hash·포트·차수와 명시 재제출 여부를 별도 evidence에 기록한다. legacy 복구 probe의 재제출은 아래에 명시한 진단 단계다. 서로 다른 노드의 finality certificate hash는 quorum seal 구성에 따라 다를 수 있으므로 동일성 조건에 넣지 않는다.
 
-**시나리오 3은 RC1 당시 공급자 시험보다 긴 정족수 부족과 재제출 없는 복구를 관측한다.** 공급자 `04-qbft-multiprocess.spec.ts`는 첫 round 증가를 최대 45초 기다린 뒤 바로 세 번째 노드를 복구하고, 그 노드에 같은 signed transaction을 명시적으로 재제출한다. `QBFT_DEVNET_RUNBOOK.md`는 reconnect 이전 pending backfill을 보장하지 않는다. RC1 당시 기본 실행의 복구 timeout 하나만으로 결함을 확정하지 않았으며, 별도 재시작·재제출 probe와 공급자 재현으로 원인을 구분했다. RC2의 live 복구와 전체 동일 DB 재시작은 각각 새 관측으로 판정하고, 이전 실패를 새 후보의 성공으로 덮어쓰지 않는다.
+**시나리오 3은 RC1 당시 공급자 시험보다 긴 정족수 부족과 재제출 없는 복구를 관측한다.** 공급자 `04-qbft-multiprocess.spec.ts`는 첫 round 증가를 최대 45초 기다린 뒤 바로 세 번째 노드를 복구하고, 그 노드에 같은 signed transaction을 명시적으로 재제출한다. `QBFT_DEVNET_RUNBOOK.md`는 reconnect 이전 pending backfill을 보장하지 않는다. RC1 당시 기본 실행의 복구 timeout 하나만으로 결함을 확정하지 않았으며, 별도 재시작·재제출 probe와 공급자 재현으로 원인을 구분했다. RC2/RC3의 live 복구와 전체 동일 DB 재시작은 각각 새 관측으로 판정하고, 이전 실패를 새 후보의 성공으로 덮어쓰지 않는다.
 
-| 거래 nonce | RC2 `full` | RC1 `full` |
+| 거래 nonce | RC2/RC3 `full` | RC1 `full` |
 | --- | --- | --- |
 | 0 | 최초 네 노드의 거래 확정 | 동일 |
 | 1 | 네 번째 노드 정지 중 거래와 catch-up 기준 | 동일 |
@@ -122,11 +125,11 @@ python3 ./run_acceptance.py \
 | 7 | wrong-pin 중 정상 세 노드 거래 | 미제출 예비 |
 | 8~11 | 미제출 예비 | 생성하지 않음 |
 
-### RC2 동일 DB 복구만 독립 실행
+### RC2/RC3 동일 DB 복구만 독립 실행
 
-`--candidate rc2 --scenario same-db-recovery`는 새 fixture·출력·control·data를 만드는 별도 실행이다. 최초 네 노드의 nonce 0 확정을 확인하고 nonce 1로 45초 skew·전체 정상 정지·같은 네 DB 재시작·원 거래 1회 재제출을 수행한 뒤 nonce 2 새 거래를 확인한다. 앞선 live 복구 시험이 실패했더라도 그 결과를 보존하고 새 경로에서 이 시나리오를 별도로 수행할 수 있다. `--continue-from`이나 기존 실패 DB 재활용 옵션이 아니다.
+`--candidate rc2|rc3 --scenario same-db-recovery`는 후보 하나를 명시해 새 fixture·출력·control·data를 만드는 별도 실행이다. 최초 네 노드의 nonce 0 확정을 확인하고 nonce 1로 45초 skew·전체 정상 정지·같은 네 DB 재시작·원 거래 1회 재제출을 수행한 뒤 nonce 2 새 거래를 확인한다. 앞선 live 복구 시험이 실패했더라도 그 결과를 보존하고 새 경로에서 이 시나리오를 별도로 수행할 수 있다. `--continue-from`이나 기존 실패 DB 재활용 옵션이 아니다.
 
-RC2의 `full`과 `same-db-recovery`는 처음부터 RC2로 초기화한 DB의 복구를 시험한다. RC1 DB를 RC2 패키지에 이전하거나 기존 설치의 JAR를 교체하는 BXDL 업그레이드 인수가 아니다. 새 실행을 반복하면 새 fixture/출력 경로를 준비하고, 앞선 실행의 정상 cleanup과 포트 해제를 확인한다.
+RC2/RC3의 `full`과 `same-db-recovery`는 처음부터 선택한 후보로 초기화한 DB의 복구를 시험한다. 이전 후보의 DB를 새 후보 패키지로 이전하거나 기존 설치의 JAR를 교체하는 BXDL 업그레이드 인수가 아니다. `engineUpgradeTested=false`를 기록하며 기존 `rc1ToRc2UpgradeTested=false` 필드도 이력 호환을 위해 유지한다. 새 실행을 반복하면 새 fixture/출력 경로를 준비하고, 앞선 실행의 정상 cleanup과 포트 해제를 확인한다.
 
 전체 재시작 전후에는 data 폴더의 device/inode와 `engine-instance.json`, product/native 파일 hash를 대조한다. 정상 기동 중 변경되는 실제 ledger/WAL 파일 전체의 hash 불변을 요구하지 않는다. 엔진 DB 내용 보존과 복구는 같은 genesis·원 거래·후속 거래의 확정 관측으로 추가 확인한다.
 
@@ -166,7 +169,7 @@ python3 ./run_acceptance.py \
 
 ## 보존한 후보의 독립 진단
 
-`run_pin_only.py`와 `run_recovery_probe.py`는 2026-10-20의 특정 archive·CLI hash를 코드에 고정한 재현 도구다. 임의 후보를 시험하는 범용 옵션으로 해석하지 않는다. 실제 입력과 필요한 이전 실행이 없으면 새 기본 실행부터 준비한다. 각 도구의 `--help`로 경로 인자를 확인하며 `--run`을 명시해야 실행한다. 두 legacy 도구는 후보 선택 없이 RC1만 취급하며, RC2 fixture를 넣으면 거부한다. 특히 `run_recovery_probe.py`의 고정 helper hash는 과거 원본을 가리키므로 현재 보완본을 통과시키려고 hash를 재고정하지 않는다. 해당 기록의 정확한 보존 source 묶음을 사용하거나, RC2 검증에는 위의 새 `--scenario same-db-recovery`를 사용한다.
+`run_pin_only.py`와 `run_recovery_probe.py`는 2026-10-20의 특정 archive·CLI hash를 코드에 고정한 재현 도구다. 임의 후보를 시험하는 범용 옵션으로 해석하지 않는다. 실제 입력과 필요한 이전 실행이 없으면 새 기본 실행부터 준비한다. 각 도구의 `--help`로 경로 인자를 확인하며 `--run`을 명시해야 실행한다. 두 legacy 도구는 후보 선택 없이 RC1만 취급하며, RC2/RC3 fixture를 넣으면 거부한다. 특히 `run_recovery_probe.py`의 고정 helper hash는 과거 원본을 가리키므로 현재 보완본을 통과시키려고 hash를 재고정하지 않는다. 해당 기록의 정확한 보존 source 묶음을 사용하거나, RC2/RC3 검증에는 위의 새 `--scenario same-db-recovery`를 사용한다.
 
 Pin-only는 새 fixture와 HTTP 24420~24423·P2P 25420~25423을 사용한다. 기존 실행과 다른 identity를 확인하고 같은 archive에서 정상 세 노드와 잘못된 expected pin을 가진 한 노드를 설치한다. 정상 세 노드의 TLS1.3 인증과 거래 확정, 부정 노드의 outbound WRONG_PIN·peer 0을 확인한다. 기존 실행의 control/data는 재사용하지 않는다.
 
@@ -176,7 +179,7 @@ Recovery probe는 완전히 정지한 B/C 실행과 원 fixture A를 검사한�
 
 ## 실패·종료·근거 보존
 
-실행이 성공하거나 중간에 실패하면 하네스가 자신이 시작한 시험 노드에 BXDL `stop`을 요청한다. 정상 종료 근거와 `operationBusy=false`를 확인해야 정리된 것으로 기록한다. 정지 확인 실패나 남은 노드가 있으면 전체 결과는 `INCOMPLETE`다. init이 불명으로 끝나면 프로세스가 종료됐다고 추측하지 않으며 node·단계·기록된 PID를 unresolved cleanup으로 남긴다.
+실행이 성공하거나 중간에 실패하면 하네스가 자신이 시작한 시험 노드에 BXDL `stop`을 요청한다. 정상 종료 근거와 `operationBusy=false`를 확인해야 정리된 것으로 기록한다. 정지 확인 실패나 남은 노드가 있으면 전체 결과는 `INCOMPLETE`다. 정상 stop 기록과 별도로 `cleanupListeners`에 시험 HTTP/P2P 포트의 실제 OS TCP LISTEN 관측을 기록한다. `lsof`의 명확한 부재만 PASS이며 listener가 있거나 관측이 불명하면 전체 결과는 `INCOMPLETE`다. bind 실패를 listener 존재로 추정하거나 관측 때문에 프로세스·서비스를 조작하지 않는다. init이 불명으로 끝나면 프로세스가 종료됐다고 추측하지 않으며 node·단계·기록된 PID를 unresolved cleanup으로 남긴다.
 
 CLI 관측 timeout은 실행 취소가 아니다. 지원 코드는 timeout에 프로세스를 강제 kill하지 않고 부분 출력과 PID를 보존한다. 새 init/start, 잠금 삭제, data/WAL 삭제로 성공 상태를 만들지 않는다. 하네스 자체가 중단되었거나 `result.json`이 없으면 종료 성공으로 추측하지 말고 남은 프로세스·서비스와 근거를 확인한다.
 
@@ -186,4 +189,4 @@ CLI 관측 timeout은 실행 취소가 아니다. 지원 코드는 timeout에 �
 
 ## 도구 자체 검사
 
-이 디렉터리에서 `python3 -B -m unittest -v test_oracles test_candidates`로 판정·불명 cleanup 회귀를 검사한다. 엔진이나 노드를 시작하지 않는다. Rust 제품 검사는 저장소 루트의 `make check`를 사용한다. 이 두 검사는 위 실제 패키지 인수와 별개다.
+이 디렉터리에서 `python3 -B -m unittest -v test_oracles test_candidates test_listeners`로 판정·불명 cleanup 회귀를 검사한다. 엔진이나 노드를 시작하지 않는다. Rust 제품 검사는 저장소 루트의 `make check`를 사용한다. 이 두 검사는 위 실제 패키지 인수와 별개다.

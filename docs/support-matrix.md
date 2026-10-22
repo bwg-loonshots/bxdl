@@ -6,7 +6,7 @@
 | --- | --- |
 | Rust 1.86.0 / macOS arm64 | CLI 개발·로컬 테스트·native 빌드 대상. setup·설치·cold·등록/초기화·수동 LaunchAgent·오프라인 진단 구현 |
 | macOS arm64 + Java 21 + RocksDB + 사용자 LaunchAgent | macOS 26.6.2의 지정 RC.2·Temurin에서 4-validator 거래/catch-up·두 복구 경로·pin 거부 PASS. 새 V2 보관본·시작 진단은 별도 RC.2 package의 로컬13사례 PASS. OS 최소 버전·전체 G1-M 미확정 |
-| RC.3 + 선정 Temurin / macOS arm64 | 원격 수신·전체 identity·실제 engine-info PASS. 제품 lock 미선택, package/A7 NOT_RUN |
+| RC.3 + 선정 Temurin / macOS arm64 | 전용 lock/spec 명시 선택 후 동일 서명 archive의 4-validator·두 정족수 복구·wrong-pin과 원본 공급 경로 부재 setup13사례·독립 정리 PASS. A7 NOT_RUN·전체 G1-M 미완료 |
 | Linux amd64/glibc + Java 21 + RocksDB + systemd | 기존 development manifest 유지, 후속 서버 인수. Ubuntu 24.04 후보 |
 | Docker/Compose | 후속 이미지·volume·network·종료/재생성 인수 필요 |
 | Intel Mac·Linux ARM64·Windows·Alpine/musl·H2 제품 지원 | 별도 구현·인수 전 미지원 |
@@ -25,7 +25,7 @@ NIGO `ROCKSDB_OPERATIONS.md`와 `tasks/2026-09-07-rocksdb-storage-implementation
 
 2026-10-19에 Temurin21.0.12.1+1 전체 JRE의 공급자·patch·archive hash를 선정하고 RC1과 함께 고정했다. [JRE 준비](./runtime.md)와 [NIGO J1~J3 수신 기록](../contracts/nigo/jre-feedback-2026-10-19/README.md)을 따른다. 지정 RC1/Temurin 조합의 공급자 9사례 검증을 수용했으며, BXDL signed package의 단일 노드 설치·초기화·서비스·재시작도 확인했다. 이후 [RC.1 package의 4-validator 시험](../results/2026-10-20-macos-qbft-package.md)에서 정상 거래/catch-up·pin 거부를 확인했으나 당시 정족수 복구는 INCOMPLETE였다. 2026-10-21에는 별도 RC.2 고정 package·새 DB로 [Mac 재인수](../results/2026-10-21-macos-rc2-package.md)를 수행해 4-validator 거래/catch-up·재제출 없는 실시간 복구·같은 네 DB 전체 재시작 복구·pin 거부를 통과했다. RC.1 실패 기록은 유지하며 기존 RC.1 설치의 RC.2 upgrade는 미완료다. 후속 [전체 setup 설치 UX](../results/2026-10-21-macos-rc2-setup.md)에서 지정 임시 시험 경로의20개 사례를 통과했지만, Documents 참조의 시작 전 대기 원인은 미확정이다. 원본 자동 집계 INCOMPLETE와 독립 사후 정리 PASS를 구분하며 모든 사용자 자료 경로의 지원을 주장하지 않는다. 전체 제품 NOTICE/SBOM·대응 소스 전달·최소 macOS와 G1-M 인수는 남아 있다. 과거 clean 후보·Oracle jlink 결과는 해당 revision의 이력이며 현재 공급 lock이나 제품 인수를 대신하지 않는다. REQ-0003은 OPEN이고 계약은 PROPOSED다. source commit이나 fake JAR/Java fixture를 공식 공급물로 표기하지 않는다.
 
-2026-10-22 [RC.3 수신](../contracts/nigo/engine-rc3-2026-10-22/README.md)은 공급 archive22파일·계약/source·Console과 선정 Temurin의 실제 `engine-info`를 대조한 별도 결과다. JRE259파일 전후 불변과49모듈을 확인했다. RC.3 제품 lock은 선택하지 않았고 노드·Storage·서비스·package/A7은 실행하지 않았다. RC.2의 제품 PASS와 공급자의 RC.3 검증을 이번 소비자 지원 범위로 합치지 않는다.
+2026-10-22 [RC.3 수신](../contracts/nigo/engine-rc3-2026-10-22/README.md)은 공급 archive22파일·계약/source·Console과 선정 Temurin의 실제 `engine-info`를 대조한 별도 결과다. JRE259파일 전후 불변과49모듈을 확인했다. 수신 당시에는 제품 lock을 선택하지 않았고 노드·Storage·서비스·package/A7을 실행하지 않았으며 그 snapshot은 유지한다. 이후 [RC.3 engine lock](../packaging/engine-lock.rc3-temurin-development.json)·[package spec](../packaging/package-spec.rc3-temurin.example.json)으로 새 개발 후보를 명시 선택했다. [재인수 설계](../design/2026-10-22-rc3-package-reacceptance.md)에 따른 동일 새 archive의 [4-validator·두 복구·wrong-pin](../results/2026-10-22-macos-rc3-package.md)과 [원본 공급 경로 부재 setup13사례](../results/2026-10-22-macos-rc3-setup.md)가 PASS다. 정상 종료와 독립 PID/job/LISTEN·설치 inventory 검사도 통과했다. setup은 제품 설정을 가져온 뒤 공급 자료 문답을 진행한 범위이며 전체14문답·cancel/hangup 경로를 이번에 재실행하지 않았다. RC.2와 공급자의 RC.3 검증은 각각의 이력으로 보존한다. offline Storage A7은 NOT_RUN이고 기존 설치 upgrade·전체 G1-M은 후속이다.
 
 Manifest v1의 Mac 값 `libc=none`, `minGlibc=none`은 Linux glibc 조건이 적용되지 않는다는 뜻이다. Mac에 libc가 없다는 뜻이 아니다. Linux의 `glibc/2.34`는 기존 development 후보 계약값을 유지하며 실제 지원 보장이 아니다.
 
@@ -49,7 +49,7 @@ logs/diagnose는 저장된 최신 시도의 제한된 이벤트를 정제해 수
 
 2026-09-18 서비스 시험의 Oracle Java21.0.7 jlink는 과거 실행 fixture다. 현재 선정 Temurin과 구분하며, 그 과거 결과가 고객 재배포 승인이나 완전한 NOTICE/SBOM을 의미하지 않는다.
 
-G1-M은 Mac 사용자 설치·launchd·동일 데이터 재시작·사용자 흐름 검증이다. 같은 사용자 권한으로 CLI와 engine가 실행되므로 Linux 전용 service UID와 같은 격리를 주장하지 않는다. 지정 RC.2 package의 4-validator 거래·동일 DB 재시작은 확인했으며 로그인/로그아웃·sleep·실패/재개 UX와 안전한 제거 등 전체 인수는 아직 미완료다.
+G1-M은 Mac 사용자 설치·launchd·동일 데이터 재시작·사용자 흐름 검증이다. 같은 사용자 권한으로 CLI와 engine가 실행되므로 Linux 전용 service UID와 같은 격리를 주장하지 않는다. 지정 RC.2와 새 RC.3 package에서 4-validator 거래·동일 DB 재시작을 확인했으며 로그인/로그아웃·sleep·실패/재개 UX와 안전한 제거 등 전체 인수는 아직 미완료다.
 
 G1-L은 실제 Linux VM의 systemd·전용 UID·native·다중 host 네트워크 인수다. G1-D는 container 별도 인수다. 기존 사용자 node/data를 fixture로 사용하지 않는다. 개발 테스트와 과거 다른 revision의 evidence는 각 gate를 대신하지 않는다.
 
