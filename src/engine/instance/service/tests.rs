@@ -32,6 +32,7 @@ impl Fixture {
             binding_sha256: state.binding_sha256.clone(),
             attempt_id: "run-attempt".into(),
             phase: RuntimePhase::StartPrepared,
+            startup_stage: None,
             uid: uid().unwrap(),
             pid: None,
             worker_sha256: "a".repeat(64),
@@ -171,6 +172,8 @@ fn observation(engine: &str, readiness: &str, outcome: &str, reason: &str) -> Se
         runtime_readiness: readiness.into(),
         reason: reason.into(),
         last_observation_reason: None,
+        startup_stage: None,
+        startup_failure_reason: None,
         operation_busy: true,
         development_only: true,
         login_auto_start: false,
@@ -414,6 +417,7 @@ impl Fixture {
         let root = self.control.path().parent().unwrap();
         let binding = Binding {
             schema_version: 1,
+            supply: None,
             instance_id: self.state.instance_id.clone(),
             package: root.join("package"),
             archive: root.join("bundle.tar.gz"),
@@ -592,4 +596,189 @@ fn adapter_timeout_and_actual_identity_failure_remain_distinct_in_status() {
     );
     assert_eq!(result.reason, "SERVICE_HTTP_IDENTITY_UNKNOWN");
     assert!(result.last_observation_reason.is_none());
+}
+
+#[test]
+fn startup_steps_are_durable_before_work_and_survive_refusal() {
+    let mut f = Fixture::new();
+    f.store.require_capacity(START_REVISIONS).unwrap();
+    f.runtime.save(&mut f.store).unwrap();
+    f.store.require_capacity(GATE_REVISIONS).unwrap();
+    f.runtime.phase = RuntimePhase::GateConsumed;
+    f.runtime.pid = Some(31234);
+    f.runtime.save(&mut f.store).unwrap();
+    let mut stage_count = 0;
+    for stage in [
+        StartupStage::InputPins,
+        StartupStage::PackageVerification,
+        StartupStage::ColdPreflight,
+        StartupStage::NativeConfiguration,
+        StartupStage::SnapshotVerification,
+        StartupStage::FinalRecheck,
+        StartupStage::EngineExec,
+    ] {
+        f.runtime.enter_stage(&mut f.store, stage).unwrap();
+        // A separate observer sees the step even before its operation returns.
+        let raw = f.store.read().unwrap().unwrap();
+        let record = diagnostic_record(&f.control, &f.state, &raw).unwrap();
+        assert_eq!(record.startup_stage.as_deref(), Some(stage.code()));
+        assert_eq!(record.startup_failure_reason, None);
+        assert_eq!(record.attempt, "run-attempt");
+        assert_eq!(record.phase, "GATE_CONSUMED");
+        stage_count += 1;
+    }
+    assert_eq!(START_REVISIONS, 1 + 1 + stage_count + 1 + 1);
+    f.runtime
+        .refuse(&mut f.store, "SERVICE_EXEC_FAILED")
+        .unwrap();
+    let raw = f.store.read().unwrap().unwrap();
+    let record = diagnostic_record(&f.control, &f.state, &raw).unwrap();
+    assert_eq!(record.startup_stage.as_deref(), Some("ENGINE_EXEC"));
+    assert_eq!(
+        record.startup_failure_reason.as_deref(),
+        Some("SERVICE_EXEC_FAILED")
+    );
+    assert_eq!(record.phase, "GATE_REFUSED");
+    assert!(
+        f.runtime
+            .enter_stage(&mut f.store, StartupStage::InputPins)
+            .is_err()
+    );
+}
+
+#[test]
+fn old_v1_runtime_without_startup_stage_remains_compatible_and_unknown_stages_are_rejected() {
+    let f = Fixture::new();
+    let raw = serde_json::to_vec(&f.runtime).unwrap();
+    assert!(!String::from_utf8_lossy(&raw).contains("startupStage"));
+    assert!(
+        decode_runtime(&f.control, &f.state, &raw)
+            .unwrap()
+            .startup_stage
+            .is_none()
+    );
+    for stage in ["INPUT_PINS", "PRIVATE_CANARY"] {
+        let mut value = serde_json::to_value(&f.runtime).unwrap();
+        value["startupStage"] = stage.into();
+        assert!(
+            decode_runtime(&f.control, &f.state, &serde_json::to_vec(&value).unwrap()).is_err()
+        );
+    }
+    let mut consumed = f.runtime;
+    consumed.phase = RuntimePhase::GateConsumed;
+    consumed.pid = Some(31234);
+    let record = diagnostic_record(
+        &f.control,
+        &f.state,
+        &serde_json::to_vec(&consumed).unwrap(),
+    )
+    .unwrap();
+    assert!(record.startup_stage.is_none());
+    assert!(record.startup_failure_reason.is_none());
+}
+
+#[test]
+fn startup_failure_projection_withholds_unknown_reasons_and_never_infers_failure_from_stage() {
+    let mut f = Fixture::new();
+    f.runtime.phase = RuntimePhase::GateConsumed;
+    f.runtime.pid = Some(31234);
+    f.runtime.startup_stage = Some(StartupStage::PackageVerification);
+    f.runtime.reason = "ENGINE_INPUT_IO".into();
+    assert!(f.runtime.startup_failure().is_none());
+    f.runtime
+        .refuse(&mut f.store, "PRIVATE_CANARY /customer/path")
+        .unwrap();
+    let record =
+        diagnostic_record(&f.control, &f.state, &f.store.read().unwrap().unwrap()).unwrap();
+    assert_eq!(
+        record.startup_stage.as_deref(),
+        Some("PACKAGE_VERIFICATION")
+    );
+    assert_eq!(
+        record.startup_failure_reason.as_deref(),
+        Some("DETAIL_WITHHELD")
+    );
+    assert!(!String::from_utf8_lossy(&f.store.read().unwrap().unwrap()).contains("PRIVATE_CANARY"));
+    assert_eq!(startup_failure_code("ENGINE_INPUT_IO"), "ENGINE_INPUT_IO");
+}
+
+#[test]
+fn wait_expiry_preserves_current_startup_stage_without_starting_another_attempt() {
+    let mut pending = observation("UNKNOWN", "UNKNOWN", "UNKNOWN", "SERVICE_REPORT_UNKNOWN");
+    pending.startup_stage = Some("PACKAGE_VERIFICATION".into());
+    let attempt = pending.attempt_id.clone();
+    let expired = waiting(WaitKind::Status)
+        .accept(pending, true)
+        .unwrap()
+        .unwrap();
+    assert_eq!(expired.attempt_id, attempt);
+    assert_eq!(
+        expired.startup_stage.as_deref(),
+        Some("PACKAGE_VERIFICATION")
+    );
+    assert!(expired.startup_failure_reason.is_none());
+    assert_eq!(expired.reason, "SERVICE_STATUS_WAIT_EXPIRED");
+    assert_eq!(
+        expired.last_observation_reason.as_deref(),
+        Some("SERVICE_REPORT_UNKNOWN")
+    );
+    assert_eq!(expired.outcome, "UNKNOWN");
+}
+
+#[test]
+fn advancing_gate_stage_does_not_invalidate_read_only_snapshot_or_relax_writer_conflicts() {
+    let mut f = Fixture::new();
+    f.runtime.phase = RuntimePhase::GateConsumed;
+    f.runtime.pid = Some(31234);
+    f.runtime
+        .enter_stage(&mut f.store, StartupStage::InputPins)
+        .unwrap();
+    let mut earlier = open_runtime(&f.control).unwrap().unwrap();
+    f.runtime
+        .enter_stage(&mut f.store, StartupStage::PackageVerification)
+        .unwrap();
+    assert!(earlier.read().is_err());
+    let snapshot = runtime_snapshot(&f.control, &f.state, &earlier).unwrap();
+    assert_eq!(snapshot.startup_stage, Some(StartupStage::InputPins));
+    assert_eq!(snapshot.attempt_id, f.runtime.attempt_id);
+    // An old observer snapshot must still be unable to overwrite newer work.
+    assert!(snapshot.save(&mut earlier).is_err());
+    let next = observe_runtime(&f.control, &f.state).unwrap().unwrap();
+    assert_eq!(next.startup_stage, Some(StartupStage::PackageVerification));
+    assert_eq!(next.attempt_id, snapshot.attempt_id);
+}
+
+#[test]
+fn stop_observation_follows_stage_progress_but_never_adopts_a_replacement_attempt() {
+    let mut f = Fixture::new();
+    f.runtime.save(&mut f.store).unwrap();
+    let initial = observe_runtime(&f.control, &f.state).unwrap().unwrap();
+    assert_eq!(initial.phase, RuntimePhase::StartPrepared);
+    f.runtime.phase = RuntimePhase::GateConsumed;
+    f.runtime.pid = Some(31234);
+    f.runtime
+        .enter_stage(&mut f.store, StartupStage::InputPins)
+        .unwrap();
+    let mut earlier = open_runtime(&f.control).unwrap().unwrap();
+    f.runtime
+        .enter_stage(&mut f.store, StartupStage::PackageVerification)
+        .unwrap();
+    assert!(earlier.read().is_err());
+    let current = observe_stop_attempt(&f.control, &f.state, &initial.attempt_id).unwrap();
+    assert_eq!(
+        current.startup_stage,
+        Some(StartupStage::PackageVerification)
+    );
+    assert_eq!(current.pid, Some(31234));
+    // Stop observations do not relax the exclusive final confirmation writer.
+    assert!(current.save(&mut earlier).is_err());
+    f.runtime.attempt_id = "different-attempt".into();
+    f.runtime.save(&mut f.store).unwrap();
+    assert_eq!(
+        observe_stop_attempt(&f.control, &f.state, &initial.attempt_id)
+            .err()
+            .unwrap()
+            .code,
+        "SERVICE_OPERATION_UNKNOWN"
+    );
 }

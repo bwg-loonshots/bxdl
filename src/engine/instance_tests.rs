@@ -37,6 +37,7 @@ impl Fixture {
             node_identity: format!("0x{}:0x{}", "1".repeat(64), "2".repeat(40)),
             data_directory: root.join("data"),
             pins: vec![],
+            supply: None,
         };
         let raw = serde_json::to_vec(&binding).unwrap();
         store::write_new(&control.path().join("binding.json"), &raw).unwrap();
@@ -229,6 +230,12 @@ mod owned {
     }
     impl OwnedFixture {
         fn new() -> Self {
+            Self::build(false, false)
+        }
+        fn managed(signed: bool) -> Self {
+            Self::build(true, signed)
+        }
+        fn build(managed: bool, signed: bool) -> Self {
             let temporary = tempfile::tempdir().unwrap();
             let root = fs::canonicalize(temporary.path()).unwrap();
             fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
@@ -266,17 +273,40 @@ mod owned {
             let spec = root.join("spec.json");
             put(&spec, &serde_json::to_vec(&manifest).unwrap());
             let archive = root.join("bundle.tar.gz");
+            let (signing_key_path, public_key_path) = if signed {
+                use ed25519_dalek::{
+                    SigningKey,
+                    pkcs8::{EncodePrivateKey, EncodePublicKey, spki::der::pem::LineEnding},
+                };
+                let key = SigningKey::from_bytes(&[0x52; 32]); // Fixed test-only seed.
+                let private = root.join("test-signing.pem");
+                let public = root.join("test-public.pem");
+                put(
+                    &private,
+                    key.to_pkcs8_pem(LineEnding::LF).unwrap().as_bytes(),
+                );
+                put(
+                    &public,
+                    key.verifying_key()
+                        .to_public_key_pem(LineEnding::LF)
+                        .unwrap()
+                        .as_bytes(),
+                );
+                (Some(private), Some(public))
+            } else {
+                (None, None)
+            };
             artifact::build(&BuildOptions {
                 root: stage,
                 spec_path: spec,
                 output: archive.clone(),
-                signing_key_path: None,
-                allow_unsigned_development: true,
+                signing_key_path,
+                allow_unsigned_development: !signed,
             })
             .unwrap();
             let trust = VerifyOptions {
-                public_key_path: None,
-                allow_unsigned_development: true,
+                public_key_path: public_key_path.clone(),
+                allow_unsigned_development: !signed,
             };
             let verified = artifact::verify(&archive, &trust).unwrap();
             let package = root.join("package");
@@ -327,14 +357,14 @@ mod owned {
                 instance: root.join("control"),
                 package,
                 archive,
-                public_key: None,
-                allow_unsigned_development: true,
+                public_key: public_key_path,
+                allow_unsigned_development: !signed,
                 product: product_path,
                 native,
                 lock,
                 timeout: Duration::from_secs(1),
             };
-            let (mut binding, _, _) = registration_inputs(&options).unwrap();
+            let (mut binding, native, _) = registration_inputs(&options).unwrap();
             binding.instance_id = "validator-one".into();
             binding.archive_sha256 = verified.archive_sha256;
             binding.manifest_sha256 = verified.manifest_sha256;
@@ -346,6 +376,10 @@ mod owned {
                 Ok(())
             })
             .unwrap();
+            if managed {
+                supply::retain(&control, &mut binding, &native).unwrap();
+                verified_package(&binding, true).unwrap();
+            }
             let raw = serde_json::to_vec(&binding).unwrap();
             store::write_new(&control.path().join("binding.json"), &raw).unwrap();
             let state = State {
@@ -439,5 +473,240 @@ mod owned {
             assert!(!error.message.contains("CANARY"));
             assert!(!error.message.contains(f.root.to_str().unwrap()));
         }
+    }
+    #[test]
+    fn managed_signed_and_unsigned_copies_survive_original_supply_removal() {
+        for signed in [false, true] {
+            let f = OwnedFixture::managed(signed);
+            let (original, _, _) = registration_inputs(&f.options).unwrap();
+            let expected = supply::source_pins(&original).unwrap();
+            let before = f.journal.read().unwrap();
+            for path in [&f.options.archive, &f.options.lock]
+                .into_iter()
+                .chain(f.options.public_key.iter())
+            {
+                fs::remove_file(path).unwrap();
+            }
+            let observed = verify_owned_binding_with_package(&f.options, &f.owner, true).unwrap();
+            assert_eq!(observed.summary.initialization, "NOT_STARTED");
+            assert_eq!(observed.source_pins, expected);
+            assert_eq!(
+                observed.package.authenticity,
+                if signed {
+                    "verified-external-ed25519"
+                } else {
+                    "unsigned-development"
+                }
+            );
+            assert_eq!(before, f.journal.read().unwrap());
+            assert!(!f.root.join("data").exists());
+            let trust = f.options.instance.join("trust");
+            assert_eq!(
+                fs::symlink_metadata(&trust).unwrap().permissions().mode() & 0o7777,
+                0o700
+            );
+            for name in ["package.tar.gz", "engine-lock.json"]
+                .into_iter()
+                .chain(signed.then_some("public-key.pem"))
+            {
+                assert_eq!(
+                    fs::symlink_metadata(trust.join(name))
+                        .unwrap()
+                        .permissions()
+                        .mode()
+                        & 0o7777,
+                    0o600
+                );
+            }
+            let control = Control::open(&f.options.instance).unwrap();
+            let (binding, _, _, _) = load(&control).unwrap();
+            assert_eq!(binding.schema_version, 2);
+            assert_eq!(
+                binding.options(Duration::from_secs(1)).lock,
+                trust.join("engine-lock.json")
+            );
+            assert!(!binding.pins.iter().any(|p| p.path == f.options.lock));
+            let summary = serde_json::to_string(&observed.summary).unwrap();
+            assert!(!summary.contains(f.root.to_str().unwrap()));
+            assert!(!summary.contains("CANARY"));
+        }
+    }
+
+    #[test]
+    fn managed_supply_does_not_adopt_changed_request_or_operational_credentials() {
+        for case in 0..6 {
+            let mut f = OwnedFixture::managed(true);
+            match case {
+                0 => f.options.archive = f.options.instance.join("trust/package.tar.gz"),
+                1 => f.options.lock = f.root.join("same-lock-copy.json"),
+                2 => f.options.public_key = None,
+                3 => f.options.allow_unsigned_development = true,
+                4 => put(&f.root.join("0.private"), b"CHANGED_SECRET_CANARY"),
+                _ => put(
+                    &f.options.package.join("runtime/lib/modules"),
+                    b"changed installed runtime",
+                ),
+            }
+            let before = f.journal.read().unwrap();
+            let error = verify_owned_binding(&f.options, &f.owner)
+                .err()
+                .expect("must refuse changed request/live input");
+            assert!(!error.message.contains("CANARY"));
+            assert!(!error.message.contains(f.root.to_str().unwrap()));
+            assert_eq!(before, f.journal.read().unwrap());
+            assert!(!f.root.join("data").exists());
+        }
+    }
+
+    #[test]
+    fn managed_copy_tampering_missing_files_links_and_permissions_fail_closed() {
+        for case in 0..9 {
+            let f = OwnedFixture::managed(true);
+            let trust = f.options.instance.join("trust");
+            match case {
+                0 => put(&trust.join("package.tar.gz"), b"changed archive"),
+                1 => put(&trust.join("engine-lock.json"), b"changed lock"),
+                2 => put(&trust.join("public-key.pem"), b"changed key"),
+                3 => {
+                    fs::remove_file(trust.join("engine-lock.json")).unwrap();
+                }
+                4 => {
+                    fs::remove_file(trust.join("public-key.pem")).unwrap();
+                    symlink(
+                        f.options.public_key.as_ref().unwrap(),
+                        trust.join("public-key.pem"),
+                    )
+                    .unwrap();
+                }
+                5 => {
+                    fs::hard_link(trust.join("package.tar.gz"), f.root.join("hardlink")).unwrap();
+                }
+                6 => {
+                    fs::set_permissions(
+                        trust.join("public-key.pem"),
+                        fs::Permissions::from_mode(0o644),
+                    )
+                    .unwrap();
+                }
+                7 => put(&trust.join("unregistered-copy"), b"unexpected"),
+                _ => {
+                    fs::set_permissions(&trust, fs::Permissions::from_mode(0o755)).unwrap();
+                }
+            }
+            let before = f.journal.read().unwrap();
+            assert!(verify_owned_binding(&f.options, &f.owner).is_err());
+            assert_eq!(before, f.journal.read().unwrap());
+            assert!(!f.root.join("data").exists());
+        }
+    }
+
+    #[test]
+    fn managed_provenance_hash_and_fixed_layout_are_required() {
+        for case in 0..5 {
+            let mut f = OwnedFixture::managed(true);
+            let control = Control::open(&f.options.instance).unwrap();
+            let (mut binding, _, _, _) = load(&control).unwrap();
+            match case {
+                0 => binding.supply.as_mut().unwrap().lock.sha256 = "f".repeat(64),
+                1 => binding.archive = f.options.archive.clone(),
+                2 => binding.supply = None,
+                3 => binding.pins.push(binding.pins[0].clone()),
+                _ => binding.schema_version = 1,
+            }
+            let raw = serde_json::to_vec(&binding).unwrap();
+            put(&control.path().join("binding.json"), &raw);
+            f.state.binding_sha256 = files::digest(&raw);
+            f.state.save(&mut f.journal).unwrap();
+            assert!(verify_owned_binding(&f.options, &f.owner).is_err());
+        }
+    }
+
+    #[test]
+    fn legacy_v1_keeps_original_supply_dependency_without_implicit_upgrade() {
+        let f = OwnedFixture::new();
+        let before = fs::read(f.options.instance.join("binding.json")).unwrap();
+        fs::remove_file(&f.options.archive).unwrap();
+        assert!(verify_owned_binding(&f.options, &f.owner).is_err());
+        assert_eq!(
+            before,
+            fs::read(f.options.instance.join("binding.json")).unwrap()
+        );
+        assert!(!f.options.instance.join("trust").exists());
+        assert_eq!(
+            show(&f.options.instance).unwrap().initialization,
+            "NOT_STARTED"
+        );
+    }
+
+    #[test]
+    fn interrupted_supply_copy_is_preserved_and_cannot_be_adopted_or_overwritten() {
+        let f = OwnedFixture::new();
+        let instance = f.root.join("incomplete");
+        let mut owner = None;
+        let control = Control::create_owned(&instance, &mut |identity| {
+            owner = Some(identity);
+            Ok(())
+        })
+        .unwrap();
+        let incorrect = "f".repeat(64);
+        let lock_hash = files::digest(&fs::read(&f.options.lock).unwrap());
+        let inputs = [
+            (
+                "package.tar.gz",
+                f.options.archive.as_path(),
+                incorrect.as_str(),
+                artifact::MAX_ARCHIVE_BYTES,
+            ),
+            (
+                "engine-lock.json",
+                f.options.lock.as_path(),
+                lock_hash.as_str(),
+                65_536,
+            ),
+        ];
+        assert!(control.retain_supply(&inputs).is_err());
+        assert!(instance.join("trust/package.tar.gz").is_file());
+        assert!(!instance.join("binding.json").exists());
+        assert!(!instance.join("journal").exists());
+        let before = fs::read(instance.join("trust/package.tar.gz")).unwrap();
+        assert!(control.retain_supply(&inputs).is_err());
+        assert_eq!(
+            before,
+            fs::read(instance.join("trust/package.tar.gz")).unwrap()
+        );
+        assert!(show(&instance).is_err());
+        let mut options = f.options;
+        options.instance = instance;
+        assert!(inspect_owned_registration(&options, &owner.unwrap()).is_err());
+    }
+    #[test]
+    fn managed_observation_preserves_unknown_attempt_and_busy_lock_without_sources() {
+        let mut f = OwnedFixture::managed(true);
+        for path in [&f.options.archive, &f.options.lock]
+            .into_iter()
+            .chain(f.options.public_key.iter())
+        {
+            fs::remove_file(path).unwrap();
+        }
+        f.state.phase = Phase::InitIntent;
+        f.state.attempt = Some(Attempt {
+            id: "managed-unresolved".into(),
+            command: "init".into(),
+        });
+        f.state.reason = "INITIALIZATION_ATTEMPT_UNRESOLVED".into();
+        f.state.save(&mut f.journal).unwrap();
+        let before = f.journal.read().unwrap();
+        let root = Control::open(&f.options.instance).unwrap();
+        let _guard = root.lock().unwrap();
+        let observed = verify_owned_binding_with_package(&f.options, &f.owner, false).unwrap();
+        assert_eq!(observed.summary.initialization, "UNKNOWN");
+        assert_eq!(observed.summary.operation_busy, Some(true));
+        assert_eq!(
+            observed.summary.attempt_id.as_deref(),
+            Some("managed-unresolved")
+        );
+        assert!(inspect_owned_registration(&f.options, &f.owner).is_err());
+        assert_eq!(before, f.journal.read().unwrap());
+        assert!(!f.root.join("data").exists());
     }
 }

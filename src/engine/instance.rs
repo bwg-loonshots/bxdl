@@ -2,6 +2,7 @@
 //! explicit one-shot init/resume-init preserves uncertain attempts for inspection.
 pub mod diagnostics;
 pub mod service;
+mod supply;
 use super::{
     Identity, Lock, Options, ProductReport, fail,
     files::{self, Input, NativeInput, Workspace},
@@ -39,7 +40,7 @@ pub struct RegisterOptions {
     pub lock: PathBuf,
     pub timeout: Duration,
 }
-#[derive(PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Pin {
     path: PathBuf,
@@ -67,6 +68,8 @@ struct Binding {
     node_identity: String,
     data_directory: PathBuf,
     pins: Vec<Pin>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    supply: Option<supply::Provenance>,
 }
 #[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -191,6 +194,14 @@ pub fn register_owned(
     }
     native.recheck()?;
     verified_package(&binding, true)?;
+    supply::retain(&root, &mut binding, &native)?;
+    verified_package(&binding, true)?;
+    // Keep live configuration pins stable across potentially long archive copying.
+    for input in &inputs {
+        input.recheck()?;
+    }
+    native.recheck()?;
+    root.recheck()?;
     let raw = serde_json::to_vec(&binding).map_err(|_| corrupt())?;
     store::write_new(&root.path().join("binding.json"), &raw).map_err(state_error)?;
     let mut journal = Store::create(&root.path().join("journal")).map_err(state_error)?;
@@ -237,6 +248,7 @@ fn registration_inputs(options: &RegisterOptions) -> Result<(Binding, NativeInpu
         node_identity: String::new(),
         data_directory: native.data.clone(),
         pins: Vec::new(),
+        supply: None,
     };
     let mut inputs = vec![
         product,
@@ -270,7 +282,7 @@ pub fn inspect_owned_registration(
     options: &RegisterOptions,
     owned: &install::RootIdentity,
 ) -> Result<Summary> {
-    verify_owned(options, owned, true)
+    Ok(verify_owned_binding_with_package(options, owned, true)?.summary)
 }
 
 /// Observe the current state of an owned registration without running an engine
@@ -281,14 +293,22 @@ pub fn verify_owned_binding(
     options: &RegisterOptions,
     owned: &install::RootIdentity,
 ) -> Result<Summary> {
-    verify_owned(options, owned, false)
+    Ok(verify_owned_binding_with_package(options, owned, false)?.summary)
 }
 
-fn verify_owned(
+/// An authenticated package and exact original-path pins for a saved setup plan.
+/// V2 source paths are provenance only; their hashes come from managed bytes.
+pub struct OwnedVerification {
+    pub summary: Summary,
+    pub package: artifact::Report,
+    pub source_pins: Vec<super::setup_plan::Pin>,
+}
+
+pub fn verify_owned_binding_with_package(
     options: &RegisterOptions,
     owned: &install::RootIdentity,
     registered_only: bool,
-) -> Result<Summary> {
+) -> Result<OwnedVerification> {
     host()?;
     let root = Control::open(&options.instance)?;
     root.require_owner(owned)?;
@@ -298,18 +318,28 @@ fn verify_owned(
     {
         return Err(precondition());
     }
-    let (requested, native, inputs) = registration_inputs(options)?;
-    if binding.package != requested.package
-        || binding.archive != requested.archive
-        || binding.public_key != requested.public_key
-        || binding.allow_unsigned_development != requested.allow_unsigned_development
-        || binding.product != requested.product
-        || binding.native != requested.native
-        || binding.lock != requested.lock
-        || binding.identity != requested.identity
-        || binding.backend != requested.backend
-        || binding.data_directory != requested.data_directory
-        || binding.pins != requested.pins
+    supply::check_request(&binding, options)?;
+    let inputs = binding.check_pins()?;
+    let native = NativeInput::load(&binding.native)?;
+    if native.data != binding.data_directory || native.value.backend != binding.backend {
+        return Err(precondition());
+    }
+    // Reconstruct the complete current reference set using the retained lock/key.
+    // Missing, extra or reordered references cannot be hidden by provenance.
+    let effective = RegisterOptions {
+        instance: options.instance.clone(),
+        package: binding.package.clone(),
+        archive: binding.archive.clone(),
+        public_key: binding.public_key.clone(),
+        allow_unsigned_development: binding.allow_unsigned_development,
+        product: binding.product.clone(),
+        native: binding.native.clone(),
+        lock: binding.lock.clone(),
+        timeout: options.timeout,
+    };
+    let requested = current_pins(&effective, &native)?;
+    if binding.pins != requested
+        || read_lock(&Input::read(&binding.lock, 65_536, false)?)?.expected != binding.identity
     {
         return Err(precondition());
     }
@@ -320,7 +350,8 @@ fn verify_owned(
     if product_value["instanceId"].as_str() != Some(binding.instance_id.as_str()) {
         return Err(precondition());
     }
-    verified_package(&binding, true)?;
+    let package = verified_package(&binding, true)?;
+    let source_pins = supply::source_pins(&binding)?;
     for input in &inputs {
         input.recheck()?;
     }
@@ -344,7 +375,11 @@ fn verify_owned(
     journal.read().map_err(state_error)?;
     binding_file.recheck()?;
     root.require_owner(owned)?;
-    Ok(result)
+    Ok(OwnedVerification {
+        summary: result,
+        package,
+        source_pins,
+    })
 }
 
 impl Binding {
@@ -357,6 +392,7 @@ impl Binding {
         }
     }
     fn check_pins(&self) -> Result<Vec<Input>> {
+        supply::check_files(self)?;
         if self.pins.is_empty() || self.pins.len() > 128 {
             return Err(corrupt());
         }
@@ -364,6 +400,7 @@ impl Binding {
     }
 }
 fn verified_package(binding: &Binding, pinned: bool) -> Result<artifact::Report> {
+    supply::check_files(binding)?;
     let expected = artifact::verify(
         &binding.archive,
         &artifact::VerifyOptions {
@@ -395,6 +432,7 @@ fn read_lock(input: &Input) -> Result<Lock> {
     Ok(lock)
 }
 fn disjoint(instance: &Path, b: &Binding) -> Result<()> {
+    supply::validate_layout(instance, b)?;
     for trust in [&b.lock, &b.archive].into_iter().chain(b.public_key.iter()) {
         if paths::overlaps(&b.package, trust)? {
             return Err(fail(
@@ -409,7 +447,9 @@ fn disjoint(instance: &Path, b: &Binding) -> Result<()> {
         .map(|p| p.path.as_path())
         .chain([b.package.as_path(), b.archive.as_path()])
     {
-        if paths::overlaps(instance, path)? || paths::overlaps(&b.data_directory, path)? {
+        if (!supply::is_managed(b, path) && paths::overlaps(instance, path)?)
+            || paths::overlaps(&b.data_directory, path)?
+        {
             return Err(fail(
                 "INSTANCE_PATH_OVERLAP",
                 "인스턴스 기록·데이터·설치 패키지·입력 경로를 서로 분리하세요.",
@@ -421,13 +461,46 @@ fn disjoint(instance: &Path, b: &Binding) -> Result<()> {
     }
     Ok(())
 }
+fn binding_schema_valid(binding: &Binding) -> bool {
+    matches!(
+        (binding.schema_version, &binding.supply),
+        (1, None) | (2, Some(_))
+    )
+}
+
+// Rebuild exactly the same deduplicated pin order as registration, without
+// requiring external supply paths once their managed copies have been committed.
+fn current_pins(options: &RegisterOptions, native: &NativeInput) -> Result<Vec<Pin>> {
+    let mut paths = vec![
+        &options.product,
+        &options.lock,
+        &native.config.path,
+        &native.chain.path,
+    ];
+    paths.extend(native.references.iter());
+    paths.extend(options.public_key.iter());
+    let mut seen = BTreeSet::new();
+    let mut pins = Vec::new();
+    for path in paths {
+        let input = Input::read(path, 4 * 1024 * 1024, false)?;
+        if seen.insert(input.path.clone()) {
+            pins.push(Pin {
+                path: input.path.clone(),
+                sha256: files::digest(&input.raw),
+            });
+        }
+        input.recheck()?;
+    }
+    Ok(pins)
+}
+
 fn load(root: &Control) -> Result<(Binding, Input, Store, State)> {
     let binding_file = Input::read(&root.path().join("binding.json"), 262_144, false)?;
     let binding: Binding = json::decode(&binding_file.raw).map_err(|_| corrupt())?;
     let journal = Store::open(&root.path().join("journal")).map_err(state_error)?;
     let raw = journal.read().map_err(state_error)?.ok_or_else(corrupt)?;
     let state: State = json::decode(&raw).map_err(|_| corrupt())?;
-    if binding.schema_version != 1
+    if !binding_schema_valid(&binding)
         || state.schema_version != 1
         || binding.instance_id != state.instance_id
         || files::digest(&binding_file.raw) != state.binding_sha256

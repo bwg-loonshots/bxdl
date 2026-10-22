@@ -1,0 +1,167 @@
+{
+  "artifact": {
+    "sha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+    "sizeBytes": 164088530,
+    "sourceCommit": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1"
+  },
+  "cases": [
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "h2",
+      "caseName": "fourValidatorMtlsFinalityObserverAndSameIdentityRestart",
+      "childCommands": {
+        "engine-info": 1,
+        "init": 5,
+        "preflight": 6,
+        "run": 7
+      },
+      "children": 19,
+      "displayName": "\"h2\", restart run 1",
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "rocksdb",
+      "caseName": "explicitInitAndSameInstanceRunStopAndRestart",
+      "childCommands": {
+        "engine-info": 1,
+        "init": 2,
+        "preflight": 1,
+        "run": 2
+      },
+      "children": 6,
+      "displayName": "[2] backend = \"rocksdb\"",
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "rocksdb",
+      "caseName": "interruptedInitCanOnlyResumeAnAlreadyCommittedGenesis",
+      "childCommands": {
+        "engine-info": 1,
+        "init": 1,
+        "resume-init": 1,
+        "run": 1
+      },
+      "children": 4,
+      "displayName": "[2] backend = \"rocksdb\"",
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": null,
+      "caseName": "engineInfoUsesOnlyMachineJsonAndNamesUnavailableSourceExecution",
+      "childCommands": {
+        "engine-info": 2
+      },
+      "children": 2,
+      "displayName": "engineInfoUsesOnlyMachineJsonAndNamesUnavailableSourceExecution()",
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": null,
+      "caseName": "misplacedOrMissingManagedCommandCannotFallBackToSpring",
+      "childCommands": {
+        "--config=/missing": 2,
+        "--server.port=1": 1,
+        "engine-info": 1
+      },
+      "children": 4,
+      "displayName": "misplacedOrMissingManagedCommandCannotFallBackToSpring()",
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "h2",
+      "caseName": "interruptedInitCanOnlyResumeAnAlreadyCommittedGenesis",
+      "childCommands": {
+        "engine-info": 1,
+        "init": 1,
+        "resume-init": 1,
+        "run": 1
+      },
+      "children": 4,
+      "displayName": "[1] backend = \"h2\"",
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": null,
+      "caseName": "unknownCommandCannotFallBackToSpring",
+      "childCommands": {
+        "engine-info": 1,
+        "rn": 1
+      },
+      "children": 2,
+      "displayName": "unknownCommandCannotFallBackToSpring()",
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "rocksdb",
+      "caseName": "fourValidatorMtlsFinalityObserverAndSameIdentityRestart",
+      "childCommands": {
+        "engine-info": 1,
+        "init": 5,
+        "preflight": 6,
+        "run": 7
+      },
+      "children": 19,
+      "displayName": "\"rocksdb\", restart run 1",
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "allChildrenHaveRecordedExit": true,
+      "backend": "h2",
+      "caseName": "explicitInitAndSameInstanceRunStopAndRestart",
+      "childCommands": {
+        "engine-info": 1,
+        "init": 2,
+        "preflight": 1,
+        "run": 2
+      },
+      "children": 6,
+      "displayName": "[1] backend = \"h2\"",
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    }
+  ],
+  "engineRebuilt": false,
+  "finishedAt": "2026-10-21T09:55:19.949Z",
+  "harnessCommit": "d6c022282753e94e94764d0e23e034e2f4757ce8",
+  "rawCommandsPropertiesLogsAndCaseJsonIncluded": false,
+  "runtime": {
+    "files": 259,
+    "inventoryDocumentSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+    "inventorySha256": "08df9e7b86a4c9a31f710c5b947c4ddf58ac776a8eaa7d30e6b8416b2cb1b9f5",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "moduleCount": 49,
+    "properties": {
+      "java.runtime.version": "21.0.12.1+1-LTS",
+      "java.specification.version": "21",
+      "java.vendor": "Eclipse Adoptium",
+      "java.version": "21.0.12.1",
+      "os.arch": "aarch64",
+      "os.name": "Mac OS X"
+    }
+  },
+  "scope": "ENGINE",
+  "sourceProofSha256": "f38336449d5dac9bb18e3f75ac4637bca256eaaeb0970787a47a93503464e68e",
+  "startedAt": "2026-10-21T09:51:42.939Z",
+  "status": "PASS",
+  "summary": {
+    "cases": 9,
+    "failed": 0,
+    "passed": 9,
+    "skipped": 0
+  }
+}

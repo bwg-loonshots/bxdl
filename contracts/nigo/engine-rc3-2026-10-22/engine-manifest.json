@@ -1,0 +1,74 @@
+{
+    "engine": "NIGO",
+    "version": "0.0.1-SNAPSHOT",
+    "source": {
+        "commit": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1",
+        "dirty": false
+    },
+    "java": {
+        "requiredMajor": 21
+    },
+    "console": {
+        "node": "v24.21.0",
+        "npm": "11.19.0",
+        "sourceFingerprint": "a76e634dacf728b81cd446cdeaa2b6a250e1a2a91c505153dd424fd46431e99e"
+    },
+    "contract": {
+        "status": "PROPOSED",
+        "revision": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1",
+        "documentationSha256": "a284e1502b298dd755704378e168811373b860665dfba14ed3069d0f6c8431d6",
+        "definitionSha256": "988648d06b95d372cfc36a88fbf4a88ae7deb4a3477ad8629163daa03f902e49",
+        "runtimeDocumentationSha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+        "runtimeFixtureSha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e",
+        "fingerprint": "c604b1d24097015b2839d97f2bc9d45e3fff91ed6984665d1aa827a155c7b6e8"
+    },
+    "distribution": {
+        "channel": "development",
+        "officialRelease": false
+    },
+    "contractInputs": [
+        {
+            "sourcePath": "nigo-java/nigo-node/ENGINE_CONTRACT.md",
+            "jarEntry": "BOOT-INF/classes/engine/contract-evidence/ENGINE_CONTRACT.md",
+            "sha256": "a284e1502b298dd755704378e168811373b860665dfba14ed3069d0f6c8431d6"
+        },
+        {
+            "sourcePath": "nigo-java/nigo-node/src/main/resources/engine/contract.json",
+            "jarEntry": "BOOT-INF/classes/engine/contract.json",
+            "sha256": "988648d06b95d372cfc36a88fbf4a88ae7deb4a3477ad8629163daa03f902e49"
+        },
+        {
+            "sourcePath": "nigo-java/nigo-node/ENGINE_RUNTIME_CONTRACT.md",
+            "jarEntry": "BOOT-INF/classes/engine/contract-evidence/ENGINE_RUNTIME_CONTRACT.md",
+            "sha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e"
+        },
+        {
+            "sourcePath": "nigo-java/nigo-node/src/test/resources/engine-contract/health-cases.json",
+            "jarEntry": "BOOT-INF/classes/engine/contract-evidence/health-cases.json",
+            "sha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e"
+        }
+    ],
+    "artifact": {
+        "fileName": "nigo-node-0.0.1-SNAPSHOT.jar",
+        "sha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+        "sizeBytes": 164088530
+    },
+    "evidence": {
+        "supplierTests": "NOT_RECORDED",
+        "consumerAcceptance": "NOT_RUN",
+        "testedPlatforms": [
+            
+        ]
+    },
+    "native": {
+        "validationStatus": "NOT_CHECKED",
+        "writableExecutableJavaTempRequired": true,
+        "requirementsReference": "nigo-java/nigo-crypto/PROVIDERS.md",
+        "rocksDbRequirementsReference": "nigo-java/nigo-node/ROCKSDB_OPERATIONS.md"
+    },
+    "limitations": [
+        "Development candidate only; not an official release or customer-delivery approval.",
+        "A dirty source tree is not an exact reproducible source revision.",
+        "Bundled dependencies do not establish Java/native/platform or BXDL package acceptance."
+    ]
+}

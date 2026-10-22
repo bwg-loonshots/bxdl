@@ -68,3 +68,5 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 3. 잘못된 경로·설정·키·artifact와 중복 실행을 명시적으로 거부한다.
 4. 같은 Mac 패키지의 test-owned 4-validator mTLS 로컬 회귀에서 거래 확정·순차 재시작을 확인한다. Linux/multi-host 인수는 후속 별도 gate다.
 5. 위 evidence로 G1-M Mac 로컬 패키지 RC를 판정한다. 고객 운영 승인은 별도 Linux·보안·내구성·운영 조건을 충족해야 한다.
+
+- [등록 자료 보관·시작 진단](./2026-10-22-managed-supply-and-start-diagnostics.md): V2 관리 사본, 기존 V1 유지, setup 재개와 단계 관측.

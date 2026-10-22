@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "scope": "MANAGED_SUPPLY_RC2_LOCAL_LIFECYCLE",
+  "engine": "nigo-engine-v0.1.0-rc.2",
+  "outcome": "PASS",
+  "buildSource": {
+    "baseCommit": "13e2aeef93e38767109beb1005c073435b72117a",
+    "dirty": true,
+    "inventorySha256": "e12ecb9e5b0739cd67a1ce591111565d6c661e37b6cc62a05e40907fe583f8cc",
+    "cliSha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+    "manifestRevision": "development"
+  },
+  "harness": {
+    "run_smoke.py": "e5d16149df53f9043bbfa1ff809dd1d12a2310c8ea0d2f0dbd892261af930cd6",
+    "support.py": "f7625dd79cf9827f3f14c4d8f9acea0278a089933fba80f553c70ea7e513f0b8"
+  },
+  "cases": [
+    {
+      "case": "SIGNED_NEW_CLI_RC2_PACKAGE",
+      "outcome": "PASS",
+      "archiveSha256": "cdd01d823ec3cd3843b63640c81b83f39bb79798a9fb55b664e05d8af21491e8",
+      "manifestSha256": "c439069a9974bcac5e947960db3c99434cbc52ef08838bd4ccb9311c2dde67c0",
+      "filesVerified": 270,
+      "bytesVerified": 325295952,
+      "authenticity": "verified-external-ed25519"
+    },
+    {
+      "case": "V2_REGISTERED_EXACT_PRIVATE_COPIES",
+      "outcome": "PASS"
+    },
+    {
+      "case": "ORIGINAL_THREE_INPUT_PATHS_ABSENT",
+      "outcome": "PASS",
+      "preservedBytes": true
+    },
+    {
+      "case": "INSTALL_RESUME_AND_CHECK_WITHOUT_ORIGINALS",
+      "outcome": "PASS"
+    },
+    {
+      "case": "COLD_PREFLIGHT_MATCHED_INCOMPLETE",
+      "outcome": "PASS"
+    },
+    {
+      "case": "EXPLICIT_INIT_WITHOUT_ORIGINALS",
+      "outcome": "PASS"
+    },
+    {
+      "case": "EXPLICIT_START_READY_WITH_ENGINE_EXEC_STAGE",
+      "outcome": "PASS",
+      "attemptId": "bxdl-49638-18e0ba4f79deaae0-0"
+    },
+    {
+      "case": "DIAGNOSE_EXPOSES_SAFE_START_STAGE",
+      "outcome": "PASS"
+    },
+    {
+      "case": "FIRST_NORMAL_STOP_VERIFIED",
+      "outcome": "PASS"
+    },
+    {
+      "case": "SAME_DATABASE_RESTART_READY",
+      "outcome": "PASS",
+      "attemptId": "bxdl-49812-18e0ba531b99da28-0"
+    },
+    {
+      "case": "SECOND_NORMAL_STOP_VERIFIED",
+      "outcome": "PASS"
+    },
+    {
+      "case": "TCP_LISTEN_ABSENT_AFTER_STOP",
+      "outcome": "PASS"
+    },
+    {
+      "case": "SOURCE_MANAGED_COPY_OPERATIONAL_INPUT_INTEGRITY",
+      "outcome": "PASS"
+    }
+  ],
+  "newDatabase": true,
+  "testCredentials": "COPIED_FROM_PRIOR_PRIVATE_RC2_FIXTURE",
+  "testOnlySigningKey": true,
+  "globalConsensus": "NOT_CHECKED",
+  "notTested": [
+    "RC3_PRODUCT_ADOPTION",
+    "RC3_A7",
+    "HISTORICAL_PATH_ROOT_CAUSE",
+    "LOGIN_LOGOUT",
+    "POWER_LOSS",
+    "CUSTOMER_UPGRADE",
+    "QUORUM"
+  ],
+  "package": {
+    "archiveSha256": "cdd01d823ec3cd3843b63640c81b83f39bb79798a9fb55b664e05d8af21491e8",
+    "manifestSha256": "c439069a9974bcac5e947960db3c99434cbc52ef08838bd4ccb9311c2dde67c0",
+    "filesVerified": 270,
+    "bytesVerified": 325295952,
+    "authenticity": "verified-external-ed25519"
+  },
+  "cleanup": {
+    "listeners": {
+      "outcome": "PASS",
+      "listeners": [],
+      "scope": "TCP_LISTEN"
+    },
+    "serviceState": "NOT_LOADED",
+    "engineState": "STOPPED"
+  },
+  "automatedChecks": {
+    "rust": 363,
+    "python": 34,
+    "format": "PASS",
+    "clippy": "PASS",
+    "macReleaseBuild": "PASS",
+    "linuxTypeCheck": "PASS",
+    "linuxRuntime": "NOT_RUN"
+  },
+  "independentPostflight": {
+    "schemaVersion": 1,
+    "outcome": "PASS",
+    "observedAt": "2026-10-22T02:52:59.409855+00:00",
+    "recordedPids": 15,
+    "remainingPids": 0,
+    "listeners": {
+      "outcome": "PASS",
+      "listeners": [],
+      "scope": "TCP_LISTEN"
+    },
+    "installedPayloadFiles": 270,
+    "installedInventory": "MATCHED",
+    "rawResultSha256": "9e2e2ce657598cf986e53dcca9c541ff106cf739beb6399c87dc762e9eef6685",
+    "launchAgentsNotLoaded": 2,
+    "startupSequences": 2,
+    "everySequence": [
+      "INPUT_PINS",
+      "PACKAGE_VERIFICATION",
+      "COLD_PREFLIGHT",
+      "NATIVE_CONFIGURATION",
+      "SNAPSHOT_VERIFICATION",
+      "FINAL_RECHECK",
+      "ENGINE_EXEC"
+    ]
+  },
+  "evidence": {
+    "files": 28,
+    "rawResultSha256": "9e2e2ce657598cf986e53dcca9c541ff106cf739beb6399c87dc762e9eef6685",
+    "postflightSha256": "fcdd5bddca015932e0a3ab7b9221a5d901e470de24023a69723c0a1ecbfc7a7f",
+    "inventorySha256": "d58093e5c2f4c34a58b899d361b3cf600a4f919b287c2db6c7b40dd17745df0d",
+    "diagnosticSha256": "05354e6cb9f2b2537451290410c44d0b6d45b166fac8e7770852a62a87be913e"
+  },
+  "rc3": {
+    "receipt": "PASS",
+    "explicitAdoption": "NOT_PERFORMED",
+    "packageAcceptance": "NOT_RUN",
+    "A7": "NOT_RUN"
+  }
+}

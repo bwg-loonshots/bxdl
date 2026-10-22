@@ -81,7 +81,7 @@ BXDL_INSTANCE="/absolute/bxdl/instances/validator-a"
 "$BXDL_PACKAGE/bin/bxdl" start --instance "$BXDL_INSTANCE" --json
 ```
 
-각 start는 별도 attempt·worker/JAR snapshot·plist·report를 만든다. 내부 worker는 control 잠금·자신의 snapshot·정확한 job/PID를 확인해 한 번 실행 허가를 먼저 기록한다. 이후 등록 입력·원본 archive·설치 전체 파일·cold 결과·INITIALIZED/genesis를 검사하고 Java로 전환한다. 검증 실패도 소비한 시도로 보존한다. worker와 Java의 PID가 같고 Java가 control 작업 잠금을 이어받는다. 기존 데이터 존재만으로 init 성공을 추측하지 않는다. 원본 archive/key와 등록 때 고정한 참조 자료는 계속 필요하다.
+각 start는 별도 attempt·worker/JAR snapshot·plist·report를 만든다. 내부 worker는 control 잠금·자신의 snapshot·정확한 job/PID를 확인해 한 번 실행 허가를 먼저 기록한다. 이후 등록 입력·검증용 archive·설치 전체 파일·cold 결과·INITIALIZED/genesis를 검사하고 Java로 전환한다. 검증 실패도 소비한 시도로 보존한다. worker와 Java의 PID가 같고 Java가 control 작업 잠금을 이어받는다. 기존 데이터 존재만으로 init 성공을 추측하지 않는다. V2 등록은 control/trust에 보관한 archive/key/lock을 검증한다. V1 등록은 기존 원본 공급 파일이 계속 필요하며, 두 버전 모두 제품·native 설정과 체인·자격 자료 등 운용 참조는 유지해야 한다.
 
 plist는 control의 시도 폴더에 두고 수동 bootstrap한다. `~/Library/LaunchAgents`에는 설치하지 않는다. 로그인 자동 시작·자동 재시작은 없으며 내부 `service-run`이나 `launchctl kickstart`로 이미 소비한 attempt를 다시 실행할 수 없다. 이 profile은 로그인 세션이 없는 장기 서버용 LaunchDaemon이 아니다.
 
@@ -108,6 +108,14 @@ bxdl diagnose --instance "/absolute/bxdl/instances/validator-a" \
 logs/diagnose는 최신 초기화·서비스 시도의 정제한 이벤트와 저장 상태를 수집한다. 엔진·launchd·네트워크를 호출하지 않아 엔진이 내려가 있어도 사용할 수 있다. raw 로그나 ID·경로·hash·credential은 내보내지 않는다. 현재 노드 상태는 `status`로 별도 확인하며 진단 기록만으로 UNKNOWN을 완료로 바꾸거나 다시 초기화하지 않는다.
 
 diagnose의 출력 부모는 미리 존재해야 하고 control/data/package·참조 자료와 분리되어야 한다. 기존 파일에는 덮어쓰지 않는다. 일부 자료를 읽지 못하면 사유를 담은 `partial=true`/exit 5 보고서를 저장할 수 있다. 등록 binding이 손상돼 출력 위치의 안전을 확인할 수 없을 때는 diagnose를 거부하므로 logs로 읽을 수 있는 부분을 먼저 확인한다. [옵션·예산·종료 코드](./cli.md#오프라인-기록과-지원-보고서)를 따른다.
+
+## 등록 자료 보관과 시작 진단
+
+새 등록은 V2 binding을 사용하며 `trust/` 아래 archive·engine lock·선택 외부 공개키의 검증된 사본을 보관한다. 서명·전체 package inventory·engine identity 검사는 매번 유지한다. 등록이 완료된 뒤 원본 세 파일은 실행 입력으로 다시 열지 않지만, 보관본과 제품/native/chain/키 참조·설치본·data·control은 계속 필요하다. 등록 중 실패한 부분 자료는 보존하며 덮어쓰거나 원본으로 자동 fallback하지 않는다. 기존 V1 등록은 원본 참조 동작을 유지한다. archive 한 벌의 추가 디스크 공간을 확보한다.
+
+`status`와 `diagnose`는 마지막 시작 검사 단계 `startupStage`와 gate 거부 시 공개 가능한 실패 코드 `startupFailureReason`를 표시한다. 입력 pin·패키지 검증·cold·설정·snapshot·최종 재검사·exec 전환 중 어디에 진입했는지를 나타내며, 현재 작업 완료나 TCC 원인을 확정하지 않는다. 단계가 없는 과거 기록은 임의 추론하지 않는다. `UNKNOWN`이면 같은 attempt의 status와 정제 진단을 확인한다. 자동 재시작하지 않는다.
+
+[자료 보관·진단 설계](../design/2026-10-22-managed-supply-and-start-diagnostics.md)를 따른다.
 
 ## 저장 위치와 현재 경계
 

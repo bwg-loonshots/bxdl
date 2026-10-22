@@ -15,6 +15,36 @@ use std::{
 
 const SERVICE_JOURNAL: &str = "service-journal";
 const MAX_CLI: u64 = 64 * 1024 * 1024;
+// Reserve every possible checkpoint before publishing a start request. Failure
+// and verified stop are separate terminal paths, but both get a spare revision.
+const START_REVISIONS: u32 = 1 + GATE_REVISIONS;
+const GATE_REVISIONS: u32 = 1 + 7 + 1 + 1; // consume, stages, refusal, verified stop
+
+/// The last gate step entered, not proof that it completed or why it is slow.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+enum StartupStage {
+    InputPins,
+    PackageVerification,
+    ColdPreflight,
+    NativeConfiguration,
+    SnapshotVerification,
+    FinalRecheck,
+    EngineExec,
+}
+impl StartupStage {
+    fn code(self) -> &'static str {
+        match self {
+            Self::InputPins => "INPUT_PINS",
+            Self::PackageVerification => "PACKAGE_VERIFICATION",
+            Self::ColdPreflight => "COLD_PREFLIGHT",
+            Self::NativeConfiguration => "NATIVE_CONFIGURATION",
+            Self::SnapshotVerification => "SNAPSHOT_VERIFICATION",
+            Self::FinalRecheck => "FINAL_RECHECK",
+            Self::EngineExec => "ENGINE_EXEC",
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -33,6 +63,8 @@ struct Runtime {
     binding_sha256: String,
     attempt_id: String,
     phase: RuntimePhase,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    startup_stage: Option<StartupStage>,
     uid: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pid: Option<u32>,
@@ -56,6 +88,22 @@ impl Runtime {
         store
             .save(&serde_json::to_vec(self).map_err(|_| invalid())?)
             .map_err(|_| unknown())
+    }
+    fn enter_stage(&mut self, store: &mut Store, stage: StartupStage) -> Result<()> {
+        if self.phase != RuntimePhase::GateConsumed {
+            return Err(invalid());
+        }
+        self.startup_stage = Some(stage);
+        self.save(store)
+    }
+    fn refuse(&mut self, store: &mut Store, code: &str) -> Result<()> {
+        self.phase = RuntimePhase::GateRefused;
+        self.reason = startup_failure_code(code).into();
+        self.save(store)
+    }
+    fn startup_failure(&self) -> Option<String> {
+        (self.phase == RuntimePhase::GateRefused)
+            .then(|| startup_failure_code(&self.reason).to_owned())
     }
     fn workspace(&self, root: &Control) -> Result<Workspace> {
         Workspace::persistent(&root.path().join("operations").join(&self.attempt_id))
@@ -83,6 +131,10 @@ pub struct ServiceSummary {
     pub reason: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_observation_reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub startup_stage: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub startup_failure_reason: Option<String>,
     pub operation_busy: bool,
     pub development_only: bool,
     pub login_auto_start: bool,
@@ -107,6 +159,8 @@ fn summary(binding: &Binding, runtime: Option<&Runtime>) -> ServiceSummary {
         runtime_readiness: "UNKNOWN".into(),
         reason: "SERVICE_OBSERVATION_UNKNOWN".into(),
         last_observation_reason: None,
+        startup_stage: runtime.and_then(|r| r.startup_stage.map(|s| s.code().to_owned())),
+        startup_failure_reason: runtime.and_then(Runtime::startup_failure),
         operation_busy: false,
         development_only: true,
         login_auto_start: false,
@@ -129,17 +183,35 @@ fn uid() -> Result<u32> {
     }
     Ok(uid)
 }
-fn load_runtime(root: &Control, state: &State) -> Result<Option<(Store, Runtime)>> {
+fn open_runtime(root: &Control) -> Result<Option<Store>> {
     let path = root.path().join(SERVICE_JOURNAL);
     match fs::symlink_metadata(&path) {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(_) => return Err(invalid()),
         Ok(_) => (),
     }
-    let store = Store::open(&path).map_err(|_| invalid())?;
+    Store::open(&path).map(Some).map_err(|_| invalid())
+}
+fn load_runtime(root: &Control, state: &State) -> Result<Option<(Store, Runtime)>> {
+    let Some(store) = open_runtime(root)? else {
+        return Ok(None);
+    };
     let raw = store.read().map_err(|_| invalid())?.ok_or_else(invalid)?;
     let runtime = decode_runtime(root, state, &raw)?;
     Ok(Some((store, runtime)))
+}
+fn runtime_snapshot(root: &Control, state: &State, store: &Store) -> Result<Runtime> {
+    // A read-only observer uses the validated snapshot from open. Another
+    // durable gate step may be published immediately afterward; that is normal
+    // progress, not a corrupt runtime. Writers retain load_runtime's conflict
+    // check, and the readiness wait still pins one attempt across observations.
+    decode_runtime(root, state, store.loaded_snapshot().ok_or_else(invalid)?)
+}
+fn observe_runtime(root: &Control, state: &State) -> Result<Option<Runtime>> {
+    open_runtime(root)?
+        .as_ref()
+        .map(|store| runtime_snapshot(root, state, store))
+        .transpose()
 }
 fn decode_runtime(root: &Control, state: &State, raw: &[u8]) -> Result<Runtime> {
     let runtime: Runtime = json::decode(raw).map_err(|_| invalid())?;
@@ -155,17 +227,24 @@ fn decode_runtime(root: &Control, state: &State, raw: &[u8]) -> Result<Runtime> 
         || !runtime.endpoint.ip().is_loopback()
         || runtime.endpoint.port() == 0
         || (runtime.phase == RuntimePhase::StartPrepared) != runtime.pid.is_none()
+        || (runtime.phase == RuntimePhase::StartPrepared && runtime.startup_stage.is_some())
         || runtime.pid == Some(0)
     {
         return Err(invalid());
     }
     Ok(runtime)
 }
+pub(super) struct DiagnosticRecord {
+    pub attempt: String,
+    pub phase: &'static str,
+    pub startup_stage: Option<String>,
+    pub startup_failure_reason: Option<String>,
+}
 pub(super) fn diagnostic_record(
     root: &Control,
     state: &State,
     raw: &[u8],
-) -> Result<(String, &'static str)> {
+) -> Result<DiagnosticRecord> {
     let runtime = decode_runtime(root, state, raw)?;
     let phase = match runtime.phase {
         RuntimePhase::StartPrepared => "START_PREPARED",
@@ -173,7 +252,79 @@ pub(super) fn diagnostic_record(
         RuntimePhase::GateRefused => "GATE_REFUSED",
         RuntimePhase::StoppedVerified => "STOPPED_VERIFIED",
     };
-    Ok((runtime.attempt_id, phase))
+    let startup_failure_reason = runtime.startup_failure();
+    Ok(DiagnosticRecord {
+        attempt: runtime.attempt_id,
+        phase,
+        startup_stage: runtime.startup_stage.map(|s| s.code().to_owned()),
+        startup_failure_reason,
+    })
+}
+
+/// Only compiled codes are exported, including for legacy journal reasons.
+/// Unknown future reasons stay private rather than becoming arbitrary output.
+pub(crate) fn startup_failure_code(code: &str) -> &'static str {
+    const CODES: &[&str] = &[
+        "ARCHIVE_CHANGED",
+        "ARCHIVE_INVALID",
+        "ARCHIVE_TRAILING_DATA",
+        "ENTRY_INVALID",
+        "ENTRY_TYPE_FORBIDDEN",
+        "HASH_MISMATCH",
+        "IDENTITY_MISMATCH",
+        "INVENTORY_CONFLICT",
+        "INVENTORY_DUPLICATE",
+        "INVENTORY_MISMATCH",
+        "JSON_INVALID",
+        "KEY_INVALID",
+        "LIMIT_EXCEEDED",
+        "MANIFEST_INVALID",
+        "PATH_FORBIDDEN",
+        "PATH_INVALID",
+        "PLATFORM_UNSUPPORTED",
+        "REQUIRED_FILE_MISSING",
+        "SIGNATURE_INVALID",
+        "SIGNATURE_REQUIRED",
+        "TRUST_KEY_REQUIRED",
+        "INSTALL_IO",
+        "INSTALL_LIMIT",
+        "INSTALL_PATH_COLLISION",
+        "INSTALL_UNSAFE_PATH",
+        "ENGINE_CONFIG_INVALID",
+        "ENGINE_INPUT_CHANGED",
+        "ENGINE_INPUT_IO",
+        "ENGINE_INPUT_UNSAFE",
+        "ENGINE_PATH_INVALID",
+        "ENGINE_PIN_MISMATCH",
+        "ENGINE_IDENTITY_MISMATCH",
+        "ENGINE_INVALID_CONFIGURATION",
+        "ENGINE_LOCK_INVALID",
+        "ENGINE_OPTIONS_INVALID",
+        "ENGINE_PRECONDITION_FAILED",
+        "ENGINE_RESPONSE_INVALID",
+        "ENGINE_PRODUCT_MISMATCH",
+        "ENGINE_RUNTIME_RESULT_INVALID",
+        "ENGINE_OUTPUT_LIMIT",
+        "ENGINE_PROCESS_FAILED",
+        "ENGINE_START_FAILED",
+        "ENGINE_TIMEOUT",
+        "INSTANCE_INPUT_CHANGED",
+        "INSTANCE_STATE_INVALID",
+        "INSTANCE_STATE_IO",
+        "INSTANCE_PRECONDITION_FAILED",
+        "SERVICE_STATE_INVALID",
+        "SERVICE_OPERATION_UNKNOWN",
+        "SERVICE_INITIALIZATION_REQUIRED",
+        "SERVICE_START_CANCELLED",
+        "SERVICE_EXEC_FAILED",
+        "SERVICE_FILES_UNSAFE",
+        "DETAIL_WITHHELD",
+    ];
+    CODES
+        .iter()
+        .copied()
+        .find(|known| *known == code)
+        .unwrap_or("DETAIL_WITHHELD")
 }
 fn expected<'a>(
     binding: &'a Binding,
@@ -298,6 +449,7 @@ pub fn start(instance: &Path, timeout: Duration) -> Result<ServiceSummary> {
         binding_sha256: state.binding_sha256.clone(),
         attempt_id: attempt_id()?,
         phase: RuntimePhase::StartPrepared,
+        startup_stage: None,
         uid: uid()?,
         pid: None,
         worker_sha256: files::digest(&cli.raw),
@@ -352,7 +504,9 @@ pub fn start(instance: &Path, timeout: Duration) -> Result<ServiceSummary> {
             Some(Store::create(&root.path().join(SERVICE_JOURNAL)).map_err(|_| unknown())?);
     }
     let mut runtime_store = runtime_store.ok_or_else(invalid)?;
-    runtime_store.require_capacity(4).map_err(|_| unknown())?;
+    runtime_store
+        .require_capacity(START_REVISIONS)
+        .map_err(|_| unknown())?;
     runtime.save(&mut runtime_store)?;
     // launchd is not our child. Its worker acquires a NEW lock, then passes
     // that lock to Java. Never hold our copy while bootstrapping the job.
@@ -393,18 +547,26 @@ pub fn run_gate(instance: &Path, attempt: &str) -> Result<()> {
             ));
         }
     }
+    store
+        .require_capacity(GATE_REVISIONS)
+        .map_err(|_| unknown())?;
     runtime.phase = RuntimePhase::GateConsumed;
     runtime.pid = Some(std::process::id());
     runtime.reason = "START_GATE_CONSUMED".into();
     runtime.save(&mut store)?;
     let operation = (|| -> Result<()> {
+        runtime.enter_stage(&mut store, StartupStage::InputPins)?;
         let inputs = binding.check_pins()?;
+        runtime.enter_stage(&mut store, StartupStage::PackageVerification)?;
         let package = verified_package(&binding, true)?;
+        runtime.enter_stage(&mut store, StartupStage::ColdPreflight)?;
         bound_preflight(&binding, Duration::from_secs(120))?;
+        runtime.enter_stage(&mut store, StartupStage::NativeConfiguration)?;
         let native = NativeInput::load(&binding.native)?;
         let product = ProductInput::load(&binding.product)?;
         product.check(&native)?;
         let engine_journal = initialized(&binding, &state, &runtime)?;
+        runtime.enter_stage(&mut store, StartupStage::SnapshotVerification)?;
         let workspace = runtime.workspace(&root)?;
         let config = checked_snapshot(
             &workspace.path.join("node.json"),
@@ -423,6 +585,7 @@ pub fn run_gate(instance: &Path, attempt: &str) -> Result<()> {
             &binding.options(Duration::from_secs(120)).java,
             &lock.java_sha256,
         )?;
+        runtime.enter_stage(&mut store, StartupStage::FinalRecheck)?;
         for input in &inputs {
             input.recheck()?;
         }
@@ -469,6 +632,7 @@ pub fn run_gate(instance: &Path, attempt: &str) -> Result<()> {
             .arg(format!("--attempt-id={}", runtime.attempt_id));
         // Successful exec keeps the launchd PID and stdin's flock. No shell,
         // supervisor PID guessing or destructor-based unlock is involved.
+        runtime.enter_stage(&mut store, StartupStage::EngineExec)?;
         let _error = command.exec();
         Err(fail(
             "SERVICE_EXEC_FAILED",
@@ -476,9 +640,7 @@ pub fn run_gate(instance: &Path, attempt: &str) -> Result<()> {
         ))
     })();
     if let Err(error) = operation {
-        runtime.phase = RuntimePhase::GateRefused;
-        runtime.reason = error.code.clone();
-        runtime.save(&mut store)?;
+        runtime.refuse(&mut store, &error.code)?;
         return Err(error);
     }
     Err(unknown())
@@ -527,10 +689,10 @@ pub fn status(instance: &Path, timeout: Duration) -> Result<ServiceSummary> {
 fn status_until(instance: &Path, deadline: Instant) -> Result<ServiceSummary> {
     let root = Control::open(instance)?;
     let (binding, _file, _journal, state) = load(&root)?;
-    let runtime = load_runtime(&root, &state)?;
-    let mut result = summary(&binding, runtime.as_ref().map(|(_, r)| r));
+    let runtime = observe_runtime(&root, &state)?;
+    let mut result = summary(&binding, runtime.as_ref());
     result.operation_busy = busy(&root)?;
-    let Some((_store, runtime)) = runtime else {
+    let Some(runtime) = runtime else {
         result.outcome = "INCOMPLETE".into();
         result.service_state = "NOT_REGISTERED".into();
         result.engine_state = "NOT_STARTED".into();
@@ -870,12 +1032,20 @@ fn check_wait_timeout(timeout: Duration) -> Result<()> {
     Ok(())
 }
 
+fn observe_stop_attempt(root: &Control, state: &State, attempt: &str) -> Result<Runtime> {
+    let runtime = observe_runtime(root, state)?.ok_or_else(invalid)?;
+    if runtime.attempt_id != attempt {
+        return Err(unknown());
+    }
+    Ok(runtime)
+}
+
 pub fn stop(instance: &Path, timeout: Duration) -> Result<ServiceSummary> {
     host()?;
     check_timeout(timeout, 600)?;
     let root = Control::open(instance)?;
     let (binding, binding_file, _journal, state) = load(&root)?;
-    let Some((_store, mut runtime)) = load_runtime(&root, &state)? else {
+    let Some(mut runtime) = observe_runtime(&root, &state)? else {
         return status(instance, Duration::from_secs(5));
     };
     let job = runtime.job(&root)?;
@@ -913,11 +1083,7 @@ pub fn stop(instance: &Path, timeout: Duration) -> Result<ServiceSummary> {
     let deadline = Instant::now() + timeout;
     let mut signalled = false;
     loop {
-        let (_, current) = load_runtime(&root, &state)?.ok_or_else(invalid)?;
-        if current.attempt_id != runtime.attempt_id {
-            return Err(unknown());
-        }
-        runtime = current;
+        runtime = observe_stop_attempt(&root, &state, &runtime.attempt_id)?;
         let observation = job.inspect(remaining(deadline)?.min(Duration::from_secs(3)))?;
         let report = report_for(&root, &binding, &state, &runtime).ok();
         match observation {

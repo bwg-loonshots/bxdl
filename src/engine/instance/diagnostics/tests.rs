@@ -18,6 +18,7 @@ impl Fixture {
         let root = Control::create(&base.join("control")).unwrap();
         let binding = Binding {
             schema_version: 1,
+            supply: None,
             instance_id: "CANARY-CUSTOMER-ID".into(),
             package: base.join("package"),
             archive: base.join("bundle.tar.gz"),
@@ -374,4 +375,139 @@ fn checkpoints_obey_payload_limit_before_loading() {
     let store = Store::open_bounded(&path, 4096).unwrap();
     assert!(store.read_bounded(1).is_err());
     assert!(store.read_bounded(4096).unwrap().is_some());
+}
+
+#[test]
+fn startup_gate_diagnosis_exports_last_entered_step_and_only_known_refusal_codes() {
+    for (phase, reason, expected_failure) in [
+        ("GATE_CONSUMED", "ENGINE_INPUT_IO", None),
+        ("GATE_REFUSED", "ENGINE_INPUT_IO", Some("ENGINE_INPUT_IO")),
+        (
+            "GATE_REFUSED",
+            "PRIVATE_CANARY /source/path",
+            Some("DETAIL_WITHHELD"),
+        ),
+    ] {
+        let mut f = Fixture::new();
+        f.init();
+        let (_, mut journal) = f.service();
+        let mut runtime: Value = serde_json::from_slice(&journal.read().unwrap().unwrap()).unwrap();
+        runtime["phase"] = phase.into();
+        runtime["startupStage"] = "PACKAGE_VERIFICATION".into();
+        runtime["reason"] = reason.into();
+        journal
+            .save(&serde_json::to_vec(&runtime).unwrap())
+            .unwrap();
+        let before = journal.read().unwrap().unwrap();
+        let report = diagnose(
+            f.root.path(),
+            &f.base.join("gate-diagnose.json"),
+            &Options::default(),
+        )
+        .unwrap();
+        assert_eq!(
+            report.startup_stage.as_deref(),
+            Some("PACKAGE_VERIFICATION")
+        );
+        assert_eq!(report.startup_failure_reason.as_deref(), expected_failure);
+        assert_eq!(report.runtime_readiness, "NOT_OBSERVED");
+        let text = serde_json::to_string(&report).unwrap();
+        assert!(!text.contains("CANARY"));
+        assert!(!text.contains(f.base.to_str().unwrap()));
+        assert!(!text.contains("/source/path"));
+        assert_eq!(journal.read().unwrap().unwrap(), before);
+    }
+}
+
+#[test]
+fn legacy_runtime_diagnosis_omits_unrecorded_startup_fields() {
+    let mut f = Fixture::new();
+    f.init();
+    f.service();
+    let value = json_value(&logs(f.root.path(), &Options::default()).unwrap());
+    assert!(value.get("startupStage").is_none());
+    assert!(value.get("startupFailureReason").is_none());
+}
+
+#[test]
+fn managed_supply_diagnosis_does_not_require_sources_but_protects_provenance_output_names() {
+    let mut f = Fixture::new();
+    let archive = f.binding.archive.clone();
+    let lock = f.binding.lock.clone();
+    f.binding.schema_version = 2;
+    f.binding.supply = Some(supply::Provenance {
+        archive: Pin {
+            path: archive.clone(),
+            sha256: f.binding.archive_sha256.clone(),
+        },
+        lock: Pin {
+            path: lock.clone(),
+            sha256: "e".repeat(64),
+        },
+        public_key: None,
+    });
+    f.binding.archive = f.root.path().join("trust/package.tar.gz");
+    f.binding.lock = f.root.path().join("trust/engine-lock.json");
+    f.binding.pins.push(Pin {
+        path: f.binding.lock.clone(),
+        sha256: "e".repeat(64),
+    });
+    let raw = serde_json::to_vec(&f.binding).unwrap();
+    fs::write(f.root.path().join("binding.json"), &raw).unwrap();
+    f.state.binding_sha256 = files::digest(&raw);
+    f.state.save(&mut f.journal).unwrap();
+    assert!(!archive.exists());
+    assert!(!lock.exists());
+    let report = diagnose(
+        f.root.path(),
+        &f.base.join("safe-report.json"),
+        &Options::default(),
+    )
+    .unwrap();
+    assert!(report.output_created);
+    assert!(!report.partial);
+    assert!(!serde_json::to_string(&report).unwrap().contains("CANARY"));
+    for output in [&archive, &lock] {
+        assert_eq!(
+            diagnose(f.root.path(), output, &Options::default())
+                .err()
+                .unwrap()
+                .code,
+            "DIAGNOSTIC_OUTPUT_OVERLAP"
+        );
+        assert!(!output.exists());
+    }
+    #[cfg(target_os = "macos")]
+    assert!(provenance_overlaps(&f.base.join("BUNDLE.TAR.GZ"), &archive));
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn missing_provenance_names_keep_conservative_unicode_alias_protection() {
+    let f = Fixture::new();
+    let original = f.base.join("σ-source.tar.gz");
+    let alias = f.base.join("ς-source.tar.gz");
+    assert!(!original.exists());
+    assert!(!alias.exists());
+    assert!(provenance_overlaps(&original, &alias));
+    let mut binding = f.binding;
+    binding.schema_version = 2;
+    binding.supply = Some(supply::Provenance {
+        archive: Pin {
+            path: original,
+            sha256: binding.archive_sha256.clone(),
+        },
+        lock: Pin {
+            path: binding.lock.clone(),
+            sha256: "e".repeat(64),
+        },
+        public_key: None,
+    });
+    assert_eq!(
+        check_output(&alias, f.root.path(), &binding)
+            .unwrap_err()
+            .code,
+        "DIAGNOSTIC_OUTPUT_OVERLAP"
+    );
+    assert!(!alias.exists());
 }

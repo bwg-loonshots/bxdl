@@ -10,6 +10,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
+    collections::BTreeMap,
     fs,
     io::{BufRead, Read, Write},
     path::{Path, PathBuf},
@@ -106,6 +107,10 @@ pub struct Summary {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_observation_reason: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub startup_stage: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub startup_failure_reason: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub attempt_id: Option<String>,
     pub global_consensus: &'static str,
     pub development_only: bool,
@@ -121,6 +126,8 @@ pub struct Workflow {
     observed_readiness: String,
     observed_service_reason: String,
     observed_last_reason: Option<String>,
+    observed_startup_stage: Option<String>,
+    observed_startup_failure: Option<String>,
     observed_attempt: Option<String>,
 }
 
@@ -171,6 +178,8 @@ impl Workflow {
             observed_readiness: "NOT_CHECKED".into(),
             observed_service_reason: "NOT_OBSERVED".into(),
             observed_last_reason: None,
+            observed_startup_stage: None,
+            observed_startup_failure: None,
             observed_attempt: None,
         };
         value.validate()?;
@@ -398,9 +407,14 @@ impl Workflow {
                     return Err(overlap());
                 }
             }
+            // After a root is owned, original supply names are provenance only.
+            // Completed registration verification below checks managed copies;
+            // incomplete roots fail closed rather than rereading old locations.
+            let owns_registration = self.journal.registration.root.is_some();
             for input in std::iter::once(required(&plan.inputs.archive)?)
                 .chain(plan.inputs.public_key.as_deref())
                 .chain(plan.prepared.pins.iter().map(|pin| pin.path.as_path()))
+                .filter(|path| !owns_registration || !supply_source(&plan.inputs, path))
             {
                 if paths::overlaps(a, input)? {
                     return Err(overlap());
@@ -423,6 +437,22 @@ impl Workflow {
         }
         if self.draft.preflight()?.outcome == "FAIL" {
             return Err(changed());
+        }
+        if let Some(owner) = self.journal.registration.root {
+            let verified = instance::verify_owned_binding_with_package(
+                &register_options(&plan)?,
+                &owner,
+                self.journal.registration.phase != Phase::Confirmed,
+            )?;
+            if verified.package.archive_sha256 != plan.archive_sha256
+                || verified.package.manifest_sha256 != plan.manifest_sha256
+            {
+                return Err(changed());
+            }
+            check_registered_pins(&plan, &verified.source_pins)?;
+            setup_plan::check_cli(&verified.package)?;
+            self.storage.recheck()?;
+            return Ok(verified.package);
         }
         setup_plan::recheck(&plan.prepared.pins)?;
         if let Some(pin) = &plan.trust_pin {
@@ -672,6 +702,8 @@ impl Workflow {
         self.observed_readiness = value.runtime_readiness;
         self.observed_service_reason = value.reason;
         self.observed_last_reason = value.last_observation_reason;
+        self.observed_startup_stage = value.startup_stage;
+        self.observed_startup_failure = value.startup_failure_reason;
         self.observed_attempt = value.attempt_id;
     }
 
@@ -681,6 +713,8 @@ impl Workflow {
         self.observed_readiness = "UNKNOWN".into();
         self.observed_service_reason = reason.into();
         self.observed_last_reason = None;
+        self.observed_startup_stage = None;
+        self.observed_startup_failure = None;
         self.observed_attempt = None;
     }
 
@@ -780,6 +814,8 @@ impl Workflow {
             runtime_readiness: self.observed_readiness.clone(),
             service_reason: self.observed_service_reason.clone(),
             last_observation_reason: self.observed_last_reason.clone(),
+            startup_stage: self.observed_startup_stage.clone(),
+            startup_failure_reason: self.observed_startup_failure.clone(),
             attempt_id: self.observed_attempt.clone(),
             global_consensus: "NOT_CHECKED",
             development_only: true,
@@ -793,7 +829,7 @@ impl Workflow {
             &plan.prepared.pins,
         ));
         let text = format!(
-            "\n설치 계획 #{} — 새 개발용 노드\n엔진 source: {} (dirty={})\n패키지 설치: {}\n제품 설정: {}\n인스턴스 기록: {}\n새 데이터: {}\n자동 GC: {}\n{}\n기존 DB 업그레이드가 아닙니다. cold 검사는 설치 후 수행하며 네트워크 합의는 별도 확인합니다.\n원본 archive·공개키·lock·native·chain·키 참조와 이 작업 폴더는 등록 후에도 보존하세요.\n",
+            "\n설치 계획 #{} — 새 개발용 노드\n엔진 source: {} (dirty={})\n패키지 설치: {}\n제품 설정: {}\n인스턴스 기록: {}\n새 데이터: {}\n자동 GC: {}\n{}\n기존 DB 업그레이드가 아닙니다. cold 검사는 설치 후 수행하며 네트워크 합의는 별도 확인합니다.\n새 등록은 archive·공개키·lock을 인스턴스 전용 보관본으로 검증합니다. archive 한 벌만큼 추가 공간이 필요합니다.\n등록 완료 전까지 원본을 보존하세요. 완료 후에도 설치본·인스턴스·이 작업 폴더와 native·chain·키 자료는 계속 필요합니다.\n",
             plan.revision,
             plan.prepared.identity.source.commit,
             plan.prepared.identity.source.dirty,
@@ -810,6 +846,46 @@ impl Workflow {
         );
         out.write_all(text.as_bytes()).map_err(|_| output_failed())
     }
+}
+
+// These names remain in the immutable plan for provenance, without reopening
+// the original files after an owned registration has authenticated its copies.
+fn supply_source(inputs: &Inputs, path: &Path) -> bool {
+    [&inputs.archive, &inputs.public_key, &inputs.lock]
+        .into_iter()
+        .any(|source| source.as_deref() == Some(path))
+}
+
+fn check_registered_pins(plan: &Plan, observed: &[setup_plan::Pin]) -> Result<()> {
+    let product = setup_plan::Pin {
+        path: plan.product_path.clone(),
+        sha256: plan.product_sha256.clone(),
+    };
+    let mut expected = BTreeMap::new();
+    for pin in plan
+        .prepared
+        .pins
+        .iter()
+        .chain(plan.trust_pin.iter())
+        .chain([&product])
+    {
+        if expected
+            .insert(&pin.path, &pin.sha256)
+            .is_some_and(|old| old != &pin.sha256)
+        {
+            return Err(changed());
+        }
+    }
+    let mut actual = BTreeMap::new();
+    for pin in observed {
+        if actual.insert(&pin.path, &pin.sha256).is_some() {
+            return Err(changed());
+        }
+    }
+    if expected != actual {
+        return Err(changed());
+    }
+    Ok(())
 }
 
 fn registration_summary(input: Result<setup_plan::RegistrationInput>) -> String {
@@ -1070,6 +1146,8 @@ mod service_observation_tests {
             }
             .into(),
             last_observation_reason: (!ready).then(|| "SERVICE_START_PENDING".into()),
+            startup_stage: Some("PACKAGE_VERIFICATION".into()),
+            startup_failure_reason: None,
             operation_busy: true,
             development_only: true,
             login_auto_start: false,
@@ -1096,6 +1174,7 @@ mod service_observation_tests {
         assert_eq!(pending["engineState"], "STARTING");
         assert_eq!(pending["serviceReason"], "SERVICE_START_WAIT_EXPIRED");
         assert_eq!(pending["lastObservationReason"], "SERVICE_START_PENDING");
+        assert_eq!(pending["startupStage"], "PACKAGE_VERIFICATION");
         workflow
             .accept_service_observation(Ok(observation(true)))
             .unwrap();
@@ -1131,6 +1210,8 @@ mod service_observation_tests {
         assert_eq!(summary["runtimeReadiness"], "UNKNOWN");
         assert_eq!(summary["serviceReason"], "SERVICE_ATTEMPT_CHANGED");
         assert!(summary.get("attemptId").is_none());
+        assert!(summary.get("startupStage").is_none());
+        assert!(summary.get("startupFailureReason").is_none());
         assert!(!summary.to_string().contains("PRIVATE_CANARY"));
         assert!(!workflow.can_start());
         assert!(!workflow.can_wait());
@@ -1144,5 +1225,83 @@ mod service_observation_tests {
         assert_eq!(workflow.summary().runtime_readiness, "UNKNOWN");
         assert_eq!(workflow.summary().engine_state, "UNKNOWN");
         assert!(!workflow.can_start());
+    }
+}
+
+#[cfg(test)]
+mod registered_supply_plan_tests {
+    use super::*;
+
+    fn plan() -> Plan {
+        let lock: serde_json::Value = serde_json::from_str(include_str!(
+            "../../packaging/engine-lock.rc2-temurin-development.json"
+        ))
+        .unwrap();
+        Plan {
+            revision: 1,
+            inputs: Inputs::default(),
+            product_path: "/unavailable/product.json".into(),
+            product_sha256: "a".repeat(64),
+            archive_sha256: "b".repeat(64),
+            manifest_sha256: "c".repeat(64),
+            trust_pin: Some(setup_plan::Pin {
+                path: "/unavailable/key.pem".into(),
+                sha256: "d".repeat(64),
+            }),
+            prepared: setup_plan::Prepared {
+                identity: serde_json::from_value(lock["expected"].clone()).unwrap(),
+                data_directory: "/unused/data".into(),
+                backend: "rocksdb".into(),
+                automatic_gc: false,
+                issuer_count: Some(0),
+                pins: vec![
+                    setup_plan::Pin {
+                        path: "/unavailable/lock.json".into(),
+                        sha256: "e".repeat(64),
+                    },
+                    setup_plan::Pin {
+                        path: "/live/node.json".into(),
+                        sha256: "f".repeat(64),
+                    },
+                ],
+            },
+        }
+    }
+    fn pins(plan: &Plan) -> Vec<setup_plan::Pin> {
+        let mut pins = plan.prepared.pins.clone();
+        pins.push(plan.trust_pin.clone().unwrap());
+        pins.push(setup_plan::Pin {
+            path: plan.product_path.clone(),
+            sha256: plan.product_sha256.clone(),
+        });
+        pins
+    }
+    #[test]
+    fn authenticated_copy_projection_matches_saved_plan_without_opening_origins() {
+        let plan = plan();
+        let mut observed = pins(&plan);
+        observed.reverse();
+        check_registered_pins(&plan, &observed).unwrap();
+    }
+    #[test]
+    fn missing_changed_or_extra_binding_references_do_not_resume() {
+        let plan = plan();
+        for index in 0..pins(&plan).len() {
+            let mut missing = pins(&plan);
+            missing.remove(index);
+            assert!(check_registered_pins(&plan, &missing).is_err());
+            let mut changed = pins(&plan);
+            changed[index].sha256 = "0".repeat(64);
+            assert!(check_registered_pins(&plan, &changed).is_err());
+        }
+        let mut extra = pins(&plan);
+        extra.push(setup_plan::Pin {
+            path: "/extra".into(),
+            sha256: "0".repeat(64),
+        });
+        assert!(check_registered_pins(&plan, &extra).is_err());
+        let mut duplicate = pins(&plan);
+        duplicate.push(duplicate[0].clone());
+        assert!(check_registered_pins(&plan, &duplicate).is_err());
     }
 }

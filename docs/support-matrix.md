@@ -5,7 +5,8 @@
 | 조합 | 현재 상태 |
 | --- | --- |
 | Rust 1.86.0 / macOS arm64 | CLI 개발·로컬 테스트·native 빌드 대상. setup·설치·cold·등록/초기화·수동 LaunchAgent·오프라인 진단 구현 |
-| macOS arm64 + Java 21 + RocksDB + 사용자 LaunchAgent | macOS 26.6.2의 지정 RC.2·Temurin에서 4-validator 거래/catch-up·두 정족수 복구 경로·pin 거부 PASS. OS 최소 버전·전체 G1-M 인수 전 |
+| macOS arm64 + Java 21 + RocksDB + 사용자 LaunchAgent | macOS 26.6.2의 지정 RC.2·Temurin에서 4-validator 거래/catch-up·두 복구 경로·pin 거부 PASS. 새 V2 보관본·시작 진단은 별도 RC.2 package의 로컬13사례 PASS. OS 최소 버전·전체 G1-M 미확정 |
+| RC.3 + 선정 Temurin / macOS arm64 | 원격 수신·전체 identity·실제 engine-info PASS. 제품 lock 미선택, package/A7 NOT_RUN |
 | Linux amd64/glibc + Java 21 + RocksDB + systemd | 기존 development manifest 유지, 후속 서버 인수. Ubuntu 24.04 후보 |
 | Docker/Compose | 후속 이미지·volume·network·종료/재생성 인수 필요 |
 | Intel Mac·Linux ARM64·Windows·Alpine/musl·H2 제품 지원 | 별도 구현·인수 전 미지원 |
@@ -24,6 +25,8 @@ NIGO `ROCKSDB_OPERATIONS.md`와 `tasks/2026-09-07-rocksdb-storage-implementation
 
 2026-10-19에 Temurin21.0.12.1+1 전체 JRE의 공급자·patch·archive hash를 선정하고 RC1과 함께 고정했다. [JRE 준비](./runtime.md)와 [NIGO J1~J3 수신 기록](../contracts/nigo/jre-feedback-2026-10-19/README.md)을 따른다. 지정 RC1/Temurin 조합의 공급자 9사례 검증을 수용했으며, BXDL signed package의 단일 노드 설치·초기화·서비스·재시작도 확인했다. 이후 [RC.1 package의 4-validator 시험](../results/2026-10-20-macos-qbft-package.md)에서 정상 거래/catch-up·pin 거부를 확인했으나 당시 정족수 복구는 INCOMPLETE였다. 2026-10-21에는 별도 RC.2 고정 package·새 DB로 [Mac 재인수](../results/2026-10-21-macos-rc2-package.md)를 수행해 4-validator 거래/catch-up·재제출 없는 실시간 복구·같은 네 DB 전체 재시작 복구·pin 거부를 통과했다. RC.1 실패 기록은 유지하며 기존 RC.1 설치의 RC.2 upgrade는 미완료다. 후속 [전체 setup 설치 UX](../results/2026-10-21-macos-rc2-setup.md)에서 지정 임시 시험 경로의20개 사례를 통과했지만, Documents 참조의 시작 전 대기 원인은 미확정이다. 원본 자동 집계 INCOMPLETE와 독립 사후 정리 PASS를 구분하며 모든 사용자 자료 경로의 지원을 주장하지 않는다. 전체 제품 NOTICE/SBOM·대응 소스 전달·최소 macOS와 G1-M 인수는 남아 있다. 과거 clean 후보·Oracle jlink 결과는 해당 revision의 이력이며 현재 공급 lock이나 제품 인수를 대신하지 않는다. REQ-0003은 OPEN이고 계약은 PROPOSED다. source commit이나 fake JAR/Java fixture를 공식 공급물로 표기하지 않는다.
 
+2026-10-22 [RC.3 수신](../contracts/nigo/engine-rc3-2026-10-22/README.md)은 공급 archive22파일·계약/source·Console과 선정 Temurin의 실제 `engine-info`를 대조한 별도 결과다. JRE259파일 전후 불변과49모듈을 확인했다. RC.3 제품 lock은 선택하지 않았고 노드·Storage·서비스·package/A7은 실행하지 않았다. RC.2의 제품 PASS와 공급자의 RC.3 검증을 이번 소비자 지원 범위로 합치지 않는다.
+
 Manifest v1의 Mac 값 `libc=none`, `minGlibc=none`은 Linux glibc 조건이 적용되지 않는다는 뜻이다. Mac에 libc가 없다는 뜻이 아니다. Linux의 `glibc/2.34`는 기존 development 후보 계약값을 유지하며 실제 지원 보장이 아니다.
 
 ## setup 경로·파일 시스템 조건
@@ -31,6 +34,8 @@ Manifest v1의 Mac 값 `libc=none`, `minGlibc=none`은 Linux glibc 조건이 적
 Mac의 기본 workspace는 `$HOME/Library/Application Support/BXDL/setup`이다. 다른 개발 플랫폼은 `--workspace`를 지정한다. UTF-8·공백 경로를 지원하고 `~`·환경변수 표현을 입력 내부에서 확장하지 않는다. workspace와 자료·data·출력의 경로 관계를 보수적으로 검사하며 Mac의 대소문자·유니코드 정규화 별칭도 충돌로 다룬다. 대소문자 구분 볼륨이라도 별칭 충돌 가능성이 있는 이름을 허용한다고 보장하지 않는다.
 
 workspace·checkpoint·출력은 symlink 조상, 의도하지 않은 hard link·특수 파일, 손상·동시 변경을 거부한다. 새 폴더 0700·파일 0600과 열린 디렉터리 기준 저장은 파일 작업 안전 조건이며 같은 UID의 engine/CLI·다른 프로세스 간 강한 격리를 만들지 않는다. ACL·mount·실제 service UID 접근 가능성과 파일 시스템별 내구성은 별도 플랫폼 인수 대상이다. 기본 설정 초안과 네트워크 준비 모드는 NIGO process·DB·키 내용을 열지 않는다. `setup --install`은 명시 확인한 설치·cold 검사·등록·init/start를 연결한다.
+
+[등록 자료 보관과 시작 진단](../design/2026-10-22-managed-supply-and-start-diagnostics.md)의 새 V2 등록은 archive·engine lock·선택 공개키를 private `trust/`에 보관한다. 등록 완료 후에는 원본 경로 대신 보관본을 사용하지만 운용 설정·chain·키 참조·설치/control/data의 접근 조건은 그대로다. 기존 V1은 자동 변환하지 않는다. 시작 단계 표시는 마지막 진입 지점이며 접근 권한·TCC 원인의 확정이나 검사 완료 증거가 아니다. [별도 실제 RC.2 package 시험](../results/2026-10-22-macos-managed-supply.md)의 원본 경로 부재 후 재개·초기화·시작·정상 stop·재시작 13사례가 PASS다. 보호 폴더 접근 문제 전체가 해결됐다고 하지 않는다.
 
 기본 setup 초안 모드는 서로 분리된 새 workspace를 사용하고 기존 출력에 덮어쓰지 않는다. 이 모드의 작업 폴더 내부 내보내기는 `instance.json`만 허용한다. 외부 출력 부모는 기존 폴더여야 한다. 경로 충돌이 의심되면 자동으로 다른 이름을 선택하거나 기존 자료를 이동하지 않고 명시적으로 거부한다. 실제 사용 흐름은 [setup 가이드](./setup.md)를 따른다.
 

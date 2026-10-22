@@ -1,0 +1,143 @@
+{
+  "assets": {
+    "byteIdentical": true,
+    "distFiles": 19,
+    "generatedFiles": 20,
+    "inventory": [
+      {
+        "path": "assets/SegmentedControl-D-lWCL1z.js",
+        "sha256": "f52032d064c51b08518cdf3eaaeffa0a7221b6e9fa8a4f689b3200d4ac1aa04d",
+        "size": 7052
+      },
+      {
+        "path": "assets/Tabs-MKyEy8a6.js",
+        "sha256": "09839fa776d13ffff754a29302b9a99802aec41dd3ed8c373d23973014bd11bd",
+        "size": 6284
+      },
+      {
+        "path": "assets/authorizationEvidence-enpTSKfR.js",
+        "sha256": "005b3e6ed000fbe995fc7a280af602975f054314d5d87b0f6c13a37278b52467",
+        "size": 11024
+      },
+      {
+        "path": "assets/details-ByQjal3m.js",
+        "sha256": "7bbe941d8553e229bd3d93f4453d2f06800ee02ff90beba2e56dbbadc9dab4e5",
+        "size": 125114
+      },
+      {
+        "path": "assets/evidence-C1z7BXOp.js",
+        "sha256": "8100721a4a443d445f73c4035219aeb15e7f8f1143d92de469ffe6d9c5c86397",
+        "size": 1148
+      },
+      {
+        "path": "assets/gc-YdgWGw0L.js",
+        "sha256": "89ffd6e29b114d5fd60cec5a6e7f7e429a47b13dd10014717b6c71b423384f44",
+        "size": 34990
+      },
+      {
+        "path": "assets/get-auto-contrast-value-BTPwFOS2.js",
+        "sha256": "8a9536eee0165045057c7d5070ca89929948f02ba20f8bb2b2f0d81e612f2a9d",
+        "size": 75
+      },
+      {
+        "path": "assets/get-env-MimdSsZv.js",
+        "sha256": "67f8546dd403e5e5571757885999528d65fe83b48704787c356eb5fb7586de64",
+        "size": 48
+      },
+      {
+        "path": "assets/index-BzdsrjH1.js",
+        "sha256": "2761ea7ff0548e67a149437a2ba1558cd96dfde97dd7173960712925099d0b3b",
+        "size": 281096
+      },
+      {
+        "path": "assets/index-vOy4GhCi.css",
+        "sha256": "43ec2a1ba6196c4b055d5e9c61992b3e5d73e3fe0c6d3f4e642be87088373efa",
+        "size": 239255
+      },
+      {
+        "path": "assets/issues-CNG_oQ1M.js",
+        "sha256": "f9b9acd36cbeab4ff566d2efc782b3ceed4b061dea57bc0e9cd3faffd02c3bd6",
+        "size": 512538
+      },
+      {
+        "path": "assets/pages-BDoRZn-R.js",
+        "sha256": "b0d8a494ead71980876ab62e4776dc59b180458dbf38f93cdb8b4f7d0cba6659",
+        "size": 37187
+      },
+      {
+        "path": "assets/pages-CvkfYac6.js",
+        "sha256": "7503ad602fa4b3f08e06786e945833425c258b35616dbb135614890d020cf76e",
+        "size": 11959
+      },
+      {
+        "path": "assets/pages-DWiN6ufJ.js",
+        "sha256": "129ec096000fddc49d7db94a42c2f18456ed691ccdb9e5f9a9049fa52b333ca2",
+        "size": 38378
+      },
+      {
+        "path": "assets/pages-fB5q6AJe.js",
+        "sha256": "753c7139e1efe4980d1c92daf8991f63a53f10c7ace60d7a90037c60af56a95c",
+        "size": 28183
+      },
+      {
+        "path": "assets/rolldown-runtime-CbXtAM7H.js",
+        "sha256": "bbf7c5086ae414dc3f33777e3eebf16ea8631325b8bb4690d25091c03567f31a",
+        "size": 589
+      },
+      {
+        "path": "assets/safety-Qx5-bovk.js",
+        "sha256": "8632221019ec972c3f1b1540bec50249decd7b07af7d2d352546333b8339a6f1",
+        "size": 1675
+      },
+      {
+        "path": "assets/useMutation-CPktDiXx.js",
+        "sha256": "c1d5bec2bf17e769426fbfda1c3ce61c4e8a6eac3b1cbca7dde2c7e1bf69bf1b",
+        "size": 2353
+      },
+      {
+        "path": "console-build.json",
+        "sha256": "17811dc5a7929b6179fa421a074c6011e75bf14c72e04843e0771f16ec49b258",
+        "size": 142
+      },
+      {
+        "path": "index.html",
+        "sha256": "8472c2c1db73766aad213bd1271b8156b173ea918d41e208fa4cea9d81853169",
+        "size": 767
+      }
+    ],
+    "jarFiles": 20,
+    "marker": {
+      "node": "v24.21.0",
+      "npm": "11.19.0",
+      "sourceFingerprint": "a76e634dacf728b81cd446cdeaa2b6a250e1a2a91c505153dd424fd46431e99e"
+    }
+  },
+  "cleanup": {
+    "browserObserved": true,
+    "observedOwnedProcesses": 51,
+    "previewObserved": true,
+    "remainingOwnedProcesses": 0,
+    "remainingPort4173Listeners": 0,
+    "runnerObserved": true
+  },
+  "rawPlaywrightReportTraceProfilesAndLogsIncluded": false,
+  "scope": "MOCK_BROWSER_NOT_BXDL_PACKAGE_ACCEPTANCE",
+  "sourceProofSha256": "0305847b7ea35aae12a5911266768fbeb01eb95c417bd95ace6785e7381a226d",
+  "status": "PASS",
+  "tests": {
+    "counts": {
+      "console.spec.ts": 24,
+      "explorer.spec.ts": 17,
+      "gc.spec.ts": 10,
+      "i18n.spec.ts": 9,
+      "rpc.spec.ts": 9
+    },
+    "expected": 69,
+    "failed": 0,
+    "flaky": 0,
+    "passed": 69,
+    "rawReportSha256": "bd6248a997d135b29683ce7226dd8f36cdd61d4b30b2d9ebe6deba838d7f8c1f",
+    "retries": 0,
+    "skipped": 0
+  }
+}
