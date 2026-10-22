@@ -20,9 +20,17 @@ Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후
 
 [4-validator 결과](../results/2026-10-22-macos-rc3-package.md)는 거래8개·제출9회, 독립된 두45초 정족수 상실 후 실시간 무재제출 복구와 같은 네 DB 전체 재시작·명시1회 재제출 복구를 포함한다. 정상 stop12회와 독립 검사에서 기록된62 PID 잔존0·12개 job NOT_LOADED·8포트 LISTEN0을 확인했다. 5개 설치본의 각270파일과 V2 보관 자료도 대조했다.
 
-[같은 archive의 setup 결과](../results/2026-10-22-macos-rc3-setup.md)는 원본 archive·lock·공개키 세 경로가 없는 상태의 재개·init/start·진단·정상 stop·같은 DB 재시작 13사례다. 정상 stop2회와 기록된14 PID 잔존0·2개 job NOT_LOADED·2포트 LISTEN0을 확인했다. 제품 설정을 가져온 뒤 공급 자료 문답을 진행했으며 전체14문답·cancel/hangup 경로는 이번에 재실행하지 않았다. Rust363개·Python50개·fmt·Clippy·Mac release build가 PASS다.
+[같은 archive의 setup 결과](../results/2026-10-22-macos-rc3-setup.md)는 원본 archive·lock·공개키 세 경로가 없는 상태의 재개·init/start·진단·정상 stop·같은 DB 재시작 13사례다. 정상 stop2회와 기록된14 PID 잔존0·2개 job NOT_LOADED·2포트 LISTEN0을 확인했다. 이13사례 시험은 제품 설정을 가져온 뒤 공급 자료 문답을 진행했으며 당시 전체14문답·cancel/hangup 경로는 재실행하지 않았다. Rust363개·Python50개·fmt·Clippy·Mac release build가 PASS다.
 
 RC.2 결과와 공급자의 RC.3 Storage/QBFT 검증은 각 이력으로 보존한다. **offline Storage A7은 별도 구현·인수 대상이며 NOT_RUN**이다. 기존 설치 upgrade와 전체 G1-M도 후속이다.
+
+## RC.3 전체 설치 UX 후속 — 2026-10-22
+
+[NIGO PR #230](https://github.com/bwg-loonshots/nigo-protocol/pull/230) merge `cd3e3e08`으로 RC.3 지정 인수를 정식 회신한 뒤 같은 archive·CLI·JAR·JRE를 재빌드 없이 시험했다. **전체14문답·수정·취소/EOF·대기 중 HUP·원본 공급 경로 부재 상태의 설치/운용21사례와 독립 검사8항목이 PASS**다. [새 전체 UX 결과](../results/2026-10-22-macos-rc3-full-setup.md)를 따른다.
+
+초기화1회·서비스2회·정상 stop2회, 확인 전 mutation과 재개 시 추가 작업 부재를 대조했다. 기록된28 PID 잔존0·두 job NOT_LOADED·두 시험 포트 LISTEN0과 설치270파일·JRE259파일·고정 입력17개·V2 보관본3파일 일치를 확인했다. HUP은 문답/메뉴 대기 중 PTY 종료이며 mutation crash·Mac 로그아웃은 미시험이다. diagnose의 ENGINE_EXEC/NOT_OBSERVED와 live READY 관측을 구분한다.
+
+제품 source는 기반 `53bb11b9`와65파일이 같고 CLI도 동일하다. 이 기록 작업에서 `make check`를 재실행하지 않았으며 Rust363/Python50·fmt/Clippy·Mac build 및 PR #14 CI는 앞선 이력이다. RC.3 앞선13사례·package 결과와 NIGO 회신의 당시 전체 문답 NOT_RUN, RC.2 원본 INCOMPLETE·경로 원인 미확정은 보존한다. A7·upgrade·안전 제거·전체 G1-M·J5는 후속이다.
 
 ## 이전 엔진 선택과 Mac 패키지 인수 이력 — 2026-10-21 RC.2
 
@@ -186,7 +194,7 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 | BX-020 | IN_PROGRESS | v1 제품/native 대조와 validator network/peer/pin 입력·공통 native 렌더 구현. RC.2 이력 보존, 새 RC.3 archive의 4-validator 거래/catch-up·두 정족수 복구 경로·pin 거부 PASS. observer 등 확장 후속 |
 | BX-021/022/024 | IN_PROGRESS | instance journal·명시 init/resume·gated run과 기존 정상 종료/같은 DB 재시작 근거 유지. 새 V2 등록 자료 보관·시작 단계 진단의 RC.2 로컬13사례와 새 RC.3 동일 archive의 setup13사례 PASS. 전체 실패·복구/운영 인수 후속 |
 | BX-023 | IN_PROGRESS | 제품/native cold·실제 RocksDB 단발 초기화 확인. 지속 runtime·DB/WAL 복구·service 인수 후속 |
-| BX-030 | IN_PROGRESS | RC.2 지정 경로20사례 PASS·원본 INCOMPLETE·독립 정리 PASS와 자료 경로 문제 OPEN 보존. RC.3 동일 archive의 V2 보관본·원본 부재 setup13사례 PASS. 전체14문답·cancel/hangup 재시험과 mutation 중단·전체 인수 후속 |
+| BX-030 | IN_PROGRESS | RC.2 지정 경로20사례 PASS·원본 INCOMPLETE·독립 정리 PASS와 자료 경로 문제 OPEN 보존. RC.3 동일 archive의 setup13사례와 후속 전체14문답·취소/EOF·대기 중 HUP·원본 부재 운용21사례 PASS. mutation 중단·전체 인수 후속 |
 | BX-031/032 | IN_PROGRESS | 수동 LaunchAgent·status·정상 stop·restart와 같은 시도 관측 대기 구현. 로그인/로그아웃·sleep/wake와 전체 사용자 lifecycle 인수 후속 |
 | BX-033 | IN_PROGRESS | 오프라인 최신 시도 logs/diagnose·정제·bounded partial 출력 구현. 전체 시도 조회·보존/용량 정책 후속 |
 | BX-034 | PLAN | 데이터·키를 보존하는 안전한 제거 |
@@ -196,10 +204,11 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 
 ## 다음 순서
 
-1. RC.3 선택·동일 archive의 4-validator/복구·setup13사례와 독립 정리 근거를 NIGO에 정식 소비자 인수 회신으로 전달한다. 지정 범위의 PASS와 A7 NOT_RUN을 구분하고, NIGO 변경은 전용 worktree·별도 PR에서 진행한다. 과거 run A/B 원본 INCOMPLETE와 원자료 접근 지연의 미확정 원인은 보존한다. 운용 참조 경로의 사전 접근 검사·기존 설치의 binding 변환/upgrade와 전체 G1-M 지원은 별도다.
-2. Mac 중단·실패 경계·로그인/로그아웃·sleep/wake와 데이터·키를 보존하는 안전한 제거를 구현·검증한다. 제거(REM-01)는 G1-M 완료 전 필수 항목이다. 저장 기록과 실제 health를 구분하며 UNKNOWN 뒤 자동 재시작하지 않는다. 기존 DB migration은 별도다.
-3. J5의 upstream SBOM archive hash 불일치·서명 출처 확인·전체 제품 NOTICE/SBOM·대응 소스 전달·최소 macOS를 확정한다. NIGO J1~J3와 RC.2 공급·복구 회신은 수용했으며, 이 실행 호환성 근거를 공급망 승인으로 전용하지 않는다.
-4. RC.3의 offline Storage A7을 별도 구현·인수한다. 서비스 중지·자동 재기동 차단·backend/경로 매핑·백업·명시 repair 확인·UNKNOWN·재시작을 구현하고 검증해야 한다. 수신 PASS와 이번 package 재인수는 A7 완료를 뜻하지 않는다.
-5. 검증한 바이트의 정식 릴리스 pipeline과 나머지 공통·Mac 인수를 완료해 G1-M을 확정한다. 이후 버전 쌍 업데이트·지원 진단/보존 정책을 확장한다. Linux/systemd G1-L, Docker G1-D는 Mac과 분리해 검증한다.
+NIGO PR #230 정식 회신 뒤 완료한 RC.3 전체 설치 UX21사례·독립 검사8항목의 근거는 [전체 UX 결과](../results/2026-10-22-macos-rc3-full-setup.md)에 기록했다. 기존 회신과 앞선 결과의 당시 NOT_RUN, RC.2 원본 INCOMPLETE·경로 원인 미확정은 보존한다.
+
+1. Mac 중단·실패 경계·로그인/로그아웃·sleep/wake와 데이터·키를 보존하는 안전한 제거를 구현·검증한다. 제거(REM-01)는 G1-M 완료 전 필수 항목이다. 저장 기록과 실제 health를 구분하며 UNKNOWN 뒤 자동 재시작하지 않는다. 운용 참조 경로의 사전 접근 검사도 남아 있으며 기존 설치의 binding 변환/upgrade·DB migration은 별도다.
+2. J5의 upstream SBOM archive hash 불일치·서명 출처 확인·전체 제품 NOTICE/SBOM·대응 소스 전달·최소 macOS를 확정한다. NIGO J1~J3와 RC.2 공급·복구 회신은 수용했으며, 이 실행 호환성 근거를 공급망 승인으로 전용하지 않는다.
+3. RC.3의 offline Storage A7을 별도 구현·인수한다. 서비스 중지·자동 재기동 차단·backend/경로 매핑·백업·명시 repair 확인·UNKNOWN·재시작을 구현하고 검증해야 한다. 수신 PASS와 이번 package 재인수는 A7 완료를 뜻하지 않는다.
+4. 검증한 바이트의 정식 릴리스 pipeline과 나머지 공통·Mac 인수를 완료해 G1-M을 확정한다. 이후 버전 쌍 업데이트·지원 진단/보존 정책을 확장한다. Linux/systemd G1-L, Docker G1-D는 Mac과 분리해 검증한다.
 
 R2 파일 receipt는 instance 등록·NIGO journal이 아니며 전체 R2/R3 완료라고 표시하지 않는다. 현재 Mac 사용자 profile의 CLI·엔진은 같은 UID다. 파일 권한만으로 강한 격리를 보장하지 않는다. 기존 사용자 node/data/key는 시험하지 않는다.

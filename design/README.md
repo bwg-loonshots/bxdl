@@ -1,13 +1,13 @@
 # BXDL 제품 구현 설계
 
 - 작성일: 2026-09-16 / 갱신: 2026-10-22
-- 상태: Rust 기반의 package·제품 설정·setup, Mac 새 폴더 installer·NIGO cold, instance 등록·명시 init/resume-init과 수동 LaunchAgent start/status/stop과 오프라인 logs/diagnose를 구현했다. 단일 validator의 실제 서비스 수명주기를 확인했으며 setup 설치 연결도 구현했다. RC.1/RC.2의 고정 package 결과와 V2 자료 보관·시작 진단의 실제 인수를 보존하고, RC.3를 명시 선택해 같은 archive의 Mac 4-validator 재인수와 원본 공급 경로 부재 setup 13사례를 통과했다. 전체 G1-M/G1-L 인수는 미완료다.
+- 상태: Rust 기반의 package·제품 설정·setup, Mac 새 폴더 installer·NIGO cold, instance 등록·명시 init/resume-init과 수동 LaunchAgent start/status/stop과 오프라인 logs/diagnose를 구현했다. 단일 validator의 실제 서비스 수명주기를 확인했으며 setup 설치 연결도 구현했다. RC.1/RC.2의 고정 package 결과와 V2 자료 보관·시작 진단의 실제 인수를 보존하고, RC.3를 명시 선택해 같은 archive의 Mac 4-validator·원본 공급 경로 부재 setup13사례와 후속 전체 설치 UX21사례·독립 검사8항목을 통과했다. 전체 G1-M/G1-L 인수는 미완료다.
 - 사용자 확정: **Rust 구현 + macOS Apple Silicon 우선 설치·운용 UX**. Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
 - 현재 구현 범위와 근거: [구현 상태](../docs/implementation-status.md). NIGO가 `REQ-0002`의 방향·범위를 수용했고 BXDL은 피드백의 안전·인수 의미와 교환 절차에 동의했다. [소비자 회신](./2026-09-17-nigo-feedback-response.md)에 기록하며 PROPOSED API·fixture·dirty 개발 JAR는 수신해 제한된 cold 소비를 진행했다. 이후 #119의 clean 후보를 별도 수신·검증했고 전체 제품 인수는 남아 있다. REQ-0003 정책을 수용하고 RC1을 별도로 수신했다. 요청 전체는 `OPEN`이며 소비자 회신은 전용 NIGO worktree에서 준비한다.
 
 2026-10-20 RC.1의 정족수 복구 INCOMPLETE는 [당시 결과](../results/2026-10-20-macos-qbft-package.md)로 보존한다. 이후 [RC.2의 두 복구 경로](../results/2026-10-21-macos-rc2-package.md)와 [V2 자료 보관·시작 진단의13사례](../results/2026-10-22-macos-managed-supply.md)는 각각 지정 조합에서 PASS했다. [RC.2 전체 설치 UX](../results/2026-10-21-macos-rc2-setup.md)의 원본 A/B INCOMPLETE와 접근 경로 문제는 별도로 남아 있다.
 
-2026-10-22 [RC.3 수신 검증](../contracts/nigo/engine-rc3-2026-10-22/README.md) 이후 [명시 선택과 Mac 재인수 설계](./2026-10-22-rc3-package-reacceptance.md)를 추가했다. 새 lock/spec으로 후보를 선택했고 같은 archive의 [4-validator 재인수](../results/2026-10-22-macos-rc3-package.md)와 [원본 부재 setup 13사례](../results/2026-10-22-macos-rc3-setup.md), 각 독립 사후 검사가 PASS했다. 전체 14개 제품 설정 문답·취소/EOF·hangup 행렬 재시험, offline Storage A7, 기존 설치 upgrade와 전체 G1-M은 남아 있다.
+2026-10-22 [RC.3 수신 검증](../contracts/nigo/engine-rc3-2026-10-22/README.md) 이후 [명시 선택과 Mac 재인수 설계](./2026-10-22-rc3-package-reacceptance.md)를 추가했다. 새 lock/spec으로 후보를 선택했고 같은 archive의 [4-validator 재인수](../results/2026-10-22-macos-rc3-package.md)와 [원본 부재 setup 13사례](../results/2026-10-22-macos-rc3-setup.md), 각 독립 사후 검사가 PASS했다. [NIGO PR #230](https://github.com/bwg-loonshots/nigo-protocol/pull/230) 정식 회신을 머지한 뒤 [같은 archive의 전체14문답·수정·취소/EOF·대기 중 HUP·재개21사례](../results/2026-10-22-macos-rc3-full-setup.md)와 독립 검사8항목도 PASS했다. 앞선 결과/회신의 당시 NOT_RUN은 보존한다. HUP은 대기 중 PTY 범위이며 mutation crash·Mac 로그아웃 인수가 아니다. offline Storage A7·기존 설치 upgrade·안전 제거·전체 G1-M/J5는 남아 있다.
 
 ## 목표
 

@@ -16,7 +16,9 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 
 별도로 [NIGO RC.3 수신](./contracts/nigo/engine-rc3-2026-10-22/README.md)의 archive22파일·계약·선정 Temurin 실제 `engine-info` 대조를 통과했다. 이후 **RC.3를 새 Mac 개발 패키지 후보로 명시 선택**하고 [전용 engine lock](./packaging/engine-lock.rc3-temurin-development.json)·[package spec](./packaging/package-spec.rc3-temurin.example.json)을 추가했다. [재인수 설계](./design/2026-10-22-rc3-package-reacceptance.md)에 따른 같은 새 서명 archive의 **4-validator·두 정족수 복구·wrong-pin과 원본 공급 경로 부재 상태의 setup 13사례가 PASS**다. [네트워크·복구 결과](./results/2026-10-22-macos-rc3-package.md)와 [setup 결과](./results/2026-10-22-macos-rc3-setup.md)에 실제 identity·정상 종료·독립 정리 검증을 기록했다.
 
-이번 setup은 제품 설정을 가져온 뒤 공급 자료 문답과 재개·초기화·운용을 시험했으며 전체 14문답·cancel/hangup 경로를 다시 실행하지 않았다. **offline Storage A7은 NOT_RUN**, 기존 설치 upgrade와 전체 G1-M은 후속이다. RC.2 결과와 RC.3 수신 당시의 미선택 기록은 각 시점의 이력으로 보존한다.
+앞선 setup13사례는 제품 설정을 가져온 범위다. 이후 [NIGO PR #230](https://github.com/bwg-loonshots/nigo-protocol/pull/230)으로 정식 인수를 회신·머지하고, **같은 archive의 전체14문답·수정·취소/EOF·대기 중 HUP·원본 공급 경로 부재 운용21사례와 독립 검사8항목을 PASS**했다. [전체 설치 UX 결과](./results/2026-10-22-macos-rc3-full-setup.md)에 초기화1회·서비스2회·정상 stop2회와 잔존 PID/job/LISTEN 부재를 기록했다. 대기 중 HUP을 mutation 중단이나 Mac 로그아웃 검증으로 확대하지 않는다.
+
+**offline Storage A7은 NOT_RUN**, 기존 설치 upgrade와 전체 G1-M은 후속이다. RC.2 원본 INCOMPLETE·경로 원인 미확정과 RC.3 수신/앞선 시험/NIGO 회신의 당시 미선택·NOT_RUN은 각 시점의 이력으로 보존한다.
 
 ## 구현한 명령
 
@@ -113,6 +115,7 @@ Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux targe
 - [원본 공급 경로 부재 상태의 Mac 검증](./results/2026-10-22-macos-managed-supply.md)
 - [RC.3 수신 검증과 당시 범위](./contracts/nigo/engine-rc3-2026-10-22/README.md)
 - [RC.3 선택과 Mac 패키지 재인수](./design/2026-10-22-rc3-package-reacceptance.md)
+- [RC.3 전체14문답·취소/EOF·대기 중 HUP·재개 검증](./results/2026-10-22-macos-rc3-full-setup.md)
 - [현재 구현·검증 상태](./docs/implementation-status.md)
 - [설치 도우미·설정 초안 저장과 재개](./docs/setup.md)
 - [패키지 입력·서명·형식](./docs/package-format.md)
