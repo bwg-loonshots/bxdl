@@ -6,7 +6,7 @@
 
 ## 네트워크 설정 준비
 
-제품 설정에 없는 validator·peer/pin·sync 입력은 별도 `setup --network` 도우미로 준비할 수 있다. 승인 chain과 전체 validator 공개 목록, 기존 키 자료를 받아 RC1 native `node.json`을 생성한다. [네트워크 준비 가이드](./network.md)의 공개 인증서 pin 계산·문답·재개·설치 연결을 따른다. 기본 제품 초안 및 설치 세션 형식은 유지한다.
+제품 설정에 없는 validator·peer/pin·sync 입력은 별도 `setup --network` 도우미로 준비할 수 있다. 승인 chain과 전체 validator 공개 목록, 기존 키 자료를 받아 RC.1/RC.2 공통 계약의 native `node.json`을 생성한다. [네트워크 준비 가이드](./network.md)의 공개 인증서 pin 계산·문답·재개·설치 연결을 따른다. 기본 제품 초안 및 설치 세션 형식은 유지한다.
 
 ## 설치 모드: 패키지부터 시작까지
 
@@ -37,10 +37,10 @@ bxdl setup --install --workspace /absolute/existing-parent/new-session --resume
 | 종료 | `finish` 또는 Enter | 현재 단계까지만 저장하고 종료. 미선택 초기화·시작을 예약하지 않음 |
 
 자동 GC와 자산 등록 정책은 고정한 native/chain 입력의 안내다. 도우미가 GC를 켜거나 등록·발행 권한을 부여하지 않는다.
-현재 새 수신 후보는 [NIGO RC1](../contracts/nigo/engine-rc1-2026-10-19/README.md)이며, 선택한 lock/package만 사용한다.
-기존 clean `303e163a` 입력과 설치 기록은 유지하고 최신 엔진으로 자동 교체하지 않는다.
+현재 수신·재인수 후보는 [NIGO RC.2](../contracts/nigo/engine-rc2-2026-10-21/README.md)이며, 선택한 lock/package만 사용한다.
+기존 clean `303e163a` 및 RC.1 입력과 설치 기록은 유지하고 최신 엔진으로 자동 교체하지 않는다.
 
-RC1 공개 chain에는 `nigo.protocol.native-assets.registration-mode`를 정확히 `OPEN` 또는 `ALLOWLISTED`로 명시한다.
+RC.1/RC.2 공개 chain에는 `nigo.protocol.native-assets.registration-mode`를 정확히 `OPEN` 또는 `ALLOWLISTED`로 명시한다.
 설치 계획은 모드·목록의 의미와 genesis 고정을 보여준다.
 
 | 입력 | 계획에서 확인할 의미 |
@@ -48,14 +48,14 @@ RC1 공개 chain에는 `nigo.protocol.native-assets.registration-mode`를 정확
 | `OPEN`, 허용목록 0개 | 공개 등록 자격. 실제 등록 거래의 검증·성공은 별도 |
 | `ALLOWLISTED`, 허용목록 0개 | 신규 자산 등록 불가 |
 | `ALLOWLISTED`, 유효한 목록 | 목록에 있는 주소에 등록 자격 |
-| 미지정·잘못된 값·중복·OPEN의 비어 있지 않은 목록 | 모드 미지정 또는 형식/정책 불일치 안내. RC1 호환으로 추론하지 않음 |
+| 미지정·잘못된 값·중복·OPEN의 비어 있지 않은 목록 | 모드 미지정 또는 형식/정책 불일치 안내. RC.1/RC.2 호환으로 추론하지 않음 |
 | 계획 이후 입력 변경·읽기 불가 | 확인 불가. 실행 전 기존 pin 검증을 계속 적용 |
 
 모드·목록은 초기화 후 설정 편집으로 바꿀 수 없다. 등록 자격은 개별 자산 mint/burn 권한이나 RPC/P2P 접속 권한과 별개다.
-기존 후보에 모드가 없다는 이유로 새 값을 자동 추가하지 않으며, RC1의 잘못된 입력은 공급 엔진 cold 검사에서 거절한다.
+기존 후보에 모드가 없다는 이유로 새 값을 자동 추가하지 않으며, RC.1/RC.2의 잘못된 입력은 공급 엔진 cold 검사에서 거절한다.
 새 항목은 저장된 계획/저널 형식을 변경하지 않고 다시 확인한 입력에서 표시하므로 기존 계획의 재개 호환성을 유지한다.
 
-`check`는 저장된 입력과 소유한 결과를 재검증하고, 시작 시도가 있다면 서비스 상태를 관측한다. `edit`는 노드 설정을, `inputs`는 설치 자료·목적지를 다시 입력한다. 출력 생성 전의 수정은 기존 계획을 무효화하므로 다시 `plan`과 명시 확인이 필요하다. 출력 생성 이후에는 이 도우미에서 설정·등록 binding을 바꾸지 않는다.
+`check`는 저장된 입력과 소유한 결과를 재검증하고, 시작 시도가 있다면 서비스 상태를 관측한다. `edit`는 노드 설정의 1/14 항목부터 다시 묻고 Enter로 기존 답을 유지한다. `inputs`는 설치 자료·목적지를 다시 입력한다. 출력 생성 전의 수정은 기존 계획을 무효화하므로 다시 `plan`과 명시 확인이 필요하다. 출력 생성 이후에는 이 도우미에서 설정·등록 binding을 바꾸지 않는다.
 
 시작 관측 기한이 끝나도 실행은 계속될 수 있다. 화면의 서비스·엔진·로컬 준비 상태와 시작 시도, 마지막 관측 사유를 확인한다. `wait`는 관측된 같은 시도를 기다리고 `check`는 다시 조회한다. 시도 변경·조회 오류를 이전 READY로 덮지 않으며, 새 start를 자동 수행하지 않는다. 완료되지 않은 시작의 기존 진행 기록과 계획 형식은 유지한다.
 
@@ -80,7 +80,11 @@ RC1 공개 chain에는 `nigo.protocol.native-assets.registration-mode`를 정확
 
 `finish`의 exit 0은 **현재 설치 세션 저장 성공**이다. 설치만 하거나 초기화 전 종료해도 정상이며 화면의 단계별 상태를 확인한다. 취소/EOF는 exit 5, 잘못된 옵션·비터미널 입력은 exit 2다. 단계 실패는 도우미에서 사유를 표시하고 보존하며, 파일 저장·세션 오류와 안내 출력 실패는 별도 오류로 반환할 수 있다.
 
-작업 폴더의 제품 JSON, 원본 archive·신뢰 공개키·engine lock·native/chain·credential 참조는 등록 후에도 필요하다. 임시 설치 자료라고 삭제하지 않는다. 정상 종료는 `bxdl stop --instance <등록폴더>`로 확인하며 후속 관측은 `status`, `logs`, `diagnose`를 사용한다. 새 개발용 package와 실제 TTY의 취소·재개·설치·초기화·시작·종료·동일 DB 재시작을 확인했다. 실제 강제 중단·실패 주입과 전체 G1-M은 후속이다. [구현 설계](../design/2026-09-27-setup-install-flow.md), [검증 기록](../results/2026-09-27-setup-install-flow.md)을 따른다.
+작업 폴더의 제품 JSON, 원본 archive·신뢰 공개키·engine lock·native/chain·credential 참조는 등록 후에도 필요하다. 임시 설치 자료라고 삭제하지 않는다. 정상 종료는 `bxdl stop --instance <등록폴더>`로 확인하며 후속 관측은 `status`, `logs`, `diagnose`를 사용한다.
+
+2026-10-21 인수에서는 `Documents` 아래 원자료를 참조한 설치의 LaunchAgent가 시작 전 파일 열기에서 대기했다. 경로 접근과 macOS 보호 폴더 권한의 관련성은 원인 미확정이며, 현재 CLI에는 서비스 관점의 보호 경로 사전 진단이 없다. 원자료의 영구 보관 위치·서비스 접근 확인·시작 실패 안내를 보완해야 한다. 시험에 사용한 임시 경로는 장기 운영 경로 권고가 아니다.
+
+[RC.2 설치 UX 재검증](../results/2026-10-21-macos-rc2-setup.md)에서 전체 14문답·수정·취소/EOF·재개, 대기 중인 TTY 접속 종료, 명시 설치·초기화·시작·정상 종료·동일 DB 재시작의 20개 사례를 확인했다. 해당 실행의 자동 집계는 마지막 포트 확인 때문에 `INCOMPLETE`이며, 후속 독립 관측에서 서비스·프로세스·listener 정리를 확인했다. 앞선 원자료 경로 문제는 별도로 남아 있다. apply/init 진행 중 강제 중단·실패 주입, 로그아웃·sleep/wake와 전체 G1-M은 후속이다. [구현 설계](../design/2026-09-27-setup-install-flow.md), [최초 검증 기록](../results/2026-09-27-setup-install-flow.md)도 보존한다.
 
 ## 기본 초안 모드
 

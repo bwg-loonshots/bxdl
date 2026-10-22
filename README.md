@@ -10,6 +10,8 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 2026-10-20 [동일 package의 4-validator 시험](./results/2026-10-20-macos-qbft-package.md)에서 거래 확정·catch-up·잘못된 pin 거부를 확인했다. 당시 장시간 정족수 부족 이후 합의 복구는 INCOMPLETE로 보존했다.
 2026-10-21에는 [RC.2를 선택](./contracts/nigo/engine-rc2-2026-10-21/README.md)하고 새 Mac 패키지의 **4-validator·정족수 상실 후 실시간 복구·동일 네 DB 전체 재시작 복구·wrong-pin 격리**를 통과했다. [RC.2 실제 결과](./results/2026-10-21-macos-rc2-package.md)를 따른다. 기존 설치 upgrade와 전체 G1-M·정식 고객 배포는 남아 있다.
 
+같은 RC.2 archive의 [전체 설치 UX 재검증](./results/2026-10-21-macos-rc2-setup.md)에서는 지정 시험 경로의 20개 문답·중단/재개·운용 사례가 통과했다. 원본 자동 집계는 INCOMPLETE로 보존하며 후속 독립 검사에서 잔존 프로세스·리스너가 없음을 확인했다. 별도 Documents 참조 실행의 시작 전 지연은 미해결이다.
+
 ## 구현한 명령
 
 | 명령 | 실제 동작 |

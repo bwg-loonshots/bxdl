@@ -14,8 +14,16 @@ RC.1 자료·기존 INCOMPLETE 결과는 이력으로 보존한다. 계약·Cons
 [실제 결과와 범위](../results/2026-10-21-macos-rc2-package.md), [설계](../design/2026-10-21-rc2-package-reacceptance.md)를 따른다.
 
 Rust343개와 Python28개 회귀·Mac release build가 통과했다. 후보 혼용·재제출·복구 판정 검사는 `make check`에 포함한다.
-기존 RC.1 설치의 RC.2 upgrade, RC.2 전체 setup 설치 문답 재인수, 전체 G1-M·J5·고객 배포는 별도다.
+이 package 인수 당시 RC.2 전체 setup 설치 문답은 별도였으며 아래 후속 실행으로 구분한다. 기존 RC.1 설치의 RC.2 upgrade, 전체 G1-M·J5·고객 배포는 미완료다.
 아래 RC.1·이전 후보 기록의 PASS/INCOMPLETE는 당시 입력과 범위로 유지한다.
+
+## RC.2 전체 설치 UX 후속 — 2026-10-21
+
+[NIGO PR #225](https://github.com/bwg-loonshots/nigo-protocol/pull/225)에서 A4 수신/선택과 지정 package 복구 인수를 정식 회신한 뒤 같은 archive·CLI/JRE/JAR로 실제 TTY 전체 설치 흐름을 검증했다. 제품 source나 package는 바꾸지 않았다.
+
+[새 결과](../results/2026-10-21-macos-rc2-setup.md)의 run B는 14문답·수정·취소/EOF·실제 터미널 hangup·재개, apply/init/start의 거절/승인, 같은 attempt의 READY, 정상 stop2회·동일 DB 재시작 등 **20개 사례 PASS**다. 다만 정리 시 포트 bind 실패로 원본 자동 최종 집계는 **INCOMPLETE**이며 그대로 보존한다. 후속 독립 검사에서 설치 inventory270파일·입력15개가 일치하고 기록된26 PID·두 LaunchAgent·두 포트의 listener가 없음을 확인했다.
+
+앞선 run A는 Documents의 원본 archive/key/lock 참조를 사용했고 초기화 이후 start worker의 파일 열기 대기·UNKNOWN으로 INCOMPLETE였다. 명시 종료 요청 뒤 worker가 취소로 종료했고 잔존 등록만 정리했다. TCC를 포함한 원인은 미확정이며 B 통과로 해결됐다고 판단하지 않는다. 입력의 영구 보존/서비스 접근 사전진단과 인수 도구의 실제 LISTEN 검사를 후속으로 남긴다. 이 두 실행은 단일 노드 로컬 lifecycle이며 이전 4-validator 근거와 구분한다. 전체 G1-M은 아직 완료하지 않았다.
 
 ## 이전 엔진 후보 — 2026-10-19 RC1
 
@@ -151,12 +159,12 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 | BX-001/005 | IN_PROGRESS | 첫 Mac profile, 최소 OS/JRE/native·launchd 인수 |
 | BX-002/010 | DONE | Rust 기반·CLI envelope·고정 toolchain/lock |
 | BX-003 | IN_PROGRESS | Temurin21.0.12.1+1 full JRE 고정·runtime stage·runtime BOM/source 확보와 NIGO J1~J3 수용. 전체 제품 NOTICE/SBOM/소스 전달·출시 인수 후속 |
-| BX-004 | IN_PROGRESS | RC.1 이력 보존·RC.2 수신/선택·lock/snapshot·Mac 4-validator package 재인수 PASS. 변경 공유·전체 제품 인수 후속 |
+| BX-004 | IN_PROGRESS | RC.1 이력 보존·RC.2 수신/선택·lock/snapshot·Mac 4-validator package 재인수 PASS, BXDL PR #11/NIGO PR #225 공유. 전체 제품 인수 후속 |
 | BX-011~014 | IN_PROGRESS | build/verify/새 폴더 설치 구현, 정식 공급·릴리스/업데이트 후속 |
 | BX-020 | IN_PROGRESS | v1 제품/native 대조와 validator network/peer/pin 입력·공통 native 렌더 구현. RC.2 4-validator 거래/catch-up·두 정족수 복구 경로·pin 거부 PASS. observer 등 확장 후속 |
 | BX-021/022/024 | IN_PROGRESS | instance journal·명시 init/resume·결과 대조, gated run·정상 종료/같은 DB 재시작 확인. 전체 실패·복구/운영 인수 후속 |
 | BX-023 | IN_PROGRESS | 제품/native cold·실제 RocksDB 단발 초기화 확인. 지속 runtime·DB/WAL 복구·service 인수 후속 |
-| BX-030 | IN_PROGRESS | RC1 signed 실제 package/TTY 전체14문답·정상 흐름·취소·재개 확인. 강제 중단·실패 주입과 전체 인수 후속 |
+| BX-030 | IN_PROGRESS | RC.2 지정 경로의 전체14문답·수정/취소/EOF/터미널 hangup·재개 등20사례 PASS. 원본 자동 집계 INCOMPLETE·독립 정리 PASS와 Documents 참조 지연 OPEN 구분. mutation 중단·전체 인수 후속 |
 | BX-031/032 | IN_PROGRESS | 수동 LaunchAgent·status·정상 stop·restart와 같은 시도 관측 대기 구현. 로그인/로그아웃·sleep/wake와 전체 사용자 lifecycle 인수 후속 |
 | BX-033 | IN_PROGRESS | 오프라인 최신 시도 logs/diagnose·정제·bounded partial 출력 구현. 전체 시도 조회·보존/용량 정책 후속 |
 | BX-034 | PLAN | 데이터·키를 보존하는 안전한 제거 |
@@ -166,7 +174,7 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 
 ## 다음 순서
 
-1. RC.2 수신·선택과 지정 Mac 4-validator·두 복구 경로 재인수 결과를 공유하고, 같은 후보의 전체 setup 설치 문답·취소/재개와 남은 사용자 흐름을 검증한다. 기존 RC.1→RC.2 제품 upgrade는 별도 기능·호환성 인수로 계획한다. 전체 G1-M은 아직 완료하지 않았다.
+1. RC.2 전체 설치 UX에서 발견한 서비스 원본 자료 접근 지연을 조사하고 영구 입력 보존·실행 전 접근 진단을 설계한다. 실제 LISTEN 기반 인수 정리 검사를 보강하며 run A/B의 원본 INCOMPLETE는 보존한다. 지정 경로20사례와 후속 독립 정리 PASS를 전체 경로/G1-M 지원으로 확대하지 않는다. 기존 RC.1→RC.2 제품 upgrade는 별도 기능·호환성 인수로 계획한다.
 2. Mac 중단·실패 경계·로그인/로그아웃·sleep/wake와 데이터·키를 보존하는 안전한 제거를 구현·검증한다. 제거(REM-01)는 G1-M 완료 전 필수 항목이다. 저장 기록과 실제 health를 구분하며 UNKNOWN 뒤 자동 재시작하지 않는다. 기존 DB migration은 별도다.
 3. J5의 upstream SBOM archive hash 불일치·서명 출처 확인·전체 제품 NOTICE/SBOM·대응 소스 전달·최소 macOS를 확정한다. NIGO J1~J3와 RC.2 공급·복구 회신은 수용했으며, 이 실행 호환성 근거를 공급망 승인으로 전용하지 않는다.
 4. 검증한 바이트의 정식 릴리스 pipeline과 나머지 공통·Mac 인수를 완료해 G1-M을 확정한다. 이후 버전 쌍 업데이트·offline 유지보수·지원 진단/보존 정책을 확장한다. Linux/systemd G1-L, Docker G1-D는 Mac과 분리해 검증한다.
