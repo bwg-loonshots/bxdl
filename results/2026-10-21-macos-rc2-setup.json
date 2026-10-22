@@ -1,0 +1,300 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-21",
+  "outcome": "INCOMPLETE",
+  "scope": "RC2_FULL_INSTALL_DIALOG_LOCAL_LIFECYCLE_REVALIDATION",
+  "summary": "Run B passed all 20 UX/lifecycle cases. Both raw runs remain INCOMPLETE; B post-run independent cleanup/inventory audit passed. Run A source-path/start-gate delay is unresolved.",
+  "nigoReply": {
+    "repository": "bwg-loonshots/nigo-protocol",
+    "pullRequest": 225,
+    "url": "https://github.com/bwg-loonshots/nigo-protocol/pull/225",
+    "state": "MERGED",
+    "mergeCommit": "684ba347872b16a424feaec1122f2e0b1c7dc38b",
+    "headCommit": "87dbedb97aee242b43f6ba2c082646925f6a585b",
+    "mergedAt": "2026-10-21T07:59:37Z",
+    "docsOnly": true,
+    "automaticChecks": [],
+    "sharedCheckoutModified": false,
+    "dedicatedWorktreeCleanDetached": true
+  },
+  "product": {
+    "repositoryRevision": "ca66fc4c0eecfefabb88f5dca0e3a33abfbedea5",
+    "rustProductBaseRevision": "2955ba5cdedeaf6dba65a98a905588e71770abea",
+    "rustSourceFilesCompared": 63,
+    "rustSourcesMatchBase": true,
+    "productCodeChanged": false,
+    "packageRebuilt": false,
+    "cliSha256": "120089de764575709fe5d708a2d502df7dafd0b659ec4086c1176bfb8c0a803d"
+  },
+  "environment": {
+    "os": "26.6.2",
+    "build": "25G83",
+    "arch": "arm64"
+  },
+  "package": {
+    "archiveSha256": "45b74e9145996a90d33f354972f07adf23cc4bc2d34881c45eab30bc9ba694ce",
+    "manifestSha256": "abf486cc8c6b093dd88eb5d77f95b09111e1711838692931fbe85c3316fa3d32",
+    "cliSha256": "120089de764575709fe5d708a2d502df7dafd0b659ec4086c1176bfb8c0a803d",
+    "jarSha256": "b1aa84cbacf1057746bc5936308345cfdddb8f3fc78b63377af59da05dc0ce10",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "testOnlySigningKey": true,
+    "filesVerified": 270,
+    "authenticity": "verified-external-ed25519"
+  },
+  "runtime": {
+    "vendor": "Eclipse Adoptium Temurin",
+    "version": "21.0.12.1+1-LTS",
+    "files": 259,
+    "modules": 49,
+    "lockSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761"
+  },
+  "profile": {
+    "backend": "RocksDB",
+    "role": "validator",
+    "singleNodeLocalLifecycle": true,
+    "consensusAutoStart": false,
+    "syncEnabled": false,
+    "peers": 0,
+    "globalConsensus": "NOT_CHECKED",
+    "freshKeysAndDataPerRun": true,
+    "nativePreparation": "setup --network PTY then explicit removal of peer properties before input freeze; test profile only",
+    "productionPkiToolAcceptance": false
+  },
+  "runs": [
+    {
+      "id": "run-a",
+      "rawOutcome": "INCOMPLETE",
+      "uxCasesPassed": 13,
+      "uxCasesOutcome": "INCOMPLETE",
+      "failure": "COMMAND_EXIT_first-running-status",
+      "harnessSources": {
+        "run_setup_acceptance.py": "d9cf8a18a15b731abd85932f6a368700311abcccdcb34c6ca64e10558cf458b3",
+        "support.py": "07f8ba80d300c3ca97c2d600bce749ed07b72f66b123f460adbf5719f82bea2e"
+      },
+      "cases": [
+        {
+          "case": "EXACT_ARCHIVE_AND_FRESH_LOCAL_PROFILE_FROZEN",
+          "outcome": "PASS"
+        },
+        {
+          "case": "SUPPLY_CANCEL_EXIT5_NO_OUTPUTS",
+          "outcome": "PASS"
+        },
+        {
+          "case": "HELP_INVALID_INPUT_BACK_EDIT_AND_EOF_EXIT5_CHECKPOINT",
+          "outcome": "PASS"
+        },
+        {
+          "case": "DRAFT_TERMINAL_HANGUP_SIGHUP_PRESERVED_CHECKPOINT",
+          "outcome": "PASS"
+        },
+        {
+          "case": "FULL14_INPUTS_AND_RC2_PLAN_VERIFIED",
+          "outcome": "PASS"
+        },
+        {
+          "case": "EDIT14_PRESERVED_VALUES_INVALIDATED_PLAN_AND_EXPLICIT_REPLAN",
+          "outcome": "PASS"
+        },
+        {
+          "case": "APPLY_DECLINE_CREATED_NO_OUTPUTS",
+          "outcome": "PASS"
+        },
+        {
+          "case": "APPLY_CONFIRMATION_EOF_EXIT5_NO_OUTPUTS",
+          "outcome": "PASS"
+        },
+        {
+          "case": "APPLY_CONFIRMATION_CANCEL_EXIT5_NO_OUTPUTS",
+          "outcome": "PASS"
+        },
+        {
+          "case": "EXPLICIT_APPLY_INSTALLED_REGISTERED_AND_COLD_INCOMPLETE",
+          "outcome": "PASS"
+        },
+        {
+          "case": "INIT_DECLINE_AND_FINISH_DID_NOT_INITIALIZE",
+          "outcome": "PASS"
+        },
+        {
+          "case": "EXPLICIT_INIT_AND_GENESIS_VERIFIED",
+          "outcome": "PASS"
+        },
+        {
+          "case": "START_DECLINE_AND_FINISH_DID_NOT_START",
+          "outcome": "PASS"
+        }
+      ],
+      "rawResultSha256": "728666d183b673046a1f064c067247ed5753e5cadc3108f10768be98e3050213",
+      "preservedInventorySha256": "445925c6b4bec521c27af0cdd507af2b170215081264ee0bc223fd8507b46c95",
+      "preservedFiles": 28,
+      "preservedBytes": 142024,
+      "inputReferenceLocation": "Documents",
+      "startStatus": "UNKNOWN / SERVICE_STATUS_WAIT_EXPIRED",
+      "runtimeRunObservedForFailedStart": false,
+      "priorColdAndInitSucceeded": true,
+      "workerCancellationReason": "SERVICE_START_CANCELLED",
+      "normalEngineStopVerified": false,
+      "exitedOwnedLaunchAgentRemoved": true,
+      "postRunPhysicalCleanup": "PASS",
+      "rawCleanupOracleLimitation": "Original cleanup PASS did not include failureStop UNRESOLVED and omitted failed-status worker PID; raw preserved, independent cleanup used."
+    },
+    {
+      "id": "run-b",
+      "rawOutcome": "INCOMPLETE",
+      "uxCasesPassed": 20,
+      "uxCasesOutcome": "PASS",
+      "failure": null,
+      "harnessSources": {
+        "run_setup_acceptance.py": "770bdc6a962add99e5f7b94dd30583373e882814bebba58b1f90a6db696b4574",
+        "support.py": "07f8ba80d300c3ca97c2d600bce749ed07b72f66b123f460adbf5719f82bea2e"
+      },
+      "cases": [
+        {
+          "case": "EXACT_ARCHIVE_AND_FRESH_LOCAL_PROFILE_FROZEN",
+          "outcome": "PASS"
+        },
+        {
+          "case": "SUPPLY_CANCEL_EXIT5_NO_OUTPUTS",
+          "outcome": "PASS"
+        },
+        {
+          "case": "HELP_INVALID_INPUT_BACK_EDIT_AND_EOF_EXIT5_CHECKPOINT",
+          "outcome": "PASS"
+        },
+        {
+          "case": "DRAFT_TERMINAL_HANGUP_SIGHUP_PRESERVED_CHECKPOINT",
+          "outcome": "PASS"
+        },
+        {
+          "case": "FULL14_INPUTS_AND_RC2_PLAN_VERIFIED",
+          "outcome": "PASS"
+        },
+        {
+          "case": "EDIT14_PRESERVED_VALUES_INVALIDATED_PLAN_AND_EXPLICIT_REPLAN",
+          "outcome": "PASS"
+        },
+        {
+          "case": "APPLY_DECLINE_CREATED_NO_OUTPUTS",
+          "outcome": "PASS"
+        },
+        {
+          "case": "APPLY_CONFIRMATION_EOF_EXIT5_NO_OUTPUTS",
+          "outcome": "PASS"
+        },
+        {
+          "case": "APPLY_CONFIRMATION_CANCEL_EXIT5_NO_OUTPUTS",
+          "outcome": "PASS"
+        },
+        {
+          "case": "EXPLICIT_APPLY_INSTALLED_REGISTERED_AND_COLD_INCOMPLETE",
+          "outcome": "PASS"
+        },
+        {
+          "case": "INIT_DECLINE_AND_FINISH_DID_NOT_INITIALIZE",
+          "outcome": "PASS"
+        },
+        {
+          "case": "EXPLICIT_INIT_AND_GENESIS_VERIFIED",
+          "outcome": "PASS"
+        },
+        {
+          "case": "START_DECLINE_AND_FINISH_DID_NOT_START",
+          "outcome": "PASS"
+        },
+        {
+          "case": "EXPLICIT_START_AND_SETUP_WAIT_READY_SAME_ATTEMPT",
+          "outcome": "PASS"
+        },
+        {
+          "case": "IDLE_RUNNING_SETUP_TERMINAL_HANGUP_SERVICE_CONTINUES",
+          "outcome": "PASS"
+        },
+        {
+          "case": "RUNNING_RESUME_CHECK_FINISH_OBSERVES_EXISTING_ATTEMPT",
+          "outcome": "PASS"
+        },
+        {
+          "case": "FIRST_NORMAL_STOP_VERIFIED",
+          "outcome": "PASS"
+        },
+        {
+          "case": "SAME_DATA_RESTART_AND_SETUP_WAIT_NEW_IDENTITY_SAME_GENESIS",
+          "outcome": "PASS"
+        },
+        {
+          "case": "SECOND_NORMAL_STOP_VERIFIED",
+          "outcome": "PASS"
+        },
+        {
+          "case": "FINAL_STOPPED_RESUME_NO_NEW_ATTEMPT",
+          "outcome": "PASS"
+        }
+      ],
+      "rawResultSha256": "9a510779cc9eaadd9f0bc85a8b23dde345a229db80b97f19f08ce792313145e2",
+      "preservedInventorySha256": "3a667d1f6f31ba516a430a1279457e97e2bd71bbe4aaab73f857e6fea3483704",
+      "preservedFiles": 40,
+      "preservedBytes": 161604,
+      "inputReferenceLocation": "private temporary test supply directory",
+      "rawCleanupObservation": "bind to HTTP port28590 failed; listener existence not established",
+      "normalStopsVerified": 2,
+      "sameDataDirectoryIdentityPreserved": true,
+      "terminalHangupKeepsSamePidAndAttempt": true,
+      "finalResumeCreatesNoAttempt": true,
+      "postRunIndependentAudit": {
+        "outcome": "PASS",
+        "recordedPidsChecked": 26,
+        "remainingPids": 0,
+        "remainingListenSockets": 0,
+        "launchdJobsAbsent": 2,
+        "installedInventoryFilesVerified": 270,
+        "installedInventoryBytesVerified": 325229584,
+        "runtimeFilesVerified": 259,
+        "frozenInputFilesUnchanged": 15,
+        "harnessFilesUnchanged": 2,
+        "initAttempts": 1,
+        "serviceAttempts": 2
+      }
+    }
+  ],
+  "openIssues": [
+    {
+      "id": "SETUP-RC2-01",
+      "status": "OPEN",
+      "finding": "Run A worker stalled in file open before observable runtime run; status wait expired with UNKNOWN. Archive/key/lock used Documents paths. Cause, including TCC, remains unresolved.",
+      "next": "Design worker-accessible persistent input staging and pre-start diagnostics; retain unknown/cancelled start evidence."
+    },
+    {
+      "id": "SETUP-RC2-02",
+      "status": "OPEN",
+      "finding": "Harness bind failure alone is not evidence of a LISTEN socket; raw B cleanup reported INCOMPLETE despite later independent no-listener checks. Original bind failure cause is unresolved.",
+      "next": "Use explicit LISTEN/process/job evidence in future cleanup oracle; preserve A/B original outcomes and frozen harness."
+    }
+  ],
+  "validation": {
+    "actualUxCasesPassedInRunB": 20,
+    "postRunIndependentAudit": "PASS",
+    "existingCodeGate": "PR #11: make check Rust343/Python28 and Mac/Ubuntu CI4 PASS; code unchanged; not rerun in this documentation-only turn",
+    "harnessValidation": "AST syntax, static exact-input pins, harmless controlling-terminal hangup probe, independent source review"
+  },
+  "notTested": [
+    "APPLY_INIT_MID_MUTATION_CRASH",
+    "LOGIN_LOGOUT_SLEEP_WAKE",
+    "POWER_LOSS",
+    "SAFE_UNINSTALL",
+    "RC1_TO_RC2_PRODUCT_UPGRADE",
+    "CUSTOMER_DISTRIBUTION_J5",
+    "MINIMUM_MACOS",
+    "MULTI_HOST_LINUX_SYSTEMD_DOCKER",
+    "LONG_SOAK_PERFORMANCE",
+    "FULL_G1_M"
+  ],
+  "evidence": {
+    "inputPrecheckSha256": "dba16b0c7b5e3223afb8ee93991c3f283edc0414d639c9ae531fc94b8a69ab72",
+    "runAIndependentCleanupSha256": "d404fb981d0d2c829d893031a5379c9031e28738afc63b8843c4895d6a4c8a6c",
+    "runAWorkerStackSampleSha256": "bde78831cd98e5744076df68b4a5e68de3b930672dc29eea9065bb3d87f533ea",
+    "runBIndependentAuditSha256": "bda3e57a73c72c6f426d202eb8522050daa1ca0d295dfad52d2ba2223732e6d7",
+    "privateEvidenceLocation": "task workspace work/bxdl-rc2-setup-acceptance",
+    "privateKeysDatabasesArchivesRawLogsCommitted": false
+  }
+}
