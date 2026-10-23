@@ -41,7 +41,7 @@ package/bin/bxdl
 
 `status/start/stop/logs/diagnose <이름> [--home <root>]`도 연결한다. 이름과 `--instance`는 배타적이며 경로 명령에 `--home`을 섞지 않는다. 대상 누락·알 수 없는 이름은 추정하지 않는다. 목록의 cached 상태를 실행 승인으로 사용하지 않는다.
 
-설치와 최초 등록은 기존 BXDL installer/등록 API를 유지한다. 호환되는 기존 RC.3의 V1/V2 binding 계약에 따라 등록하고, 등록 이후의 실제 노드 작업은 고정 실행기에 위임한다. 기존 `setup --install`의 package 선택 검사는 정확한 지원 profile이면 관리 CLI bytes 불일치를 허용한다. 문답의 승인·workflow 소유 증거·UNKNOWN 보존은 그대로 유지하며 init/start/status/wait만 공통 실행기 경로에 연결한다. 새로운 순차 `setup new/resume` UX는 CLI-03의 별도 과제다.
+설치와 최초 등록은 기존 BXDL installer/등록 API를 유지한다. 호환되는 기존 RC.3의 V1/V2 binding 계약에 따라 등록하고, 등록 이후의 실제 노드 작업은 고정 실행기에 위임한다. 기존 `setup --install`의 package 선택 검사는 정확한 지원 profile이면 관리 CLI bytes 불일치를 허용한다. 문답의 승인·workflow 소유 증거·UNKNOWN 보존은 그대로 유지하며 init/start/status/wait만 공통 실행기 경로에 연결한다. 순차 `setup new/resume` UX는 CLI-03에서 구현했다. CLI-04의 `setup apply`는 별도 승인으로 기존 설치·등록 API를 호출하고 완료 후 이름을 연결한다. 이름 기반 init/resume-init도 기존 고정 실행기 요청을 사용하며 준비/실행 기록과 초기화·start 승인을 분리한다. 새 경로의 최종 검증은 CLI-04에서 별도로 기록한다.
 
 ## 인증·호환 계약
 

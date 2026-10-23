@@ -4,6 +4,21 @@
 
 기본 `setup`은 초안 저장·내보내기까지만 수행한다. `setup --install`은 별도 설치 세션에서 패키지·등록·초기화·시작을 각각 명시적으로 선택한다. 어느 모드든 저장 성공을 모든 단계의 완료로 해석하지 않는다.
 
+## 이름 있는 순차 설치 준비
+
+공급 package와 제품/native 자료를 함께 준비하려면 이름 있는 직접 명령을 사용한다.
+
+```bash
+bxdl setup new local
+bxdl setup resume local
+bxdl setup list
+bxdl setup show local --json
+bxdl setup edit local --field httpPort
+bxdl setup apply local
+```
+
+`new/resume`은 저장한 답을 재사용하고 부족한 질문부터 순서대로 진행한다. `list/show`는 기록을 쓰지 않는 조회이며 `edit`은 제품 필드 하나만 수정한다. 새 세션과 설정 파일 준비는 별도로 승인한다. 준비가 끝나면 `setup apply local`의 TTY 최종 확인에서 y/yes로 설치·cold 검사·등록·이름 연결을 실행한다. 준비 기록과 설치 실행 기록은 분리하며 list/show에서 함께 조회한다. 초기화·시작은 각각 `init local --confirm-initialize`, `start local`로 별도 실행한다. 완료 apply 재호출은 완료 근거 검증과 이름 연결 복구만 수행하며 자료 변경·UNKNOWN에서 자동 재설치하지 않는다. [순차 준비 가이드](./preparation.md)에 관리 위치·재개·JSON·중단·검토 규칙이 있다. 아래의 기존 `setup`, `setup --network`, `setup --install` 형식과 저장소는 유지한다.
+
 ## 네트워크 설정 준비
 
 제품 설정에 없는 validator·peer/pin·sync 입력은 별도 `setup --network` 도우미로 준비할 수 있다. 승인 chain과 전체 validator 공개 목록, 기존 키 자료를 받아 RC.1~RC.3 공통 계약의 native `node.json`을 생성한다. [네트워크 준비 가이드](./network.md)의 공개 인증서 pin 계산·문답·재개·설치 연결을 따른다. 기본 제품 초안 및 설치 세션 형식은 유지한다.

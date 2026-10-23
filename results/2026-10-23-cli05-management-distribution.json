@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "scope": "CLI05-02 actual Mac management CLI distribution only",
+  "buildProvenance": {
+    "classification": "development-only acceptance fixtures, not official releases",
+    "sourceBaseCommit": "84351233dd6a882299d001bc363bdeb40afeeabc",
+    "syntheticRevisions": true,
+    "builds": [
+      {
+        "name": "A",
+        "version": "0.1.0-dev",
+        "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "binarySha256": "0c658435b106f2d4faab60c0175b6a70e13c320562df77a319d1ceae8a3e6e84",
+        "archives": {
+          "signed": {
+            "sha256": "0f84e7bafd23079491f3fc1114208138fd915675d8133700b3f4cf8785da2bce"
+          },
+          "unsigned": {
+            "sha256": "f36f7e1342acfeca9f8d8a50ffebe87448c13ac7acf47a0ba2d1e7c1e935cadf"
+          }
+        }
+      },
+      {
+        "name": "B",
+        "version": "0.1.0-dev",
+        "revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "binarySha256": "ac90e8523f5104f8ec6ecb5216774db62fb8a3a0762e8af0fa47cb6866781279",
+        "archives": {
+          "signed": {
+            "sha256": "29a54e80752c6dae3eb9303e4ca90dbfff8abb8c1875d1d6c736027d8a3a824c"
+          },
+          "unsigned": {
+            "sha256": "59755c0d5a4af5f070a14a7df5a5fd52a6792c6af286ca94449714ea3a82ee7a"
+          }
+        }
+      }
+    ]
+  },
+  "productionSourceSha256": "67efd709c71b28040edb746d82ddb191d6ad6632feda2c6501e51bcafe1ff208",
+  "productionSourceHashFormat": "Python pathlib.Path component ordering (sorted Paths), then each relative POSIX path UTF-8 + NUL + SHA256 bytes for src/**/*.rs, Cargo.toml, Cargo.lock, completions/_bxdl",
+  "testHarnessSha256": "5dd75ca28df3138d659146441af80cfc7a442522135cfa4dd795e077933bf7fa",
+  "rustc": "rustc 1.86.0 (05f9846f8 2025-03-31)",
+  "cargo": "cargo 1.86.0 (adf9b6ad1 2025-02-28)",
+  "developmentPublicKeySha256": "0c1ff28ba0e8b806e325692cf7641cda76a8d9f7eeb0e94abe5631aebf614105",
+  "runs": [
+    {
+      "status": "PASS",
+      "scope": "CLI distribution; no engine or service acceptance",
+      "buildProvenance": "Same uncommitted final working source at base 84351233dd6a882299d001bc363bdeb40afeeabc; synthetic a40/b40 revisions; development-only acceptance fixtures, not official releases",
+      "bootstrapSha256": "0c658435b106f2d4faab60c0175b6a70e13c320562df77a319d1ceae8a3e6e84",
+      "host": {
+        "system": "Darwin",
+        "architecture": "arm64"
+      },
+      "scenarios": [
+        {
+          "name": "missing default installation info is read-only",
+          "status": "PASS"
+        },
+        {
+          "name": "self installation under umask 077, exact payload modes, default paths, new zsh, existing names",
+          "status": "PASS"
+        },
+        {
+          "name": "same identity installation is unchanged",
+          "status": "PASS"
+        },
+        {
+          "name": "local bundle update and new zsh autoload use second identity",
+          "status": "PASS"
+        },
+        {
+          "name": "installed info is read-only",
+          "status": "PASS"
+        },
+        {
+          "name": "invalid supply preserves installed version",
+          "status": "PASS"
+        },
+        {
+          "name": "installed trust policy cannot be omitted or weakened",
+          "status": "PASS"
+        },
+        {
+          "name": "replaced installed entry is preserved and update is refused",
+          "status": "PASS"
+        },
+        {
+          "name": "unsafe installation permissions preserve selected release",
+          "status": "PASS"
+        },
+        {
+          "name": "foreign executable entry is not replaced",
+          "status": "PASS"
+        },
+        {
+          "name": "node management home cannot be adopted as CLI root",
+          "status": "PASS"
+        },
+        {
+          "name": "rollback restores first identity and its completion",
+          "status": "PASS"
+        },
+        {
+          "name": "explicit root reuses its recorded entry directory",
+          "status": "PASS"
+        }
+      ],
+      "bundles": [
+        {
+          "identity": {
+            "version": "0.1.0-dev",
+            "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "manifestSha256": "b1a6a59863fbeb00d2ab1fe29f61242b28e56729bad2b123c215252b36490d6f",
+          "binarySha256": "0c658435b106f2d4faab60c0175b6a70e13c320562df77a319d1ceae8a3e6e84",
+          "archiveSha256": "0f84e7bafd23079491f3fc1114208138fd915675d8133700b3f4cf8785da2bce"
+        },
+        {
+          "identity": {
+            "version": "0.1.0-dev",
+            "revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "manifestSha256": "8f28609e5edc9b3774830fccb827f1dc7735d315be977f6a39d4d9ea88834c6f",
+          "binarySha256": "ac90e8523f5104f8ec6ecb5216774db62fb8a3a0762e8af0fa47cb6866781279",
+          "archiveSha256": "29a54e80752c6dae3eb9303e4ca90dbfff8abb8c1875d1d6c736027d8a3a824c"
+        }
+      ],
+      "existingManagementAndNodeFixturesUnchanged": true,
+      "shellStartupFilesNotCreated": true,
+      "executedNodeCommands": 0,
+      "mutationProcessUmask": "0077",
+      "trustMode": "external-ed25519",
+      "zshVersion": "zsh 5.9 (arm64-apple-darwin25.0)"
+    },
+    {
+      "status": "PASS",
+      "scope": "CLI distribution; no engine or service acceptance",
+      "buildProvenance": "Same uncommitted final working source at base 84351233dd6a882299d001bc363bdeb40afeeabc; synthetic a40/b40 revisions; development-only acceptance fixtures, not official releases",
+      "bootstrapSha256": "0c658435b106f2d4faab60c0175b6a70e13c320562df77a319d1ceae8a3e6e84",
+      "host": {
+        "system": "Darwin",
+        "architecture": "arm64"
+      },
+      "scenarios": [
+        {
+          "name": "missing default installation info is read-only",
+          "status": "PASS"
+        },
+        {
+          "name": "self installation under umask 077, exact payload modes, default paths, new zsh, existing names",
+          "status": "PASS"
+        },
+        {
+          "name": "same identity installation is unchanged",
+          "status": "PASS"
+        },
+        {
+          "name": "local bundle update and new zsh autoload use second identity",
+          "status": "PASS"
+        },
+        {
+          "name": "installed info is read-only",
+          "status": "PASS"
+        },
+        {
+          "name": "invalid supply preserves installed version",
+          "status": "PASS"
+        },
+        {
+          "name": "installed trust policy cannot be omitted or weakened",
+          "status": "PASS"
+        },
+        {
+          "name": "replaced installed entry is preserved and update is refused",
+          "status": "PASS"
+        },
+        {
+          "name": "unsafe installation permissions preserve selected release",
+          "status": "PASS"
+        },
+        {
+          "name": "foreign executable entry is not replaced",
+          "status": "PASS"
+        },
+        {
+          "name": "node management home cannot be adopted as CLI root",
+          "status": "PASS"
+        },
+        {
+          "name": "rollback restores first identity and its completion",
+          "status": "PASS"
+        },
+        {
+          "name": "explicit root reuses its recorded entry directory",
+          "status": "PASS"
+        }
+      ],
+      "bundles": [
+        {
+          "identity": {
+            "version": "0.1.0-dev",
+            "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "manifestSha256": "b1a6a59863fbeb00d2ab1fe29f61242b28e56729bad2b123c215252b36490d6f",
+          "binarySha256": "0c658435b106f2d4faab60c0175b6a70e13c320562df77a319d1ceae8a3e6e84",
+          "archiveSha256": "f36f7e1342acfeca9f8d8a50ffebe87448c13ac7acf47a0ba2d1e7c1e935cadf"
+        },
+        {
+          "identity": {
+            "version": "0.1.0-dev",
+            "revision": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "manifestSha256": "8f28609e5edc9b3774830fccb827f1dc7735d315be977f6a39d4d9ea88834c6f",
+          "binarySha256": "ac90e8523f5104f8ec6ecb5216774db62fb8a3a0762e8af0fa47cb6866781279",
+          "archiveSha256": "59755c0d5a4af5f070a14a7df5a5fd52a6792c6af286ca94449714ea3a82ee7a"
+        }
+      ],
+      "existingManagementAndNodeFixturesUnchanged": true,
+      "shellStartupFilesNotCreated": true,
+      "executedNodeCommands": 0,
+      "mutationProcessUmask": "0077",
+      "trustMode": "unsigned-development-explicit",
+      "zshVersion": "zsh 5.9 (arm64-apple-darwin25.0)"
+    }
+  ],
+  "scenarioCount": 26,
+  "isolatedTestHomesRemoved": true,
+  "notRun": [
+    "CLI05-03 actual RC.3 service and network acceptance",
+    "CLI05-04 tasks by a person other than the author",
+    "Apple signing/notarization and official customer distribution"
+  ]
+}

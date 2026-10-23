@@ -1,6 +1,6 @@
 # CLI 우선 설치·운용 UX 구현 계획
 
-- 작성일/방향 변경: 2026-10-22 / 상태: **console 개발 중단. 기존 UX-01~03 이력 보존. CLI-01/02는 2026-10-23 구현·검증 완료. 다음은 CLI-03 순차 설치 준비다.**
+- 작성일/방향 변경: 2026-10-22 / 상태: **console 개발 중단. 기존 UX-01~03 이력 보존. CLI-01~04는 2026-10-23 구현·검증 완료. CLI-05 중 CLI05-01 zsh 자동완성과 CLI05-02 Mac 배포·업데이트의 구현·검증을 완료했다. 조합·사용자 과업은 계획이다.**
 - 기준: [직접 CLI 간소화](./2026-10-22-cli-simplification.md), [통합 설계](./2026-10-22-integrated-operations-ux.md), [화면 명세 S01~S11](./2026-10-22-integrated-operations-ux-screens.md), [화면 시안](./prototypes/integrated-operations-ux.html).
 - 기존 M/BX 작업 ID와 G1/G2를 대체하지 않는다. UX ID는 이번 개선을 나눠 구현·검토하기 위한 하위 추적이다.
 - 최초 설계 코드 기준은 PR #15의 `870ca72`, 설계 merge는 PR #16의 `a8fd55a`다. UX-01의 `operator/{prompt,help,view}.rs`와 UX-02의 `operator/{console,catalog,home,target}.rs`를 구현했다. UX-03의 `operator/install_flow.rs`와 `setup/preparation.rs`도 구현했다. node/support 모듈은 후속 제안이다.
@@ -11,15 +11,15 @@
 
 사용자가 console을 직접 확인하고 직관성이 부족하다고 평가하여 개발 중단을 요청했다. console의 추가 화면·메뉴·서비스 연결과 별도 시안 개선을 진행하지 않는다. 기존 코드와 저장 자료는 보존하며 삭제/제거는 이번 작업에 포함하지 않는다. [CLI 우선 설계](./2026-10-22-cli-simplification.md)가 이후 구현의 기준이다.
 
-현재 `setup new/resume`도 7개 번호 메뉴로 진입한다. Preparation 도메인과 저장·검증 기능은 재사용하되 이 UI는 CLI-03에서 교체한다. 기존 UX-03 완료 표시는 기술 구현 이력이며 새 순차 CLI 사용성의 완료 판정이 아니다.
+CLI-03에서 직접 `setup new/resume`의 7개 번호 메뉴를 순차 문답으로 교체하고 `setup list/show/edit`을 연결했다. Preparation 저장·검증 형식과 기존 세션을 재사용한다. console의 기존 메뉴는 별도 진입점으로 보존한다. 기존 UX-03 완료 표시는 기술 구현 이력이며 이번 검증을 대신하지 않는다.
 
 | 순서 | 작업 | 사용자에게 보이는 결과 | 구현·검증 범위 | 상태 |
 | --- | --- | --- | --- | --- |
 | CLI-01 | 직접 이름 연결·목록과 도움말 진입 정리 | `nodes`, `nodes add local --instance <control>` | console을 한 번도 열지 않고 기존 등록 연결; 별칭/표시명/ID 분리, 충돌·손상·동시 갱신 거절; 목록 무쓰기·live 미조회 | IMPLEMENTED |
 | CLI-02 | 독립 관리 CLI·이름 기반 일상 운용 | `status/start/stop/logs/diagnose local` | 기존 RC.3 실행기 인증·고정 명령/JSON 위임; 이름/경로 재검증; setup 기존 흐름 연결; CLI×runtime 조합 인수 | IMPLEMENTED |
-| CLI-03 | 번호 메뉴를 순차 준비 문답과 단일 작업 명령으로 교체 | `setup new/resume`, `setup list/show/edit` | 공급→자기 노드→누락 제품/정책→검토→종료; 기존 입력 재사용·한 항목 수정·재개·EOF·비TTY·immutable 결과 | PLAN |
-| CLI-04 | 준비 결과에서 실제 설치 실행 | `setup apply local`, 별도 `init`·`start` | 기존 workflow intent/소유 증거/잠금 재사용; 승인 범위와 자료 변경 검사; partial/UNKNOWN 보존; 이름 저장 실패와 실제 설치 완료 분리 | PLAN |
-| CLI-05 | 셸 완성·Mac 배포 조합·사용자 과업 | 명령/이름 완성과 실제 명령 중심 인수 | fmt/Clippy/회귀·PTY·관리 CLI/runtime 조합 서비스/네트워크 인수·작성자가 아닌 사용자 과업을 각각 기록 | PLAN |
+| CLI-03 | 번호 메뉴를 순차 준비 문답과 단일 작업 명령으로 교체 | `setup new/resume`, `setup list/show/edit` | 공급→자기 노드→누락 제품/정책→검토→종료; 기존 입력 재사용·한 항목 수정·재개·EOF·비TTY·immutable 결과 | IMPLEMENTED |
+| CLI-04 | 준비 결과에서 실제 설치 실행 | `setup apply local`, 별도 `init`·`start` | 기존 workflow intent/소유 증거/잠금 재사용; 승인 범위와 자료 변경 검사; partial/UNKNOWN 보존; 이름 저장 실패와 실제 설치 완료 분리 | DONE · 자동 검사·RC.3 Mac 12개 PASS |
+| CLI-05 | 셸 완성·Mac 배포 조합·사용자 과업 | 명령/이름 완성과 실제 명령 중심 인수 | 자동 검사·실제 zsh·관리 CLI/runtime 조합 서비스/네트워크 인수·작성자가 아닌 사용자 과업을 각각 기록 | CLI05-01/02 DONE · CLI05-03/04 PLAN |
 
 착수 순서는 **CLI-01 → CLI-02 → CLI-03 → CLI-04 → CLI-05**다. CLI-02는 패키지 내부 바이너리를 덮어쓰지 않는다. 지원하는 기존 RC.3 profile을 인증한 뒤 내부 실행기로 위임한다. 실행기 동작은 기존 검사를 유지하며 실제 조합 인수를 이번 단계에서 수행한다. 이후 새 runtime package 인수와 전체 사용자 과업은 CLI-04/05와 연결한다. NIGO RC.3/JRE 고정을 유지하며 이 순서의 새 NIGO 선행 구현은 없다.
 
@@ -45,13 +45,60 @@
 5. 미지원/변조 package, bad JSON/exit, timeout/출력 유실, noexec, 손상 진단 salvage, stale alias, private 출력 검사를 완료한다.
 6. 두 관리 CLI bytes로 같은 원본 RC.3 package의 init/start/status/stop/같은 DB 재시작을 시험한다. worker는 기존 bytes이며 package/JRE inventory 불변과 종료 정리를 독립 대조한다.
 
+### CLI-03 구현 단위 — 순차 준비와 단일 작업 명령
+
+2026-10-23 구현·검증을 완료했다. `make check`, 추가 순서 회귀의 최종 준비 테스트·fmt·Clippy, Linux 타입 검사와 빌드, 실제 Mac의 PTY 8개·비TTY JSON 3개를 확인했다. 정확한 실행별 검사 수와 소스 identity는 [CLI-03 검증 기록](../results/2026-10-23-cli03-sequential-preparation.md)을 따른다. 합성 자료로 준비 UX를 검증했으며 NIGO·서비스 실행이나 새 runtime 패키지 인수는 포함하지 않는다. 후속 CLI-04의 설치 실행 구현과 검증은 아래에서 별도로 추적한다.
+
+1. 직접 new/resume의 진입점을 console 메뉴에서 분리한다. 저장된 입력을 기준으로 누락된 질문부터 이어가고 :help/:back/:cancel/EOF를 보존한다. 네트워크 선택이 채운 node/P2P 값과 가져온 제품 값은 중복 질문하지 않는다.
+2. 순차 흐름의 마지막 검토에서 `edit <필드>`와 `details`를 제공한다. `y/yes`를 받아 자료 검증과 immutable 설정 준비 후 종료한다. Enter/n/no는 답을 보존하고 종료한다. 기존 준비 결과가 유효하고 답에 변경이 없으면 새 revision을 중복 생성하지 않는다.
+3. `setup list/show`는 비TTY와 JSON을 지원한다. list는 저장 상태만 조회하며 빈 관리 위치를 생성하지 않는다. show는 기록된 준비 결과가 있으면 현재 참조 자료를 대조한다. saved 상태와 `NOT_PREPARED/NOT_CHECKED/VERIFIED/CHANGED`를 구분한다. 일부 목록 실패/현재 자료 변경은 INCOMPLETE이며 엔진·DB·서비스를 실행하지 않는다.
+4. `setup edit <이름> --field <제품필드>`는 지정 필드 하나만 묻고 종료한다. 동일 값의 no-op, 중단, 손상·대상 교체 거절, 다른 답과 기존 출력 보존을 검증한다. 새 설정 준비는 resume의 별도 승인으로 남긴다.
+5. 기존 세션과 JSON envelope를 유지한다. 조회는 준비 파일·잠금 파일을 쓰거나 배타적 준비 잠금을 획득하지 않으며, 공개 DTO에 credential 경로와 원본 답변을 노출하지 않는다. new/resume/edit의 JSON·비TTY 거절은 입력/쓰기보다 앞선다.
+6. 순차 질문 순서, 중단 후 재개, 뒤로 수정, 준비 실패와 재승인, 외부 자료 변경, 읽기 전용 조회, 동시 변경과 비TTY를 회귀 시험한다. `make check`, Linux 타입 검사와 실제 Mac PTY 결과를 이번 변경 기준으로 기록한다. CLI-04 설치 실행과 CLI-05 사용자 과업/서비스 조합 인수는 별도로 남긴다.
+
+### CLI-04 구현 단위 — 준비 결과의 설치·등록·이름 연결
+
+2026-10-23 구현·검증을 완료했다. 전체 `make check` Rust545/Python50, 최종 경로 보호 후 prepare_cli34·fmt·Clippy·Linux 타입 검사·release 빌드와 최종 RC.3 Mac 12개 사례를 통과했다. [CLI-04 검증 기록](../results/2026-10-23-cli04-apply-and-lifecycle.md)에서 전체 검사와 최종 회귀 검사, 바이너리별 실물 인수를 구분한다.
+
+1. `setup apply <이름> [--home <root>]`을 TTY 전용 직접 명령으로 연결한다. 준비 source와 대상·이름 연결 범위를 표시하고 y/yes만 승인한다. Enter/n/no·취소/EOF는 설치를 실행하지 않으며 JSON·비TTY는 입력·쓰기 전 거절한다.
+2. 준비 `sessions/<이름>`과 실행 `operations/<이름>`을 분리한다. 기존 Preparation 저장 형식을 유지하고 승인 revision·컨테이너/파일 identity·hash·출력 위치를 설치 source에 결속한다. 자료 및 카탈로그를 승인 직전과 실제 작업 직전에 재검사한다.
+3. 기존 workflow의 lock·durable intent·소유 근거로 파일 설치→cold 검사→control 등록을 수행한다. DB 초기화·서비스 등록·start를 일괄 실행하지 않는다. 완료 후 같은 이름으로 등록 노드에 연결하며 충돌·목록 저장 실패를 실제 설치 완료와 별도로 기록한다.
+4. 완료 apply 재호출은 완료 근거와 현재 source를 확인하고 이름 연결만 복구한다. V2의 보관 공급 자료를 사용해 원본 archive/key/lock 부재에 대응한다. SOURCE_CHANGED·UNKNOWN·소유 근거 없는 부분 출력은 보존하고 자동 재설치·재등록하지 않는다.
+5. `setup list/show`에 준비 검사와 별도 설치 실행 요약을 추가한다. sessions/operations 이름을 합쳐 읽고 준비 삭제·손상 시에도 남은 실행 기록과 실패 사유를 표시한다. 조회는 무쓰기이며 엔진·서비스를 실행하지 않는다. 설치 기록의 상태를 현재 runtime으로 표현하지 않고 `status`를 안내한다.
+6. 이름 기반 `init/resume-init`을 기존 대상 resolver에 연결한다. 확인 플래그·timeout·exit/UNKNOWN과 기존 --instance를 유지한다. catalog revision·root·binding을 executor dispatch/native 호출 직전에 재검사한다.
+7. 승인 전 거절·EOF·비TTY, source 변경·동시 실행·소유/intent 불명, 이름 충돌·저장 실패·완료 재호출, 조회 무쓰기·비밀 비노출과 정확한 RC.3 위임 인자를 회귀 검사한다. 실제 Mac에서 같은 기존 RC.3를 준비→apply→별도 init/start/status/stop으로 실행하고 payload/JRE 불변·정상 종료를 독립 확인한다. 결과는 해당 CLI-04 검증 기록에 실제 수행 범위대로 남긴다.
+
+다음은 CLI-05의 자동완성·Mac 배포 조합·작성자가 아닌 사용자 과업이다. NIGO RC.3/JRE pin 변경이나 새 NIGO 선행 API는 요구하지 않는다. 안전 제거·로그인 lifecycle·A7·공급망 인수는 별도 제품 과제로 남긴다.
+
+### CLI-05 구현 단위 — zsh부터 배포·사용자 과업까지
+
+2026-10-23 사용자 요청에 따라 **CLI05-01 zsh 자동완성의 구현·검증을 완료했다.** 전체 `make check` Rust561/Python58, 이후 completion_cli15·zsh 프런트엔드10과 최종 보강2개, 최종 release의 실제 zsh13시나리오·인용 바이너리 경로를 통과했다. 검사 회차와 최종 바이너리 identity는 [검증 기록](../results/2026-10-23-cli05-zsh-completion.md)에 구분한다. 이번 범위의 완료는 CLI-05 전체 완료를 뜻하지 않는다. 관리 CLI만 독립적으로 갱신하며 기존 RC.3 runtime package·실행기·JAR/JRE 고정은 유지한다. 새 NIGO 선행 API 구현은 필요하지 않다. 관리 CLI 독립 배포와 인수 기준 변경은 NIGO에 별도 보충 회신으로 공유한다.
+
+| 단위 | 범위 | 완료 근거 | 상태 |
+| --- | --- | --- | --- |
+| CLI05-01 | `completion zsh`, 명령·옵션·값·노드/준비 이름 완성, 직접 적용 가이드 | 자동 회귀·실제 Mac zsh Tab/인용/경로·무쓰기/미호출 검사 | DONE · 자동 검사·최종 release 실제 zsh PASS |
+| CLI05-02 | 독립 Mac 관리 CLI 배포·설치/업데이트 안내 | 기존 RC.3 설치본을 보존하는 CLI 교체·버전 확인·기존 이름 목록 재사용 | DONE · [배포 설계](./2026-10-23-management-cli-distribution.md) · 실제 Mac signed13/unsigned13 PASS |
+| CLI05-03 | 관리 CLI/runtime 조합 인수 | 고정 기존 RC.3와 설치·일상 운용·네트워크 과업의 실제 결과, payload/JRE 불변·정상 정리 | PLAN |
+| CLI05-04 | 작성자가 아닌 사용자의 실제 과업 | 처음 설치·한 항목 수정·다음 날 재개·새 터미널 운용·실패 진단 기록 | PLAN · 사용자 과업 NOT_RUN |
+
+CLI05-01은 다음 계약을 지킨다.
+
+1. 공개 명령 `bxdl completion zsh`는 스크립트만 stdout에 출력한다. TTY를 요구하지 않는다. `--json` 혼합은 사용법 오류로 거절하고 JSON 요청에서는 기존 오류 envelope를 유지한다. `completion`/`completion zsh`의 정확한 도움말 형식을 제공한다.
+2. 명령·옵션·정해진 값과 입력 위치를 해석한다. 값이 필요한 옵션 뒤, `--name=value`, `--` 이후의 리터럴, 이미 입력한 옵션과 커서 뒤 인자를 구분한다. 경로 값은 zsh의 파일/디렉터리 완성에 연결한다.
+3. 입력 중인 명시 `--home` 또는 기본 Mac 관리 위치에서 저장 이름만 읽는다. 노드 이름은 catalog를 사용한다. `setup resume/edit/apply`는 정상 private nonsymlink `sessions/<이름>` 디렉터리, `setup show`는 같은 조건의 sessions/operations 이름 합집합을 사용한다. 내용 유효성이나 실제 실행 가능성은 Tab에서 검사하지 않는다. 대상 control·외부 공급 자료·준비 결과 재검증·서비스/HTTP·엔진 실행·새 root/lock/기록 쓰기는 수행하지 않는다. 손상·부재·잘못된 이름은 후보로 추측하지 않는다.
+4. zsh 코드는 입력을 eval하지 않고 현재 BXDL 바이너리의 고정 후보 조회만 호출한다. 내부 후보 조회는 사용자 운용 API나 새 runtime 실행 경로가 아니다. 잘못된 입력/후보 조회 실패는 후보 없이 끝낸다.
+5. 현재 셸의 `source`와 사용자가 선택하는 `fpath` 설치 방법을 [가이드](../docs/completion.md)에 설명한다. 셸 rc 파일/PATH/설치된 CLI를 자동 수정하지 않는다. bash/fish는 이번 범위에 포함하지 않는다.
+6. 자동 검사와 실제 zsh Tab 검증은 별도로 기록한다. 사람이 수행하지 않은 과업은 NOT_RUN으로 보존하고 RC.3 서비스·네트워크 인수나 고객 배포 준비 완료로 확대하지 않는다.
+
+CLI05-02는 [전용 배포 설계](./2026-10-23-management-cli-distribution.md)에 따라 CLI-only bundle → 별도 사용자 설치 root → 검증한 버전 전환/복귀 → PATH/fpath 안내 → 실제 두 CLI 설치·업데이트 인수를 완료했다. 기존 노드용 `install`과 관리 CLI용 `cli` 명령을 구분하며 노드 package·관리 home·DB를 CLI 설치에 사용하지 않는다. [검증 기록](../results/2026-10-23-cli05-management-distribution.md)에 Rust590·Python60 PASS/2 SKIP·fmt/Clippy/Linux 검사와 별도 실제 Mac signed13/unsigned13사례를 기록했다. 합성 revision의 개발 인수 배포본과 기존 자료 fixture를 사용했으며 CLI05-03의 실제 서비스·네트워크 인수와 CLI05-04 사람 과업을 대신하지 않는다.
+
 ### 기존 UX ID와의 관계
 
 | 기존 항목 | 현재 취급 |
 | --- | --- |
 | UX-01 공통 prompt/help/view | 재사용. CLI 출력/선형 문답에 필요한 범위만 개선 |
 | UX-02 console 홈 | 개발 중단·기존 구현 보존. catalog/home/target는 CLI-01의 공통 기반으로 재사용 |
-| UX-03 Preparation | 검증·저장·재개 도메인 재사용. 메뉴형 install_flow UI는 CLI-03 교체 대상 |
+| UX-03 Preparation | 검증·저장·재개 도메인 재사용. 직접 CLI는 순차 문답으로 교체하고 console 메뉴는 보존 |
 | UX-04 설치 controller | console 연결을 제외하고 CLI-04로 재배치 |
 | UX-05 반복 운용 | console 화면을 제외하고 CLI-01/02로 앞당김 |
 | UX-06 지원 흐름 | 직접 오류 안내·diagnose로 CLI-02/04에 반영 |

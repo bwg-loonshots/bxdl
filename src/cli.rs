@@ -1,5 +1,7 @@
 //! Operator interface. Mutations require a registered instance and explicit intent.
-use crate::{artifact, config, engine, error::BxdlError, install, operator, runtime, setup};
+use crate::{
+    artifact, config, engine, error::BxdlError, install, management, operator, runtime, setup,
+};
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::{
@@ -32,11 +34,16 @@ pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
 설치·준비:
   bxdl setup new <이름>                    설치 자료·설정 준비
   bxdl setup resume <이름>                 저장한 준비 이어가기
-  bxdl setup --install --workspace <세션>  실제 설치·등록·초기화·시작 문답
+  bxdl setup list                         준비 목록·설치 실행 기록
+  bxdl setup show <이름>                   준비 내용·설치 실행 기록 확인
+  bxdl setup edit <이름> --field httpPort  제품 항목 하나 수정
+  bxdl setup apply <이름>                  확인 후 설치·등록·이름 연결
+  bxdl setup --install --workspace <세션>  기존 설치·등록·초기화·시작 문답
   bxdl setup --install --workspace <세션> --resume
-  bxdl init --instance <경로> --confirm-initialize
-  bxdl resume-init --instance <경로> --confirm-resume
-  setup new/resume의 순차 문답 개선과 실제 설치 연결은 후속입니다.
+  bxdl init local --confirm-initialize
+  bxdl resume-init local --confirm-resume
+  init/resume-init은 기존 --instance도 지원하며 확인 플래그가 필요합니다.
+  setup apply는 TTY에서 y/yes로 승인합니다. 초기화·시작은 별도 명령입니다.
 
 설정·패키지 제작:
   bxdl setup --help                       제품 초안·비대화형 입력
@@ -52,6 +59,16 @@ pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
   bxdl runtime stage --help               고정 JRE 준비
   bxdl engine inspect --help              엔진 identity 검사
   bxdl engine preflight --help            native 설정 cold 검사
+
+관리 CLI 설치·업데이트:
+  bxdl cli install --help                 관리 CLI 최초 설치
+  bxdl cli update --from <새-CLI-배포본>   검증 후 관리 CLI 교체
+  bxdl cli info                          설치·현재 선택 경로 확인
+  bxdl cli rollback                      이전 관리 CLI로 복귀
+  cli 명령의 --root는 CLI 설치 위치이며 노드 목록의 --home과 별개입니다.
+
+자동완성:
+  bxdl completion zsh                    zsh 자동완성 스크립트 출력
 
 도움말:
   bxdl <명령> --help                       필수 입력·예제·다음 단계
@@ -175,6 +192,18 @@ pub fn run_with_input<'a>(
             ),
             0,
         )
+    } else if args.first().is_some_and(|arg| arg == "completion") {
+        if json_mode {
+            invalid("completion")
+        } else if let Some(script) = operator::completion::output(&args[1..]) {
+            return if stdout.write_all(script.as_bytes()).is_ok() {
+                0
+            } else {
+                7
+            };
+        } else {
+            invalid("completion")
+        }
     } else if args.first().is_some_and(|arg| arg == "console") {
         dispatch_console(&args[1..], json_mode, interactive, input, stderr)
     } else if args.first().is_some_and(|arg| arg == "setup") {
@@ -213,7 +242,12 @@ pub fn run_with_input<'a>(
     if writeln!(out, "{} [{}]", response.message, response.reason_code).is_err() {
         return 7;
     }
-    if !matches!(response.command.as_str(), "start" | "status" | "stop") || response.data.is_none()
+    if response.command == "cli" || response.command.starts_with("cli ") {
+        if print_management_guidance(out, &response).is_err() {
+            return 7;
+        }
+    } else if !matches!(response.command.as_str(), "start" | "status" | "stop")
+        || response.data.is_none()
     {
         if let Some(view) = operator::view::command(&response.outcome, &response.reason_code) {
             if print_guidance(out, &view).is_err() {
@@ -222,8 +256,28 @@ pub fn run_with_input<'a>(
         }
     }
     if let Some(data) = response.data {
+        if matches!(
+            response.command.as_str(),
+            "cli install" | "cli update" | "cli info" | "cli rollback"
+        ) {
+            return if print_management_summary(out, &data).is_ok() {
+                exit
+            } else {
+                7
+            };
+        }
         if matches!(response.command.as_str(), "nodes" | "nodes add") {
             return if print_nodes_summary(out, &data, response.command == "nodes add").is_ok() {
+                exit
+            } else {
+                7
+            };
+        }
+        if matches!(
+            response.command.as_str(),
+            "setup list" | "setup show" | "setup edit" | "setup apply"
+        ) {
+            return if print_preparation_summary(out, &data, &response.command).is_ok() {
                 exit
             } else {
                 7
@@ -262,6 +316,238 @@ pub fn run_with_input<'a>(
         }
     }
     exit
+}
+
+fn print_management_guidance(
+    out: &mut dyn Write,
+    response: &ResultEnvelope,
+) -> std::io::Result<()> {
+    match response.reason_code.as_str() {
+        "CLI_ACTIVATION_UNKNOWN" => writeln!(
+            out,
+            "CLI 선택 결과가 확정되지 않았습니다. 같은 --root를 지정한 bxdl cli info로 설치 기록과 진입점을 확인하세요. 확인 전에는 업데이트·복귀를 반복하지 마세요."
+        ),
+        "CLI_BUSY" => writeln!(
+            out,
+            "다른 관리 CLI 작업이 진행 중입니다. 작업이 끝난 뒤 같은 --root를 지정한 bxdl cli info로 결과를 확인하세요."
+        ),
+        "INVALID_ARGUMENTS" => writeln!(out, "사용법: bxdl {} --help", response.command),
+        _ => Ok(()),
+    }
+}
+
+fn print_management_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
+    let status = data["status"].as_str().unwrap_or("UNKNOWN");
+    let label = match status {
+        "NOT_INSTALLED" => "설치 기록 없음",
+        "INSTALLED" => "설치 완료",
+        "UPDATED" => "업데이트 완료",
+        "ROLLED_BACK" => "이전 버전으로 복귀 완료",
+        "UNCHANGED" if data["changed"] == true => "같은 배포본 · 진입점 연결 복구",
+        "UNCHANGED" => "같은 배포본 · 변경 없음",
+        "READY" => "선택한 관리 CLI 확인",
+        _ => status,
+    };
+    writeln!(out, "설치 상태: {label}")?;
+    for (key, label) in [
+        ("root", "CLI 설치 위치"),
+        ("executable", "실행 진입점"),
+        ("invokedExecutable", "이번 명령을 실행한 CLI"),
+    ] {
+        if let Some(value) = data[key].as_str() {
+            writeln!(out, "{label}: {value}")?;
+        }
+    }
+    for (key, label) in [("current", "현재 선택"), ("previous", "이전 버전")] {
+        if let Some(value) = data[key].as_object() {
+            writeln!(
+                out,
+                "{label}: {} · revision {}",
+                value.get("version").and_then(Value::as_str).unwrap_or("?"),
+                value.get("revision").and_then(Value::as_str).unwrap_or("?")
+            )?;
+        }
+    }
+    if let Some(value) = data["pathStatus"].as_str() {
+        let label = match value {
+            "SELECTED" => "설치한 CLI가 선택됨",
+            "SHADOWED" => "다른 bxdl이 먼저 선택됨",
+            "NOT_ON_PATH" => "PATH에서 bxdl을 찾지 못함",
+            _ => value,
+        };
+        writeln!(
+            out,
+            "PATH 확인: {label} · 현재 셸에서는 command -v bxdl로 확인하세요."
+        )?;
+    }
+    if let Some(value) = data["activation"].as_str() {
+        writeln!(out, "선택 기록: {value}")?;
+    }
+    if let Some(lines) = data["shellSetup"]
+        .as_array()
+        .filter(|lines| status != "NOT_INSTALLED" && !lines.is_empty())
+    {
+        writeln!(out, "셸 적용 안내 (설정 파일은 자동 수정하지 않습니다):")?;
+        for line in lines.iter().filter_map(Value::as_str) {
+            writeln!(out, "{line}")?;
+        }
+    }
+    if status == "NOT_INSTALLED" {
+        writeln!(out, "최초 설치: bxdl cli install --help")?;
+    }
+    Ok(())
+}
+
+fn print_preparation_summary(
+    out: &mut dyn Write,
+    data: &Value,
+    command: &str,
+) -> std::io::Result<()> {
+    if command == "setup list" {
+        if let Some(entries) = data["entries"].as_array() {
+            if entries.is_empty() {
+                writeln!(
+                    out,
+                    "저장한 설치 준비가 없습니다. 새 준비: bxdl setup new <이름> (같은 --home 사용)"
+                )?;
+            }
+            for entry in entries {
+                let name = entry["name"].as_str().unwrap_or("?");
+                if entry["record"] == "UNAVAILABLE" {
+                    writeln!(
+                        out,
+                        "{name}  읽기 불가 [{}]",
+                        entry["reasonCode"].as_str().unwrap_or("UNKNOWN")
+                    )?;
+                } else {
+                    let snapshot = &entry["inspection"];
+                    let missing = snapshot["missingFields"].as_array().map_or(0, Vec::len)
+                        + snapshot["missingInputs"].as_array().map_or(0, Vec::len);
+                    writeln!(
+                        out,
+                        "{name}  {} · 남은 입력 {missing}개 · 자료 재검증 미수행",
+                        snapshot["summary"]["preparation"]
+                            .as_str()
+                            .unwrap_or("UNKNOWN")
+                    )?;
+                }
+                print_application_summary(out, &entry["application"])?;
+            }
+        }
+        writeln!(out, "상세 확인: bxdl setup show <이름> (같은 --home 사용)")?;
+    } else if command == "setup show" {
+        let snapshot = &data["inspection"];
+        if snapshot.is_null() {
+            writeln!(
+                out,
+                "준비 기록 확인 불가 [{}] · 설치 실행 기록과 기존 출력 보존",
+                data["reasonCode"].as_str().unwrap_or("UNKNOWN")
+            )?;
+        }
+        writeln!(
+            out,
+            "{} · 저장 상태 {} · 현재 자료 {}",
+            data["name"].as_str().unwrap_or("?"),
+            snapshot["summary"]["preparation"]
+                .as_str()
+                .unwrap_or("UNKNOWN"),
+            snapshot["verification"].as_str().unwrap_or("NOT_CHECKED")
+        )?;
+        if let Some(fields) = snapshot["fields"].as_array() {
+            for field in fields {
+                writeln!(
+                    out,
+                    "  {}: {}",
+                    field["label"].as_str().unwrap_or("?"),
+                    field["value"].as_str().unwrap_or("미입력")
+                )?;
+            }
+        }
+        for key in ["missingInputs", "missingFields"] {
+            if let Some(fields) = snapshot[key].as_array().filter(|fields| !fields.is_empty()) {
+                writeln!(
+                    out,
+                    "남은 입력: {}",
+                    fields
+                        .iter()
+                        .filter_map(Value::as_str)
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )?;
+            }
+        }
+        if let Some(next) = snapshot["nextInput"].as_str() {
+            writeln!(out, "다음 입력: {next}")?;
+        }
+        if let Some(code) = snapshot["verificationCode"].as_str() {
+            writeln!(out, "자료 확인 결과: {code}")?;
+        }
+        if data["application"].is_null() {
+            writeln!(out, "설치 NOT_PERFORMED · 엔진/실행 상태 NOT_CHECKED")?;
+        } else {
+            print_application_summary(out, &data["application"])?;
+        }
+    } else if command == "setup apply" {
+        print_application_summary(out, &data["application"])?;
+    }
+    if let Some(words) = data["nextCommand"].as_array() {
+        let rendered: Vec<String> = words
+            .iter()
+            .filter_map(Value::as_str)
+            .map(|word| {
+                if word
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b"-_./".contains(&b))
+                {
+                    word.into()
+                } else {
+                    format!("'{}'", word.replace('\'', "'\"'\"'"))
+                }
+            })
+            .collect();
+        writeln!(out, "다음 명령: {}", rendered.join(" "))?;
+    }
+    Ok(())
+}
+
+fn print_application_summary(out: &mut dyn Write, view: &Value) -> std::io::Result<()> {
+    if view.is_null() {
+        return Ok(());
+    }
+    if view["record"] == "UNAVAILABLE" {
+        return writeln!(
+            out,
+            "설치 실행 기록 확인 불가 [{}] · 기존 출력 보존",
+            view["reasonCode"].as_str().unwrap_or("UNKNOWN")
+        );
+    }
+    let s = &view["summary"];
+    writeln!(
+        out,
+        "설치 {} · 등록 {} · 이름 {}",
+        s["installation"].as_str().unwrap_or("UNKNOWN"),
+        s["registration"].as_str().unwrap_or("UNKNOWN"),
+        view["nameBinding"].as_str().unwrap_or("UNKNOWN")
+    )?;
+    writeln!(
+        out,
+        "준비 연결 {} · 설치 검증 {} · 실행 상태 미조회",
+        s["sourceMatch"].as_str().unwrap_or("UNKNOWN"),
+        s["verification"].as_str().unwrap_or("NOT_CHECKED")
+    )?;
+    if let Some(code) = view["reasonCode"]
+        .as_str()
+        .or_else(|| s["verificationCode"].as_str())
+    {
+        writeln!(out, "확인 결과: {code}")?;
+    }
+    if let Some(path) = s["instance"].as_str() {
+        writeln!(
+            out,
+            "control: {path} (이름 없이 --instance 경로로도 운용 가능)"
+        )?;
+    }
+    Ok(())
 }
 
 fn print_nodes_summary(out: &mut dyn Write, data: &Value, added: bool) -> std::io::Result<()> {
@@ -719,7 +1005,7 @@ fn dispatch_preparation(
         Ok(home) => home,
         Err(error) => return failure(command, error, 2),
     };
-    match operator::install_flow::run(
+    match operator::install_flow::run_sequential(
         &home,
         &positions[0],
         resume,
@@ -761,6 +1047,200 @@ fn dispatch_preparation(
     }
 }
 
+fn dispatch_preparation_command(
+    args: &[String],
+    json_mode: bool,
+    interactive: bool,
+    input: &mut dyn BufRead,
+    prompts: &mut dyn Write,
+) -> (ResultEnvelope, i32) {
+    let action = args[0].as_str();
+    let command = format!("setup {action}");
+    let Some((flags, positions)) = parse(&args[1..], &[("home", true), ("field", true)]) else {
+        return invalid(&command);
+    };
+    if (action == "list" && (!positions.is_empty() || flags.contains_key("field")))
+        || (action != "list"
+            && (positions.len() != 1 || !operator::install_flow::valid_name(&positions[0])))
+        || (action == "show" && flags.contains_key("field"))
+        || (action == "edit"
+            && (!flags.contains_key("field")
+                || json_mode
+                || !setup::FIELDS
+                    .iter()
+                    .any(|field| flags.get("field").is_some_and(|name| field.name == name))))
+    {
+        return invalid(&command);
+    }
+    if action == "edit" && !interactive {
+        return failure(
+            &command,
+            BxdlError::new(
+                "SETUP_INTERACTIVE_TERMINAL_REQUIRED",
+                "한 항목 수정은 터미널에서 실행하세요. 조회에는 setup list/show --json을 사용할 수 있습니다.",
+            ),
+            2,
+        );
+    }
+    let home = match flags
+        .get("home")
+        .map(|path| setup::absolute(Path::new(path)))
+        .unwrap_or_else(operator::home::default_home)
+    {
+        Ok(path) => path,
+        Err(error) => return failure(&command, error, 2),
+    };
+    match action {
+        "list" => match operator::preparation_commands::list(&home) {
+            Ok(listing) => {
+                let partial = listing.partial;
+                report(
+                    &command,
+                    if partial { "INCOMPLETE" } else { "SUCCEEDED" },
+                    if partial {
+                        "PREPARATION_LIST_PARTIAL"
+                    } else {
+                        "PREPARATION_LIST"
+                    },
+                    "저장한 설치 준비 목록입니다. 공급 자료와 실행 상태는 재검증하지 않았습니다.",
+                    listing,
+                    if partial { 5 } else { 0 },
+                )
+            }
+            Err(error) => failure(&command, error, 3),
+        },
+        "show" => match operator::preparation_commands::show(&home, &positions[0]) {
+            Ok(detail) => {
+                let changed = detail
+                    .inspection
+                    .as_ref()
+                    .is_none_or(|inspection| inspection.verification == "CHANGED")
+                    || detail
+                        .application
+                        .as_ref()
+                        .is_some_and(operator::application::View::partial);
+                report(
+                    &command,
+                    if changed { "INCOMPLETE" } else { "SUCCEEDED" },
+                    if changed {
+                        "PREPARATION_CHANGED"
+                    } else {
+                        "PREPARATION_DETAILS"
+                    },
+                    if changed {
+                        "저장한 준비 기록의 현재 유효성을 확인하지 못했습니다. 자료를 확인하고 다시 준비하세요."
+                    } else {
+                        "설치 준비 내용을 확인했습니다. 설치·엔진 실행은 수행하지 않았습니다."
+                    },
+                    detail,
+                    if changed { 5 } else { 0 },
+                )
+            }
+            Err(error) => failure(&command, error, 3),
+        },
+        "edit" => match operator::preparation_commands::edit(
+            &home,
+            &positions[0],
+            &flags["field"],
+            input,
+            prompts,
+        ) {
+            Ok(edit) => {
+                let (outcome, code, message, exit) = if edit.paused {
+                    (
+                        "INCOMPLETE",
+                        "PREPARATION_EDIT_PAUSED",
+                        "항목 수정을 중단했습니다. 기존 값은 보존됩니다.",
+                        5,
+                    )
+                } else if edit.changed {
+                    (
+                        "SUCCEEDED",
+                        "PREPARATION_EDITED",
+                        "한 항목을 저장했습니다. 이전 생성 파일은 보존하며 새 내용은 다시 검토해야 합니다.",
+                        0,
+                    )
+                } else {
+                    (
+                        "SUCCEEDED",
+                        "PREPARATION_UNCHANGED",
+                        "항목 값을 변경하지 않았습니다.",
+                        0,
+                    )
+                };
+                report(&command, outcome, code, message, edit, exit)
+            }
+            Err(error) => {
+                let exit = if matches!(
+                    error.code.as_str(),
+                    "SETUP_INPUT_FAILED" | "SETUP_OUTPUT_FAILED"
+                ) {
+                    7
+                } else {
+                    3
+                };
+                failure(&command, error, exit)
+            }
+        },
+        _ => invalid(&command),
+    }
+}
+
+fn dispatch_application(
+    args: &[String],
+    json_mode: bool,
+    interactive: bool,
+    input: &mut dyn BufRead,
+    prompts: &mut dyn Write,
+) -> (ResultEnvelope, i32) {
+    let command = "setup apply";
+    let Some((flags, positions)) = parse(&args[1..], &[("home", true)]) else {
+        return invalid(command);
+    };
+    if json_mode || positions.len() != 1 || !operator::install_flow::valid_name(&positions[0]) {
+        return invalid(command);
+    }
+    if !interactive {
+        return failure(
+            command,
+            BxdlError::new(
+                "SETUP_INTERACTIVE_TERMINAL_REQUIRED",
+                "설치 적용은 터미널에서 최종 경로를 확인하고 승인하세요.",
+            ),
+            2,
+        );
+    }
+    let home = match flags
+        .get("home")
+        .map(|path| setup::absolute(Path::new(path)))
+        .unwrap_or_else(operator::home::default_home)
+    {
+        Ok(home) => home,
+        Err(error) => return failure(command, error, 2),
+    };
+    match operator::application::run(&home, &positions[0], input, prompts) {
+        Ok(finish) => report(
+            command,
+            finish.outcome,
+            &finish.code,
+            finish.message,
+            finish.summary,
+            finish.exit,
+        ),
+        Err(error) => {
+            let exit = if matches!(
+                error.code.as_str(),
+                "SETUP_INPUT_FAILED" | "SETUP_OUTPUT_FAILED"
+            ) {
+                7
+            } else {
+                3
+            };
+            failure(command, error, exit)
+        }
+    }
+}
+
 fn dispatch_setup(
     args: &[String],
     json_mode: bool,
@@ -768,6 +1248,15 @@ fn dispatch_setup(
     input: &mut dyn BufRead,
     prompts: &mut dyn Write,
 ) -> (ResultEnvelope, i32) {
+    if args.first().is_some_and(|arg| arg == "apply") {
+        return dispatch_application(args, json_mode, interactive, input, prompts);
+    }
+    if args
+        .first()
+        .is_some_and(|arg| matches!(arg.as_str(), "list" | "show" | "edit"))
+    {
+        return dispatch_preparation_command(args, json_mode, interactive, input, prompts);
+    }
     if args
         .first()
         .is_some_and(|arg| matches!(arg.as_str(), "new" | "resume"))
@@ -1106,6 +1595,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
         );
     }
     match args[0].as_str() {
+        "cli" => dispatch_management(&args[1..]),
         "nodes" => dispatch_nodes(&args[1..]),
         "version" => {
             if args.len() != 1 {
@@ -1120,7 +1610,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["nodes.list", "nodes.add", "nodes.named-operations", "executor.rc3-legacy-v1", "runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
+                        "capabilities": ["management-cli.v1", "management.bundle.build", "management.bundle.verify", "management.install.macos", "management.update.macos", "management.info", "management.rollback.macos", "completion.zsh", "nodes.list", "nodes.add", "nodes.named-operations", "executor.rc3-legacy-v1", "runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "setup.preparation.sequential", "setup.preparation.list", "setup.preparation.show", "setup.preparation.edit", "setup.apply", "nodes.named-initialization", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
                         "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),
@@ -1522,6 +2012,168 @@ fn dispatch_engine(args: &[String]) -> (ResultEnvelope, i32) {
     }
 }
 
+fn management_failure(command: &str, error: BxdlError) -> (ResultEnvelope, i32) {
+    let code = error.code.as_str();
+    if code == "CLI_ACTIVATION_UNKNOWN" {
+        (result(command, "UNKNOWN", code, &error.message, None), 6)
+    } else if code == "CLI_BUSY" {
+        failure(command, error, 6)
+    } else if code == "CLI_PLATFORM_UNSUPPORTED" {
+        (
+            result(command, "UNSUPPORTED", code, &error.message, None),
+            4,
+        )
+    } else {
+        failure(command, error, 3)
+    }
+}
+
+fn dispatch_management(args: &[String]) -> (ResultEnvelope, i32) {
+    let Some(action) = args.first().map(String::as_str) else {
+        return invalid("cli");
+    };
+    if action == "bundle" {
+        return dispatch_management_bundle(&args[1..]);
+    }
+    if !matches!(action, "install" | "update" | "info" | "rollback") {
+        return invalid("cli");
+    }
+    let command = format!("cli {action}");
+    let mut allowed = vec![("root", true), ("bin-dir", true)];
+    if matches!(action, "install" | "update") {
+        allowed.extend([
+            ("from", true),
+            ("public-key", true),
+            ("allow-unsigned-development", false),
+        ]);
+    }
+    let Some((flags, positions)) = parse(&args[1..], &allowed) else {
+        return invalid(&command);
+    };
+    if !positions.is_empty()
+        || (action == "update" && !flags.contains_key("from"))
+        || (flags.contains_key("public-key") && flags.contains_key("allow-unsigned-development"))
+    {
+        return invalid(&command);
+    }
+    let locations = match management::default_locations(
+        flags.get("root").map(Path::new),
+        flags.get("bin-dir").map(Path::new),
+    ) {
+        Ok(locations) => locations,
+        Err(error) => return management_failure(&command, error),
+    };
+    let options = management::InstallOptions {
+        locations,
+        from: flags.get("from").map(PathBuf::from),
+        trust: management::bundle::VerifyOptions {
+            public_key_path: flags.get("public-key").map(PathBuf::from),
+            allow_unsigned_development: flags.contains_key("allow-unsigned-development"),
+        },
+    };
+    let response = match action {
+        "install" => management::install(&options),
+        "update" => management::update(&options),
+        "info" => management::info(&options.locations),
+        "rollback" => management::rollback(&options.locations),
+        _ => unreachable!(),
+    };
+    match response {
+        Ok(value) => {
+            let code = format!("CLI_{}", value.status);
+            report(
+                &command,
+                "SUCCEEDED",
+                &code,
+                "관리 CLI 결과를 확인했습니다.",
+                value,
+                0,
+            )
+        }
+        Err(error) => management_failure(&command, error),
+    }
+}
+
+fn dispatch_management_bundle(args: &[String]) -> (ResultEnvelope, i32) {
+    match args.first().map(String::as_str) {
+        Some("verify") => {
+            let command = "cli bundle verify";
+            let Some((flags, positions)) = parse(
+                &args[1..],
+                &[("public-key", true), ("allow-unsigned-development", false)],
+            ) else {
+                return invalid(command);
+            };
+            if positions.len() != 1
+                || flags.contains_key("public-key")
+                    == flags.contains_key("allow-unsigned-development")
+            {
+                return invalid(command);
+            }
+            let options = management::bundle::VerifyOptions {
+                public_key_path: flags.get("public-key").map(PathBuf::from),
+                allow_unsigned_development: flags.contains_key("allow-unsigned-development"),
+            };
+            match management::bundle::verify(Path::new(&positions[0]), &options) {
+                Ok(bundle) => report(
+                    command,
+                    "SUCCEEDED",
+                    "CLI_BUNDLE_VERIFIED",
+                    "관리 CLI 배포 파일을 검증했습니다. 실행·설치·Mac 배포 인증은 수행하지 않았습니다.",
+                    bundle.report(),
+                    0,
+                ),
+                Err(error) => management_failure(command, error),
+            }
+        }
+        Some("build") => {
+            let command = "cli bundle build";
+            let Some((flags, positions)) = parse(
+                &args[1..],
+                &[
+                    ("root", true),
+                    ("output", true),
+                    ("version", true),
+                    ("revision", true),
+                    ("signing-key", true),
+                    ("allow-unsigned-development", false),
+                ],
+            ) else {
+                return invalid(command);
+            };
+            if !positions.is_empty()
+                || ["root", "output", "version", "revision"]
+                    .iter()
+                    .any(|name| !flags.contains_key(*name))
+                || flags.contains_key("signing-key")
+                    == flags.contains_key("allow-unsigned-development")
+            {
+                return invalid(command);
+            }
+            let options = management::bundle::BuildOptions {
+                root: PathBuf::from(&flags["root"]),
+                output: PathBuf::from(&flags["output"]),
+                version: flags["version"].clone(),
+                revision: flags["revision"].clone(),
+                signing_key_path: flags.get("signing-key").map(PathBuf::from),
+                allow_unsigned_development: flags.contains_key("allow-unsigned-development"),
+            };
+            match management::bundle::build(&options) {
+                Ok(value) => report(
+                    command,
+                    "SUCCEEDED",
+                    "CLI_BUNDLE_BUILT",
+                    "관리 CLI 배포본을 만들고 검증했습니다. 설치·Mac 배포 인증은 수행하지 않았습니다.",
+                    value,
+                    0,
+                ),
+                Err(error) => management_failure(command, error),
+            }
+        }
+        _ => invalid("cli bundle"),
+    }
+}
+
 // Preserve positional arguments after -- and allow flags on either side of a path.
 fn parse(
     args: &[String],
@@ -1822,27 +2474,39 @@ fn dispatch_initialization(command: &str, args: &[String]) -> (ResultEnvelope, i
         args,
         &[
             ("instance", true),
+            ("home", true),
             (confirm, false),
             ("timeout-seconds", true),
         ],
     ) else {
         return invalid(command);
     };
-    if !pos.is_empty() || !flags.contains_key("instance") || !flags.contains_key(confirm) {
+    if !flags.contains_key(confirm) {
         return invalid(command);
     }
+    let Some(target) = TargetSpec::parse(&flags, &pos) else {
+        return invalid(command);
+    };
     let Some(timeout) = timeout_flag(&flags, 120, 600) else {
         return invalid(command);
     };
+    let target = match target.resolve() {
+        Ok(target) => target,
+        Err(error) => return instance_failure(command, error),
+    };
+    let instance = target.path();
     if let Some(response) = delegated(
         command,
-        Path::new(&flags["instance"]),
+        instance,
         &engine::instance::executor::Request::Initialize { resume, timeout },
-        || Ok(()),
+        || target.recheck(),
     ) {
         return response;
     }
-    match engine::instance::initialize(Path::new(&flags["instance"]), resume, timeout) {
+    if let Err(error) = target.recheck() {
+        return instance_failure(command, error);
+    }
+    match engine::instance::initialize(instance, resume, timeout) {
         Ok(value) if value.initialization == "INITIALIZED" => report(
             command,
             "SUCCEEDED",
@@ -2323,5 +2987,37 @@ mod startup_summary_tests {
         assert!(text.contains("기록 해석 불가"));
         assert!(text.contains("DETAIL_WITHHELD"));
         assert!(!text.contains("PRIVATE_CANARY"));
+    }
+}
+
+#[cfg(test)]
+mod management_ux_tests {
+    use super::*;
+
+    #[test]
+    fn uncertain_cli_activation_preserves_unknown_and_uses_cli_recovery_guidance() {
+        let (response, exit) = management_failure(
+            "cli update",
+            BxdlError::new("CLI_ACTIVATION_UNKNOWN", "전환 결과 확인 필요"),
+        );
+        assert_eq!(exit, 6);
+        assert_eq!(response.outcome, "UNKNOWN");
+        assert!(response.data.is_none());
+        let mut output = Vec::new();
+        print_management_guidance(&mut output, &response).unwrap();
+        let output = String::from_utf8(output).unwrap();
+        assert!(output.contains("bxdl cli info"));
+        assert!(output.contains("업데이트·복귀를 반복하지 마세요"));
+        assert!(!output.contains("instance show"));
+        assert!(!output.contains("diagnose"));
+        let (busy, exit) = management_failure("cli update", BxdlError::new("CLI_BUSY", "사용 중"));
+        assert_eq!(exit, 6);
+        assert_eq!(busy.outcome, "FAILED");
+        let (unsupported, exit) = management_failure(
+            "cli install",
+            BxdlError::new("CLI_PLATFORM_UNSUPPORTED", "지원 대상 아님"),
+        );
+        assert_eq!(exit, 4);
+        assert_eq!(unsupported.outcome, "UNSUPPORTED");
     }
 }

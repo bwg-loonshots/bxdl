@@ -105,6 +105,34 @@ fn arguments_are_fixed_and_paths_are_single_literal_arguments() {
     );
 }
 #[test]
+fn initialization_arguments_preserve_exact_confirmation_and_literal_control_path() {
+    for (resume, command, confirmation) in [
+        (false, "init", "--confirm-initialize"),
+        (true, "resume-init", "--confirm-resume"),
+    ] {
+        let request = Request::Initialize {
+            resume,
+            timeout: Duration::from_secs(137),
+        };
+        let args = request
+            .arguments(Path::new("/private/tmp/control ; $HOME"))
+            .unwrap();
+        let expected: Vec<OsString> = [
+            command,
+            "--instance",
+            "/private/tmp/control ; $HOME",
+            "--json",
+            "--timeout-seconds",
+            "137",
+            confirmation,
+        ]
+        .into_iter()
+        .map(OsString::from)
+        .collect();
+        assert_eq!(args, expected);
+    }
+}
+#[test]
 fn accepted_reply_preserves_incomplete_unknown_and_public_data() {
     let raw = envelope(
         "start",

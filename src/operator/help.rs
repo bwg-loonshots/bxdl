@@ -9,6 +9,42 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
         return None;
     };
     let (usage, note) = match topic {
+        ["cli"] => (
+            "bxdl cli install [옵션]\n  bxdl cli update --from <CLI-배포본> [옵션]\n  bxdl cli info [옵션]\n  bxdl cli rollback [옵션]\n  bxdl cli bundle --help  (배포본 제작·검증)",
+            "관리 CLI를 사용자 권한으로 설치·업데이트하고 선택한 버전을 확인하거나 이전 버전으로 복귀합니다.\n기존 bxdl install은 노드 패키지 설치용입니다. cli install/update/rollback은 명령 실행 자체가 변경 요청이며 추가 문답 없이 진행합니다. 비TTY와 --json을 지원하고 표준입력을 읽지 않습니다.\n기본 CLI 설치 위치는 ~/Library/Application Support/BXDL-CLI이며 진입점은 ~/.local/bin/bxdl입니다. --root/--bin-dir로 별도 위치를 지정하며 노드 목록의 --home과 혼용하지 않습니다.\n새 노드 설치·초기화·시작이나 기존 RC.3 패키지·catalog·control·data 변경은 수행하지 않습니다. 네트워크 최신 버전 탐색이나 자동 다운로드는 제공하지 않습니다. 각 하위 명령의 --help를 확인하세요.",
+        ),
+        ["cli", "install"] => (
+            "bxdl cli install [--from <CLI-archive-or-directory>] [--root <CLI-root>] [--bin-dir <entry-dir>] [--public-key <trusted.pem> | --allow-unsigned-development] [--json]",
+            "관리 CLI 전용 배포본을 검증해 새 버전 위치에 설치하고 고정 진입점을 연결합니다. --from을 생략하면 실행 중인 CLI가 속한 압축 해제 배포본을 사용하며 일반 개발 checkout 바이너리는 배포본으로 추정하지 않습니다.\n최초 설치에는 외부 신뢰키 또는 명시 --allow-unsigned-development가 필요합니다. 신뢰키를 배포본 자체에서 채택하지 않습니다. 이미 설치된 같은 배포본은 다시 쓰지 않으며 누락된 본 설치의 진입점만 재연결할 수 있습니다. 같은 identity에 다른 내용이 있거나 다른 bxdl 파일과 충돌하면 거절합니다.\nPATH·셸 설정은 자동 수정하지 않습니다. 출력된 안내를 적용하고 새 터미널에서 bxdl cli info와 bxdl version --json을 확인하세요. 설치는 Mac arm64를 대상으로 하며 노드·JAR·JRE·LaunchAgent는 변경하지 않습니다.",
+        ),
+        ["cli", "update"] => (
+            "bxdl cli update --from <CLI-archive-or-directory> [--root <CLI-root>] [--bin-dir <entry-dir>] [--public-key <trusted.pem> | --allow-unsigned-development] [--json]",
+            "지정한 로컬 관리 CLI 배포본을 검증·설치한 뒤 선택 버전을 전환합니다. --from은 필수이며 온라인 최신 버전 조회·자동 다운로드를 하지 않습니다.\n서명한 설치는 저장한 신뢰키를 재사용할 수 있으며 다른 키·unsigned 정책으로 바꾸지 않습니다. 무서명 개발 설치의 업데이트는 매번 --allow-unsigned-development를 명시해야 합니다. 전환 전 실패 시 기존 선택을 유지하고 이전 버전은 복귀용으로 보존합니다. 결과가 불명확하면 cli info로 기록과 선택 경로를 확인하세요.\nCLI와 같은 버전의 zsh 자동완성 파일도 함께 배치합니다. 이미 열린 셸에는 안내된 다시 읽기 명령을 적용하세요. 기존 노드 목록·준비·control·data 및 RC.3 package를 다시 만들지 않습니다.",
+        ),
+        ["cli", "info"] => (
+            "bxdl cli info [--root <CLI-root>] [--bin-dir <entry-dir>] [--json]",
+            "관리 CLI 설치 위치·선택 버전·이전 버전과 실행 진입점 정보를 읽습니다. 없는 설치 위치를 만들거나 잠금·기록을 쓰지 않습니다.\n현재 실행한 bxdl과 설치된 선택 버전은 다를 수 있습니다. 출력된 경로와 셸의 command -v bxdl을 확인하세요. 별도 위치에 설치했다면 같은 --root를 사용합니다. --bin-dir를 생략하면 설치 기록의 진입점 위치를 재사용합니다.\n노드의 실행 상태나 엔진 호환 조합을 관측하지 않습니다. 노드 상태는 기존 bxdl status <이름>으로 확인하세요.",
+        ),
+        ["cli", "rollback"] => (
+            "bxdl cli rollback [--root <CLI-root>] [--bin-dir <entry-dir>] [--json]",
+            "저장된 이전 관리 CLI를 다시 검증하고 선택 버전을 되돌립니다. 이전 버전이 없거나 보존된 파일이 변경되었으면 거절합니다.\n명령 실행이 복귀 요청이며 표준입력 문답 없이 진행합니다. 노드 패키지 downgrade·DB 복구·목록/설정 형식 변환은 수행하지 않습니다.\n복귀 후 cli info와 version을 확인하고 zsh 자동완성을 다시 읽으세요. 현재 셸의 PATH가 다른 bxdl을 먼저 선택하면 해당 설정을 직접 바로잡아야 합니다.",
+        ),
+        ["cli", "bundle"] => (
+            "bxdl cli bundle build --help\n  bxdl cli bundle verify --help",
+            "관리 CLI 전용 배포본을 제작하거나 검증합니다. 노드 패키지의 package build/verify와 공급 형식이 다릅니다.\nJAR·JRE·노드 데이터는 포함하지 않으며 로컬 입력만 사용합니다. 서명 검증은 외부 신뢰키를 기준으로 하고 개발용 무서명 자료는 명시적으로 선택해야 합니다.",
+        ),
+        ["cli", "bundle", "build"] => (
+            "bxdl cli bundle build --root <stage> --output <new.tar.gz> --version <CLI-version> --revision <Git-revision> (--signing-key <private.pem> | --allow-unsigned-development) [--json]",
+            "준비된 관리 CLI 바이너리·자동완성·사용 가이드를 CLI 전용 manifest와 함께 새 archive로 만듭니다. 입력을 내려받거나 컴파일하지 않습니다.\n배포 빌드는 실제 Git revision을 바이너리와 manifest에 일치시켜야 합니다. 개발 단계의 development revision과 무서명 자료는 고객용 정식 배포 인증이 아닙니다. 기존 출력은 덮어쓰지 않습니다.\n신뢰한 signing key는 stage 밖에 두며 archive에 포함하지 않습니다. 완성한 배포본은 cli bundle verify로 독립 확인할 수 있습니다.",
+        ),
+        ["cli", "bundle", "verify"] => (
+            "bxdl cli bundle verify <CLI-archive-or-directory> (--public-key <trusted.pem> | --allow-unsigned-development) [--json]",
+            "관리 CLI 전용 manifest·파일 목록·크기·해시와 선택한 서명 정책을 검증합니다. archive와 압축 해제된 배포 디렉터리를 받습니다.\n검증만으로 새 폴더를 만들거나 바이너리를 실행하지 않습니다. 신뢰키는 공급 자료 밖에서 독립적으로 확인해 제공하세요.\n이 결과는 Mac 코드서명·공증이나 실제 노드 운용 인수를 뜻하지 않습니다. 설치/업데이트는 별도 cli install/update 명령입니다.",
+        ),
+        ["completion"] | ["completion", "zsh"] => (
+            "bxdl completion zsh",
+            "zsh 자동완성 스크립트를 표준출력으로 내보냅니다. 비TTY에서도 사용할 수 있으며 --json과 함께 요청하면 사용법 오류입니다.\ncompinit 실행 뒤 source <(bxdl completion zsh)로 현재 셸에 적용하세요. 셸 설정 파일은 자동 수정하지 않습니다.\n명령·옵션·등록 노드 이름·설치 준비 이름을 해당 위치에서 제안합니다. 이름은 입력 중인 --home 또는 Mac 기본 관리 위치에서 읽습니다.\n자동완성은 관리 위치·기록을 쓰거나 노드·엔진·서비스를 호출하지 않습니다. 제안된 이름이 현재 정상 상태나 실행 승인을 뜻하지는 않습니다.\n현재 지원 셸은 zsh이며 bash/fish는 지원하지 않습니다. 설치·사용 예시는 docs/completion.md를 따르세요.",
+        ),
         ["nodes"] => (
             "bxdl nodes [--home <관리-루트>] [--json]",
             "저장한 등록 노드 목록을 읽습니다. 이름·표시명·저장 당시 상태와 시각을 보여줍니다.\n예: bxdl nodes\n목록 조회는 폴더를 만들거나 노드·서비스·네트워크를 조회하지 않습니다. 없는 관리 위치는 빈 목록입니다.\n기존 노드 연결: bxdl nodes add local --instance <control-경로>\nMac 기본 위치는 ~/Library/Application Support/BXDL입니다. 다른 OS 또는 별도 목록은 --home을 지정하세요.\n이름 기반 운용: bxdl status local. 기존 --instance 경로도 지원합니다. 이름에는 같은 --home을 지정하세요.",
@@ -19,15 +55,31 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
         ),
         ["console"] => (
             "bxdl console [--home <관리-루트>] [--instance <기존-control-경로>]",
-            "TTY 전용 홈·목록·기존 자료 조회입니다. --json과 비TTY 실행은 입력/쓰기 전에 거절합니다.\n홈/목록은 폴더를 만들지 않습니다. 명시 경로를 읽은 뒤 y/yes로 승인한 목록 저장만 관리 위치를 준비합니다.\nMac 기본 위치는 ~/Library/Application Support/BXDL입니다. 다른 OS는 --home을 지정하세요.\n등록 노드와 기존 설치/제품초안/네트워크 세션을 연결하며 재등록·형식변환·임의 CLI 실행은 하지 않습니다.\n목록은 저장 기록이며 현재 서비스 상태는 미조회입니다. 새 설치 자료 준비는 홈 1번에서 setup new/resume과 같은 흐름으로 진행합니다. console의 추가 개발은 중단했습니다. 직접 CLI 개선을 우선합니다.\n:help 도움말, :back 이전 화면, :cancel/EOF 저장 자료를 보존하고 중단. Enter는 변경을 승인하지 않습니다.",
+            "TTY 전용 홈·목록·기존 자료 조회입니다. --json과 비TTY 실행은 입력/쓰기 전에 거절합니다.\n홈/목록은 폴더를 만들지 않습니다. 명시 경로를 읽은 뒤 y/yes로 승인한 목록 저장만 관리 위치를 준비합니다.\nMac 기본 위치는 ~/Library/Application Support/BXDL입니다. 다른 OS는 --home을 지정하세요.\n등록 노드와 기존 설치/제품초안/네트워크 세션을 연결하며 재등록·형식변환·임의 CLI 실행은 하지 않습니다.\n목록은 저장 기록이며 현재 서비스 상태는 미조회입니다. 새 설치 자료 준비는 홈 1번에서 기존 번호 메뉴로 진행하며 직접 setup new/resume과 저장 형식을 공유합니다. console의 추가 개발은 중단했습니다. 직접 CLI 개선을 우선합니다.\n:help 도움말, :back 이전 화면, :cancel/EOF 저장 자료를 보존하고 중단. Enter는 변경을 승인하지 않습니다.",
         ),
         ["setup", "new"] => (
             "bxdl setup new <이름> [--home <관리-루트>] [--from <instance.json>]",
-            "이름을 붙인 설치 준비 세션을 만듭니다. 이름은 소문자로 시작하는 1~32자의 소문자·숫자·하이픈입니다.\nTTY 전용이며 --json/--non-interactive를 지원하지 않습니다. y/yes 승인 전에는 관리 폴더나 세션을 만들지 않습니다.\n공급 자료·제품 설정·공개 network 또는 기존 native를 연결해 새 설정 revision을 준비합니다. 설치·등록·초기화·시작은 수행하지 않습니다.\n중단한 작업은 setup resume <이름>으로 이어갑니다. Mac 기본 관리 위치는 ~/Library/Application Support/BXDL이며 다른 OS는 --home을 지정하세요.",
+            "이름을 붙인 설치 준비 세션을 만듭니다. 이름은 소문자로 시작하는 1~32자의 소문자·숫자·하이픈입니다.\nTTY 전용이며 --json/--non-interactive를 지원하지 않습니다. y/yes 승인 전에는 관리 폴더나 세션을 만들지 않습니다.\n공급 자료→네트워크→누락 제품·정책→검토 순서로 질문하고 새 설정 revision을 준비합니다. 이미 저장한 값은 재사용합니다. 설치·등록·초기화·시작은 수행하지 않습니다.\n중단한 작업은 setup resume <이름>으로 이어갑니다. Mac 기본 관리 위치는 ~/Library/Application Support/BXDL이며 다른 OS는 --home을 지정하세요.",
         ),
         ["setup", "resume"] => (
             "bxdl setup resume <이름> [--home <관리-루트>]",
-            "setup new 또는 console에서 만든 준비 세션을 엽니다. 열기만으로 저장·재검증 결과 승인·설치 실행을 하지 않습니다.\n기존 setup --install/--network/제품 초안은 해당 기존 --resume 명령으로 엽니다.\n:help 도움말, :back 검토, :cancel/EOF 저장한 자료를 보존하고 중단. 0은 저장 후 종료입니다.",
+            "setup new 또는 console에서 만든 준비 세션을 엽니다. 열기만으로 저장·재검증 결과 승인·설치 실행을 하지 않습니다.\n기존 setup --install/--network/제품 초안은 해당 기존 --resume 명령으로 엽니다.\n:help 도움말, :back 이전 질문, :cancel/EOF 저장한 자료를 보존하고 중단. 부족한 입력부터 순서대로 이어갑니다.",
+        ),
+        ["setup", "list"] => (
+            "bxdl setup list [--home <관리-루트>] [--json]",
+            "이름을 붙인 설치 준비 목록·남은 입력과 별도 설치 실행 기록을 읽습니다. 없는 관리 위치는 빈 목록이며 폴더·잠금·기록을 쓰지 않습니다.\n목록은 저장 기록이며 공급 자료·엔진·서비스를 재검증하지 않습니다. 손상된 세션은 읽기 불가로 남기고 나머지 목록을 보여줍니다.\n다음 명령: bxdl setup show <이름> (같은 --home 사용).",
+        ),
+        ["setup", "show"] => (
+            "bxdl setup show <이름> [--home <관리-루트>] [--json]",
+            "준비한 공개 설정·남은 입력과 별도 설치 실행 기록을 읽습니다. credential 값·경로·비밀 원문은 표시하지 않습니다.\n저장한 PREPARED_RECORDED와 현재 자료 재검증 결과를 분리합니다. 자료가 달라지면 INCOMPLETE이며 기존 기록을 수정하지 않습니다. 설치 완료 기록도 현재 서비스 상태는 아니며 status로 확인하세요.\n읽기 전용이며 workflow 잠금을 획득하거나 엔진·네트워크·서비스를 호출하지 않습니다.\n다음 명령: bxdl setup resume <이름> 또는 bxdl setup edit <이름> --field httpPort (같은 --home 사용).",
+        ),
+        ["setup", "apply"] => (
+            "bxdl setup apply <이름> [--home <관리-루트>]",
+            "준비한 자료와 설치 범위를 검토한 뒤 y/yes로 설치·cold 검사·등록·노드 이름 연결을 승인합니다. Enter/n/no는 거절하고 :cancel/EOF는 중단합니다.\nTTY 전용이며 --json/비TTY는 입력·쓰기 전에 거절합니다. 초기화와 시작은 포함하지 않습니다.\n준비 기록 sessions/<이름>과 별도로 operations/<이름>에 설치 실행 기록을 보존합니다. setup list/show에서 두 기록을 구분해 조회하고 현재 실행 상태는 status로 확인하세요.\n완료한 apply를 다시 실행하면 기존 완료 근거를 검증하고 필요한 이름 연결만 복구합니다. 자료 변경·UNKNOWN에서 자동 재설치하거나 기존 폴더를 채택하지 않습니다.\n이름 연결이 실패해도 이미 완료한 설치·등록은 보존합니다. 안내된 control 경로로 조회하고 같은 apply의 복구 안내를 따르세요.\n다음 명령: bxdl init <이름> --confirm-initialize, 이후 bxdl start <이름> (별도 관리 위치에서는 같은 --home 지정).",
+        ),
+        ["setup", "edit"] => (
+            "bxdl setup edit <이름> --field <제품-항목> [--home <관리-루트>]",
+            "지정한 제품 항목 하나만 질문하고 종료합니다. 저장한 값에서 Enter는 유지하고 :back은 변경 없이 종료합니다. :cancel/EOF는 기존 값을 보존하고 중단합니다.\nTTY 전용이며 --json/비TTY는 입력·쓰기 전에 거절합니다. 같은 값은 새 기록을 쓰지 않습니다. 실제 변경은 기존 검토를 무효화하되 이전 생성 파일을 보존합니다.\n지원 항목: instanceId, nodeId, dataDirectory, httpAddress, httpPort, p2pAddress, p2pPort, chainDescription, validatorKeystore, validatorPasswordFile, tlsKeyStore, tlsKeyPasswordFile, tlsTrustStore, tlsTrustPasswordFile.\n비밀번호 원문 대신 기존 파일 경로를 입력하세요. 공급 자료·정책 수정은 setup resume <이름>의 검토에서 진행합니다.\n다음 명령: bxdl setup resume <이름> (같은 --home 사용). 설치·등록·초기화·시작은 수행하지 않습니다.",
         ),
         ["setup"] => (
             "bxdl setup [--workspace <dir>] [--resume | --from <instance.json>] [--output <new.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume) --non-interactive [--output <new.json>] [--json]",
@@ -54,12 +106,12 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
             "등록한 현재 시작 시도의 정상 종료를 요청하고 확인합니다. 기본 제한 시간은 60초입니다.\n종료 대기 만료·결과 불명에서는 새 start를 반복하지 말고 status와 정제 기록을 확인하세요.\nSERVICE_STOPPED_VERIFIED 이후에도 다음 start는 별도로 명시해야 합니다. 데이터는 삭제하지 않습니다.",
         ),
         ["init"] => (
-            "bxdl init --instance <control-dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]",
-            "등록된 새 데이터 경로를 한 번 초기화합니다. 노드·서비스를 시작하지 않습니다.\n체인·자산 등록 정책을 먼저 검토하세요. 실패·불명 결과에서 init을 자동 반복하지 않습니다.",
+            "bxdl init <이름> [--home <관리-루트>] --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl init --instance <control-dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]",
+            "등록된 새 데이터 경로를 한 번 초기화합니다. 노드·서비스를 시작하지 않습니다. 이름과 --instance는 둘 중 하나만 받으며 --home은 이름에만 사용합니다.\n체인·자산 등록 정책을 먼저 검토하세요. 실패·불명 결과에서 init을 자동 반복하지 않습니다.",
         ),
         ["resume-init"] => (
-            "bxdl resume-init --instance <control-dir> --confirm-resume [--timeout-seconds <1..600>] [--json]",
-            "미완료 초기화의 재개 조건을 검사하고 조건이 맞을 때만 이어갑니다. 일반적인 UNKNOWN 복구 명령이 아닙니다.\n기존 기록을 삭제하거나 DB를 재초기화하지 않습니다. 노드를 시작하지 않습니다.",
+            "bxdl resume-init <이름> [--home <관리-루트>] --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <control-dir> --confirm-resume [--timeout-seconds <1..600>] [--json]",
+            "미완료 초기화의 재개 조건을 검사하고 조건이 맞을 때만 이어갑니다. 일반적인 UNKNOWN 복구 명령이 아닙니다. 이름과 --instance는 둘 중 하나만 받으며 --home은 이름에만 사용합니다.\n기존 기록을 삭제하거나 DB를 재초기화하지 않습니다. 노드를 시작하지 않습니다.",
         ),
         ["logs"] => (
             "bxdl logs <이름> [--home <관리-루트>] [기존 옵션]\n  bxdl logs --instance <control-dir> [--tail <1..200>] [--max-bytes <4096..1048576>] [--timeout-seconds <1..30>] [--json]",
@@ -75,7 +127,7 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
         ),
         ["install"] => (
             "bxdl install <tar.gz> --destination <new-dir> (--public-key <trusted.pem> | --allow-unsigned-development) [--json]",
-            "macOS arm64의 새 폴더에 검증한 package 파일만 설치합니다. 부모 폴더는 미리 준비하세요.\n신뢰키는 패키지 밖의 독립적으로 신뢰한 경로에서 제공합니다. 등록·초기화·서비스 시작은 하지 않습니다.\n문답 설치 흐름은 bxdl setup --install --help를 확인하세요.",
+            "macOS arm64의 새 폴더에 검증한 package 파일만 설치합니다. 부모 폴더는 미리 준비하세요.\n신뢰키는 패키지 밖의 독립적으로 신뢰한 경로에서 제공합니다. 등록·초기화·서비스 시작은 하지 않습니다.\n이름 있는 준비 자료의 설치는 bxdl setup apply --help, 기존 설치 문답은 bxdl setup --install --help를 확인하세요.",
         ),
         ["instance", "register"] => (
             "bxdl instance register --instance <new-dir> --package <installed-dir> --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development) --config <instance.json> --engine-config <node.json> --lock <json> --allow-development [--timeout-seconds <1..120>] [--json]",

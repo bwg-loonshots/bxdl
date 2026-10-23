@@ -1,8 +1,8 @@
 # CLI·설치·설정·초기화와 Mac 서비스
 
-**현재 개선 방향:** console의 추가 개발은 중단했다. 직접 명령의 이름 기반 대상 지정과 순차 준비 흐름을 우선하며 [CLI 계획](../design/2026-10-22-cli-simplification.md)을 따른다. 이 문서는 현재 구현된 명령만 설명한다. `setup new/resume`은 아직 기존 번호 메뉴 방식이다.
+**현재 개선 방향:** console의 추가 개발은 중단했다. 직접 명령의 이름 기반 대상 지정과 순차 준비 흐름을 우선하며 [CLI 계획](../design/2026-10-22-cli-simplification.md)을 따른다. 이 문서는 현재 구현된 명령만 설명한다. `setup new/resume`은 누락된 입력부터 순차 문답으로 안내하고 `setup list/show/edit`을 제공한다. 준비한 자료는 `setup apply <이름>`의 별도 승인으로 설치·등록하고, 초기화·시작은 별도 명령으로 실행한다.
 
-`--json`은 명령 인자 앞/뒤에서 받을 수 있으며 stdout에 JSON 문서 하나만 쓴다. 기본 setup에서는 `--non-interactive`와 함께 사용해야 한다. `console`, `setup new/resume`, `setup --install`, `setup --network`는 터미널 전용이다. console은 --json을 지원하지 않는다. 사람용 결과도 같은 내부 결과를 표현한다. 대화형 setup 질문은 stderr에 출력하며, 비대화형 JSON 실행은 질문이나 로그 없이 결과만 stdout에 쓴다. 잘못된 인자나 parser 오류에 입력값·secret을 그대로 되돌려 쓰지 않는다.
+`--json`은 명령 인자 앞/뒤에서 받을 수 있으며 stdout에 JSON 문서 하나만 쓴다. 기본 setup에서는 `--non-interactive`와 함께 사용해야 한다. `console`, `setup new/resume/edit/apply`, `setup --install`, `setup --network`는 터미널 전용이며 `--json`을 지원하지 않는다. `setup list/show`는 비TTY에서 `--json`으로 조회할 수 있다. 사람용 결과도 같은 내부 결과를 표현한다. 대화형 setup 질문은 stderr에 출력하며, 비대화형 JSON 실행은 질문이나 로그 없이 결과만 stdout에 쓴다. 잘못된 인자나 parser 오류에 입력값·secret을 그대로 되돌려 쓰지 않는다.
 
 | exit | 현재 의미 |
 | --- | --- |
@@ -20,9 +20,9 @@ engine 명령과 결합/등록형 preflight는 고정한 JVM의 cold 명령을 �
 
 `bxdl help`와 인자 없는 실행은 내 노드·운용·설치·제작 과업별 진입점을 보여준다. 상세 옵션은 각 명령 도움말에서 확인한다. `bxdl start --help`, `bxdl setup --install --help`, `bxdl setup --network --help`처럼 해당 명령·모드의 사용법을 직접 볼 수 있다. 도움말 조회는 질문을 읽거나 설치·초기화·서비스를 실행하지 않는다. 도움말 호출에는 해당 명령·모드와 도움말 옵션만 지정하며 실행 옵션·파일 경로를 함께 넣지 않는다.
 
-제품·설치·네트워크 문답의 모든 입력 단계에서 `:help`, `:back`, `:cancel`을 공통으로 사용한다. 도움말은 현재 질문으로 돌아오고, 뒤로가기는 앞 질문 또는 이전 검토 단계로 돌아가며, 취소/EOF는 저장한 checkpoint를 보존한다. 예약 문자가 파일명이라면 `./:help` 같은 명시 경로로 지정한다. 항목 편집은 번호 하나를 고르고 저장한 뒤 검토로 돌아간다. 파일 출력·apply·init·start의 대화형 확인은 `y`/`yes`만 승인하며 빈 Enter는 거절이다.
+제품·설치·네트워크 문답의 모든 입력 단계에서 `:help`, `:back`, `:cancel`을 공통으로 사용한다. 도움말은 현재 질문으로 돌아오고, 뒤로가기는 앞 질문 또는 이전 검토 단계로 돌아가며, 취소/EOF는 저장한 checkpoint를 보존한다. 예약 문자가 파일명이라면 `./:help` 같은 명시 경로로 지정한다. 기존 문답의 항목 편집은 번호 하나를 고르고 검토로 돌아간다. 이름 있는 순차 준비는 검토의 `edit <필드>` 또는 별도 `setup edit <이름> --field <제품필드>`로 한 항목만 수정한다. 파일 출력·apply·init·start의 대화형 확인은 `y`/`yes`만 승인하며 빈 Enter는 거절이다.
 
-`bxdl console [--home <관리-루트>] [--instance <기존-control>]`은 홈·목록·기존 자료 읽기를 제공한다. 홈 조회는 무쓰기이며 목록 저장/갱신/숨기기는 개별 승인한다. 홈 1번은 `setup new/resume`과 같은 자료 준비를 제공한다. console의 추가 개발은 중단했으며 실제 운용 연결은 직접 CLI에서 진행한다. [console 사용 가이드](./console.md)를 따른다. HTML과 Python 터미널 체험판은 별도의 시안이며 제품 웹서버를 실행하지 않는다.
+`bxdl console [--home <관리-루트>] [--instance <기존-control>]`은 홈·목록·기존 자료 읽기를 제공한다. 홈 조회는 무쓰기이며 목록 저장/갱신/숨기기는 개별 승인한다. 홈 1번은 기존 번호 메뉴 방식의 자료 준비를 제공한다. 직접 `setup new/resume`과 준비 저장 형식은 공유하지만 화면 흐름은 별개다. console의 추가 개발은 중단했으며 실제 운용 연결은 직접 CLI에서 진행한다. [console 사용 가이드](./console.md)를 따른다. HTML과 Python 터미널 체험판은 별도의 시안이며 제품 웹서버를 실행하지 않는다.
 
 ## JSON envelope
 
@@ -42,9 +42,19 @@ bxdl nodes
 ```text
 bxdl setup new <이름> [--home <관리-루트>] [--from <instance.json>]
 bxdl setup resume <이름> [--home <관리-루트>]
+bxdl setup list [--home <관리-루트>] [--json]
+bxdl setup show <이름> [--home <관리-루트>] [--json]
+bxdl setup edit <이름> --field <제품필드> [--home <관리-루트>]
+bxdl setup apply <이름> [--home <관리-루트>]
 ```
 
-새 문답은 자료·제품·network 또는 기존 native를 연결한다. 승인한 새 준비 세션과 제품/native revision만 만들며 설치·등록·init·start는 실행하지 않는다. 이름은 `^[a-z][a-z0-9-]{0,31}$`이며 같은 관리 루트에서 고유하다. 기존 명령의 경로 옵션·JSON은 유지하고 새 명령의 `--json`/비TTY는 입력·쓰기 전 거절한다. 정상 메뉴 종료 0은 초안 보존이며 준비 검증 성공의 증명이 아니다. 취소/EOF 5, usage 2, 저장/검증 3, I/O 7을 사용한다. [준비 사용 가이드](./preparation.md)를 따른다.
+순차 문답은 공급 자료 → 공통 network의 자기 노드 또는 기존 native → 누락 제품·정책 → 검토 순서다. 저장한 답과 가져온 설정을 재사용한다. `:help`, 앞 질문으로 이동하는 `:back`, `:cancel`/EOF 중단을 지원한다. 검토의 `edit <필드>`는 한 항목만 묻고 검토로 돌아오며, `details`는 공급·공개 입력·출력 경로를 보여준다. `y/yes`로 설정 준비를 승인하고 Enter/n/no는 답을 보존한 채 종료한다. 승인한 준비 세션과 immutable 제품/native revision만 만들며 설치·등록·init·start는 실행하지 않는다.
+
+`list/show`는 읽기 전용이다. list는 저장 상태를 나열하고 외부 자료를 재검증하지 않는다. show는 설치 실행 기록이 없을 때 저장된 준비의 참조 자료를 재대조한다. 실행 기록이 있으면 소유한 설치·등록 근거를 확인하며 준비 기록과 실행 검증 상태를 구분한다. `PREPARED_RECORDED`는 저장 기록이고 `VERIFIED`도 엔진 실행 검증은 아니다. 목록 일부를 읽을 수 없거나 show의 현재 자료 대조가 실패하면 exit 5/INCOMPLETE다. 읽을 수 있는 미완성 초안 조회는 exit 0/SUCCEEDED다. JSON에는 버전형 정제 요약과 다음 행동을 넣으며 credential 경로나 원본 답변 목록을 노출하지 않는다.
+
+`edit`은 지정한 제품 필드 하나만 입력받아 저장하고 종료한다. 다른 답과 기존 출력은 보존한다. 실제 변경은 이전 검토를 무효화하며 새 설정 파일을 자동 준비하지 않는다. 변경 없는 값은 checkpoint를 추가하지 않는다. 이름은 `^[a-z][a-z0-9-]{0,31}$`이며 같은 관리 루트에서 고유하다. new/resume/edit/apply의 `--json`·비TTY는 입력·쓰기 전 거절한다. new/resume/list/show/edit의 exit 0은 요청한 조회·저장·정상 종료이며 설치 완료를 뜻하지 않는다. apply의 exit 0은 설치·등록·이름 연결 확인을 뜻한다. 취소/EOF 5, usage 2, 저장/검증 3, I/O 7을 사용한다. [준비 사용 가이드](./preparation.md)를 따른다.
+
+`setup apply`는 TTY 최종 검토에서 `y/yes`로 설치·cold 검사·등록·노드 이름 연결을 승인한다. Enter/n/no는 실행하지 않고, 취소/EOF는 저장 자료를 보존한다. 준비 기록 `sessions/<이름>`과 설치 실행 기록 `operations/<이름>`은 분리되며 `list/show`에서 함께 조회한다. 완료 실행을 다시 부르면 완료 근거 검증과 필요한 이름 연결만 복구한다. 자료 변경·UNKNOWN에서 자동 재설치하지 않는다. 초기화와 시작은 아래의 별도 명령이며 현재 상태는 `status`로 확인한다. [상세 실행·재개 계약](./preparation.md#준비한-자료로-설치-실행)을 따른다.
 
 ## setup 명령
 
@@ -137,11 +147,17 @@ bxdl instance register --instance <new-control-dir> --package <installed-dir>
     --allow-development [--timeout-seconds <1..120>] [--json]
 bxdl instance show --instance <control-dir> [--json]
 bxdl preflight --instance <control-dir> [--timeout-seconds <1..120>] [--json]
+bxdl init <이름> [--home <관리-루트>] --confirm-initialize
+    [--timeout-seconds <1..600>] [--json]
 bxdl init --instance <control-dir> --confirm-initialize
+    [--timeout-seconds <1..600>] [--json]
+bxdl resume-init <이름> [--home <관리-루트>] --confirm-resume
     [--timeout-seconds <1..600>] [--json]
 bxdl resume-init --instance <control-dir> --confirm-resume
     [--timeout-seconds <1..600>] [--json]
 ```
+
+`init/resume-init`은 등록한 이름 또는 기존 `--instance` 중 하나만 받는다. `--home`은 이름을 사용할 때만 지정한다. 대상·확인 플래그·timeout을 검증하고 실행 직전에 이름의 catalog revision·control root·binding을 다시 대조한다. 미지 이름을 유일 노드로 추정하지 않는다.
 
 `--instance`는 instanceId가 아닌 제어 폴더 경로다. 절대경로를 사용하며 등록 대상은 새 폴더여야 한다. 등록/초기 운용은 macOS arm64 개발 profile을 대상으로 한다. package의 `engine/nigo-node.jar`와 `runtime/bin/java`를 사용하므로 후속 호출에는 JAR/Java를 지정하지 않는다. `--instance` 방식은 기존 preflight의 제품/native/engine 옵션과 섞지 않는다.
 

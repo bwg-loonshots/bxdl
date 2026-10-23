@@ -11,17 +11,17 @@
 
 ## 현재 우선순위 — 직접 CLI
 
-사용자가 console을 직접 확인한 뒤 개발 중단을 요청했다. **console 확장을 중단하고 CLI-01 → CLI-05를 진행한다.** [CLI 우선 설계](./2026-10-22-cli-simplification.md)와 [구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md)이 현재 기준이다. 이름 연결/목록 → 한 줄 운용 → 순차 설치 준비 → 실제 설치 실행 → 자동완성/새 package 인수 순서다. 기존 번호 메뉴를 유지한 채 진입 명령만 짧게 만드는 것을 완료로 삼지 않는다.
+사용자가 console을 직접 확인한 뒤 개발 중단을 요청했다. **console 확장을 중단하고 CLI-01 → CLI-05를 진행한다.** [CLI 우선 설계](./2026-10-22-cli-simplification.md)와 [구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md)이 현재 기준이다. 이름 연결/목록 → 한 줄 운용 → 순차 설치 준비 → 실제 설치 실행 → 자동완성 → 독립 관리 CLI 배포/기존 runtime 조합·사용자 과업 인수 순서다. 기존 번호 메뉴를 유지한 채 진입 명령만 짧게 만드는 것을 완료로 삼지 않는다.
 
-기존 console·HTML·터미널 시안과 아래 검증 기록은 보존하되 추가 개발하지 않는다. 공통 저장·검증 API는 CLI에서 재사용하며, 2026-10-23 CLI-01의 `nodes`/`nodes add`를 구현했다. CLI-02의 [관리 CLI/기존 RC.3 실행기 분리](./2026-10-23-independent-management-cli.md)와 이름 기반 운용도 구현했다. [CLI-01 결과](../results/2026-10-23-cli01-node-names.md)와 [CLI-02 실제 조합 인수](../results/2026-10-23-independent-management-cli.md)를 따른다. 다음은 CLI-03 순차 준비 문답이다.
+기존 console·HTML·터미널 시안과 아래 검증 기록은 보존하되 추가 개발하지 않는다. 공통 저장·검증 API는 CLI에서 재사용하며, 2026-10-23 CLI-01의 `nodes`/`nodes add`를 구현했다. CLI-02의 [관리 CLI/기존 RC.3 실행기 분리](./2026-10-23-independent-management-cli.md)와 이름 기반 운용도 구현했다. [CLI-01 결과](../results/2026-10-23-cli01-node-names.md)와 [CLI-02 실제 조합 인수](../results/2026-10-23-independent-management-cli.md)를 따른다. CLI-03의 직접 `setup new/resume` 순차 문답, 읽기 전용 `setup list/show`, 제품 한 항목 수정 `setup edit`도 구현·검증했다. [준비 가이드](../docs/preparation.md)에 명령·저장·재검증 계약을, [CLI-03 결과](../results/2026-10-23-cli03-sequential-preparation.md)에 자동 검사와 실제 Mac 문답·조회 범위를 기록했다. CLI-04의 `setup apply`로 TTY 승인 뒤 설치·cold 검사·등록·이름 연결을 연결하고, 이름 기반 init/resume-init을 제공한다. 준비 `sessions/<이름>`과 실행 `operations/<이름>`을 구분하며 완료 재호출은 완료 근거 검증과 이름 복구만 수행한다. CLI-04 자동 검사와 최종 RC.3 Mac 12개 사례를 통과했다. [CLI-04 검증 기록](../results/2026-10-23-cli04-apply-and-lifecycle.md)을 따르며 CLI-05 중 zsh 자동완성(CLI05-01)의 구현·검증도 완료했다. [CLI05-01 검증 기록](../results/2026-10-23-cli05-zsh-completion.md)에 전체 검사·후속 보강·최종 release 실제 zsh 결과를 구분했다. [자동완성 가이드](../docs/completion.md)를 제공한다. CLI05-02 독립 Mac 배포·업데이트도 구현하고 [최종 검증](../results/2026-10-23-cli05-management-distribution.md)의 자동 검사·개발 인수 배포본 실제 signed13/unsigned13사례를 통과했다. CLI/runtime 서비스·네트워크 조합 인수와 작성자가 아닌 사용자 과업은 후속 계획으로 남긴다.
 
 ## 통합 설치·운용 UX 기존 설계·검증 이력 — 2026-10-22
 
-현재 Mac 설치·운용의 기능 인수와 처음 사용자의 사용성 인수는 구분한다. [통합 UX 설계안](./2026-10-22-integrated-operations-ux.md)은 별도 `bxdl console` 진입점에서 새 설치·이어하기·내 노드 관리·지원 보고서를 연결한다. **UX-01 공통 문답과 UX-02 `console` 홈·목록·명시 기존 경로 읽기를 구현했다.** console의 추가 설치·운용 연결은 중단했으며 후속 기능은 위 CLI 계획에서 진행한다. [현재 console 사용 범위](../docs/console.md)와 [UX-02 검증 결과](../results/2026-10-22-ux02-console-catalog.md)를 따른다. 기존 CLI/JSON·저장 포맷·명시 확인·UNKNOWN 보존·LaunchAgent 범위를 유지한다.
+당시 [통합 UX 설계안](./2026-10-22-integrated-operations-ux.md)은 별도 `bxdl console` 진입점에서 새 설치·이어하기·내 노드 관리·지원 보고서를 연결하는 방향이었다. Mac 설치·운용의 기능 인수와 처음 사용자의 사용성 인수는 구분한다. **UX-01 공통 문답과 UX-02 `console` 홈·목록·명시 기존 경로 읽기를 구현했다.** console의 추가 설치·운용 연결은 중단했으며 후속 기능은 위 CLI 계획에서 진행한다. [현재 console 사용 범위](../docs/console.md)와 [UX-02 검증 결과](../results/2026-10-22-ux02-console-catalog.md)를 따른다. 기존 CLI/JSON·저장 포맷·명시 확인·UNKNOWN 보존·LaunchAgent 범위를 유지한다.
 
-[직접 CLI 간소화 설계](./2026-10-22-cli-simplification.md)를 추가해 `setup new/resume`과 console의 같은 준비 흐름을 UX-03에서 구현한다. 종전 UX-04~07의 후속 항목은 위 CLI-01~05로 재배치했다. 표시명·불변 ID·별칭을 구분하고 기존 명령/JSON을 유지한다. UX-03은 이름 기반 준비·재개·설정 출력을 구현했고 [로컬 검증](../results/2026-10-22-ux03-preparation.md)을 통과했다. [현재 가이드](../docs/preparation.md)를 따른다. 실제 설치 실행·이름 기반 서비스 호출·새 package 인수는 후속이다.
+UX-03 당시에는 `setup new/resume`과 console이 같은 번호 메뉴를 사용했다. CLI-03은 기존 저장 형식을 유지하며 직접 명령만 순차 문답으로 바꾸고 console 메뉴는 보존한다. 종전 UX-04~07의 후속 항목은 위 CLI-01~05로 재배치했다. 표시명·불변 ID·별칭을 구분하고 기존 명령/JSON을 유지한다. UX-03은 이름 기반 준비·재개·설정 출력을 구현했고 [로컬 검증](../results/2026-10-22-ux03-preparation.md)을 통과했다. [현재 가이드](../docs/preparation.md)는 CLI-03 흐름을 설명한다. 이름 기반 서비스 호출은 CLI-02에서 구현했고, 준비 세션에서 실제 설치로 연결하는 기능은 CLI-04로 별도 구현·검증한다. CLI-04 최종 인수는 완료했으며 CLI-05 사용자 과업을 후속으로 추적한다.
 
-[화면 명세](./2026-10-22-integrated-operations-ux-screens.md)와 [클릭 가능한 시안](./prototypes/integrated-operations-ux.html), [UX-01~07 구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md)을 다음 구현의 기준으로 먼저 읽는다. 순서는 공통 문답 → 홈·목록 → 자료·설정 연결 → 설치·재개 → 반복 운용 → 오류·지원 → 새 package/사용자 과업 인수다. 안전 제거 REM-01과 나머지 Mac lifecycle은 G1-M의 별도 필수 항목이며 A7·업데이트는 G2로 구분한다. 이 계획 작성만으로 기존 요구 상태나 release gate를 완료 처리하지 않는다.
+기존 [화면 명세](./2026-10-22-integrated-operations-ux-screens.md)와 [클릭 가능한 시안](./prototypes/integrated-operations-ux.html)은 당시 설계 이력이다. 다음 구현은 [현재 CLI-01~05 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md)을 기준으로 한다. 안전 제거 REM-01과 나머지 Mac lifecycle은 G1-M의 별도 필수 항목이며 A7·업데이트는 G2로 구분한다. 이 계획 작성만으로 기존 요구 상태나 release gate를 완료 처리하지 않는다.
 
 ## 목표
 
@@ -33,12 +33,14 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 
 | 문서 | 내용 |
 | --- | --- |
-| [직접 CLI 간소화 설계](./2026-10-22-cli-simplification.md) | 명명된 준비·재개, 고유 노드 별칭, 기존 CLI 호환과 단계별 제공 범위 |
+| [직접 CLI 간소화 설계](./2026-10-22-cli-simplification.md) | 순차 준비·재개·조회·제품 항목 수정, 설치 실행·이름 연결, 노드 별칭과 기존 CLI 호환 |
+| [관리 CLI/노드 실행기 분리](./2026-10-23-independent-management-cli.md) | 기존 RC.3 유지, 관리 CLI 독립 업데이트와 실행기 검증·위임 |
+| [독립 Mac 관리 CLI 배포·업데이트](./2026-10-23-management-cli-distribution.md) | CLI05-02 완료: CLI-only bundle·사용자 설치·버전 전환/복귀·셸 연결과 개발 배포본 실제 Mac 인수 |
+| [CLI 우선 구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md) | 현재 CLI-01~05 상태·선행·검증 기준, 종전 UX 이력 |
 | [통합 설치·운용 UX 설계안](./2026-10-22-integrated-operations-ux.md) | 새 진입점·자료/경로·상태·안전 경계·기존 CLI 호환 |
 | [통합 UX 화면 명세](./2026-10-22-integrated-operations-ux-screens.md) | S01~S11 문구·입력·상태별 다음 행동 |
 | [통합 UX 화면 시안](./prototypes/integrated-operations-ux.html) | 실제 명령을 실행하지 않는 화면·상태 탐색 모형 |
 | [통합 UX 터미널 체험판](./prototypes/integrated-operations-ux-demo.md) | 번호·입력·개별 승인·운용·오류 동선을 메모리 예시로 체험하는 독립 데모 |
-| [통합 UX 구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md) | UX-01~07의 코드 접점·선행·검증·완료 기준 |
 | [RC.3 선택·Mac 패키지 재인수](./2026-10-22-rc3-package-reacceptance.md) | 새 lock/spec·동일 archive의4-validator/원본 부재 setup 인수, A7 별도 |
 | [등록 자료 보관·시작 진단](./2026-10-22-managed-supply-and-start-diagnostics.md) | V2 관리 사본·V1 유지·setup 재개·시작 단계 관측 |
 | [RC.2 선택·Mac 패키지 재인수](./2026-10-21-rc2-package-reacceptance.md) | 지정 후보의 두 정족수 복구 경로와 기존 결과 보존 |

@@ -1,6 +1,7 @@
 //! Persisted preparation of one installation. This module verifies supplied
 //! materials and writes private, immutable configuration snapshots only. It
 //! never extracts a package, registers a node, opens a DB or starts an engine.
+mod application;
 use super::{Session, absolute, error, paths, store, workflow_store::WorkflowStore};
 use crate::{
     artifact,
@@ -8,6 +9,7 @@ use crate::{
     engine::setup_plan,
     error::{BxdlError, Result},
 };
+pub(crate) use application::ApplicationSource;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -152,6 +154,30 @@ pub struct Summary {
     pub runtime_options: Option<RuntimeOptions>,
 }
 
+/// Public projection of saved preparation records. Credential values, reference
+/// paths and hashes are deliberately absent. Reading does not reserve a session.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Inspection {
+    pub summary: Summary,
+    pub fields: Vec<PublicField>,
+    pub missing_fields: Vec<String>,
+    pub missing_inputs: Vec<String>,
+    pub next_input: Option<String>,
+    pub node_selection: &'static str,
+    pub verification: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verification_code: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PublicField {
+    pub name: &'static str,
+    pub label: &'static str,
+    pub value: String,
+}
+
 pub struct Preparation {
     storage: WorkflowStore,
     draft: Session,
@@ -192,6 +218,140 @@ impl Preparation {
     pub fn resume(workspace: &Path) -> Result<Self> {
         Self::load(WorkflowStore::open(&absolute(workspace)?)?)
     }
+    /// Read-only snapshot. `revalidate` checks the saved supply/configuration
+    /// fingerprints only; it never runs an engine or observes a service.
+    pub fn inspect(workspace: &Path, revalidate: bool) -> Result<Inspection> {
+        let session = Self::load(WorkflowStore::inspect(&absolute(workspace)?)?)?;
+        let missing_fields: Vec<String> = super::FIELDS
+            .iter()
+            .filter(|field| !session.draft.has_answer(field.name))
+            .map(|field| field.name.to_owned())
+            .collect();
+        let mut missing_inputs = session.missing_inputs();
+        let node_selection = if session.inputs().network.is_none() {
+            "NOT_APPLICABLE"
+        } else if ["nodeId", "p2pAddress", "p2pPort"]
+            .iter()
+            .any(|name| !session.draft.has_answer(name))
+        {
+            "MISSING"
+        } else if !revalidate {
+            "NOT_CHECKED"
+        } else {
+            match session.selected_node_matches() {
+                Ok(true) => "MATCH",
+                Ok(false) => "MISMATCH",
+                Err(_) => "UNVERIFIED",
+            }
+        };
+        if matches!(node_selection, "MISSING" | "MISMATCH" | "UNVERIFIED") {
+            missing_inputs.push("node".into());
+        }
+        // Match the sequential wizard's dependency order. List uses saved
+        // presence only; show additionally checks the selected public node.
+        let mut order = vec!["archive", "trustPolicy", "lock", "networkSource"];
+        if session.inputs().network.is_some() {
+            order.extend(["chainDescription", "node"]);
+        }
+        order.extend(
+            super::FIELDS
+                .iter()
+                .filter(|field| {
+                    session.inputs().network.is_none()
+                        || !["chainDescription", "nodeId", "p2pAddress", "p2pPort"]
+                            .contains(&field.name)
+                })
+                .map(|field| field.name),
+        );
+        if session.inputs().network.is_some() {
+            order.extend(RUNTIME_FIELDS);
+        }
+        order.extend(["destination", "instance"]);
+        let next_input = order
+            .into_iter()
+            .find(|name| {
+                missing_inputs
+                    .iter()
+                    .chain(&missing_fields)
+                    .any(|missing| missing == name)
+            })
+            .map(str::to_owned);
+        let (verification, verification_code) = if session.journal.review.is_none() {
+            ("NOT_PREPARED", None)
+        } else if !revalidate {
+            ("NOT_CHECKED", None)
+        } else {
+            match session.check() {
+                Ok(()) => ("VERIFIED", None),
+                Err(error) => ("CHANGED", Some(error.code)),
+            }
+        };
+        let fields = super::FIELDS
+            .iter()
+            .zip(session.review_rows())
+            .map(|(field, (label, value))| PublicField {
+                name: field.name,
+                label,
+                value,
+            })
+            .collect();
+        session.storage.recheck()?;
+        session.draft.store.read()?;
+        Ok(Inspection {
+            summary: session.summary(),
+            fields,
+            missing_fields,
+            missing_inputs,
+            next_input,
+            node_selection,
+            verification,
+            verification_code,
+        })
+    }
+
+    /// Structural missing inputs, in preparation order. This is not a validity
+    /// claim for referenced files and does not read their contents.
+    pub fn missing_inputs(&self) -> Vec<String> {
+        let inputs = self.inputs();
+        let mut missing = Vec::new();
+        if inputs.archive.is_none() {
+            missing.push("archive".into());
+        }
+        if inputs.unsigned.is_none()
+            || (inputs.unsigned == Some(false) && inputs.public_key.is_none())
+        {
+            missing.push("trustPolicy".into());
+        }
+        if inputs.lock.is_none() {
+            missing.push("lock".into());
+        }
+        if inputs.network.is_none() && inputs.native.is_none() {
+            missing.push("networkSource".into());
+        }
+        if inputs.network.is_some() && inputs.runtime_options.is_none() {
+            missing.extend(
+                RUNTIME_FIELDS
+                    .iter()
+                    .filter(|name| !inputs.runtime_answers.contains_key(**name))
+                    .map(|name| (*name).to_owned()),
+            );
+        }
+        if inputs.destination.is_none() {
+            missing.push("destination".into());
+        }
+        if inputs.instance.is_none() {
+            missing.push("instance".into());
+        }
+        missing
+    }
+
+    /// Detect publication or root replacement after an interactive prompt.
+    pub(crate) fn recheck(&self) -> Result<()> {
+        self.storage.recheck()?;
+        self.draft.store.read()?;
+        Ok(())
+    }
+
     fn load(storage: WorkflowStore) -> Result<Self> {
         let journal: Journal =
             artifact::decode_strict_json(&storage.read()?).map_err(|_| invalid())?;
@@ -299,14 +459,20 @@ impl Preparation {
         self.set_inputs(inputs)
     }
 
-    pub fn set_field(&mut self, name: &str, value: &str) -> Result<()> {
+    pub(crate) fn field_matches(&self, name: &str, value: &str) -> bool {
+        self.draft.answer_matches(name, value)
+    }
+    pub(crate) fn validate_field(&self, name: &str, value: &str) -> Result<()> {
         self.draft.validate_answer(name, value)?;
+        let mut next = self.draft.draft.clone();
+        next.answers.insert(name.into(), value.into());
+        self.check_layout(&next, self.inputs())
+    }
+    pub fn set_field(&mut self, name: &str, value: &str) -> Result<()> {
+        self.validate_field(name, value)?;
         if self.draft.answer_matches(name, value) {
             return Ok(());
         }
-        let mut next = self.draft.draft.clone();
-        next.answers.insert(name.into(), value.into());
-        self.check_layout(&next, self.inputs())?;
         self.invalidate()?;
         self.storage.recheck()?;
         self.draft.set(name, value)?;
@@ -361,6 +527,17 @@ impl Preparation {
         self.storage.recheck()?;
         Ok(choices)
     }
+    /// Match the saved public node triple to the current selected network.
+    /// Reads public materials only; it does not attest engine/key identity.
+    pub fn selected_node_matches(&self) -> Result<bool> {
+        let answers = &self.draft.draft.answers;
+        Ok(self.node_choices()?.iter().any(|node| {
+            answers.get("nodeId") == Some(&node.node_id)
+                && answers.get("p2pAddress") == Some(&node.host)
+                && answers.get("p2pPort") == Some(&node.port.to_string())
+        }))
+    }
+
     /// The three related fields are validated and persisted together, so a
     /// change never leaves an accidental node-ID/endpoint mixture on resume.
     pub fn select_node(&mut self, node_id: &str) -> Result<()> {

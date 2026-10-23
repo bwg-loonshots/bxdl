@@ -20,6 +20,9 @@ fn write_json(path: &Path, value: &Value) {
 }
 impl Fixture {
     fn new() -> Self {
+        Self::with_executor(false)
+    }
+    fn with_executor(executor: bool) -> Self {
         let temp = tempfile::tempdir().unwrap();
         let root = fs::canonicalize(temp.path()).unwrap();
         fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
@@ -61,22 +64,38 @@ impl Fixture {
         ))
         .unwrap();
         let jar = b"fixture jar never executed";
-        let java = b"fixture java never executed";
+        let cold = json!({
+            "command":"preflight","status":"INCOMPLETE","reason":"RUNTIME_CHECKS_REQUIRED",
+            "contractStatus":"PROPOSED","backend":"rocksdb","chainFingerprint":"c".repeat(64),
+            "nodeIdentity":format!("0x{}:0x{}", "a".repeat(64), "b".repeat(40)),
+            "checks":[{"check":"CONFIGURATION","status":"PASS"},{"check":"KEY_MATERIAL","status":"PASS"},
+                {"check":"DATABASE_AND_WAL","status":"NOT_CHECKED","reason":"REQUIRES_EXCLUSIVE_OPEN"},
+                {"check":"PORTS_AND_PEERS","status":"NOT_CHECKED","reason":"NETWORK_NOT_ACCESSED"},
+                {"check":"NATIVE_RUNTIME","status":"NOT_CHECKED","reason":"REQUIRES_RUNTIME_LOAD"}]
+        });
+        let calls = root.join("fixture-calls");
+        // Same bounded shell contract as tests/setup_install.rs: no JVM/DB/service.
+        let java = if executor {
+            format!("#!/bin/sh\nfor argument in \"$@\"; do\ncase \"$argument\" in\nengine-info) printf 'engine-info\\n' >> '{}'; printf '%s\\n' '{}'; exit 0;;\npreflight) printf 'preflight\\n' >> '{}'; printf '%s\\n' '{}'; exit 3;;\ninit|resume-init|run) printf '%s\\n' \"$argument\" >> '{}'; exit 74;;\nesac\ndone\nexit 77\n", calls.display(), identity, calls.display(), cold, calls.display()).into_bytes()
+        } else {
+            b"fixture java never executed".to_vec()
+        };
         write_json(
             &lock,
-            &json!({"schemaVersion":1,"jarSha256":digest(jar),"jarSizeBytes":jar.len(),"javaSha256":digest(java),"expected":identity}),
+            &json!({"schemaVersion":1,"jarSha256":digest(jar),"jarSizeBytes":jar.len(),"javaSha256":digest(&java),"expected":identity}),
         );
         let stage = root.join("stage");
         for directory in ["bin", "engine", "runtime/bin", "licenses"] {
             fs::create_dir_all(stage.join(directory)).unwrap();
         }
-        write(
-            &stage.join("bin/bxdl"),
-            b"fixture CLI deliberately mismatched",
-            0o755,
-        );
+        let cli = if executor {
+            fs::read(std::env::current_exe().unwrap()).unwrap()
+        } else {
+            b"fixture CLI deliberately mismatched".to_vec()
+        };
+        write(&stage.join("bin/bxdl"), &cli, 0o755);
         write(&stage.join("engine/nigo-node.jar"), jar, 0o644);
-        write(&stage.join("runtime/bin/java"), java, 0o755);
+        write(&stage.join("runtime/bin/java"), &java, 0o755);
         write(
             &stage.join("licenses/THIRD_PARTY_NOTICES"),
             b"test only",
@@ -90,7 +109,7 @@ impl Fixture {
             "product":{"name":"BXDL","version":"0.1.0-dev","revision":"development"},"channel":"development",
             "platform":{"os":"darwin","arch":"arm64","libc":"none","minGlibc":"none","javaMajor":21,"backend":"rocksdb"},
             "engine":{"revision":identity["source"]["commit"],"jarSha256":digest(jar),"contractStatus":"proposed","contractRevision":identity["contract"]["fingerprint"]},
-            "runtime":{"vendor":"test-only","version":"21-test","javaSha256":digest(java)}}),
+            "runtime":{"vendor":"test-only","version":"21-test","javaSha256":digest(&java)}}),
         );
         artifact::build(&artifact::BuildOptions {
             root: stage,
@@ -430,7 +449,7 @@ fn cli_prepares_verified_package_and_resume_edit_publishes_new_revision_only() {
         f.source.to_str().unwrap().into(),
     ];
     let answers = format!(
-        "y\n2\n1\n{}\n2\n2\n2\ny\n2\n3\n{}\n3\n1\n{}\n1\nPKCS12\nPKCS12\nnew-network\nyes\nno\n5\ny\n0\n",
+        "y\n{}\n2\ny\n{}\n1\n{}\nPKCS12\nPKCS12\nnew-network\nyes\nno\ny\n",
         f.archive.display(),
         f.lock.display(),
         f.network.display()
@@ -444,16 +463,13 @@ fn cli_prepares_verified_package_and_resume_edit_publishes_new_revision_only() {
         String::from_utf8(err).unwrap()
     );
     assert_eq!(code, 0, "{text}");
-    assert!(text.contains("PREPARED_RECORDED"), "{text}");
     assert!(text.contains("설정 파일 준비를 마쳤습니다"), "{text}");
-    assert!(
-        text.contains("준비 당시 package의 CLI가 현재 도구와 다릅니다"),
-        "{text}"
-    );
     assert!(!text.contains(CANARY));
     assert!(!text.contains("credential-0"));
     let workspace = home.join("sessions/local");
     let p = Preparation::resume(&workspace).unwrap();
+    assert_eq!(p.summary().preparation, "PREPARED_RECORDED");
+    assert_eq!(p.summary().cli_match, "MISMATCH");
     p.check().unwrap();
     let old_product = fs::read(p.product_path(1)).unwrap();
     let old_native = fs::read(p.native_path(1)).unwrap();
@@ -468,7 +484,7 @@ fn cli_prepares_verified_package_and_resume_edit_publishes_new_revision_only() {
     let (mut out, mut err) = (Vec::new(), Vec::new());
     let code = crate::cli::run_with_input(
         &args,
-        &mut Cursor::new("1\n5\n18081\n5\ny\n0\n"),
+        &mut Cursor::new("edit httpPort\n18081\ny\n"),
         true,
         &mut out,
         &mut err,
@@ -537,3 +553,5 @@ fn stale_checkpoint_and_review_corruption_are_rejected_without_repair() {
     );
     f.assert_no_operations();
 }
+
+mod application;
