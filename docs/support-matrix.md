@@ -43,7 +43,7 @@ workspace·checkpoint·출력은 symlink 조상, 의도하지 않은 hard link·
 
 이번 서비스 profile은 로그인된 현재 사용자의 GUI 세션에 명시 start로 bootstrap하는 LaunchAgent다. plist는 private control 아래 시도별로 생성하고 `~/Library/LaunchAgents`에는 등록하지 않는다. 로그인 자동 시작·자동 재시작·장기 운영 LaunchDaemon은 제공하지 않는다. Application Support 아래에서 package/control/data/config를 분리해 두는 위치를 권장하며 선택한 OS의 파일 접근·GUI 세션·실행 조건을 실제 인수해야 한다.
 
-start는 설치본 `bin/bxdl`과 동일한 바이트의 CLI를 요구한다. 새 CLI를 기존 package에 덮어쓰는 업데이트와 기존 control/data의 migration은 아직 없다. 시도별 JAR·CLI snapshot/private 로그의 자동 정리도 후속이다. 로그아웃·OS 종료에서는 launchd가 자체 강제 종료할 수 있으므로 수동 stop의 SIGKILL 미사용을 OS 전체 보장으로 확대하지 않는다.
+지원하는 RC.3는 [독립 관리 CLI](./management-cli.md)가 설치본의 인증된 고정 실행기에 start를 위임한다. 미지원 package의 native 경로는 동일 bytes 조건을 유지한다. 관리 CLI는 package 밖에서 교체하며, 내부 CLI 덮어쓰기와 기존 control/data의 migration은 제공하지 않는다. 시도별 JAR·CLI snapshot/private 로그의 자동 정리도 후속이다. 로그아웃·OS 종료에서는 launchd가 자체 강제 종료할 수 있으므로 수동 stop의 SIGKILL 미사용을 OS 전체 보장으로 확대하지 않는다.
 
 logs/diagnose는 저장된 최신 시도의 제한된 이벤트를 정제해 수집하는 오프라인 기능이다. 실제 health·전체 파일 무결성·DB 안전성을 검사하지 않으며 보고서 생성 성공은 서비스 인수가 아니다. 수집 시간은 파일 작업 사이에서 확인하는 예산이며 막힌 파일시스템 호출의 강제 중단을 보장하지 않는다. [진단 사용 조건](./cli.md#오프라인-기록과-지원-보고서)을 따른다.
 

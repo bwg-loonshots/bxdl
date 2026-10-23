@@ -208,8 +208,8 @@ pub fn recheck(pins: &[Pin]) -> Result<()> {
     Ok(())
 }
 
-/// This early check prevents installing/initializing with a CLI that cannot
-/// later act as the package's exact service worker. It does not run that worker.
+/// Require either an accepted external executor profile or the exact current
+/// CLI. This planning check never executes the package worker.
 pub(crate) fn check_cli(package: &artifact::Report) -> Result<()> {
     let mismatch = || {
         fail(
@@ -218,6 +218,11 @@ pub(crate) fn check_cli(package: &artifact::Report) -> Result<()> {
         )
     };
     artifact::validate_manifest(&package.manifest, true).map_err(|_| mismatch())?;
+    // A reviewed legacy executor owns its own worker/journal contract. The
+    // management CLI need not be the bytes shipped inside that immutable bundle.
+    if super::instance::executor::supports_package(package) {
+        return Ok(());
+    }
     let entry = package
         .manifest
         .files

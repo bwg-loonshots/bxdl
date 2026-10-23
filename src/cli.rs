@@ -1,5 +1,5 @@
 //! Operator interface. Mutations require a registered instance and explicit intent.
-use crate::{artifact, config, engine, error::BxdlError, install, runtime, setup};
+use crate::{artifact, config, engine, error::BxdlError, install, operator, runtime, setup};
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::{
@@ -14,7 +14,53 @@ pub const REVISION: &str = match option_env!("BXDL_REVISION") {
     Some(v) => v,
     None => "development",
 };
-pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl runtime stage --source <extracted-java-home> --lock <json> --output <new-dir> [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl config fingerprint --certificate <leaf.pem|leaf.der> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup --network --workspace <new-session> --from <instance.json>\n      --network-file <network.json> [--output <new-node.json>]\n  bxdl setup --network --workspace <session> --resume [--output <new-node.json>]\n  bxdl setup --install --workspace <new-session> [--from <instance.json>]\n  bxdl setup --install --workspace <session> --resume\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl status --instance <dir> --wait [--timeout-seconds <1..600>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl logs --instance <dir> [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n  bxdl diagnose --instance <dir> --output <new.json>\n      [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\n기본 setup은 설정 초안·로컬 검사·파일 저장만 수행합니다.\nsetup --network는 기존 제품 설정·공개 네트워크 자료로 RC1 native 설정을 준비합니다. 키 생성·엔진 실행은 하지 않습니다.\nsetup --install은 터미널에서 설치·등록·초기화·시작을 각각 명시 선택합니다. 기존 DB 업그레이드는 제공하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nstatus --wait는 현재 시작 시도만 최대 120초(기본) 관측하며 초기화·시작·중지는 실행하지 않습니다.\nlogs는 최신 초기화·서비스 시도의 정제한 저장 기록만 읽습니다. raw stdout/stderr나 실시간 follow는 제공하지 않습니다.\ndiagnose는 같은 기록을 새 JSON 지원 보고서에 저장합니다. JVM·네트워크·서비스 호출이나 현재 상태 검증은 수행하지 않습니다.\nstatus/diagnose의 시작 단계는 마지막 진입 기록입니다. 완료 여부나 파일 접근 지연의 원인을 확정하지 않습니다.\nlogs/diagnose 기본 한도는 tail 50개, 읽기 262144 bytes, 시간 5초입니다. 누락·예산 초과는 partial로 표시합니다.\nupgrade/uninstall은 아직 제공하지 않습니다.\n";
+pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
+
+내 노드:
+  bxdl nodes                              저장한 노드 목록
+  bxdl nodes add local --instance <경로>   기존 노드에 이름 연결
+  목록 위치를 지정하려면 --home <관리-루트>, 자동화 출력은 --json
+
+노드 운용 (이름 또는 --instance <control-경로>):
+  bxdl status local                       현재 실행 상태 확인
+  bxdl start local                        시작
+  bxdl stop local                         정상 종료 요청·확인
+  bxdl logs local                         정제한 저장 기록
+  bxdl diagnose local --output <새.json>
+  이름에는 같은 --home을 사용하세요. 기존 --instance 경로도 지원합니다.
+
+설치·준비:
+  bxdl setup new <이름>                    설치 자료·설정 준비
+  bxdl setup resume <이름>                 저장한 준비 이어가기
+  bxdl setup --install --workspace <세션>  실제 설치·등록·초기화·시작 문답
+  bxdl setup --install --workspace <세션> --resume
+  bxdl init --instance <경로> --confirm-initialize
+  bxdl resume-init --instance <경로> --confirm-resume
+  setup new/resume의 순차 문답 개선과 실제 설치 연결은 후속입니다.
+
+설정·패키지 제작:
+  bxdl setup --help                       제품 초안·비대화형 입력
+  bxdl setup --network --help             공개 네트워크 자료로 native 설정 준비
+  bxdl config validate --help             제품 설정 형식 검사
+  bxdl config fingerprint --help          인증서 pin 계산
+  bxdl preflight --help                   로컬·cold 검사
+  bxdl instance register --help           설치본 등록
+  bxdl instance show --help               등록 기록 조회
+  bxdl install --help                     새 폴더에 패키지 설치
+  bxdl package build --help               패키지 조립
+  bxdl package verify --help              서명·파일 검증
+  bxdl runtime stage --help               고정 JRE 준비
+  bxdl engine inspect --help              엔진 identity 검사
+  bxdl engine preflight --help            native 설정 cold 검사
+
+도움말:
+  bxdl <명령> --help                       필수 입력·예제·다음 단계
+  bxdl help <명령>                         같은 명령별 안내
+  bxdl version [--json]                    CLI 식별 정보
+
+macOS arm64 우선입니다. start/status/stop은 Mac 사용자 LaunchAgent를 사용합니다.
+console은 기존 구현을 보존하며 추가 개발은 중단했습니다. bxdl console --help로 확인할 수 있습니다.
+"#;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -91,7 +137,9 @@ fn report<T: Serialize>(
 /// A failed output write is exit 7, never a successful operation report.
 pub fn run<'a>(args: &[String], stdout: &'a mut dyn Write, stderr: &'a mut dyn Write) -> i32 {
     let input = std::io::stdin();
-    let interactive = input.is_terminal();
+    let interactive = input.is_terminal()
+        && (args.first().is_none_or(|arg| arg != "console")
+            || (std::io::stdout().is_terminal() && std::io::stderr().is_terminal()));
     run_with_input(args, &mut input.lock(), interactive, stdout, stderr)
 }
 
@@ -105,7 +153,8 @@ pub fn run_with_input<'a>(
     stderr: &'a mut dyn Write,
 ) -> i32 {
     let (json_mode, args) = take_json(args);
-    if !json_mode {
+    let help = operator::help::for_args(&args);
+    if !json_mode && help.is_none() {
         if let Some(notice) = service_wait_notice(&args) {
             if writeln!(stderr, "{notice}")
                 .and_then(|_| stderr.flush())
@@ -115,15 +164,30 @@ pub fn run_with_input<'a>(
             }
         }
     }
-    let (mut response, exit) = if args.first().is_some_and(|arg| arg == "setup") {
+    let (mut response, exit) = if let Some(usage) = help {
+        (
+            result(
+                "help",
+                "SUCCEEDED",
+                "HELP",
+                "BXDL 명령 안내",
+                Some(json!({"usage": usage})),
+            ),
+            0,
+        )
+    } else if args.first().is_some_and(|arg| arg == "console") {
+        dispatch_console(&args[1..], json_mode, interactive, input, stderr)
+    } else if args.first().is_some_and(|arg| arg == "setup") {
         dispatch_setup(&args[1..], json_mode, interactive, input, stderr)
     } else {
         dispatch(&args)
     };
-    response.observed_at = match OffsetDateTime::now_utc().format(&Rfc3339) {
-        Ok(time) => time,
-        Err(_) => return 7,
-    };
+    if response.observed_at.is_empty() {
+        response.observed_at = match OffsetDateTime::now_utc().format(&Rfc3339) {
+            Ok(time) => time,
+            Err(_) => return 7,
+        };
+    }
     if json_mode {
         return if serde_json::to_writer(&mut *stdout, &response).is_err()
             || writeln!(stdout).is_err()
@@ -134,7 +198,12 @@ pub fn run_with_input<'a>(
         };
     }
     if response.command == "help" && exit == 0 {
-        return if stdout.write_all(HELP.as_bytes()).is_ok() {
+        let usage = response
+            .data
+            .as_ref()
+            .and_then(|data| data["usage"].as_str())
+            .unwrap_or(HELP);
+        return if stdout.write_all(usage.as_bytes()).is_ok() {
             0
         } else {
             7
@@ -144,7 +213,22 @@ pub fn run_with_input<'a>(
     if writeln!(out, "{} [{}]", response.message, response.reason_code).is_err() {
         return 7;
     }
+    if !matches!(response.command.as_str(), "start" | "status" | "stop") || response.data.is_none()
+    {
+        if let Some(view) = operator::view::command(&response.outcome, &response.reason_code) {
+            if print_guidance(out, &view).is_err() {
+                return 7;
+            }
+        }
+    }
     if let Some(data) = response.data {
+        if matches!(response.command.as_str(), "nodes" | "nodes add") {
+            return if print_nodes_summary(out, &data, response.command == "nodes add").is_ok() {
+                exit
+            } else {
+                7
+            };
+        }
         if response.command == "setup network" {
             return if print_network_summary(out, &data).is_ok() {
                 exit
@@ -178,6 +262,68 @@ pub fn run_with_input<'a>(
         }
     }
     exit
+}
+
+fn print_nodes_summary(out: &mut dyn Write, data: &Value, added: bool) -> std::io::Result<()> {
+    let entries: Vec<&Value> = if added {
+        vec![data]
+    } else {
+        data["entries"]
+            .as_array()
+            .map(|entries| entries.iter().collect())
+            .unwrap_or_default()
+    };
+    if entries.is_empty() {
+        writeln!(out, "연결한 노드가 없습니다.")?;
+        writeln!(
+            out,
+            "다음 명령: bxdl nodes add local --instance <control-경로>"
+        )?;
+        writeln!(
+            out,
+            "별도 관리 위치를 사용한다면 같은 --home 옵션을 지정하세요."
+        )?;
+    }
+    for entry in entries {
+        let text = |key: &str| entry[key].as_str().unwrap_or("—");
+        let state = match entry["recordedState"].as_str() {
+            Some("REGISTERED") => "초기화 전",
+            Some("INITIALIZED") => "초기화 기록 있음",
+            _ => "작업 결과 불명",
+        };
+        let name = entry["name"].as_str().unwrap_or("이름 없음");
+        writeln!(out, "{name}  |  {}  |  {state}", text("label"))?;
+        writeln!(
+            out,
+            "  저장: {}  ·  instanceId: {}",
+            text("recordedAt"),
+            text("instanceId")
+        )?;
+        if entry["name"].is_null() {
+            writeln!(out, "  항목 ID: {}", text("id"))?;
+        }
+    }
+    writeln!(out, "현재 실행 상태: 미조회 (목록은 저장 당시 기록입니다)")?;
+    if added
+        || data["entries"]
+            .as_array()
+            .is_some_and(|entries| !entries.is_empty())
+    {
+        writeln!(
+            out,
+            "운용은 이름 또는 --instance <control-경로>로 실행합니다."
+        )?;
+        writeln!(out, "다음 명령: bxdl status --help")?;
+    }
+    Ok(())
+}
+
+fn print_guidance(out: &mut dyn Write, view: &operator::view::View) -> std::io::Result<()> {
+    writeln!(out, "{}", view.description)?;
+    for action in view.next_actions {
+        writeln!(out, "다음 조치: {action}")?;
+    }
+    Ok(())
 }
 
 fn print_network_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
@@ -318,41 +464,7 @@ pub(crate) fn print_service_summary(out: &mut dyn Write, data: &Value) -> std::i
         writeln!(out, "마지막 관측 사유: {last}")?;
     }
     print_startup_summary(out, data)?;
-    match reason {
-        "SERVICE_START_WAIT_EXPIRED" | "SERVICE_STATUS_WAIT_EXPIRED" => {
-            writeln!(
-                out,
-                "관측 시간이 끝났습니다. 실행은 계속될 수 있으며, 시작 실패가 확정된 것은 아닙니다."
-            )?;
-            writeln!(
-                out,
-                "다음 조치: bxdl status --instance <인스턴스> --wait로 같은 시작 시도의 준비 상태를 이어서 확인하세요."
-            )?;
-        }
-        "SERVICE_STATUS_QUERY_EXPIRED" => {
-            writeln!(
-                out,
-                "이번 상태 조회의 관측 시간이 끝났습니다. 실행 여부를 확정하지 못했습니다."
-            )?;
-            writeln!(
-                out,
-                "다음 조치: bxdl status --instance <인스턴스> --wait로 현재 시도를 다시 확인하세요."
-            )?;
-        }
-        _ if data["engineState"] == "FAILED" || data["outcome"] == "FAILED" => {
-            writeln!(
-                out,
-                "실패가 관측됐습니다. logs 또는 diagnose의 정제한 기록을 확인하세요. 자동으로 다시 시작하지 않습니다."
-            )?;
-        }
-        _ if data["engineState"] == "STARTING" => {
-            writeln!(
-                out,
-                "엔진이 준비 중입니다. status --wait로 같은 시작 시도를 이어서 확인할 수 있습니다."
-            )?;
-        }
-        _ => {}
-    }
+    print_guidance(out, &operator::view::service(data))?;
     writeln!(
         out,
         "네트워크 합의: 미검사 (로컬 READY만으로 quorum·거래 확정을 보장하지 않음)"
@@ -448,6 +560,207 @@ fn print_setup_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()>
     )
 }
 
+fn dispatch_nodes(args: &[String]) -> (ResultEnvelope, i32) {
+    let Some((flags, positions)) = parse(args, &[("home", true), ("instance", true)]) else {
+        return invalid("nodes");
+    };
+    let name = match positions.as_slice() {
+        [] if !flags.contains_key("instance") => None,
+        [action, name] if action == "add" && flags.contains_key("instance") => Some(name.as_str()),
+        _ => return invalid("nodes"),
+    };
+    let command = if name.is_some() { "nodes add" } else { "nodes" };
+    if name.is_some_and(|name| !operator::catalog::valid_name(name)) {
+        return failure(
+            command,
+            BxdlError::new(
+                "NODE_NAME_INVALID",
+                "이름은 소문자로 시작하는 1~32자의 소문자·숫자·하이픈으로 지정하세요. bxdl nodes add --help를 확인하세요.",
+            ),
+            2,
+        );
+    }
+    let home = match flags
+        .get("home")
+        .map(|path| setup::absolute(Path::new(path)))
+        .unwrap_or_else(operator::home::default_home)
+    {
+        Ok(path) => path,
+        Err(error) => return failure(command, error, 2),
+    };
+    if let Some(name) = name {
+        match operator::nodes::add(&home, name, Path::new(&flags["instance"])) {
+            Ok(node) => report(
+                command,
+                "SUCCEEDED",
+                "NODE_NAME_LINKED",
+                "기존 노드의 이름 연결을 확인했습니다.",
+                node,
+                0,
+            ),
+            Err(error) => failure(command, error, 3),
+        }
+    } else {
+        match operator::nodes::list(&home) {
+            Ok(listing) => report(
+                command,
+                "SUCCEEDED",
+                "NODE_LIST",
+                "저장한 노드 목록입니다.",
+                listing,
+                0,
+            ),
+            Err(error) => failure(command, error, 3),
+        }
+    }
+}
+
+fn dispatch_console(
+    args: &[String],
+    json_mode: bool,
+    interactive: bool,
+    input: &mut dyn BufRead,
+    prompts: &mut dyn Write,
+) -> (ResultEnvelope, i32) {
+    let Some((flags, positions)) = parse(args, &[("home", true), ("instance", true)]) else {
+        return invalid("console");
+    };
+    if json_mode || !positions.is_empty() {
+        return invalid("console");
+    }
+    if !interactive {
+        return failure(
+            "console",
+            BxdlError::new(
+                "CONSOLE_INTERACTIVE_TERMINAL_REQUIRED",
+                "console은 대화형 터미널에서 실행하세요. 자동화는 기존 개별 명령을 사용하세요.",
+            ),
+            2,
+        );
+    }
+    let home = match flags
+        .get("home")
+        .map(|path| setup::absolute(Path::new(path)))
+        .unwrap_or_else(operator::home::default_home)
+    {
+        Ok(path) => path,
+        Err(error) => return failure("console", error, 2),
+    };
+    let instance = flags.get("instance").map(Path::new);
+    match operator::console::interact(&home, instance, input, prompts) {
+        Ok(operator::console::Finish::Closed) => (
+            result(
+                "console",
+                "SUCCEEDED",
+                "CONSOLE_CLOSED",
+                "콘솔을 종료했습니다. 노드 실행 상태는 변경하지 않았습니다.",
+                None,
+            ),
+            0,
+        ),
+        Ok(operator::console::Finish::Paused) => (
+            result(
+                "console",
+                "INCOMPLETE",
+                "CONSOLE_PAUSED",
+                "콘솔을 중단했습니다. 저장한 목록과 기존 자료는 보존됩니다. 노드 중지 요청은 하지 않았습니다.",
+                None,
+            ),
+            5,
+        ),
+        Err(error) => {
+            let exit = if matches!(
+                error.code.as_str(),
+                "SETUP_INPUT_FAILED" | "SETUP_OUTPUT_FAILED"
+            ) {
+                7
+            } else {
+                3
+            };
+            failure("console", error, exit)
+        }
+    }
+}
+
+fn dispatch_preparation(
+    args: &[String],
+    json_mode: bool,
+    interactive: bool,
+    input: &mut dyn BufRead,
+    prompts: &mut dyn Write,
+) -> (ResultEnvelope, i32) {
+    let resume = args.first().is_some_and(|arg| arg == "resume");
+    let command = if resume { "setup resume" } else { "setup new" };
+    let Some((flags, positions)) = parse(&args[1..], &[("home", true), ("from", true)]) else {
+        return invalid(command);
+    };
+    if json_mode
+        || positions.len() != 1
+        || (resume && flags.contains_key("from"))
+        || !operator::install_flow::valid_name(&positions[0])
+    {
+        return invalid(command);
+    }
+    if !interactive {
+        return failure(
+            command,
+            BxdlError::new(
+                "SETUP_INTERACTIVE_TERMINAL_REQUIRED",
+                "설치 준비는 터미널에서 실행하세요. 자동화에는 기존 명시 명령을 사용하세요.",
+            ),
+            2,
+        );
+    }
+    let home = match flags
+        .get("home")
+        .map(|path| setup::absolute(Path::new(path)))
+        .unwrap_or_else(operator::home::default_home)
+    {
+        Ok(home) => home,
+        Err(error) => return failure(command, error, 2),
+    };
+    match operator::install_flow::run(
+        &home,
+        &positions[0],
+        resume,
+        flags.get("from").map(Path::new),
+        input,
+        prompts,
+    ) {
+        Ok(operator::install_flow::Finish::Saved) => (
+            result(
+                command,
+                "SUCCEEDED",
+                "PREPARATION_SAVED",
+                "준비 기록을 저장했습니다. 설치·초기화·시작은 수행하지 않았습니다.",
+                None,
+            ),
+            0,
+        ),
+        Ok(operator::install_flow::Finish::Paused) => (
+            result(
+                command,
+                "INCOMPLETE",
+                "PREPARATION_PAUSED",
+                "준비를 중단했습니다. 승인하여 저장한 자료는 보존됩니다.",
+                None,
+            ),
+            5,
+        ),
+        Err(error) => {
+            let exit = if matches!(
+                error.code.as_str(),
+                "SETUP_INPUT_FAILED" | "SETUP_OUTPUT_FAILED"
+            ) {
+                7
+            } else {
+                3
+            };
+            failure(command, error, exit)
+        }
+    }
+}
+
 fn dispatch_setup(
     args: &[String],
     json_mode: bool,
@@ -455,17 +768,11 @@ fn dispatch_setup(
     input: &mut dyn BufRead,
     prompts: &mut dyn Write,
 ) -> (ResultEnvelope, i32) {
-    if args.len() == 1 && matches!(args[0].as_str(), "--help" | "-h") {
-        return (
-            result(
-                "help",
-                "SUCCEEDED",
-                "HELP",
-                "BXDL 설정 도우미 안내",
-                Some(json!({"usage": HELP})),
-            ),
-            0,
-        );
+    if args
+        .first()
+        .is_some_and(|arg| matches!(arg.as_str(), "new" | "resume"))
+    {
+        return dispatch_preparation(args, json_mode, interactive, input, prompts);
     }
     let Some((flags, positions)) = parse(
         args,
@@ -799,6 +1106,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
         );
     }
     match args[0].as_str() {
+        "nodes" => dispatch_nodes(&args[1..]),
         "version" => {
             if args.len() != 1 {
                 return invalid("version");
@@ -812,7 +1120,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
+                        "capabilities": ["nodes.list", "nodes.add", "nodes.named-operations", "executor.rc3-legacy-v1", "runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
                         "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),
@@ -1294,6 +1602,92 @@ fn instance_failure(command: &str, error: BxdlError) -> (ResultEnvelope, i32) {
         failure(command, error, 3)
     }
 }
+fn delegated(
+    command: &str,
+    instance: &Path,
+    request: &engine::instance::executor::Request,
+    before_dispatch: impl FnOnce() -> crate::error::Result<()>,
+) -> Option<(ResultEnvelope, i32)> {
+    match engine::instance::executor::try_execute(instance, request, before_dispatch) {
+        Ok(None) => None,
+        Ok(Some(response)) => Some((
+            ResultEnvelope {
+                schema_version: 1,
+                command: response.command,
+                outcome: response.outcome,
+                reason_code: response.reason_code,
+                message: response.message,
+                observed_at: response.observed_at,
+                data: response.data,
+            },
+            response.exit,
+        )),
+        Err(error) => {
+            if error.code.contains("UNKNOWN") {
+                Some((
+                    result(command, "UNKNOWN", &error.code, &error.message, None),
+                    6,
+                ))
+            } else {
+                Some(failure(command, error, 3))
+            }
+        }
+    }
+}
+
+/// Parse target intent without touching the filesystem (also used by help/wait notices).
+struct TargetSpec {
+    instance: Option<PathBuf>,
+    name: Option<String>,
+    home: Option<PathBuf>,
+}
+impl TargetSpec {
+    fn parse(flags: &BTreeMap<String, String>, positions: &[String]) -> Option<Self> {
+        match (flags.get("instance"), positions) {
+            (Some(instance), []) if !flags.contains_key("home") => Some(Self {
+                instance: Some(instance.into()),
+                name: None,
+                home: None,
+            }),
+            (None, [name]) if operator::catalog::valid_name(name) => Some(Self {
+                instance: None,
+                name: Some(name.clone()),
+                home: flags.get("home").map(PathBuf::from),
+            }),
+            _ => None,
+        }
+    }
+    fn resolve(self) -> crate::error::Result<NodeTarget> {
+        if let Some(instance) = self.instance {
+            return Ok(NodeTarget::Path(instance));
+        }
+        let home = match self.home {
+            Some(home) => setup::absolute(&home)?,
+            None => operator::home::default_home()?,
+        };
+        operator::target::resolve_instance(Some(&home), self.name.as_deref(), None)
+            .map(|target| NodeTarget::Named(Box::new(target)))
+    }
+}
+enum NodeTarget {
+    Path(PathBuf),
+    Named(Box<operator::target::ResolvedInstance>),
+}
+impl NodeTarget {
+    fn path(&self) -> &Path {
+        match self {
+            Self::Path(path) => path,
+            Self::Named(target) => &target.snapshot().path,
+        }
+    }
+    fn recheck(&self) -> crate::error::Result<()> {
+        match self {
+            Self::Path(_) => Ok(()),
+            Self::Named(target) => target.recheck().map(|_| ()),
+        }
+    }
+}
+
 fn dispatch_instance(args: &[String]) -> (ResultEnvelope, i32) {
     match args.first().map(String::as_str) {
         Some("show") => {
@@ -1302,6 +1696,14 @@ fn dispatch_instance(args: &[String]) -> (ResultEnvelope, i32) {
             };
             if !pos.is_empty() || !flags.contains_key("instance") {
                 return invalid("instance show");
+            }
+            if let Some(response) = delegated(
+                "instance show",
+                Path::new(&flags["instance"]),
+                &engine::instance::executor::Request::Show,
+                || Ok(()),
+            ) {
+                return response;
             }
             match engine::instance::show(Path::new(&flags["instance"])) {
                 Ok(value) => report(
@@ -1389,6 +1791,14 @@ fn dispatch_registered_preflight(args: &[String]) -> (ResultEnvelope, i32) {
     let Some(timeout) = timeout_flag(&flags, 30, 120) else {
         return invalid("preflight");
     };
+    if let Some(response) = delegated(
+        "preflight",
+        Path::new(&flags["instance"]),
+        &engine::instance::executor::Request::Preflight { timeout },
+        || Ok(()),
+    ) {
+        return response;
+    }
     match engine::instance::preflight(Path::new(&flags["instance"]), timeout) {
         Ok(value) => report(
             "preflight",
@@ -1424,6 +1834,14 @@ fn dispatch_initialization(command: &str, args: &[String]) -> (ResultEnvelope, i
     let Some(timeout) = timeout_flag(&flags, 120, 600) else {
         return invalid(command);
     };
+    if let Some(response) = delegated(
+        command,
+        Path::new(&flags["instance"]),
+        &engine::instance::executor::Request::Initialize { resume, timeout },
+        || Ok(()),
+    ) {
+        return response;
+    }
     match engine::instance::initialize(Path::new(&flags["instance"]), resume, timeout) {
         Ok(value) if value.initialization == "INITIALIZED" => report(
             command,
@@ -1466,6 +1884,7 @@ fn service_failure(command: &str, error: BxdlError) -> (ResultEnvelope, i32) {
 fn dispatch_diagnostics(command: &str, args: &[String]) -> (ResultEnvelope, i32) {
     let mut accepted_flags = vec![
         ("instance", true),
+        ("home", true),
         ("tail", true),
         ("max-bytes", true),
         ("timeout-seconds", true),
@@ -1476,10 +1895,10 @@ fn dispatch_diagnostics(command: &str, args: &[String]) -> (ResultEnvelope, i32)
     let Some((flags, positions)) = parse(args, &accepted_flags) else {
         return invalid(command);
     };
-    if !positions.is_empty()
-        || !flags.contains_key("instance")
-        || (command == "diagnose" && !flags.contains_key("output"))
-    {
+    let Some(target) = TargetSpec::parse(&flags, &positions) else {
+        return invalid(command);
+    };
+    if command == "diagnose" && !flags.contains_key("output") {
         return invalid(command);
     }
     let tail = match flags.get("tail") {
@@ -1504,7 +1923,31 @@ fn dispatch_diagnostics(command: &str, args: &[String]) -> (ResultEnvelope, i32)
         max_bytes,
         timeout,
     };
-    let instance = Path::new(&flags["instance"]);
+    let target = match target.resolve() {
+        Ok(target) => target,
+        Err(error) => return failure(command, error, 3),
+    };
+    let instance = target.path();
+    let request = if command == "diagnose" {
+        engine::instance::executor::Request::Diagnose {
+            output: PathBuf::from(&flags["output"]),
+            tail,
+            max_bytes,
+            timeout,
+        }
+    } else {
+        engine::instance::executor::Request::Logs {
+            tail,
+            max_bytes,
+            timeout,
+        }
+    };
+    if let Some(response) = delegated(command, instance, &request, || target.recheck()) {
+        return response;
+    }
+    if let Err(error) = target.recheck() {
+        return failure(command, error, 3);
+    }
     let collected = if command == "diagnose" {
         engine::instance::diagnostics::diagnose(instance, Path::new(&flags["output"]), &options)
     } else {
@@ -1534,7 +1977,7 @@ fn dispatch_diagnostics(command: &str, args: &[String]) -> (ResultEnvelope, i32)
     }
 }
 struct ServiceOptions {
-    instance: PathBuf,
+    target: TargetSpec,
     timeout: std::time::Duration,
     wait: bool,
 }
@@ -1544,12 +1987,14 @@ fn service_options(command: &str, args: &[String]) -> Option<ServiceOptions> {
         args,
         &[
             ("instance", true),
+            ("home", true),
             ("timeout-seconds", true),
             ("wait", false),
         ],
     )?;
     let wait = flags.contains_key("wait");
-    if !positions.is_empty() || !flags.contains_key("instance") || (wait && command != "status") {
+    let target = TargetSpec::parse(&flags, &positions)?;
+    if wait && command != "status" {
         return None;
     }
     let (default, maximum) = match command {
@@ -1560,7 +2005,7 @@ fn service_options(command: &str, args: &[String]) -> Option<ServiceOptions> {
         _ => return None,
     };
     Some(ServiceOptions {
-        instance: PathBuf::from(&flags["instance"]),
+        target,
         timeout: timeout_flag(&flags, default, maximum)?,
         wait,
     })
@@ -1586,7 +2031,27 @@ fn dispatch_service(command: &str, args: &[String]) -> (ResultEnvelope, i32) {
     let Some(options) = service_options(command, args) else {
         return invalid(command);
     };
-    let instance = options.instance.as_path();
+    let target = match options.target.resolve() {
+        Ok(target) => target,
+        Err(error) => return service_failure(command, error),
+    };
+    let instance = target.path();
+    let action = match command {
+        "start" => engine::instance::executor::ServiceAction::Start,
+        "stop" => engine::instance::executor::ServiceAction::Stop,
+        _ => engine::instance::executor::ServiceAction::Status,
+    };
+    let request = engine::instance::executor::Request::Service {
+        action,
+        wait: options.wait,
+        timeout: options.timeout,
+    };
+    if let Some(response) = delegated(command, instance, &request, || target.recheck()) {
+        return response;
+    }
+    if let Err(error) = target.recheck() {
+        return service_failure(command, error);
+    }
     let result_value = match command {
         "start" => engine::instance::service::start(instance, options.timeout),
         "stop" => engine::instance::service::stop(instance, options.timeout),

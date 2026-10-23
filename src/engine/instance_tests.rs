@@ -698,6 +698,10 @@ mod owned {
         let before = f.journal.read().unwrap();
         let root = Control::open(&f.options.instance).unwrap();
         let _guard = root.lock().unwrap();
+        let catalog = catalog_record(&f.options.instance).unwrap();
+        assert_eq!(catalog.schema_version, 2);
+        assert_eq!(catalog.initialization, "UNKNOWN");
+        assert_eq!(catalog.cli_match, Some(false));
         let observed = verify_owned_binding_with_package(&f.options, &f.owner, false).unwrap();
         assert_eq!(observed.summary.initialization, "UNKNOWN");
         assert_eq!(observed.summary.operation_busy, Some(true));
@@ -708,5 +712,262 @@ mod owned {
         assert!(inspect_owned_registration(&f.options, &f.owner).is_err());
         assert_eq!(before, f.journal.read().unwrap());
         assert!(!f.root.join("data").exists());
+        check_catalog_location(&f.options.instance, &f.root.join("console/catalog")).unwrap();
+        // Original supply locations are no longer operational references. A
+        // later symlink there cannot block metadata linkage or redirect writes.
+        for path in [&f.options.archive, &f.options.lock]
+            .into_iter()
+            .chain(f.options.public_key.iter())
+        {
+            symlink(&f.root, path).unwrap();
+        }
+        check_catalog_location(&f.options.instance, &f.root.join("console/catalog")).unwrap();
+        assert_eq!(
+            catalog_record(&f.options.instance).unwrap().schema_version,
+            2
+        );
+        assert_eq!(before, f.journal.read().unwrap());
     }
+}
+
+#[test]
+fn catalog_metadata_does_not_take_operation_lock_or_change_uncertain_record() {
+    let mut f = Fixture::new();
+    f.pending();
+    let before = f.journal.read().unwrap();
+    let _guard = f.control.lock().unwrap();
+    let observed = catalog_record(f.control.path()).unwrap();
+    assert_eq!(observed.schema_version, 1);
+    assert_eq!(observed.instance_id, "test-validator");
+    assert_eq!(observed.initialization, "UNKNOWN");
+    assert_eq!(observed.cli_match, None);
+    assert_eq!(before, f.journal.read().unwrap());
+    assert!(!f.binding.data_directory.exists());
+}
+
+#[test]
+fn catalog_cli_comparison_requires_exact_bytes_without_execution() {
+    let f = Fixture::new();
+    fs::create_dir_all(f.binding.package.join("bin")).unwrap();
+    let cli = f.binding.package.join("bin/bxdl");
+    put(&cli, b"must never execute these bytes");
+    fs::set_permissions(&cli, fs::Permissions::from_mode(0o700)).unwrap();
+    assert_eq!(
+        catalog_record(f.control.path()).unwrap().cli_match,
+        Some(false)
+    );
+    fs::copy(std::env::current_exe().unwrap(), &cli).unwrap();
+    fs::set_permissions(&cli, fs::Permissions::from_mode(0o700)).unwrap();
+    assert_eq!(
+        catalog_record(f.control.path()).unwrap().cli_match,
+        Some(true)
+    );
+    fs::set_permissions(&cli, fs::Permissions::from_mode(0o600)).unwrap();
+    assert_eq!(catalog_record(f.control.path()).unwrap().cli_match, None);
+    assert!(!f.binding.data_directory.exists());
+}
+
+#[test]
+fn catalog_write_location_cannot_enter_instance_data_package_or_input_paths() {
+    let f = Fixture::new();
+    let before = f.journal.read().unwrap();
+    for protected in [
+        &f.binding.data_directory,
+        &f.binding.package,
+        &f.binding.archive,
+        &f.binding.product,
+        &f.binding.native,
+        &f.binding.lock,
+    ] {
+        assert!(
+            check_catalog_location(f.control.path(), &protected.join("console/catalog")).is_err()
+        );
+    }
+    check_catalog_location(f.control.path(), &f.root.join("console/catalog")).unwrap();
+    assert_eq!(before, f.journal.read().unwrap());
+    assert!(!f.binding.data_directory.exists());
+    assert!(!f.binding.package.exists());
+}
+
+#[test]
+fn cli_node_names_migrate_only_on_explicit_add_and_keep_existing_catalog_history() {
+    use crate::operator::{catalog::Catalog, target};
+    let f = Fixture::new();
+    let home = f.root.join("management");
+    let node = target::inspect(target::Kind::Instance, f.control.path()).unwrap();
+    let mut catalog = Catalog::create(&home).unwrap();
+    let id = catalog.add("기존 표시 이름", node.clone()).unwrap();
+    let original = catalog.entries()[0].clone();
+    let before = Store::open(&home.join("catalog"))
+        .unwrap()
+        .read()
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        serde_json::from_slice::<Value>(&before).unwrap()["schemaVersion"],
+        1
+    );
+    drop(Catalog::open(&home).unwrap());
+    assert_eq!(
+        Store::open(&home.join("catalog"))
+            .unwrap()
+            .read()
+            .unwrap()
+            .unwrap(),
+        before
+    );
+    assert_eq!(catalog.add_named("local", node.clone()).unwrap(), id);
+    let current = &catalog.entries()[0];
+    assert_eq!(current.id, original.id);
+    assert_eq!(current.label, original.label);
+    assert_eq!(current.recorded_at, original.recorded_at);
+    assert_eq!(current.target, original.target);
+    assert_eq!(current.alias.as_deref(), Some("local"));
+    assert_eq!(
+        current.binding_sha256.as_deref(),
+        Some(f.state.binding_sha256.as_str())
+    );
+    let versioned = Store::open(&home.join("catalog")).unwrap();
+    let after = versioned.read().unwrap().unwrap();
+    assert_eq!(
+        serde_json::from_slice::<Value>(&after).unwrap()["schemaVersion"],
+        2
+    );
+    assert_eq!(catalog.add_named("local", node).unwrap(), id);
+    // Store retains revision + file identity as well as bytes, proving no append.
+    assert_eq!(versioned.read().unwrap().unwrap(), after);
+    let resolved = target::resolve_instance(Some(&home), Some("local"), None).unwrap();
+    assert_eq!(resolved.snapshot().path, f.control.path());
+    assert_eq!(resolved.recheck().unwrap().path, f.control.path());
+}
+
+#[test]
+fn cli_node_names_refuse_collision_rename_and_stale_catalog_writes() {
+    use crate::operator::{catalog::Catalog, target};
+    let a = Fixture::new();
+    let b = Fixture::new();
+    let home = a.root.join("management");
+    let first = target::inspect(target::Kind::Instance, a.control.path()).unwrap();
+    let second = target::inspect(target::Kind::Instance, b.control.path()).unwrap();
+    let mut catalog = Catalog::create(&home).unwrap();
+    let mut stale = Catalog::open(&home).unwrap().unwrap();
+    catalog.add_named("local", first.clone()).unwrap();
+    assert_eq!(
+        stale.add_named("other", second.clone()).unwrap_err().code,
+        "CONSOLE_CATALOG_CONFLICT"
+    );
+    assert_eq!(
+        catalog.add_named("local", second).unwrap_err().code,
+        "NODE_NAME_EXISTS"
+    );
+    assert_eq!(
+        catalog.add_named("other", first).unwrap_err().code,
+        "NODE_TARGET_NAMED"
+    );
+    assert_eq!(catalog.entries().len(), 1);
+    assert_eq!(catalog.entries()[0].alias.as_deref(), Some("local"));
+}
+
+#[test]
+fn cli_node_resolver_rechecks_catalog_revision_and_preserves_explicit_path_fallback() {
+    use crate::operator::{catalog::Catalog, target};
+    let f = Fixture::new();
+    let home = f.root.join("management");
+    let node = target::inspect(target::Kind::Instance, f.control.path()).unwrap();
+    let mut catalog = Catalog::create(&home).unwrap();
+    let id = catalog.add_named("local", node).unwrap();
+    let resolved = target::resolve_instance(Some(&home), Some("local"), None).unwrap();
+    catalog.remove(&id).unwrap();
+    assert_eq!(
+        resolved.recheck().unwrap_err().code,
+        "CONSOLE_CATALOG_CONFLICT"
+    );
+    assert_eq!(
+        target::resolve_instance(Some(&home), Some("local"), None)
+            .err()
+            .unwrap()
+            .code,
+        "NODE_NAME_MISSING"
+    );
+    assert_eq!(
+        target::resolve_instance(Some(&home), None, None)
+            .err()
+            .unwrap()
+            .code,
+        "NODE_TARGET_REQUIRED"
+    );
+    assert_eq!(
+        target::resolve_instance(Some(&home), Some("local"), Some(f.control.path()))
+            .err()
+            .unwrap()
+            .code,
+        "NODE_TARGET_REQUIRED"
+    );
+    fs::write(home.join(".catalog.lock"), b"broken").unwrap();
+    assert!(Catalog::open(&home).is_err());
+    let path = target::resolve_instance(Some(&home), None, Some(f.control.path())).unwrap();
+    assert_eq!(path.recheck().unwrap().path, f.control.path());
+}
+
+#[test]
+fn cli_node_resolver_pins_binding_but_allows_initialization_state_progress() {
+    use crate::operator::{catalog::Catalog, target};
+    let mut f = Fixture::new();
+    let home = f.root.join("management");
+    let node = target::inspect(target::Kind::Instance, f.control.path()).unwrap();
+    let mut catalog = Catalog::create(&home).unwrap();
+    let id = catalog.add_named("local", node).unwrap();
+    let resolved = target::resolve_instance(Some(&home), Some("local"), None).unwrap();
+    f.pending();
+    assert_eq!(
+        resolved.recheck().unwrap().state,
+        target::RecordState::Unknown
+    );
+    // A fully coherent different binding in the same root is still a different
+    // node mapping. The original catalog hash must not silently advance to it.
+    f.binding.package = f.root.join("other-package");
+    let raw = serde_json::to_vec(&f.binding).unwrap();
+    put(&f.control.path().join("binding.json"), &raw);
+    f.state.binding_sha256 = files::digest(&raw);
+    f.state.save(&mut f.journal).unwrap();
+    assert_eq!(
+        resolved.recheck().unwrap_err().code,
+        "CONSOLE_TARGET_CHANGED"
+    );
+    let changed = target::inspect(target::Kind::Instance, f.control.path()).unwrap();
+    assert_eq!(
+        catalog
+            .add_named("local", changed.clone())
+            .unwrap_err()
+            .code,
+        "NODE_TARGET_CHANGED"
+    );
+    assert_eq!(
+        catalog.refresh(&id, changed).unwrap_err().code,
+        "NODE_TARGET_CHANGED"
+    );
+    assert!(target::resolve_instance(None, None, Some(f.control.path())).is_ok());
+}
+
+#[test]
+fn cli_node_names_refuse_replacement_under_a_remembered_path() {
+    use crate::operator::{catalog::Catalog, target};
+    let f = Fixture::new();
+    let other = Fixture::new();
+    let home = f.root.join("management");
+    let node = target::inspect(target::Kind::Instance, f.control.path()).unwrap();
+    let mut catalog = Catalog::create(&home).unwrap();
+    catalog.add_named("local", node).unwrap();
+    let resolved = target::resolve_instance(Some(&home), Some("local"), None).unwrap();
+    fs::rename(f.control.path(), f.root.join("old-control")).unwrap();
+    fs::rename(other.control.path(), f.control.path()).unwrap();
+    assert_eq!(
+        resolved.recheck().unwrap_err().code,
+        "CONSOLE_TARGET_CHANGED"
+    );
+    let replacement = target::inspect(target::Kind::Instance, f.control.path()).unwrap();
+    assert_eq!(
+        catalog.add_named("local", replacement).unwrap_err().code,
+        "NODE_TARGET_CHANGED"
+    );
 }

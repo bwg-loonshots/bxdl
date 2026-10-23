@@ -260,8 +260,12 @@ impl Workflow {
         if !self.pristine() {
             return Err(locked_plan());
         }
+        if self.journal.inputs == inputs {
+            return Ok(());
+        }
         self.journal.plan = None;
         self.journal.plan_sha256 = None;
+        self.observed_initialization = "NOT_OBSERVED".into();
         self.journal.inputs = inputs;
         self.save()
     }
@@ -277,7 +281,7 @@ impl Workflow {
     }
 
     pub(super) fn set_field(&mut self, name: &str, answer: &str) -> Result<()> {
-        if !self.pristine() || self.journal.plan.is_some() {
+        if !self.pristine() {
             return Err(locked_plan());
         }
         if matches!(
@@ -296,6 +300,15 @@ impl Workflow {
                 "SETUP_PATH_CONFLICT",
                 "데이터·체인·키 자료는 설치 작업 폴더 밖에 두세요.",
             ));
+        }
+        // Invalid, canceled and unchanged edits retain the reviewed plan. A
+        // real accepted change invalidates it before the new draft is saved.
+        self.draft.validate_answer(name, answer)?;
+        if self.draft.answer_matches(name, answer) {
+            return Ok(());
+        }
+        if self.has_plan() {
+            self.edit()?;
         }
         self.draft.set(name, answer)
     }
@@ -651,7 +664,7 @@ impl Workflow {
         }
         self.journal.initialization = Phase::InProgress;
         self.save()?;
-        match instance::initialize(required(&plan.inputs.instance)?, resume, TIMEOUT) {
+        match super::runtime::initialize(required(&plan.inputs.instance)?, resume, TIMEOUT) {
             Ok(observed) => {
                 self.observe_initialization(&observed);
                 self.save()?;
@@ -674,7 +687,7 @@ impl Workflow {
         let plan = self.plan()?;
         self.journal.start = Phase::InProgress;
         self.save()?;
-        match instance::service::start(required(&plan.inputs.instance)?, TIMEOUT) {
+        match super::runtime::start(required(&plan.inputs.instance)?, TIMEOUT) {
             Ok(summary) => self.set_service(summary),
             Err(failure) => {
                 self.clear_service_observation(&failure.code);
@@ -739,7 +752,7 @@ impl Workflow {
         self.clear_service_observation("SERVICE_OBSERVATION_UNKNOWN");
         let plan = self.plan()?;
         let result =
-            instance::service::status(required(&plan.inputs.instance)?, Duration::from_secs(15));
+            super::runtime::status(required(&plan.inputs.instance)?, Duration::from_secs(15));
         self.accept_service_observation(result)
     }
 
@@ -753,7 +766,7 @@ impl Workflow {
         let plan = self.plan()?;
         // Read the current attempt through the service adapter. This path never
         // invokes initialization, bootstrap, kickstart, or automatic retries.
-        let result = instance::service::wait_ready_for(
+        let result = super::runtime::wait_ready_for(
             required(&plan.inputs.instance)?,
             &expected_attempt,
             TIMEOUT,
@@ -785,6 +798,37 @@ impl Workflow {
     }
     pub(super) fn can_edit(&self) -> bool {
         self.pristine()
+    }
+
+    /// A catalog may be a sibling of managed outputs, never a child of an
+    /// existing or planned data/package/control/input path. No plan is applied.
+    pub(crate) fn check_catalog_location(&self, candidate: &Path) -> Result<()> {
+        self.storage.read()?;
+        self.draft.check_catalog_location(candidate)?;
+        // Match disjoint(): after ownership is recorded, original supply names
+        // are provenance. The protected instance root contains managed copies.
+        let owns_registration = self.journal.registration.root.is_some();
+        for path in input_paths(&self.journal.inputs)
+            .filter(|path| !owns_registration || !supply_source(&self.journal.inputs, path))
+        {
+            if paths::overlaps(candidate, path)? {
+                return Err(overlap());
+            }
+        }
+        if let Some(plan) = &self.journal.plan {
+            for path in [&plan.product_path, &plan.prepared.data_directory]
+                .into_iter()
+                .chain(plan.prepared.pins.iter().map(|pin| &pin.path))
+                .chain(plan.trust_pin.iter().map(|pin| &pin.path))
+                .filter(|path| !owns_registration || !supply_source(&plan.inputs, path))
+            {
+                if paths::overlaps(candidate, path)? {
+                    return Err(overlap());
+                }
+            }
+        }
+        self.storage.read()?;
+        Ok(())
     }
 
     pub fn summary(&self) -> Summary {
@@ -1303,5 +1347,95 @@ mod registered_supply_plan_tests {
         let mut duplicate = pins(&plan);
         duplicate.push(duplicate[0].clone());
         assert!(check_registered_pins(&plan, &duplicate).is_err());
+    }
+}
+
+#[cfg(all(test, target_os = "macos", target_arch = "aarch64"))]
+mod catalog_location_tests {
+    use super::*;
+    use std::os::unix::fs::PermissionsExt;
+
+    #[test]
+    fn planned_output_and_input_guards_are_read_only_and_allow_managed_siblings() {
+        let temporary = tempfile::tempdir().unwrap();
+        let root = fs::canonicalize(temporary.path()).unwrap();
+        fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
+        let mut workflow = Workflow::create(&root.join("session"), None).unwrap();
+        let before = workflow.storage.read().unwrap();
+        workflow.journal.inputs.destination = Some(root.join("packages/node"));
+        workflow.journal.inputs.instance = Some(root.join("instances/node"));
+        workflow.journal.inputs.native = Some(root.join("configs/native.json"));
+        workflow.journal.inputs.archive = Some(root.join("supply/package.tar.gz"));
+        let lock: serde_json::Value = serde_json::from_str(include_str!(
+            "../../packaging/engine-lock.rc2-temurin-development.json"
+        ))
+        .unwrap();
+        workflow.journal.plan = Some(Plan {
+            revision: 1,
+            inputs: workflow.journal.inputs.clone(),
+            product_path: root.join("configs/product.json"),
+            product_sha256: "a".repeat(64),
+            archive_sha256: "b".repeat(64),
+            manifest_sha256: "c".repeat(64),
+            trust_pin: None,
+            prepared: setup_plan::Prepared {
+                identity: serde_json::from_value(lock["expected"].clone()).unwrap(),
+                data_directory: root.join("data/node"),
+                backend: "rocksdb".into(),
+                automatic_gc: false,
+                issuer_count: Some(0),
+                pins: vec![setup_plan::Pin {
+                    path: root.join("credentials/validator.key"),
+                    sha256: "d".repeat(64),
+                }],
+            },
+        });
+        for protected in [
+            "packages/node",
+            "instances/node",
+            "configs/native.json",
+            "supply/package.tar.gz",
+            "configs/product.json",
+            "data/node",
+            "credentials/validator.key",
+        ] {
+            assert!(
+                workflow
+                    .check_catalog_location(&root.join(protected).join("console/catalog"))
+                    .is_err()
+            );
+        }
+        workflow
+            .check_catalog_location(&root.join("catalog"))
+            .unwrap();
+        assert_eq!(workflow.storage.read().unwrap(), before);
+        assert!(!root.join("data").exists());
+        assert!(!root.join("packages").exists());
+        assert!(!root.join("credentials").exists());
+        // Guarding an owned installation must not reopen obsolete supply
+        // names, even after those original names become unrelated symlinks.
+        workflow.journal.registration.root = Some(install::RootIdentity {
+            device: 1,
+            inode: 1,
+        });
+        workflow.journal.inputs.lock = Some(root.join("supply/lock.json"));
+        let plan = workflow.journal.plan.as_mut().unwrap();
+        plan.inputs = workflow.journal.inputs.clone();
+        plan.prepared.pins.push(setup_plan::Pin {
+            path: root.join("supply/package.tar.gz"),
+            sha256: "e".repeat(64),
+        });
+        plan.trust_pin = Some(setup_plan::Pin {
+            path: root.join("supply/lock.json"),
+            sha256: "f".repeat(64),
+        });
+        fs::create_dir(root.join("supply")).unwrap();
+        for name in ["supply/package.tar.gz", "supply/lock.json"] {
+            std::os::unix::fs::symlink(&root, root.join(name)).unwrap();
+        }
+        workflow
+            .check_catalog_location(&root.join("catalog"))
+            .unwrap();
+        assert_eq!(workflow.storage.read().unwrap(), before);
     }
 }

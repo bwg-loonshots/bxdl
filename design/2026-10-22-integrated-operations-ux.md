@@ -1,14 +1,16 @@
 # 통합 설치·운용 UX 설계안
 
+> 최신 결정(2026-10-22): **console 개발 중단·직접 CLI 우선**. 아래 console 통합 설계/화면은 기존 구현과 시안의 참고 기록으로 보존한다. 후속 구현 순서와 완료 조건은 [CLI 우선 설계](./2026-10-22-cli-simplification.md)와 [현재 구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md)이 대체한다. console 화면 추가나 서비스 연결을 현재 작업 범위로 해석하지 않는다.
+
 - 작성일: 2026-10-22
-- 상태: **설계안. 제품 구현·새 패키지 인수·처음 사용자 과업 검증은 미실행**이다.
+- 상태: **전체 UX 설계안. UX-01~03의 공통 문답·console 홈/목록/기존 자료 읽기와 이름 기반 설치 자료 준비는 구현했으며, 통합 설치·반복 운용·새 패키지 인수·처음 사용자 과업은 후속**이다. 현행 기능은 [console 가이드](../docs/console.md)를 따른다.
 - 기준: BXDL `870ca725d2a57e25b0fb0b574766d19e7600a733`(PR #15 병합), RC.3/선정 Temurin의 기존 인수 기록.
 - 사용자 요청: 설치·운용의 직관성을 먼저 개선하며 Rust·macOS arm64·수동 LaunchAgent를 유지한다.
-- 연결: [화면 명세](./2026-10-22-integrated-operations-ux-screens.md), [구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md), [클릭 가능한 시안](./prototypes/integrated-operations-ux.html).
+- 연결: [직접 CLI 간소화](./2026-10-22-cli-simplification.md), [화면 명세](./2026-10-22-integrated-operations-ux-screens.md), [구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md), [클릭 가능한 시안](./prototypes/integrated-operations-ux.html).
 
 ## 1. 목표와 현재 문제
 
-NIGO 내부를 모르는 설치 담당자가 승인 자료를 받아 새 노드를 설치하고, 다음 날 경로를 기억하지 않아도 같은 노드를 찾아 운용하게 한다. 운영자가 노드와 원하는 행동을 선택하면 제품이 준비자료·상태·허용 조건을 확인한다.
+NIGO 내부를 모르는 설치 담당자가 승인 자료를 받아 새 노드를 설치하고, 다음 날 경로를 기억하지 않아도 같은 노드를 찾아 운용하게 한다. 운영자가 노드와 원하는 행동을 선택하면 제품이 준비자료·상태·허용 조건을 확인한다. 간단한 작업은 직접 CLI 한 줄로 수행하고, 설치처럼 안내가 필요한 작업은 문답이나 console에서 진행한다. 두 진입점은 같은 내부 작업과 검증을 사용한다.
 
 기존 [RC.3 설치 UX 21사례](../results/2026-10-22-macos-rc3-full-setup.md)는 준비한 입력과 절차의 실행 정확성을 검증했다. 초보 사용자의 발견 가능성·이해도·오류 해결 능력을 검증한 결과는 아니다. 이 설계의 시안과 목표도 실제 PASS로 표시하지 않는다.
 
@@ -17,6 +19,7 @@ NIGO 내부를 모르는 설치 담당자가 승인 자료를 받아 새 노드�
 | [설치 준비](../src/setup/install_wizard.rs)는 native를 먼저 요구하고 [network](../src/setup/network.rs)는 제품 설정을 요구 | 세 도우미와 JSON 전달 순서를 알아야 함. `--from`으로 재입력은 피할 수 있으나 사용자가 연결해야 함 | 하나의 여정에서 제품 초안·network·설치의 전달을 연결 |
 | 설치용 workspace·package·control·data의 부모를 사전 준비 | 내부 저장 구조를 먼저 알아야 함 | 검증하는 기본 관리 루트와 고급 경로 설정 |
 | 설치 `edit`는 첫 질문부터, 일부 preflight 오류는 포괄적 메시지 | 잘못된 항목을 찾고 수정하기 어려움 | 항목별 검토·수정, 실패 항목과 다음 행동 연결 |
+| 매번 긴 `--instance` 경로와 설치 자료를 반복 지정 | 같은 노드의 경로·중간 파일을 계속 기억해야 함 | 명시 고유 별칭으로 운용, 명명된 준비 세션의 `setup new/resume`으로 답 재사용 |
 | 설치 메뉴에 stop/logs/diagnose 없음 | 설치 후 별도 명령·경로를 기억해야 함 | 내 노드 목록과 반복 운용 화면 |
 | 상태 코드·여러 상태 축을 동시에 표시 | 실행 중인지, 지금 무엇을 해야 하는지 해석 필요 | 과업 상태 요약 → 권장 행동 → 상세 근거 순서 |
 | 하위 `--help` 미지원, 공급 입력의 `:help`가 경로로 처리됨 | 같은 도구 안에서 조작이 일관되지 않음 | 공통 입력 규칙과 명령별 도움말 |
@@ -40,7 +43,7 @@ bxdl console --home <관리-루트>
 bxdl console --instance <기존-control-경로>
 ```
 
-위 명령은 **신규 제안**이다. `console`은 대화형 터미널 전용이며 비TTY·`--json` 조합은 쓰기 전에 설명과 usage 오류로 종료한다. `--instance`는 지원되는 기존 등록을 명시적으로 여는 경로이며 재등록·DB 채택·migration이 아니다. `--home`과 함께 쓸 수 있지만 목록 저장은 별도 선택이다.
+위 명령은 **UX-02의 홈·목록·기존 등록/세션 읽기와 UX-03의 공유 설치 자료 준비를 구현**했다. 이후 절의 통합 설치·실행 동작은 후속 계획이다. `console`은 대화형 터미널 전용이며 비TTY·`--json` 조합은 쓰기 전에 설명과 usage 오류로 종료한다. `--instance`는 지원되는 기존 등록을 명시적으로 여는 경로이며 재등록·DB 채택·migration이 아니다. `--home`과 함께 쓸 수 있지만 목록 저장은 별도 선택이다.
 
 - 인자 없는 `bxdl`, `help`, 기존 `setup` 세 모드, 개별 명령과 JSON/exit 계약은 유지한다. 도움말 본문에는 새 사용자용 빠른 시작을 먼저 배치한다.
 - `setup`을 갑자기 설치 명령으로 바꾸지 않는다. 기존 자동화는 기존 명령을 계속 사용한다.
@@ -72,6 +75,14 @@ flowchart TD
 ```
 
 분기 화살표는 조건부 선택이다. 재개가 모든 단계를 자동 실행하는 의미가 아니다.
+
+### 3.1 직접 CLI 간소화
+
+[CLI 간소화 설계](./2026-10-22-cli-simplification.md)를 함께 적용한다. UX-03은 `bxdl setup new <name> [--home <root>] [--from <instance.json>]`과 `bxdl setup resume <name> [--home <root>]`를 console과 같은 준비 API로 연결하는 단계다. 새 준비 기록은 기존 setup/workflow와 구분하며 실제 설치·init·start 연결은 UX-04다. 이름은 `^[a-z][a-z0-9-]{0,31}$`를 따르고 같은 관리 루트에서 중복 생성하지 않는다.
+
+UX-05에서는 `bxdl nodes`, `bxdl status/start/stop/logs <alias>`를 추가하고, UX-06은 `bxdl diagnose <alias> --output ...`, UX-07은 도움말 구조와 셸 자동완성을 완성한다. 현재 구현 여부는 각 단계와 가이드를 따른다. 별칭과 기존 `--instance` 경로를 동시에 지정하지 않으며, 대상 생략 시 마지막 사용 노드를 추정하지 않는다.
+
+표시명은 중복을 허용하고, 기존 opaque `entryId`는 불변이며, 명령용 별칭은 명시 지정·변경하는 고유 이름이다. 준비 세션명과 노드 별칭은 별도 namespace다. 기존 표시명·engine ID를 별칭으로 자동 채택하지 않는다. 별칭 해석 뒤에도 현재 root/binding·CLI·입력·실행 시도를 다시 검증한다.
 
 ## 4. 준비자료와 설치 여정
 
@@ -114,7 +125,7 @@ flowchart TD
 ```text
 <home>/                         # 0700, 신규 준비 또는 검증한 기존 BXDL 루트
   catalog/                      # 탐색용 목록, 파일 0600
-  sessions/<operation-id>/       # console 조정 기록 + draft/network/install 하위 세션
+  sessions/<name>/               # 명명된 새 준비 조정 기록 + 필요한 하위 세션
   configs/<operation-id>/        # 새 제품 원본/native 등; 기존 export workspace와 분리
   packages/<installation-id>/    # 새 설치본; 첫 범위에서는 공유/중복 제거 안 함
   instances/<entry-id>/          # 기존 instance control
@@ -133,7 +144,7 @@ flowchart TD
 | package·control·data·설치 session | 운용 자료로 계속 보존 |
 | 기존 V1 | 원본 공급 자료도 계속 필요. 목록 연결로 V2 변환되지 않음 |
 
-카탈로그는 `entryId`, 종류(instance/session), 표시명, 정규 경로, 확인한 root identity·schema, 마지막 관측 시각·요약만 갖는 별도 버전형 private 색인이다. 표시명이나 instanceId는 전역 유일키가 아니다. 원문 credential, key hash, 건강 상태의 권위 있는 판정은 저장하지 않는다.
+카탈로그는 `entryId`, 종류(instance/session), 표시명, 정규 경로, 확인한 root identity·schema, 마지막 관측 시각·요약을 갖는 별도 버전형 private 색인이다. 명령용 고유 별칭은 UX-05에서 명시 지정과 버전형 저장 계약으로 추가하며, UX-03이 기존 목록 형식을 선제 변경하지 않는다. 표시명이나 instanceId는 전역 유일키가 아니다. 원문 credential, key hash, 건강 상태의 권위 있는 판정은 저장하지 않는다.
 
 - 첫 범위는 콘솔이 만든 항목과 사용자가 **명시 경로로 연결한 항목**만 다룬다. 전체 홈/디스크 재귀 검색이나 외부 자료 자동 편입은 하지 않는다.
 - 선택 시와 변경 직전에 기존 root/binding/입력 검사를 다시 한다. 목록의 READY·경로·CLI 정보만 믿고 실행하지 않는다.
@@ -181,7 +192,7 @@ READY는 로컬 준비 상태다. 합의는 기존 근거가 없으면 미확인
 
 | 구분 | 이번 UX 범위 |
 | --- | --- |
-| 포함 | 터미널 통합 여정, 공통 문답, 탐색용 목록, 기본 경로 제안·준비, 설치/운용 controller, 상태·오류 안내, 정제 보고서 연결 |
+| 포함 | 직접 CLI의 명명된 준비 세션·명시 노드 별칭, 터미널 통합 여정, 공통 문답, 탐색용 목록, 기본 경로 제안·준비, 설치/운용 controller, 상태·오류 안내, 정제 보고서 연결 |
 | 별도 필수 후속 | 안전 제거 REM-01, 실제 mutation 중단·로그아웃·sleep/wake를 포함한 나머지 G1-M 인수 |
 | 별도 G2 | A7 offline Storage inspect/repair, 기존 설치 업데이트·V1 migration·DB 호환 버전 쌍 |
 | 범위 밖 | 웹 관리 서버, PKI 발급, 고객 네트워크 승인, UNKNOWN 강제 해제, 자동 로그인 시작/재시작, LaunchDaemon, Linux/systemd·Docker 구현 |

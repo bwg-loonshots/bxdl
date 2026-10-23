@@ -1,6 +1,44 @@
-# 구현 상태 — 2026-10-22
+# 구현 상태 — 2026-10-23
 
 Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후 **R2의 Mac 새 폴더 패키지 설치**와 **R3의 NIGO 개발 후보 정보·cold 사전검사**를 추가했다. clean NIGO 후보를 별도로 수신하고 제품 설정과 명시 native QBFT 설정을 연결하는 preflight를 추가했다. 이후 설치본·설정을 등록해 `--instance`로 preflight와 명시 init/resume-init을 호출하고, Mac 사용자 LaunchAgent의 start/status/stop을 연결했다. 이번에는 `setup --install`에서 이 단계를 선택하고 재개하는 A~C 흐름을 구현했다. 기존 package의 단일 validator 서비스 근거와 새 setup의 exact package·TTY 인수, 전체 G1-M을 구분한다.
+
+## 현재 방향 — console 개발 중단, 직접 CLI 우선
+
+2026-10-22 사용자가 실제 console의 직관성이 부족하다고 평가해 개발 중단을 요청했다. 기존 console 코드·시안·검증 이력은 보존하고 새 메뉴·화면·서비스 연결은 진행하지 않는다. 공통 catalog/home/target와 Preparation 검증·저장 API는 직접 CLI에서 재사용한다.
+
+**CLI-01의 이름 연결·목록과 CLI-02의 독립 관리 CLI·이름 기반 운용을 구현·검증했다.** 이후에는 순차 설치 준비/재개(CLI-03), 실제 설치 실행(CLI-04), 자동완성·Mac 배포 조합·사용자 과업(CLI-05)을 진행한다. [최신 설계](../design/2026-10-22-cli-simplification.md)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
+
+현재 `setup new/resume`도 7개 번호 메뉴를 사용한다. 이를 아직 CLI 우선 UX로 개선했다고 주장하지 않으며 CLI-03에서 필요한 값만 순차 질문하는 흐름으로 교체한다. `nodes`/`nodes add`와 이름 기반 운용을 연결했고 선형 문답은 계획 상태다. 아래 UX-01~03의 PASS는 당시 구현의 기술 검증이며 CLI-01 검증은 아래 별도 기록으로 구분한다.
+
+## CLI-02 — 관리 CLI와 기존 RC.3 실행기 분리
+
+[새 설계](../design/2026-10-23-independent-management-cli.md)에 따라 관리 CLI를 package 밖에서 업데이트한다. 정확한 RC.3 archive/manifest/실행기 hash profile을 검증한 뒤 기존 실행기에 고정 명령·JSON으로 위임한다. 기존 worker의 exact CLI 검사·NIGO/JRE pin·private journal은 유지한다. 이름 기반 운용과 기존 경로 명령, 기존 설치 문답의 runtime 경로를 연결한다. [가이드](./management-cli.md)를 따른다. [새 실제 검증](../results/2026-10-23-independent-management-cli.md)에서 두 관리 CLI/같은 RC.3의 직접 운용16사례·설치 도우미 PTY8사례와 독립 정리를 통과했다. 최종 `make check` Rust512/Python50·fmt·Clippy, Linux 타입 검사도 PASS다. 기존 실행기 worker와 각 설치본270파일/JRE259파일은 그대로다. 단일 노드 로컬 READY 범위이며 합의·거래 확정을 재검증한 결과는 아니다.
+
+## CLI-01 — 직접 노드 목록·이름 연결
+
+`bxdl nodes [--home <root>] [--json]`와 `bxdl nodes add <이름> --instance <control> [--home <root>] [--json]`를 구현했다. 두 명령은 문답 없이 실행하며 목록은 대상·서비스를 열지 않는다. add는 기존 등록을 검증하고 관리 목록만 저장한다. V1 목록 읽기를 유지하고 명시 이름 저장 때만 V2로 새 revision을 남긴다. 기존 ID/표시명/저장 시각을 보존하고 중복 이름·자동 rename·root/binding 교체·동시 갱신을 거절한다.
+
+최상위 도움말을 과업별로 줄였다. 이름과 경로를 위한 공통 해석기는 catalog revision·root·binding을 재검사한다. 이후 CLI-02에서 `status local` 등 이름 기반 운용에 연결했다. [가이드](./nodes.md)와 [CLI-01 검증 기록](../results/2026-10-23-cli01-node-names.md)을 따른다. console 확장·NIGO·RC.3/JRE pin 변경은 없다. 전체 `make check` Rust482/Python50와 마지막 추가 테스트를 포함한 nodes suite13개가 통과해 최종 Rust483개를 검증했다. 최종 fmt·Clippy, Linux 타입 검사, 실제 Mac PTY10개도 PASS다.
+
+## 통합 UX 3단계 — 이름 기반 CLI와 설치 자료 준비
+
+`bxdl setup new <이름>` / `bxdl setup resume <이름>`과 console 홈 1번을 같은 준비 controller에 연결했다. 생성 승인, 제품 가져오기·개별 수정, 공급 자료·공개 network의 자기 노드 선택 또는 기존 native, 정책별 중간 저장, 검토 승인 뒤 immutable 제품/native revision 저장을 제공한다. 이전 답과 출력은 보존하고 변경한 입력의 준비 결과만 무효화한다. 입력 변경·동일 bytes 교체·경로 충돌·저장 충돌을 검사하며 package/control/data는 생성하지 않는다.
+
+`make check` **Rust464·Python50·fmt·Clippy**, Linux 타입 검사와 실제 Mac PTY의 생성 거절/승인·직접/console 재개·미완성 수정·EOF 보존을 통과했다. [사용 가이드](./preparation.md)와 [UX-03 검증 결과](../results/2026-10-22-ux03-preparation.md)를 따른다. 이후 실제 설치·등록·init 연결은 CLI-04, `nodes`와 이름 기반 `start/status/stop/logs`는 CLI-01/02에서 진행한다. [CLI 간소화 설계](../design/2026-10-22-cli-simplification.md)에 명령·이름·호환 계약을 반영했다. 기존 명령·JSON·저장 schema와 NIGO RC.3/JRE pin은 유지한다. 새 package 실인수·사람 과업은 후속이다.
+
+## 통합 UX 2단계 — 홈·목록·기존 자료 읽기
+
+`bxdl console [--home <관리-루트>] [--instance <control>]`을 구현했다. 홈은 무쓰기이며 등록 V1/V2·설치 세션·제품 초안·네트워크 준비 세션을 직접 지정해 읽는다. 별칭을 붙인 목록 저장·갱신·숨기기만 y/yes 뒤 수행하고, 저장 단계와 현재 서비스 미조회를 구분한다. 잘못된 관리 root, 대상 inode 교체, 목록 손상, 오래된 목록의 동시 갱신, private 입력/DB/package를 침범하는 저장 위치를 거절한다. 목록 실패가 기존 등록/설치 결과를 바꾸지 않는다.
+
+새 관리 root marker와 catalog는 별도 schema V1이다. 기존 setup/workflow/instance 저장 형식과 개별 CLI JSON/exit는 유지한다. 목록에는 저장한 공개 단계만 보관한다. console의 실제 설치·서비스 연결은 중단하고, 직접 CLI 연결은 CLI-02/04에서 진행한다. [console 가이드](./console.md)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다. `make check`(Rust 427개·Python 50개·fmt·Clippy), Linux 타입 검사, 실제 Mac PTY의 홈 무쓰기·목록 저장 거절/승인·재열기/숨기기·원본 보존을 통과했다. [UX-02 검증 기록](../results/2026-10-22-ux02-console-catalog.md)을 따른다. 실제 엔진 등록 직후 목록 실패 주입·새 package 인수는 후속이다.
+
+## 통합 UX 1단계 — 공통 문답·수정·안내
+
+[통합 UX 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)의 UX-01을 구현했다. 기존 제품·네트워크·설치 도우미의 모든 질문·출력·확인에서 `:help`·`:back`·`:cancel`을 공통 처리하고, 번호로 항목 하나를 수정한 뒤 검토로 돌아간다. 공개 식별자·주소·포트는 검토하되 자격 자료의 원문 경로는 검토 목록에 표시하지 않는다. 변경 없는 답·잘못된 값·취소는 기존 설치 계획을 보존하고 유효한 실제 변경만 계획을 무효화한다.
+
+명령별 `--help`와 공통 상태 안내를 추가했다. 알려진 cold `INCOMPLETE`, 관측 기한 만료, 실제 실패, 상태 불명, 정상 종료 확인 필요/완료를 구별하며 JSON envelope·exit code·저장 schema와 실행 승인 조건은 유지한다. `make check`(Rust 383개·Python 50개·fmt·Clippy)와 실제 PTY 초안 수정·출력 거절 검증을 통과했다. [UX-01 검증 기록](../results/2026-10-22-ux01-common-prompts.md)을 따른다.
+
+통합 홈의 기존 구현 이력은 위 UX-02/03을 따르며 현재 추가 개발은 중단했다. NIGO/engine lock/JRE·기존 accepted archive는 바꾸지 않는다. 변경 CLI를 기존 package에 덮어쓰지 않으며 새 archive의 실제 서비스·네트워크 인수는 CLI-05에서 별도로 수행한다.
 
 ## 등록 자료 보관과 시작 진단 — 2026-10-22
 
@@ -160,7 +198,7 @@ TLS 저장소 형식과 새 네트워크/참가·합의·archive 정책 선택, 
 
 당시 `make check`의 fmt·Clippy·200개 테스트와 `make check-linux` 타입 검사는 통과했다. 이번 설치 도우미의 검사 결과로 전용하지 않는다. 원격 CI 결과는 해당 PR의 revision별 검사 기록을 따른다. 시험 경로·제약·실제 결과는 [LaunchAgent 검증 기록](../results/2026-09-18-macos-launchagent.md)을 따른다. Documents 아래 첫 시험은 worker 진입 전 exit 78로 종료했고 임시 경로로 입력을 분리한 시험은 동작했으나, OS 접근 제어/TCC를 원인으로 확정하지 않는다. 설계와 실패 정책은 [LaunchAgent 문서](../design/2026-09-18-macos-launchagent.md), 실제 사용법은 [인스턴스 가이드](./instance.md)를 따른다.
 
-start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요하다. 기존 초기화용 package에 서비스 CLI만 덮어쓰는 방법은 사용할 수 없다. 새 archive·설치본의 전체 inventory를 검증하며 기존 등록/data의 migration은 후속이다. 시도별 worker/JAR snapshot과 private 로그는 보존하고 자동 용량 정리는 제공하지 않는다.
+당시 native start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요했다. 현재 CLI-02는 지원하는 RC.3에 한해 독립 관리 CLI가 해당 고정 실행기에 위임하며, 실행기 자체의 동일 bytes 검사는 유지한다. 기존 초기화용 package에 서비스 CLI만 덮어쓰는 방법은 사용할 수 없다. 새 archive·설치본의 전체 inventory를 검증하며 기존 등록/data의 migration은 후속이다. 시도별 worker/JAR snapshot과 private 로그는 보존하고 자동 용량 정리는 제공하지 않는다.
 
 정상 STOPPED report·launchd의 프로세스 부재·control 잠금 획득을 함께 확인한 뒤에만 STOPPED_VERIFIED를 게시한다. status는 읽기 전용이며 복구 기록을 쓰지 않는다. gate 실패·UNKNOWN은 자동 init/repair/restart로 해결하지 않는다. stop timeout에 SIGKILL·live job bootout을 하지 않아 엔진과 잠금이 남을 수 있다. start timeout은 cold 명령(최대120초)과 사전 검증·bootstrap 뒤 시작 대기에 각각 적용되며, 실행 취소나 전체 명령 총 시간 제한이 아니다.
 
@@ -203,6 +241,8 @@ start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요
 | BX-050~053/M6 | PLAN | 버전 쌍 업데이트·offline 유지보수·고객 운영 확대 |
 
 ## 다음 순서
+
+CLI-01/02 완료 후 [CLI-03~05](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)의 직접 CLI 개선을 진행한다. console의 후속 화면·서비스 연결은 중단했다. 아래는 그와 별도로 유지하는 전체 제품의 후속 과제다.
 
 NIGO PR #230 정식 회신 뒤 완료한 RC.3 전체 설치 UX21사례·독립 검사8항목의 근거는 [전체 UX 결과](../results/2026-10-22-macos-rc3-full-setup.md)에 기록했다. 기존 회신과 앞선 결과의 당시 NOT_RUN, RC.2 원본 INCOMPLETE·경로 원인 미확정은 보존한다.
 

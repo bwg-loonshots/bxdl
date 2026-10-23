@@ -1,22 +1,50 @@
 # CLI·설치·설정·초기화와 Mac 서비스
 
-`--json`은 명령 인자 앞/뒤에서 받을 수 있으며 stdout에 JSON 문서 하나만 쓴다. 기본 setup에서는 `--non-interactive`와 함께 사용해야 한다. `setup --install`과 `setup --network`는 터미널 전용이다. 사람용 결과도 같은 내부 결과를 표현한다. 대화형 setup 질문은 stderr에 출력하며, 비대화형 JSON 실행은 질문이나 로그 없이 결과만 stdout에 쓴다. 잘못된 인자나 parser 오류에 입력값·secret을 그대로 되돌려 쓰지 않는다.
+**현재 개선 방향:** console의 추가 개발은 중단했다. 직접 명령의 이름 기반 대상 지정과 순차 준비 흐름을 우선하며 [CLI 계획](../design/2026-10-22-cli-simplification.md)을 따른다. 이 문서는 현재 구현된 명령만 설명한다. `setup new/resume`은 아직 기존 번호 메뉴 방식이다.
+
+`--json`은 명령 인자 앞/뒤에서 받을 수 있으며 stdout에 JSON 문서 하나만 쓴다. 기본 setup에서는 `--non-interactive`와 함께 사용해야 한다. `console`, `setup new/resume`, `setup --install`, `setup --network`는 터미널 전용이다. console은 --json을 지원하지 않는다. 사람용 결과도 같은 내부 결과를 표현한다. 대화형 setup 질문은 stderr에 출력하며, 비대화형 JSON 실행은 질문이나 로그 없이 결과만 stdout에 쓴다. 잘못된 인자나 parser 오류에 입력값·secret을 그대로 되돌려 쓰지 않는다.
 
 | exit | 현재 의미 |
 | --- | --- |
-| 0 | 패키지·설치·엔진 식별·설정 저장·등록/조회·초기화 성공, 서비스 SUCCEEDED 또는 진단 수집/저장 완료. 명령별 의미를 확인해야 함 |
+| 0 | 패키지·설치·엔진 식별·설정 저장·등록/조회·초기화 성공, 서비스 SUCCEEDED 또는 진단 수집/저장 완료. 명령별 의미를 확인해야 함. console은 화면 정상 종료 |
 | 2 | 인자 오류, `config validate`/로컬 전용 `preflight`의 설정 read/schema 오류 |
 | 3 | artifact·설치·engine 입력 검증 실패, 결합 preflight 불일치, setup 저장 오류, 등록·초기화·서비스 사전 조건 거부 또는 진단 수집/출력 거부 |
 | 4 | 로컬 preflight FAIL, 서비스 관측 결과 FAILED 또는 아직 제공하지 않는 운영 명령 |
-| 5 | preflight·서비스 관측 INCOMPLETE, 진단 partial 또는 setup 취소/EOF·비대화형 미완성 초안 |
+| 5 | preflight·서비스 관측 INCOMPLETE, 진단 partial 또는 setup/console 취소·EOF 및 비대화형 미완성 초안 |
 | 6 | cold JVM timeout, 설치 receipt commit·초기화·서비스 시도/관측 불명(UNKNOWN) |
 | 7 | 입력/안내·결과 출력 실패 또는 분류되지 않은 내부 오류 |
 
 engine 명령과 결합/등록형 preflight는 고정한 JVM의 cold 명령을 실행한다. cold timeout은 직접 child를 종료·회수하고 UNKNOWN/exit 6을 반환한다. 쓰기 작업인 init/resume-init은 TERM 후 최대 5초를 더 기다리며 SIGKILL하지 않는다. child가 살아 있거나 잠금을 보유할 수 있으므로 UNKNOWN을 종료 완료로 해석하지 않는다. 두 경로 모두 자동 재시도하지 않는다.
 
+## 명령별 도움말과 대화형 입력
+
+`bxdl help`와 인자 없는 실행은 내 노드·운용·설치·제작 과업별 진입점을 보여준다. 상세 옵션은 각 명령 도움말에서 확인한다. `bxdl start --help`, `bxdl setup --install --help`, `bxdl setup --network --help`처럼 해당 명령·모드의 사용법을 직접 볼 수 있다. 도움말 조회는 질문을 읽거나 설치·초기화·서비스를 실행하지 않는다. 도움말 호출에는 해당 명령·모드와 도움말 옵션만 지정하며 실행 옵션·파일 경로를 함께 넣지 않는다.
+
+제품·설치·네트워크 문답의 모든 입력 단계에서 `:help`, `:back`, `:cancel`을 공통으로 사용한다. 도움말은 현재 질문으로 돌아오고, 뒤로가기는 앞 질문 또는 이전 검토 단계로 돌아가며, 취소/EOF는 저장한 checkpoint를 보존한다. 예약 문자가 파일명이라면 `./:help` 같은 명시 경로로 지정한다. 항목 편집은 번호 하나를 고르고 저장한 뒤 검토로 돌아간다. 파일 출력·apply·init·start의 대화형 확인은 `y`/`yes`만 승인하며 빈 Enter는 거절이다.
+
+`bxdl console [--home <관리-루트>] [--instance <기존-control>]`은 홈·목록·기존 자료 읽기를 제공한다. 홈 조회는 무쓰기이며 목록 저장/갱신/숨기기는 개별 승인한다. 홈 1번은 `setup new/resume`과 같은 자료 준비를 제공한다. console의 추가 개발은 중단했으며 실제 운용 연결은 직접 CLI에서 진행한다. [console 사용 가이드](./console.md)를 따른다. HTML과 Python 터미널 체험판은 별도의 시안이며 제품 웹서버를 실행하지 않는다.
+
 ## JSON envelope
 
 `schemaVersion`, `command`, `outcome`, `reasonCode`, `message`, `observedAt`, 선택 `data`로 구성된다. outcome은 SUCCEEDED/FAILED/INCOMPLETE/UNSUPPORTED/UNKNOWN이다. Rust 이식 후에도 명령·exit·envelope를 유지한다. `version`은 CLI build와 capability만 표시하며 설치된 bundle을 탐색하지 않는다. data에 implementation=rust, primaryTarget=darwin-arm64, macosServiceAcceptance=NOT_CHECKED를 추가하고 기존 linuxServiceAcceptance도 유지한다.
+
+## 직접 노드 목록과 이름 연결
+
+```sh
+bxdl nodes add local --instance /path/to/control
+bxdl nodes
+```
+
+두 명령은 `--home <관리-루트>`와 `--json`을 지원하며 비TTY에서도 입력을 읽지 않는다. `add`는 기존 등록에 이름을 연결하는 명시 저장 요청이다. 목록은 저장 당시 상태이며 `currentStatus=NOT_OBSERVED`다. `status/start/stop/logs <이름>`과 `diagnose <이름> --output <새.json>`을 지원한다. 이름에는 같은 `--home`을 사용하고 기존 `--instance`와는 섞지 않는다. [독립 관리 CLI](./management-cli.md)는 검증한 RC.3 package의 실행기에 위임한다. [노드 이름 가이드](./nodes.md)에 충돌·호환·출력 계약을 설명한다.
+
+## 이름 있는 설치 준비
+
+```text
+bxdl setup new <이름> [--home <관리-루트>] [--from <instance.json>]
+bxdl setup resume <이름> [--home <관리-루트>]
+```
+
+새 문답은 자료·제품·network 또는 기존 native를 연결한다. 승인한 새 준비 세션과 제품/native revision만 만들며 설치·등록·init·start는 실행하지 않는다. 이름은 `^[a-z][a-z0-9-]{0,31}$`이며 같은 관리 루트에서 고유하다. 기존 명령의 경로 옵션·JSON은 유지하고 새 명령의 `--json`/비TTY는 입력·쓰기 전 거절한다. 정상 메뉴 종료 0은 초안 보존이며 준비 검증 성공의 증명이 아니다. 취소/EOF 5, usage 2, 저장/검증 3, I/O 7을 사용한다. [준비 사용 가이드](./preparation.md)를 따른다.
 
 ## setup 명령
 
@@ -46,11 +74,11 @@ bxdl setup --network --workspace <new-session> --from <instance.json>
 bxdl setup --network --workspace <session> --resume [--output <new-node.json>]
 ```
 
-`config fingerprint`는 공개 leaf DER의 NIGO MTLS pin을 계산한다. 일반 인증서 SHA256이나 인증서 신뢰 검증이 아니다. `setup --network`는 공통 공개 목록과 기존 제품 설정으로 RC1 native를 준비하는 별도 터미널 모드다. 출력 파일 생성도 cold/실행 검증을 뜻하지 않는다. `--json`, `--non-interactive`, `--install` 혼용은 거부한다. 사용법과 입력 계약은 [네트워크 가이드](./network.md)를 따른다.
+`config fingerprint`는 공개 leaf DER의 NIGO MTLS pin을 계산한다. 일반 인증서 SHA256이나 인증서 신뢰 검증이 아니다. `setup --network`는 공통 공개 목록과 기존 제품 설정으로 RC.1~RC.3 공통 계약의 native를 준비하는 별도 터미널 모드다. 출력 파일 생성도 cold/실행 검증을 뜻하지 않는다. `--json`, `--non-interactive`, `--install` 혼용은 거부한다. 사용법과 입력 계약은 [네트워크 가이드](./network.md)를 따른다.
 
 ## 제품 설정 v1
 
-현재는 JSON을 사용하며 schema는 `contracts/bxdl/instance.schema.json`이다. NIGO는 별도 native node/chain JSON 계약을 제공했다. 제품 schema는 유지하며 peer/pin/validator 상세 자료는 별도 공개 network 입력으로 받아 `setup --network`에서 RC1 native를 생성한다. `engine preflight --config`는 이 제품 JSON이 아닌 NIGO node.json을 받는다.
+현재는 JSON을 사용하며 schema는 `contracts/bxdl/instance.schema.json`이다. NIGO는 별도 native node/chain JSON 계약을 제공했다. 제품 schema는 유지하며 peer/pin/validator 상세 자료는 별도 공개 network 입력으로 받아 `setup --network`에서 RC.1~RC.3 공통 계약의 native를 생성한다. `engine preflight --config`는 이 제품 JSON이 아닌 NIGO node.json을 받는다.
 
 - schemaVersion 1, validator role, RocksDB backend를 명시한다.
 - HTTP는 127.0.0.1 또는 ::1, P2P는 명시한 unicast IP다. 두 port는 1~65535 범위의 서로 다른 값이다.
@@ -117,7 +145,7 @@ bxdl resume-init --instance <control-dir> --confirm-resume
 
 `--instance`는 instanceId가 아닌 제어 폴더 경로다. 절대경로를 사용하며 등록 대상은 새 폴더여야 한다. 등록/초기 운용은 macOS arm64 개발 profile을 대상으로 한다. package의 `engine/nigo-node.jar`와 `runtime/bin/java`를 사용하므로 후속 호출에는 JAR/Java를 지정하지 않는다. `--instance` 방식은 기존 preflight의 제품/native/engine 옵션과 섞지 않는다.
 
-register는 필수 옵션 전부와 `--public-key` 또는 `--allow-unsigned-development` 중 하나를 요구한다. 원본 archive·신뢰 key·engine lock은 설치 package 밖에 있어야 한다. 개발용 선택은 등록에 저장되며 init/resume에는 작업별 확인 flag만 추가한다. archive/key·설정·chain·참조 credential은 이후에도 원래 위치와 내용으로 필요하다. 등록은 private credential 내용의 hash도 private binding에 고정하며 원문/hash/secret 경로를 공개 Summary에 표시하지 않는다.
+register는 필수 옵션 전부와 `--public-key` 또는 `--allow-unsigned-development` 중 하나를 요구한다. 원본 archive·신뢰 key·engine lock은 설치 package 밖에 있어야 한다. 개발용 선택은 등록에 저장되며 init/resume에는 작업별 확인 flag만 추가한다. 새 V2 등록은 archive·engine lock·선택 외부 공개키의 검증된 보관본을 control의 `trust/`에 만든다. 등록 완료 전에는 원본을 보존하고 이후에는 보관본을 유지한다. 제품/native 설정·chain·참조 credential은 이후에도 원래 위치와 내용으로 필요하다. 완료된 설치 세션의 `generated/` 제품 JSON도 이 운용 입력에 포함하므로 세션을 삭제·이동하지 않는다. 기존 V1 등록은 원본 공급 파일 참조를 유지하며 자동 전환하지 않는다. 등록은 private credential 내용의 hash도 private binding에 고정하며 원문/hash/secret 경로를 공개 Summary에 표시하지 않는다.
 
 등록 전과 등록 후 작업에서 archive 신뢰 검증·전체 설치 manifest 검증·제품/native 대응·고정 engine identity를 확인한다. 등록에는 없거나 빈 data와 존재하는 부모가 필요하며 기존/외부 DB를 채택하지 않는다. 등록 성공은 INSTANCE_REGISTERED/exit 0이며 데이터는 초기화하지 않는다. 등록 preflight는 정상 cold라도 INCOMPLETE/exit 5다. 이 경로의 입력 변경·local 조건 미충족·잠금 중은 exit 3이며 local 전용 `preflight --config`의 FAIL/exit 4와 구분한다.
 
@@ -138,7 +166,7 @@ bxdl status --instance <absolute-control-dir> --wait [--timeout-seconds <1..600>
 bxdl stop --instance <absolute-control-dir> [--timeout-seconds <1..600>] [--json]
 ```
 
-macOS arm64의 현재 사용자 GUI 로그인 세션에서 이미 등록·초기화한 개발 인스턴스를 제어한다. start는 설치된 package의 `bin/bxdl`과 같은 바이트의 CLI를 요구한다. 새 CLI만 기존 package에 덮어쓰면 전체 inventory 검증에 실패하며, 외부의 다른 CLI로 시작하면 `SERVICE_CLI_MISMATCH`다. 새 CLI를 담은 archive와 새 설치본을 준비해야 하며 기존 등록/data의 업데이트·migration은 제공하지 않는다.
+macOS arm64의 현재 사용자 GUI 로그인 세션에서 이미 등록·초기화한 개발 인스턴스를 제어한다. [지원하는 RC.3](./management-cli.md)는 독립 관리 CLI가 인증한 package의 고정 실행기에 위임한다. 실행기의 동일 bytes 검사와 전체 inventory 검증을 유지하므로 package 안의 CLI는 덮어쓰지 않는다. 미지원 package의 native start는 다른 bytes의 외부 CLI에 `SERVICE_CLI_MISMATCH`를 반환한다. 관리 CLI 교체는 기존 등록/data의 업데이트·migration을 수행하지 않는다.
 
 start마다 control 아래에 고유 attempt·worker/JAR snapshot·plist·report를 만든다. 수동 bootstrap의 `RunAtLoad=true`, `KeepAlive=false`를 사용하며 `~/Library/LaunchAgents` 자동 로그인 등록은 하지 않는다. worker는 한 번 실행 허가를 소비하고 입력·전체 설치본·cold·INITIALIZED/genesis를 다시 검증한 뒤 같은 PID로 Java를 실행한다. `service-run`은 이 내부 진입점이며 직접 실행·kickstart로 실패 시도를 재사용할 수 없다.
 
