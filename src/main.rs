@@ -1,5 +1,12 @@
+#![forbid(unsafe_code)]
 use std::io;
 fn main() {
+    // Set the standalone process policy once, before any worker threads or
+    // child processes exist. The pinned executor and initialization JVM inherit
+    // it; the invoking shell and existing files are unaffected. Do not set or
+    // temporarily restore a process-wide umask inside the library's runners.
+    #[cfg(unix)]
+    let _ = rustix::process::umask(rustix::fs::Mode::RWXG | rustix::fs::Mode::RWXO);
     let raw: Vec<_> = std::env::args_os().skip(1).collect();
     let args = match raw
         .iter()

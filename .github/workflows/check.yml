@@ -14,7 +14,9 @@ jobs:
       matrix:
         os: [macos-15, ubuntu-24.04]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    # Mac installation fixtures repeatedly package the test executable.
+    # Allow slower hosted runners to finish the same complete test suite.
+    timeout-minutes: ${{ matrix.os == 'macos-15' && 25 || 15 }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:

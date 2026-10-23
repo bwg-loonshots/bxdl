@@ -24,7 +24,7 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 
 관리 CLI는 노드 패키지 밖에서 독립적으로 업데이트할 수 있다. 현재 지원 대상은 검증한 기존 RC.3 패키지이며 설치본의 CLI·NIGO JAR·JRE를 교체하지 않는다. 실행기 자체를 변경할 때는 새 패키지 인수가 필요하다. [분리 설계](./design/2026-10-23-independent-management-cli.md)와 [운용 가이드](./docs/management-cli.md)를 따른다. [독립 관리 CLI 인수](./results/2026-10-23-independent-management-cli.md)의 직접 운용16사례·설치 도우미 PTY8사례, payload/worker 불변과 정상 종료 독립 대조가 PASS다.
 
-CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bxdl completion zsh`로 셸 스크립트를 출력하고 명령·옵션·저장한 이름을 Tab으로 완성한다. 적용 방법은 [자동완성 가이드](./docs/completion.md), 전체 검사와 최종 release의 실제 zsh 13시나리오·인용 경로 결과는 [검증 기록](./results/2026-10-23-cli05-zsh-completion.md)을 따른다. 독립 관리 CLI의 Mac 배포·업데이트(CLI05-02)도 [전용 설계](./design/2026-10-23-management-cli-distribution.md)에 따라 구현·검증했다. `bxdl cli install/update/info/rollback`으로 별도 사용자 root의 CLI와 자동완성을 함께 선택한다. [검증 기록](./results/2026-10-23-cli05-management-distribution.md)에 자동 검사와 개발 인수 배포본의 실제 Mac signed13/unsigned13사례를 구분했다. 후속 **CLI05-03의 지정 Mac 서비스·네트워크 조합 인수도 PASS**했다. 실제 설치한 관리 CLI로 서비스16사례와 네트워크12개 실행 시도·거래8개/제출9회, 실행 중 CLI 업데이트·복귀·재업데이트를 확인했다. [조합 인수 기록](./results/2026-10-23-cli05-runtime-acceptance.md)에 고정 RC.3 payload/worker·정상 정리와 진단의 partial 결과를 구분했다. **진단 완전수집은 OPEN**, 작성자가 아닌 사용자의 CLI05-04 과업은 NOT_RUN이다.
+CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bxdl completion zsh`로 셸 스크립트를 출력하고 명령·옵션·저장한 이름을 Tab으로 완성한다. 적용 방법은 [자동완성 가이드](./docs/completion.md), 전체 검사와 최종 release의 실제 zsh 13시나리오·인용 경로 결과는 [검증 기록](./results/2026-10-23-cli05-zsh-completion.md)을 따른다. 독립 관리 CLI의 Mac 배포·업데이트(CLI05-02)도 [전용 설계](./design/2026-10-23-management-cli-distribution.md)에 따라 구현·검증했다. `bxdl cli install/update/info/rollback`으로 별도 사용자 root의 CLI와 자동완성을 함께 선택한다. [검증 기록](./results/2026-10-23-cli05-management-distribution.md)에 자동 검사와 개발 인수 배포본의 실제 Mac signed13/unsigned13사례를 구분했다. 후속 **CLI05-03의 지정 Mac 서비스·네트워크 조합 인수도 PASS**했다. 실제 설치한 관리 CLI로 서비스16사례와 네트워크12개 실행 시도·거래8개/제출9회, 실행 중 CLI 업데이트·복귀·재업데이트를 확인했다. [조합 인수 기록](./results/2026-10-23-cli05-runtime-acceptance.md)에 고정 RC.3 payload/worker·정상 정리와 진단의 partial 결과를 구분했다. 당시 진단 partial은 그대로 보존한다. 후속 [초기화 보고서 권한 개선](./design/2026-10-23-private-initialization-report.md)으로 새 관리 CLI가 실행하는 초기화 보고서를 `0600`으로 생성하며, 같은 RC.3에서 신규 보고서 수집을 [별도 재검증](./results/2026-10-23-private-initialization-report.md)했다. 기존 `0644` 보고서는 자동 복구하지 않아 계속 partial이며, 작성자가 아닌 사용자의 CLI05-04 과업은 NOT_RUN이다.
 
 ## 구현한 명령
 
@@ -69,6 +69,8 @@ CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bx
 | `bxdl diagnose --instance <dir> --output <new.json>` | 같은 오프라인 기록을 새 JSON 지원 보고서로 저장. 현재 health 검증은 수행하지 않음 |
 
 `upgrade/uninstall`은 exit 4와 CAPABILITY_NOT_IMPLEMENTED를 반환한다. 기본 setup 저장 성공은 초안 저장이며 설치 모드의 `finish`도 현재 단계까지만 저장한다. init 성공은 실행 중 노드·서비스 준비 완료가 아니다. logs/diagnose는 raw 로그·비밀·경로·hash를 내보내지 않고 누락은 partial로 표시한다. 보고서 생성 성공을 노드 안전·정상 판정으로 해석하지 않는다. [사용법과 한도](./docs/cli.md#오프라인-기록과-지원-보고서)를 따른다.
+
+새 standalone CLI는 Unix 프로세스 진입 시 `umask 077`을 적용해 자식 실행기와 JVM에 상속한다. 호출한 셸의 설정은 바꾸지 않으며 기존 파일 권한도 바꾸지 않는다. 기존 패키지의 내장 CLI를 직접 실행하거나 라이브러리 API만 호출하는 경우에는 이 정책이 적용되지 않는다. 새 노드 archive의 외부 파일은 `0600`으로 생성되지만 archive 내부의 payload 권한·바이트와 설치 파일의 명시 권한은 유지한다. [관리 CLI의 파일 권한 범위](./docs/management-cli.md#파일-생성-권한과-초기화-보고서)를 따른다.
 
 지원하는 기존 RC.3는 외부 관리 CLI로 start를 호출하면 인증된 package의 고정 실행기에 위임한다. 다른 package는 기존 동일 bytes 조건을 적용한다. 관리 CLI는 설치본 밖에서 교체하며 package 내부 CLI는 덮어쓰지 않는다. 로그인된 Mac 사용자 세션에서 수동 시작하며 로그인 자동 시작·자동 재시작은 제공하지 않는다. 정상 종료가 검증된 뒤에만 다음 명시 start를 허용한다. 실패·UNKNOWN 복구와 보존된 snapshot/private 로그의 자동 정리는 후속이다.
 
