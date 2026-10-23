@@ -323,45 +323,48 @@ fn chain_members(raw: &[u8]) -> Result<BTreeSet<String>> {
     Ok(unique)
 }
 
-/// Prepare deterministic native bytes from explicit public input; credentials are metadata only.
-pub fn load(product_path: &Path, network_path: &Path, options: RuntimeOptions) -> Result<Prepared> {
-    options.validate()?;
-    let product = Input::read(product_path)?;
-    let config = parse_bytes(&product.raw, &product.pin.path).map_err(|_| invalid())?;
-    // Metadata-only product checks also reject unsafe secret permissions and data references.
-    let metadata =
-        super::preflight_bytes(&product.raw, &product.pin.path).map_err(|_| invalid())?;
-    if metadata.outcome == "FAIL" {
-        return Err(invalid());
+/// Only public selection fields. Credential fingerprints stay inside validation.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct NodeChoice {
+    pub node_id: String,
+    pub validator_id: String,
+    pub host: String,
+    pub port: u16,
+    pub transaction_permission: String,
+}
+
+/// Validate approved public chain/network documents without requiring a local
+/// identity yet. The caller checks these paths against partial product inputs
+/// before calling; no credentials are opened by this function.
+pub fn node_choices(chain_path: &Path, network_path: &Path) -> Result<Vec<NodeChoice>> {
+    if paths::overlaps(chain_path, network_path)? {
+        return Err(input_conflict());
     }
-    // The explicit product document must be read to discover its references.
-    // Before reading network or chain bytes, reject aliases of credentials,
-    // data, or the other public documents using filesystem identities.
-    let mut referenced_paths = vec![
-        product.pin.path.clone(),
-        super::resolve_source(network_path).map_err(|_| input_conflict())?,
-        PathBuf::from(&config.chain_description),
-        PathBuf::from(&config.storage.data_directory),
-    ];
-    referenced_paths.extend(secret_paths(&config).into_iter().map(PathBuf::from));
-    // Input documents must not alias each other or credentials, and no input may reside inside data.
-    let data = &referenced_paths[3];
-    for (i, path) in referenced_paths.iter().enumerate() {
-        if i != 3 && paths::overlaps(path, data).map_err(|_| input_conflict())? {
-            return Err(input_conflict());
-        }
-        if i < 3 {
-            for other in referenced_paths.iter().skip(i + 1) {
-                if paths::overlaps(path, other).map_err(|_| input_conflict())? {
-                    return Err(input_conflict());
-                }
-            }
+    let chain = Input::read(chain_path)?;
+    let network = Input::read(network_path)?;
+    let value = validated_network(&chain.raw, &network.raw)?;
+    for input in [&chain, &network] {
+        if Input::read(&input.pin.path)?.pin != input.pin {
+            return Err(changed());
         }
     }
-    let network = Input::read(&referenced_paths[1])?;
-    let chain = Input::read(&referenced_paths[2])?;
-    let membership = chain_members(&chain.raw)?;
-    let mut value: Network = decode(&network.raw)?;
+    Ok(value
+        .nodes
+        .into_iter()
+        .map(|node| NodeChoice {
+            node_id: node.node_id,
+            validator_id: node.validator_id,
+            host: node.host,
+            port: node.port,
+            transaction_permission: node.transaction_permission,
+        })
+        .collect())
+}
+
+fn validated_network(chain_raw: &[u8], network_raw: &[u8]) -> Result<Network> {
+    let membership = chain_members(chain_raw)?;
+    let mut value: Network = decode(network_raw)?;
     if value.schema_version != 1
         || value.kind != "BXDL_QBFT_NETWORK"
         || value.nodes.is_empty()
@@ -437,6 +440,47 @@ pub fn load(product_path: &Path, network_path: &Path, options: RuntimeOptions) -
         ));
     }
     value.nodes.sort_by(|a, b| a.node_id.cmp(&b.node_id));
+    Ok(value)
+}
+
+/// Prepare deterministic native bytes from explicit public input; credentials are metadata only.
+pub fn load(product_path: &Path, network_path: &Path, options: RuntimeOptions) -> Result<Prepared> {
+    options.validate()?;
+    let product = Input::read(product_path)?;
+    let config = parse_bytes(&product.raw, &product.pin.path).map_err(|_| invalid())?;
+    // Metadata-only product checks also reject unsafe secret permissions and data references.
+    let metadata =
+        super::preflight_bytes(&product.raw, &product.pin.path).map_err(|_| invalid())?;
+    if metadata.outcome == "FAIL" {
+        return Err(invalid());
+    }
+    // The explicit product document must be read to discover its references.
+    // Before reading network or chain bytes, reject aliases of credentials,
+    // data, or the other public documents using filesystem identities.
+    let mut referenced_paths = vec![
+        product.pin.path.clone(),
+        super::resolve_source(network_path).map_err(|_| input_conflict())?,
+        PathBuf::from(&config.chain_description),
+        PathBuf::from(&config.storage.data_directory),
+    ];
+    referenced_paths.extend(secret_paths(&config).into_iter().map(PathBuf::from));
+    // Input documents must not alias each other or credentials, and no input may reside inside data.
+    let data = &referenced_paths[3];
+    for (i, path) in referenced_paths.iter().enumerate() {
+        if i != 3 && paths::overlaps(path, data).map_err(|_| input_conflict())? {
+            return Err(input_conflict());
+        }
+        if i < 3 {
+            for other in referenced_paths.iter().skip(i + 1) {
+                if paths::overlaps(path, other).map_err(|_| input_conflict())? {
+                    return Err(input_conflict());
+                }
+            }
+        }
+    }
+    let network = Input::read(&referenced_paths[1])?;
+    let chain = Input::read(&referenced_paths[2])?;
+    let value = validated_network(&chain.raw, &network.raw)?;
     let local_id = canonical_hex(&config.node_id, 64)?;
     let local = value
         .nodes

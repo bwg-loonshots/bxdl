@@ -2,6 +2,8 @@
 
 NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구다. **Rust로 구현하며 macOS Apple Silicon에서 설치·운용 UX를 먼저 완성한다.** Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
 
+개선 우선순위를 **직접 CLI 중심**으로 변경했다. `bxdl console`의 추가 개발은 중단하고 기존 구현은 보존한다. 다음은 console 없이 기존 노드에 이름을 연결하는 명령이며, 이름 기반 운용과 순차 설치 준비를 이어서 구현한다. 현재 `setup new/resume`의 번호 메뉴는 교체 예정이며 아직 새 순차 흐름은 제공하지 않는다. [현재 작업 계획](./design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
+
 현재 구현은 개발용 패키지 조립·검증, **Mac의 새 폴더 설치**, 초안 모드와 **명시 설치·등록·초기화·시작을 연결한 setup 설치 도우미**, **제품·NIGO 설정의 결합 cold 검사**, **인스턴스 등록과 명시적 init/resume-init**, **Mac 사용자 LaunchAgent의 start/status/stop**, **오프라인 logs/diagnose**다. 새 setup CLI와 동일한 CLI를 담은 개발용 package로 취소·재개, 설치·초기화, 단일 노드 시작·정상 종료·같은 데이터 재시작을 확인했다. [검증 범위와 남은 인수](./results/2026-09-27-setup-install-flow.md)를 따르며 전체 G1-M은 후속이다. 엔진 JAR/JRE·고객 키·DB를 이 저장소에 동봉하지 않는다.
 
 2026-10-19에는 [NIGO RC1](./contracts/nigo/engine-rc1-2026-10-19/README.md)을 원격 수신하고 등록 모드 안내를 추가했다.
@@ -24,6 +26,8 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 
 | 명령 | 실제 동작 |
 | --- | --- |
+| `bxdl setup new <이름>` / `bxdl setup resume <이름>` | 같은 이름으로 자료·제품·network/native 설정 준비·재개. 실제 설치는 후속 ([가이드](./docs/preparation.md)) |
+| `bxdl console [--home <dir>] [--instance <control>]` | **추가 개발 중단·기존 구현 보존.** 홈·내 목록·기존 등록/세션의 저장 기록 조회. 승인한 목록 저장/갱신/숨기기와 새 설치 자료 준비 ([가이드](./docs/console.md)) |
 | `bxdl version --json` | Rust CLI identity·Mac 우선 target·구현 capability·엔진/서비스 미인수 상태 |
 | `bxdl package build ...` | expected hash에 고정한 stage를 결정적인 development archive로 조립·선택 서명·자체 검증 |
 | `bxdl package verify <archive> ...` | 외부 신뢰 key의 Ed25519 서명, 모든 payload hash/size/mode, 경로·형식·한도 검증 |

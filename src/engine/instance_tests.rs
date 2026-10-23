@@ -698,6 +698,10 @@ mod owned {
         let before = f.journal.read().unwrap();
         let root = Control::open(&f.options.instance).unwrap();
         let _guard = root.lock().unwrap();
+        let catalog = catalog_record(&f.options.instance).unwrap();
+        assert_eq!(catalog.schema_version, 2);
+        assert_eq!(catalog.initialization, "UNKNOWN");
+        assert_eq!(catalog.cli_match, Some(false));
         let observed = verify_owned_binding_with_package(&f.options, &f.owner, false).unwrap();
         assert_eq!(observed.summary.initialization, "UNKNOWN");
         assert_eq!(observed.summary.operation_busy, Some(true));
@@ -708,5 +712,79 @@ mod owned {
         assert!(inspect_owned_registration(&f.options, &f.owner).is_err());
         assert_eq!(before, f.journal.read().unwrap());
         assert!(!f.root.join("data").exists());
+        check_catalog_location(&f.options.instance, &f.root.join("console/catalog")).unwrap();
+        // Original supply locations are no longer operational references. A
+        // later symlink there cannot block metadata linkage or redirect writes.
+        for path in [&f.options.archive, &f.options.lock]
+            .into_iter()
+            .chain(f.options.public_key.iter())
+        {
+            symlink(&f.root, path).unwrap();
+        }
+        check_catalog_location(&f.options.instance, &f.root.join("console/catalog")).unwrap();
+        assert_eq!(
+            catalog_record(&f.options.instance).unwrap().schema_version,
+            2
+        );
+        assert_eq!(before, f.journal.read().unwrap());
     }
+}
+
+#[test]
+fn catalog_metadata_does_not_take_operation_lock_or_change_uncertain_record() {
+    let mut f = Fixture::new();
+    f.pending();
+    let before = f.journal.read().unwrap();
+    let _guard = f.control.lock().unwrap();
+    let observed = catalog_record(f.control.path()).unwrap();
+    assert_eq!(observed.schema_version, 1);
+    assert_eq!(observed.instance_id, "test-validator");
+    assert_eq!(observed.initialization, "UNKNOWN");
+    assert_eq!(observed.cli_match, None);
+    assert_eq!(before, f.journal.read().unwrap());
+    assert!(!f.binding.data_directory.exists());
+}
+
+#[test]
+fn catalog_cli_comparison_requires_exact_bytes_without_execution() {
+    let f = Fixture::new();
+    fs::create_dir_all(f.binding.package.join("bin")).unwrap();
+    let cli = f.binding.package.join("bin/bxdl");
+    put(&cli, b"must never execute these bytes");
+    fs::set_permissions(&cli, fs::Permissions::from_mode(0o700)).unwrap();
+    assert_eq!(
+        catalog_record(f.control.path()).unwrap().cli_match,
+        Some(false)
+    );
+    fs::copy(std::env::current_exe().unwrap(), &cli).unwrap();
+    fs::set_permissions(&cli, fs::Permissions::from_mode(0o700)).unwrap();
+    assert_eq!(
+        catalog_record(f.control.path()).unwrap().cli_match,
+        Some(true)
+    );
+    fs::set_permissions(&cli, fs::Permissions::from_mode(0o600)).unwrap();
+    assert_eq!(catalog_record(f.control.path()).unwrap().cli_match, None);
+    assert!(!f.binding.data_directory.exists());
+}
+
+#[test]
+fn catalog_write_location_cannot_enter_instance_data_package_or_input_paths() {
+    let f = Fixture::new();
+    let before = f.journal.read().unwrap();
+    for protected in [
+        &f.binding.data_directory,
+        &f.binding.package,
+        &f.binding.archive,
+        &f.binding.product,
+        &f.binding.native,
+        &f.binding.lock,
+    ] {
+        assert!(
+            check_catalog_location(f.control.path(), &protected.join("console/catalog")).is_err()
+        );
+    }
+    check_catalog_location(f.control.path(), &f.root.join("console/catalog")).unwrap();
+    assert_eq!(before, f.journal.read().unwrap());
+    assert!(!f.binding.data_directory.exists());
+    assert!(!f.binding.package.exists());
 }

@@ -1,14 +1,16 @@
 # CLI·설치·설정·초기화와 Mac 서비스
 
-`--json`은 명령 인자 앞/뒤에서 받을 수 있으며 stdout에 JSON 문서 하나만 쓴다. 기본 setup에서는 `--non-interactive`와 함께 사용해야 한다. `setup --install`과 `setup --network`는 터미널 전용이다. 사람용 결과도 같은 내부 결과를 표현한다. 대화형 setup 질문은 stderr에 출력하며, 비대화형 JSON 실행은 질문이나 로그 없이 결과만 stdout에 쓴다. 잘못된 인자나 parser 오류에 입력값·secret을 그대로 되돌려 쓰지 않는다.
+**현재 개선 방향:** console의 추가 개발은 중단했다. 직접 명령의 이름 기반 대상 지정과 순차 준비 흐름을 우선하며 [CLI 계획](../design/2026-10-22-cli-simplification.md)을 따른다. 이 문서는 현재 구현된 명령만 설명한다. `setup new/resume`은 아직 기존 번호 메뉴 방식이다.
+
+`--json`은 명령 인자 앞/뒤에서 받을 수 있으며 stdout에 JSON 문서 하나만 쓴다. 기본 setup에서는 `--non-interactive`와 함께 사용해야 한다. `console`, `setup new/resume`, `setup --install`, `setup --network`는 터미널 전용이다. console은 --json을 지원하지 않는다. 사람용 결과도 같은 내부 결과를 표현한다. 대화형 setup 질문은 stderr에 출력하며, 비대화형 JSON 실행은 질문이나 로그 없이 결과만 stdout에 쓴다. 잘못된 인자나 parser 오류에 입력값·secret을 그대로 되돌려 쓰지 않는다.
 
 | exit | 현재 의미 |
 | --- | --- |
-| 0 | 패키지·설치·엔진 식별·설정 저장·등록/조회·초기화 성공, 서비스 SUCCEEDED 또는 진단 수집/저장 완료. 명령별 의미를 확인해야 함 |
+| 0 | 패키지·설치·엔진 식별·설정 저장·등록/조회·초기화 성공, 서비스 SUCCEEDED 또는 진단 수집/저장 완료. 명령별 의미를 확인해야 함. console은 화면 정상 종료 |
 | 2 | 인자 오류, `config validate`/로컬 전용 `preflight`의 설정 read/schema 오류 |
 | 3 | artifact·설치·engine 입력 검증 실패, 결합 preflight 불일치, setup 저장 오류, 등록·초기화·서비스 사전 조건 거부 또는 진단 수집/출력 거부 |
 | 4 | 로컬 preflight FAIL, 서비스 관측 결과 FAILED 또는 아직 제공하지 않는 운영 명령 |
-| 5 | preflight·서비스 관측 INCOMPLETE, 진단 partial 또는 setup 취소/EOF·비대화형 미완성 초안 |
+| 5 | preflight·서비스 관측 INCOMPLETE, 진단 partial 또는 setup/console 취소·EOF 및 비대화형 미완성 초안 |
 | 6 | cold JVM timeout, 설치 receipt commit·초기화·서비스 시도/관측 불명(UNKNOWN) |
 | 7 | 입력/안내·결과 출력 실패 또는 분류되지 않은 내부 오류 |
 
@@ -20,11 +22,20 @@ engine 명령과 결합/등록형 preflight는 고정한 JVM의 cold 명령을 �
 
 제품·설치·네트워크 문답의 모든 입력 단계에서 `:help`, `:back`, `:cancel`을 공통으로 사용한다. 도움말은 현재 질문으로 돌아오고, 뒤로가기는 앞 질문 또는 이전 검토 단계로 돌아가며, 취소/EOF는 저장한 checkpoint를 보존한다. 예약 문자가 파일명이라면 `./:help` 같은 명시 경로로 지정한다. 항목 편집은 번호 하나를 고르고 저장한 뒤 검토로 돌아간다. 파일 출력·apply·init·start의 대화형 확인은 `y`/`yes`만 승인하며 빈 Enter는 거절이다.
 
-통합 터미널 진입점 `bxdl console`은 [UX-02 이후 구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)이며 아직 제공하지 않는다. HTML 화면은 설계 검토용 시안이고 웹서버를 실행하지 않는다.
+`bxdl console [--home <관리-루트>] [--instance <기존-control>]`은 홈·목록·기존 자료 읽기를 제공한다. 홈 조회는 무쓰기이며 목록 저장/갱신/숨기기는 개별 승인한다. 홈 1번은 `setup new/resume`과 같은 자료 준비를 제공한다. 실제 통합 설치·현재 서비스 조회·시작·중지는 후속이다. [console 사용 가이드](./console.md)를 따른다. HTML과 Python 터미널 체험판은 별도의 시안이며 제품 웹서버를 실행하지 않는다.
 
 ## JSON envelope
 
 `schemaVersion`, `command`, `outcome`, `reasonCode`, `message`, `observedAt`, 선택 `data`로 구성된다. outcome은 SUCCEEDED/FAILED/INCOMPLETE/UNSUPPORTED/UNKNOWN이다. Rust 이식 후에도 명령·exit·envelope를 유지한다. `version`은 CLI build와 capability만 표시하며 설치된 bundle을 탐색하지 않는다. data에 implementation=rust, primaryTarget=darwin-arm64, macosServiceAcceptance=NOT_CHECKED를 추가하고 기존 linuxServiceAcceptance도 유지한다.
+
+## 이름 있는 설치 준비
+
+```text
+bxdl setup new <이름> [--home <관리-루트>] [--from <instance.json>]
+bxdl setup resume <이름> [--home <관리-루트>]
+```
+
+새 문답은 자료·제품·network 또는 기존 native를 연결한다. 승인한 새 준비 세션과 제품/native revision만 만들며 설치·등록·init·start는 실행하지 않는다. 이름은 `^[a-z][a-z0-9-]{0,31}$`이며 같은 관리 루트에서 고유하다. 기존 명령의 경로 옵션·JSON은 유지하고 새 명령의 `--json`/비TTY는 입력·쓰기 전 거절한다. 정상 메뉴 종료 0은 초안 보존이며 준비 검증 성공의 증명이 아니다. 취소/EOF 5, usage 2, 저장/검증 3, I/O 7을 사용한다. [준비 사용 가이드](./preparation.md)를 따른다.
 
 ## setup 명령
 

@@ -2,3 +2,10 @@
 pub(crate) mod help;
 pub(crate) mod prompt;
 pub(crate) mod view;
+
+pub(crate) mod catalog;
+pub(crate) mod console;
+pub(crate) mod home;
+pub(crate) mod target;
+
+pub(crate) mod install_flow;

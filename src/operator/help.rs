@@ -9,6 +9,18 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
         return None;
     };
     let (usage, note) = match topic {
+        ["console"] => (
+            "bxdl console [--home <관리-루트>] [--instance <기존-control-경로>]",
+            "TTY 전용 홈·목록·기존 자료 조회입니다. --json과 비TTY 실행은 입력/쓰기 전에 거절합니다.\n홈/목록은 폴더를 만들지 않습니다. 명시 경로를 읽은 뒤 y/yes로 승인한 목록 저장만 관리 위치를 준비합니다.\nMac 기본 위치는 ~/Library/Application Support/BXDL입니다. 다른 OS는 --home을 지정하세요.\n등록 노드와 기존 설치/제품초안/네트워크 세션을 연결하며 재등록·형식변환·임의 CLI 실행은 하지 않습니다.\n목록은 저장 기록이며 현재 서비스 상태는 미조회입니다. 새 설치 자료 준비는 홈 1번에서 setup new/resume과 같은 흐름으로 진행합니다. 실제 설치·시작·중지·지원 보고서 통합은 후속입니다.\n:help 도움말, :back 이전 화면, :cancel/EOF 저장 자료를 보존하고 중단. Enter는 변경을 승인하지 않습니다.",
+        ),
+        ["setup", "new"] => (
+            "bxdl setup new <이름> [--home <관리-루트>] [--from <instance.json>]",
+            "이름을 붙인 설치 준비 세션을 만듭니다. 이름은 소문자로 시작하는 1~32자의 소문자·숫자·하이픈입니다.\nTTY 전용이며 --json/--non-interactive를 지원하지 않습니다. y/yes 승인 전에는 관리 폴더나 세션을 만들지 않습니다.\n공급 자료·제품 설정·공개 network 또는 기존 native를 연결해 새 설정 revision을 준비합니다. 설치·등록·초기화·시작은 수행하지 않습니다.\n중단한 작업은 setup resume <이름>으로 이어갑니다. Mac 기본 관리 위치는 ~/Library/Application Support/BXDL이며 다른 OS는 --home을 지정하세요.",
+        ),
+        ["setup", "resume"] => (
+            "bxdl setup resume <이름> [--home <관리-루트>]",
+            "setup new 또는 console에서 만든 준비 세션을 엽니다. 열기만으로 저장·재검증 결과 승인·설치 실행을 하지 않습니다.\n기존 setup --install/--network/제품 초안은 해당 기존 --resume 명령으로 엽니다.\n:help 도움말, :back 검토, :cancel/EOF 저장한 자료를 보존하고 중단. 0은 저장 후 종료입니다.",
+        ),
         ["setup"] => (
             "bxdl setup [--workspace <dir>] [--resume | --from <instance.json>] [--output <new.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume) --non-interactive [--output <new.json>] [--json]",
             "제품 설정 초안·로컬 검사·새 설정 파일을 준비합니다. 설치·초기화·시작은 수행하지 않습니다.\n대화형 입력: :help 도움말, :back 이전 항목/검토, :cancel 저장 후 중단. edit은 번호로 한 항목만 수정합니다.\n대화형 새 설정 파일 출력은 y/yes만 승인하며 확인의 Enter는 거절합니다. 비대화형 모드는 표준입력을 읽지 않습니다.",

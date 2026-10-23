@@ -4,6 +4,7 @@ mod install_wizard;
 pub mod network;
 mod network_wizard;
 pub(crate) mod paths;
+pub mod preparation;
 pub(crate) mod store;
 mod wizard;
 pub mod workflow;
@@ -359,6 +360,15 @@ impl Session {
             &self.config_bytes()?,
             &Path::new(&self.draft.input_base).join(".bxdl-setup-config.json"),
         )
+    }
+
+    /// Check a proposed console write without exporting this draft's paths.
+    /// Partial drafts use the same field and reference rules as normal resume.
+    pub(crate) fn check_catalog_location(&self, candidate: &Path) -> Result<()> {
+        self.store.read()?;
+        check_draft(&self.draft, candidate)?;
+        self.store.read()?;
+        Ok(())
     }
 
     pub fn summary(&self) -> Summary {

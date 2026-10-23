@@ -128,6 +128,18 @@ impl Session {
         })
     }
 
+    /// Inspect only: retain all private reference paths inside this adapter.
+    pub(crate) fn check_catalog_location(&self, candidate: &Path) -> Result<()> {
+        self.store.read()?;
+        self.prepared.recheck()?;
+        check_workspace(candidate, &self.prepared)?;
+        if paths::overlaps(candidate, &self.default_output()?)? {
+            return Err(output_conflict());
+        }
+        self.store.read()?;
+        Ok(())
+    }
+
     pub fn summary(&self) -> Summary {
         Summary {
             mode: "NETWORK",

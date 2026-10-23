@@ -531,6 +531,75 @@ fn load(root: &Control) -> Result<(Binding, Input, Store, State)> {
     disjoint(root.path(), &binding)?;
     Ok((binding, binding_file, journal, state))
 }
+/// Fixed, private-path-free registration metadata for the advisory console list.
+/// CLI equality is a byte comparison only, not package authentication or consent.
+pub(crate) struct CatalogRecord {
+    pub schema_version: u32,
+    pub instance_id: String,
+    pub initialization: &'static str,
+    pub cli_match: Option<bool>,
+}
+
+/// Check a proposed console write against private binding references without
+/// publishing those paths, invoking an engine, or acquiring an operation lock.
+pub(crate) fn check_catalog_location(instance: &Path, candidate: &Path) -> Result<()> {
+    let root = Control::open(instance)?;
+    let (binding, binding_file, journal, _state) = load(&root)?;
+    let mut protected = vec![
+        &binding.package,
+        &binding.data_directory,
+        &binding.archive,
+        &binding.product,
+        &binding.native,
+        &binding.lock,
+    ];
+    protected.extend(binding.public_key.iter());
+    protected.extend(binding.pins.iter().map(|pin| &pin.path));
+    // V2 original supply paths are provenance only. Guard the managed copies
+    // above; do not inspect obsolete source locations, even if later replaced.
+    for path in protected {
+        if paths::overlaps(candidate, path)? {
+            return Err(precondition());
+        }
+    }
+    binding_file.recheck()?;
+    journal.read().map_err(state_error)?;
+    root.recheck()
+}
+
+pub(crate) fn catalog_record(instance: &Path) -> Result<CatalogRecord> {
+    let root = Control::open(instance)?;
+    let (binding, binding_file, journal, state) = load(&root)?;
+    let initialization = match state.phase {
+        Phase::Registered => "NOT_STARTED",
+        Phase::Initialized => "INITIALIZED",
+        Phase::InitIntent | Phase::Unknown => "UNKNOWN",
+    };
+    let cli_match = (|| -> Result<bool> {
+        const MAX_CLI: u64 = 64 * 1024 * 1024;
+        let cli = Input::read(&binding.package.join("bin/bxdl"), MAX_CLI, true)?;
+        let current = Input::read(
+            &std::env::current_exe().map_err(|_| precondition())?,
+            MAX_CLI,
+            true,
+        )?;
+        let matches = cli.raw == current.raw;
+        cli.recheck()?;
+        current.recheck()?;
+        Ok(matches)
+    })()
+    .ok();
+    binding_file.recheck()?;
+    journal.read().map_err(state_error)?;
+    root.recheck()?;
+    Ok(CatalogRecord {
+        schema_version: binding.schema_version,
+        instance_id: binding.instance_id,
+        initialization,
+        cli_match,
+    })
+}
+
 pub fn show(instance: &Path) -> Result<Summary> {
     let root = Control::open(instance)?;
     let (_binding, _file, _journal, state) = load(&root)?;

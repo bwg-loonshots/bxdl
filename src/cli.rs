@@ -14,7 +14,7 @@ pub const REVISION: &str = match option_env!("BXDL_REVISION") {
     Some(v) => v,
     None => "development",
 };
-pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl version [--json]\n  bxdl runtime stage --source <extracted-java-home> --lock <json> --output <new-dir> [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl config fingerprint --certificate <leaf.pem|leaf.der> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup --network --workspace <new-session> --from <instance.json>\n      --network-file <network.json> [--output <new-node.json>]\n  bxdl setup --network --workspace <session> --resume [--output <new-node.json>]\n  bxdl setup --install --workspace <new-session> [--from <instance.json>]\n  bxdl setup --install --workspace <session> --resume\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl status --instance <dir> --wait [--timeout-seconds <1..600>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl logs --instance <dir> [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n  bxdl diagnose --instance <dir> --output <new.json>\n      [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\n기본 setup은 설정 초안·로컬 검사·파일 저장만 수행합니다.\nsetup --network는 기존 제품 설정·공개 네트워크 자료로 RC.3 호환 native 설정을 준비합니다. 키 생성·엔진 실행은 하지 않습니다.\nsetup --install은 터미널에서 설치·등록·초기화·시작을 각각 명시 선택합니다. 기존 DB 업그레이드는 제공하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nstatus --wait는 현재 시작 시도만 최대 120초(기본) 관측하며 초기화·시작·중지는 실행하지 않습니다.\nlogs는 최신 초기화·서비스 시도의 정제한 저장 기록만 읽습니다. raw stdout/stderr나 실시간 follow는 제공하지 않습니다.\ndiagnose는 같은 기록을 새 JSON 지원 보고서에 저장합니다. JVM·네트워크·서비스 호출이나 현재 상태 검증은 수행하지 않습니다.\nstatus/diagnose의 시작 단계는 마지막 진입 기록입니다. 완료 여부나 파일 접근 지연의 원인을 확정하지 않습니다.\nlogs/diagnose 기본 한도는 tail 50개, 읽기 262144 bytes, 시간 5초입니다. 누락·예산 초과는 partial로 표시합니다.\nupgrade/uninstall은 아직 제공하지 않습니다.\n명령별 안내: bxdl <명령> --help (예: bxdl start --help, bxdl setup --install --help).\n";
+pub const HELP: &str = "BXDL — 패키징·운영 CLI (development, Rust)\n\n사용법:\n  bxdl setup new <이름> [--home <관리-루트>] [--from <instance.json>]\n  bxdl setup resume <이름> [--home <관리-루트>]\n  bxdl console [--home <관리-루트>] [--instance <기존-control>]\n  bxdl version [--json]\n  bxdl runtime stage --source <extracted-java-home> --lock <json> --output <new-dir> [--json]\n  bxdl package build --root <dir> --spec <json> --output <tar.gz>\n      (--signing-key <private.pem> | --allow-unsigned-development) [--json]\n  bxdl package verify <tar.gz>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl install <tar.gz> --destination <new-dir>\n      (--public-key <trusted.pem> | --allow-unsigned-development) [--json]\n  bxdl engine inspect --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl engine preflight --jar <jar> --java <java> --lock <json> --allow-development\n      --config <nigo-node.json> [--timeout-seconds <1..120>] [--json]\n  bxdl config validate --file <instance.json> [--json]\n  bxdl config fingerprint --certificate <leaf.pem|leaf.der> [--json]\n  bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <nigo-node.json>\n      --jar <jar> --java <java> --lock <json> --allow-development\n      [--timeout-seconds <1..120>] [--json]\n  bxdl setup --network --workspace <new-session> --from <instance.json>\n      --network-file <network.json> [--output <new-node.json>]\n  bxdl setup --network --workspace <session> --resume [--output <new-node.json>]\n  bxdl setup --install --workspace <new-session> [--from <instance.json>]\n  bxdl setup --install --workspace <session> --resume\n  bxdl setup [--workspace <dir>] [--resume] [--from <instance.json>]\n      [--output <new-instance.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume)\n      --non-interactive [--output <new-instance.json>] [--json]\n\n  bxdl instance register --instance <new-dir> --package <installed-dir>\n      --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development)\n      --config <instance.json> --engine-config <node.json> --lock <json>\n      --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl instance show --instance <dir> [--json]\n  bxdl preflight --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl init --instance <dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <dir> --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl status --instance <dir> [--timeout-seconds <1..120>] [--json]\n  bxdl status --instance <dir> --wait [--timeout-seconds <1..600>] [--json]\n  bxdl stop --instance <dir> [--timeout-seconds <1..600>] [--json]\n  bxdl logs --instance <dir> [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n  bxdl diagnose --instance <dir> --output <new.json>\n      [--tail <1..200>] [--max-bytes <4096..1048576>]\n      [--timeout-seconds <1..30>] [--json]\n\n서명 검증 key는 패키지 밖의 신뢰한 경로에서 제공하세요.\ndevelopment package 검증은 엔진 실행·공식 공급·OS 서비스 지원 검증이 아닙니다.\nmacOS arm64를 첫 설치·운용 UX 대상으로 하며 Linux/Docker는 후속입니다.\nsetup new/resume과 console은 같은 설치 자료·설정 준비 흐름을 사용합니다. 실제 설치·서비스 실행의 통합 연결은 후속입니다.\n기본 setup은 설정 초안·로컬 검사·파일 저장만 수행합니다.\nsetup --network는 기존 제품 설정·공개 네트워크 자료로 RC.3 호환 native 설정을 준비합니다. 키 생성·엔진 실행은 하지 않습니다.\nsetup --install은 터미널에서 설치·등록·초기화·시작을 각각 명시 선택합니다. 기존 DB 업그레이드는 제공하지 않습니다.\npreflight는 기본적으로 로컬 정적 검사입니다. 전체 엔진 옵션을 지정하면 제품·native 설정을 대조한 뒤 cold 검사합니다.\nengine preflight는 NIGO node.json을 읽고 cold 검사를 수행하며 INCOMPLETE를 유지합니다.\ninstall은 macOS arm64 새 폴더에 검증한 파일만 설치합니다. 서비스·초기화는 수행하지 않습니다.\nstart/status/stop은 Mac 사용자 LaunchAgent를 명시 제어합니다. 로그인 자동 시작·자동 재시작은 하지 않습니다.\nstatus --wait는 현재 시작 시도만 최대 120초(기본) 관측하며 초기화·시작·중지는 실행하지 않습니다.\nlogs는 최신 초기화·서비스 시도의 정제한 저장 기록만 읽습니다. raw stdout/stderr나 실시간 follow는 제공하지 않습니다.\ndiagnose는 같은 기록을 새 JSON 지원 보고서에 저장합니다. JVM·네트워크·서비스 호출이나 현재 상태 검증은 수행하지 않습니다.\nstatus/diagnose의 시작 단계는 마지막 진입 기록입니다. 완료 여부나 파일 접근 지연의 원인을 확정하지 않습니다.\nlogs/diagnose 기본 한도는 tail 50개, 읽기 262144 bytes, 시간 5초입니다. 누락·예산 초과는 partial로 표시합니다.\nupgrade/uninstall은 아직 제공하지 않습니다.\n명령별 안내: bxdl <명령> --help (예: bxdl start --help, bxdl setup --install --help).\n";
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -91,7 +91,9 @@ fn report<T: Serialize>(
 /// A failed output write is exit 7, never a successful operation report.
 pub fn run<'a>(args: &[String], stdout: &'a mut dyn Write, stderr: &'a mut dyn Write) -> i32 {
     let input = std::io::stdin();
-    let interactive = input.is_terminal();
+    let interactive = input.is_terminal()
+        && (args.first().is_none_or(|arg| arg != "console")
+            || (std::io::stdout().is_terminal() && std::io::stderr().is_terminal()));
     run_with_input(args, &mut input.lock(), interactive, stdout, stderr)
 }
 
@@ -127,6 +129,8 @@ pub fn run_with_input<'a>(
             ),
             0,
         )
+    } else if args.first().is_some_and(|arg| arg == "console") {
+        dispatch_console(&args[1..], json_mode, interactive, input, stderr)
     } else if args.first().is_some_and(|arg| arg == "setup") {
         dispatch_setup(&args[1..], json_mode, interactive, input, stderr)
     } else {
@@ -447,6 +451,152 @@ fn print_setup_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()>
     )
 }
 
+fn dispatch_console(
+    args: &[String],
+    json_mode: bool,
+    interactive: bool,
+    input: &mut dyn BufRead,
+    prompts: &mut dyn Write,
+) -> (ResultEnvelope, i32) {
+    let Some((flags, positions)) = parse(args, &[("home", true), ("instance", true)]) else {
+        return invalid("console");
+    };
+    if json_mode || !positions.is_empty() {
+        return invalid("console");
+    }
+    if !interactive {
+        return failure(
+            "console",
+            BxdlError::new(
+                "CONSOLE_INTERACTIVE_TERMINAL_REQUIRED",
+                "console은 대화형 터미널에서 실행하세요. 자동화는 기존 개별 명령을 사용하세요.",
+            ),
+            2,
+        );
+    }
+    let home = match flags
+        .get("home")
+        .map(|path| setup::absolute(Path::new(path)))
+        .unwrap_or_else(operator::home::default_home)
+    {
+        Ok(path) => path,
+        Err(error) => return failure("console", error, 2),
+    };
+    let instance = flags.get("instance").map(Path::new);
+    match operator::console::interact(&home, instance, input, prompts) {
+        Ok(operator::console::Finish::Closed) => (
+            result(
+                "console",
+                "SUCCEEDED",
+                "CONSOLE_CLOSED",
+                "콘솔을 종료했습니다. 노드 실행 상태는 변경하지 않았습니다.",
+                None,
+            ),
+            0,
+        ),
+        Ok(operator::console::Finish::Paused) => (
+            result(
+                "console",
+                "INCOMPLETE",
+                "CONSOLE_PAUSED",
+                "콘솔을 중단했습니다. 저장한 목록과 기존 자료는 보존됩니다. 노드 중지 요청은 하지 않았습니다.",
+                None,
+            ),
+            5,
+        ),
+        Err(error) => {
+            let exit = if matches!(
+                error.code.as_str(),
+                "SETUP_INPUT_FAILED" | "SETUP_OUTPUT_FAILED"
+            ) {
+                7
+            } else {
+                3
+            };
+            failure("console", error, exit)
+        }
+    }
+}
+
+fn dispatch_preparation(
+    args: &[String],
+    json_mode: bool,
+    interactive: bool,
+    input: &mut dyn BufRead,
+    prompts: &mut dyn Write,
+) -> (ResultEnvelope, i32) {
+    let resume = args.first().is_some_and(|arg| arg == "resume");
+    let command = if resume { "setup resume" } else { "setup new" };
+    let Some((flags, positions)) = parse(&args[1..], &[("home", true), ("from", true)]) else {
+        return invalid(command);
+    };
+    if json_mode
+        || positions.len() != 1
+        || (resume && flags.contains_key("from"))
+        || !operator::install_flow::valid_name(&positions[0])
+    {
+        return invalid(command);
+    }
+    if !interactive {
+        return failure(
+            command,
+            BxdlError::new(
+                "SETUP_INTERACTIVE_TERMINAL_REQUIRED",
+                "설치 준비는 터미널에서 실행하세요. 자동화에는 기존 명시 명령을 사용하세요.",
+            ),
+            2,
+        );
+    }
+    let home = match flags
+        .get("home")
+        .map(|path| setup::absolute(Path::new(path)))
+        .unwrap_or_else(operator::home::default_home)
+    {
+        Ok(home) => home,
+        Err(error) => return failure(command, error, 2),
+    };
+    match operator::install_flow::run(
+        &home,
+        &positions[0],
+        resume,
+        flags.get("from").map(Path::new),
+        input,
+        prompts,
+    ) {
+        Ok(operator::install_flow::Finish::Saved) => (
+            result(
+                command,
+                "SUCCEEDED",
+                "PREPARATION_SAVED",
+                "준비 기록을 저장했습니다. 설치·초기화·시작은 수행하지 않았습니다.",
+                None,
+            ),
+            0,
+        ),
+        Ok(operator::install_flow::Finish::Paused) => (
+            result(
+                command,
+                "INCOMPLETE",
+                "PREPARATION_PAUSED",
+                "준비를 중단했습니다. 승인하여 저장한 자료는 보존됩니다.",
+                None,
+            ),
+            5,
+        ),
+        Err(error) => {
+            let exit = if matches!(
+                error.code.as_str(),
+                "SETUP_INPUT_FAILED" | "SETUP_OUTPUT_FAILED"
+            ) {
+                7
+            } else {
+                3
+            };
+            failure(command, error, exit)
+        }
+    }
+}
+
 fn dispatch_setup(
     args: &[String],
     json_mode: bool,
@@ -454,6 +604,12 @@ fn dispatch_setup(
     input: &mut dyn BufRead,
     prompts: &mut dyn Write,
 ) -> (ResultEnvelope, i32) {
+    if args
+        .first()
+        .is_some_and(|arg| matches!(arg.as_str(), "new" | "resume"))
+    {
+        return dispatch_preparation(args, json_mode, interactive, input, prompts);
+    }
     let Some((flags, positions)) = parse(
         args,
         &[
