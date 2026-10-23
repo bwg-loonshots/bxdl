@@ -1,5 +1,6 @@
 //! Shared preparation controller for direct setup commands and console menus.
 //! This stage never installs, registers, initializes or starts a node.
+mod sequential;
 use super::{
     catalog::Catalog,
     home::Home,
@@ -49,6 +50,29 @@ pub(crate) fn run(
     from: Option<&Path>,
     input: &mut dyn BufRead,
     out: &mut dyn Write,
+) -> Result<Finish> {
+    run_mode(home_path, name, resume, from, input, out, false)
+}
+
+pub(crate) fn run_sequential(
+    home_path: &Path,
+    name: &str,
+    resume: bool,
+    from: Option<&Path>,
+    input: &mut dyn BufRead,
+    out: &mut dyn Write,
+) -> Result<Finish> {
+    run_mode(home_path, name, resume, from, input, out, true)
+}
+
+fn run_mode(
+    home_path: &Path,
+    name: &str,
+    resume: bool,
+    from: Option<&Path>,
+    input: &mut dyn BufRead,
+    out: &mut dyn Write,
+    sequential: bool,
 ) -> Result<Finish> {
     if !valid_name(name) {
         return Err(invalid_name());
@@ -104,6 +128,9 @@ pub(crate) fn run(
         inputs.destination = Some(home_path.join("packages").join(name));
         inputs.instance = Some(home_path.join("instances").join(name));
         session.set_inputs(inputs)?;
+    }
+    if sequential {
+        return sequential::run(&home, &home_path, name, &mut session, input, out);
     }
     prompt::say(
         out,
@@ -186,7 +213,7 @@ pub(crate) fn menu(home: &Path, input: &mut dyn BufRead, out: &mut dyn Write) ->
             Input::Back => return Ok(Finish::Saved),
             Input::Help => prompt::help(
                 out,
-                "새 세션과 기존 준비 세션 재개는 직접 setup new/resume과 같은 흐름입니다. 기존 setup --install 세션은 기존 메뉴에서 열 수 있습니다.",
+                "새 세션과 기존 준비 세션 재개는 직접 setup new/resume과 저장 형식을 공유하며 여기서는 기존 번호 메뉴를 사용합니다. 기존 setup --install 세션은 기존 메뉴에서 열 수 있습니다.",
             )?,
             Input::Value(value) => match value.as_str() {
                 "" | "0" => return Ok(Finish::Saved),
@@ -349,7 +376,7 @@ impl Wizard<'_> {
                     self.problem(error)?;
                     prompt::say(
                         self.out,
-                        "저장 기록을 현재 유효한 준비 결과로 사용하지 마세요. 항목을 수정하고 5번으로 다시 검토하세요.\n",
+                        "저장 기록을 현재 유효한 준비 결과로 사용하지 마세요. 항목을 수정하고 다시 검토하세요.\n",
                     )?;
                 }
             }

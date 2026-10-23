@@ -32,11 +32,14 @@ pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
 설치·준비:
   bxdl setup new <이름>                    설치 자료·설정 준비
   bxdl setup resume <이름>                 저장한 준비 이어가기
+  bxdl setup list                         저장한 설치 준비 목록
+  bxdl setup show <이름>                   준비 내용·남은 입력 확인
+  bxdl setup edit <이름> --field httpPort  제품 항목 하나 수정
   bxdl setup --install --workspace <세션>  실제 설치·등록·초기화·시작 문답
   bxdl setup --install --workspace <세션> --resume
   bxdl init --instance <경로> --confirm-initialize
   bxdl resume-init --instance <경로> --confirm-resume
-  setup new/resume의 순차 문답 개선과 실제 설치 연결은 후속입니다.
+  setup new/resume은 순차 문답입니다. setup apply의 실제 설치 연결은 후속입니다.
 
 설정·패키지 제작:
   bxdl setup --help                       제품 초안·비대화형 입력
@@ -229,6 +232,16 @@ pub fn run_with_input<'a>(
                 7
             };
         }
+        if matches!(
+            response.command.as_str(),
+            "setup list" | "setup show" | "setup edit"
+        ) {
+            return if print_preparation_summary(out, &data, &response.command).is_ok() {
+                exit
+            } else {
+                7
+            };
+        }
         if response.command == "setup network" {
             return if print_network_summary(out, &data).is_ok() {
                 exit
@@ -262,6 +275,104 @@ pub fn run_with_input<'a>(
         }
     }
     exit
+}
+
+fn print_preparation_summary(
+    out: &mut dyn Write,
+    data: &Value,
+    command: &str,
+) -> std::io::Result<()> {
+    if command == "setup list" {
+        if let Some(entries) = data["entries"].as_array() {
+            if entries.is_empty() {
+                writeln!(
+                    out,
+                    "저장한 설치 준비가 없습니다. 새 준비: bxdl setup new <이름> (같은 --home 사용)"
+                )?;
+            }
+            for entry in entries {
+                let name = entry["name"].as_str().unwrap_or("?");
+                if entry["record"] == "UNAVAILABLE" {
+                    writeln!(
+                        out,
+                        "{name}  읽기 불가 [{}]",
+                        entry["reasonCode"].as_str().unwrap_or("UNKNOWN")
+                    )?;
+                } else {
+                    let snapshot = &entry["inspection"];
+                    let missing = snapshot["missingFields"].as_array().map_or(0, Vec::len)
+                        + snapshot["missingInputs"].as_array().map_or(0, Vec::len);
+                    writeln!(
+                        out,
+                        "{name}  {} · 남은 입력 {missing}개 · 자료 재검증 미수행",
+                        snapshot["summary"]["preparation"]
+                            .as_str()
+                            .unwrap_or("UNKNOWN")
+                    )?;
+                }
+            }
+        }
+        writeln!(out, "상세 확인: bxdl setup show <이름> (같은 --home 사용)")?;
+    } else if command == "setup show" {
+        let snapshot = &data["inspection"];
+        writeln!(
+            out,
+            "{} · 저장 상태 {} · 현재 자료 {}",
+            data["name"].as_str().unwrap_or("?"),
+            snapshot["summary"]["preparation"]
+                .as_str()
+                .unwrap_or("UNKNOWN"),
+            snapshot["verification"].as_str().unwrap_or("NOT_CHECKED")
+        )?;
+        if let Some(fields) = snapshot["fields"].as_array() {
+            for field in fields {
+                writeln!(
+                    out,
+                    "  {}: {}",
+                    field["label"].as_str().unwrap_or("?"),
+                    field["value"].as_str().unwrap_or("미입력")
+                )?;
+            }
+        }
+        for key in ["missingInputs", "missingFields"] {
+            if let Some(fields) = snapshot[key].as_array().filter(|fields| !fields.is_empty()) {
+                writeln!(
+                    out,
+                    "남은 입력: {}",
+                    fields
+                        .iter()
+                        .filter_map(Value::as_str)
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )?;
+            }
+        }
+        if let Some(next) = snapshot["nextInput"].as_str() {
+            writeln!(out, "다음 입력: {next}")?;
+        }
+        if let Some(code) = snapshot["verificationCode"].as_str() {
+            writeln!(out, "자료 확인 결과: {code}")?;
+        }
+        writeln!(out, "설치 NOT_PERFORMED · 엔진/실행 상태 NOT_CHECKED")?;
+    }
+    if let Some(words) = data["nextCommand"].as_array() {
+        let rendered: Vec<String> = words
+            .iter()
+            .filter_map(Value::as_str)
+            .map(|word| {
+                if word
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b"-_./".contains(&b))
+                {
+                    word.into()
+                } else {
+                    format!("'{}'", word.replace('\'', "'\"'\"'"))
+                }
+            })
+            .collect();
+        writeln!(out, "다음 명령: {}", rendered.join(" "))?;
+    }
+    Ok(())
 }
 
 fn print_nodes_summary(out: &mut dyn Write, data: &Value, added: bool) -> std::io::Result<()> {
@@ -719,7 +830,7 @@ fn dispatch_preparation(
         Ok(home) => home,
         Err(error) => return failure(command, error, 2),
     };
-    match operator::install_flow::run(
+    match operator::install_flow::run_sequential(
         &home,
         &positions[0],
         resume,
@@ -761,6 +872,138 @@ fn dispatch_preparation(
     }
 }
 
+fn dispatch_preparation_command(
+    args: &[String],
+    json_mode: bool,
+    interactive: bool,
+    input: &mut dyn BufRead,
+    prompts: &mut dyn Write,
+) -> (ResultEnvelope, i32) {
+    let action = args[0].as_str();
+    let command = format!("setup {action}");
+    let Some((flags, positions)) = parse(&args[1..], &[("home", true), ("field", true)]) else {
+        return invalid(&command);
+    };
+    if (action == "list" && (!positions.is_empty() || flags.contains_key("field")))
+        || (action != "list"
+            && (positions.len() != 1 || !operator::install_flow::valid_name(&positions[0])))
+        || (action == "show" && flags.contains_key("field"))
+        || (action == "edit"
+            && (!flags.contains_key("field")
+                || json_mode
+                || !setup::FIELDS
+                    .iter()
+                    .any(|field| flags.get("field").is_some_and(|name| field.name == name))))
+    {
+        return invalid(&command);
+    }
+    if action == "edit" && !interactive {
+        return failure(
+            &command,
+            BxdlError::new(
+                "SETUP_INTERACTIVE_TERMINAL_REQUIRED",
+                "한 항목 수정은 터미널에서 실행하세요. 조회에는 setup list/show --json을 사용할 수 있습니다.",
+            ),
+            2,
+        );
+    }
+    let home = match flags
+        .get("home")
+        .map(|path| setup::absolute(Path::new(path)))
+        .unwrap_or_else(operator::home::default_home)
+    {
+        Ok(path) => path,
+        Err(error) => return failure(&command, error, 2),
+    };
+    match action {
+        "list" => match operator::preparation_commands::list(&home) {
+            Ok(listing) => {
+                let partial = listing.partial;
+                report(
+                    &command,
+                    if partial { "INCOMPLETE" } else { "SUCCEEDED" },
+                    if partial {
+                        "PREPARATION_LIST_PARTIAL"
+                    } else {
+                        "PREPARATION_LIST"
+                    },
+                    "저장한 설치 준비 목록입니다. 공급 자료와 실행 상태는 재검증하지 않았습니다.",
+                    listing,
+                    if partial { 5 } else { 0 },
+                )
+            }
+            Err(error) => failure(&command, error, 3),
+        },
+        "show" => match operator::preparation_commands::show(&home, &positions[0]) {
+            Ok(detail) => {
+                let changed = detail.inspection.verification == "CHANGED";
+                report(
+                    &command,
+                    if changed { "INCOMPLETE" } else { "SUCCEEDED" },
+                    if changed {
+                        "PREPARATION_CHANGED"
+                    } else {
+                        "PREPARATION_DETAILS"
+                    },
+                    if changed {
+                        "저장한 준비 기록의 현재 유효성을 확인하지 못했습니다. 자료를 확인하고 다시 준비하세요."
+                    } else {
+                        "설치 준비 내용을 확인했습니다. 설치·엔진 실행은 수행하지 않았습니다."
+                    },
+                    detail,
+                    if changed { 5 } else { 0 },
+                )
+            }
+            Err(error) => failure(&command, error, 3),
+        },
+        "edit" => match operator::preparation_commands::edit(
+            &home,
+            &positions[0],
+            &flags["field"],
+            input,
+            prompts,
+        ) {
+            Ok(edit) => {
+                let (outcome, code, message, exit) = if edit.paused {
+                    (
+                        "INCOMPLETE",
+                        "PREPARATION_EDIT_PAUSED",
+                        "항목 수정을 중단했습니다. 기존 값은 보존됩니다.",
+                        5,
+                    )
+                } else if edit.changed {
+                    (
+                        "SUCCEEDED",
+                        "PREPARATION_EDITED",
+                        "한 항목을 저장했습니다. 이전 생성 파일은 보존하며 새 내용은 다시 검토해야 합니다.",
+                        0,
+                    )
+                } else {
+                    (
+                        "SUCCEEDED",
+                        "PREPARATION_UNCHANGED",
+                        "항목 값을 변경하지 않았습니다.",
+                        0,
+                    )
+                };
+                report(&command, outcome, code, message, edit, exit)
+            }
+            Err(error) => {
+                let exit = if matches!(
+                    error.code.as_str(),
+                    "SETUP_INPUT_FAILED" | "SETUP_OUTPUT_FAILED"
+                ) {
+                    7
+                } else {
+                    3
+                };
+                failure(&command, error, exit)
+            }
+        },
+        _ => invalid(&command),
+    }
+}
+
 fn dispatch_setup(
     args: &[String],
     json_mode: bool,
@@ -768,6 +1011,12 @@ fn dispatch_setup(
     input: &mut dyn BufRead,
     prompts: &mut dyn Write,
 ) -> (ResultEnvelope, i32) {
+    if args
+        .first()
+        .is_some_and(|arg| matches!(arg.as_str(), "list" | "show" | "edit"))
+    {
+        return dispatch_preparation_command(args, json_mode, interactive, input, prompts);
+    }
     if args
         .first()
         .is_some_and(|arg| matches!(arg.as_str(), "new" | "resume"))
@@ -1120,7 +1369,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["nodes.list", "nodes.add", "nodes.named-operations", "executor.rc3-legacy-v1", "runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
+                        "capabilities": ["nodes.list", "nodes.add", "nodes.named-operations", "executor.rc3-legacy-v1", "runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "setup.preparation.sequential", "setup.preparation.list", "setup.preparation.show", "setup.preparation.edit", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
                         "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),

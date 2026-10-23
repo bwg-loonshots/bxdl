@@ -19,15 +19,27 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
         ),
         ["console"] => (
             "bxdl console [--home <관리-루트>] [--instance <기존-control-경로>]",
-            "TTY 전용 홈·목록·기존 자료 조회입니다. --json과 비TTY 실행은 입력/쓰기 전에 거절합니다.\n홈/목록은 폴더를 만들지 않습니다. 명시 경로를 읽은 뒤 y/yes로 승인한 목록 저장만 관리 위치를 준비합니다.\nMac 기본 위치는 ~/Library/Application Support/BXDL입니다. 다른 OS는 --home을 지정하세요.\n등록 노드와 기존 설치/제품초안/네트워크 세션을 연결하며 재등록·형식변환·임의 CLI 실행은 하지 않습니다.\n목록은 저장 기록이며 현재 서비스 상태는 미조회입니다. 새 설치 자료 준비는 홈 1번에서 setup new/resume과 같은 흐름으로 진행합니다. console의 추가 개발은 중단했습니다. 직접 CLI 개선을 우선합니다.\n:help 도움말, :back 이전 화면, :cancel/EOF 저장 자료를 보존하고 중단. Enter는 변경을 승인하지 않습니다.",
+            "TTY 전용 홈·목록·기존 자료 조회입니다. --json과 비TTY 실행은 입력/쓰기 전에 거절합니다.\n홈/목록은 폴더를 만들지 않습니다. 명시 경로를 읽은 뒤 y/yes로 승인한 목록 저장만 관리 위치를 준비합니다.\nMac 기본 위치는 ~/Library/Application Support/BXDL입니다. 다른 OS는 --home을 지정하세요.\n등록 노드와 기존 설치/제품초안/네트워크 세션을 연결하며 재등록·형식변환·임의 CLI 실행은 하지 않습니다.\n목록은 저장 기록이며 현재 서비스 상태는 미조회입니다. 새 설치 자료 준비는 홈 1번에서 기존 번호 메뉴로 진행하며 직접 setup new/resume과 저장 형식을 공유합니다. console의 추가 개발은 중단했습니다. 직접 CLI 개선을 우선합니다.\n:help 도움말, :back 이전 화면, :cancel/EOF 저장 자료를 보존하고 중단. Enter는 변경을 승인하지 않습니다.",
         ),
         ["setup", "new"] => (
             "bxdl setup new <이름> [--home <관리-루트>] [--from <instance.json>]",
-            "이름을 붙인 설치 준비 세션을 만듭니다. 이름은 소문자로 시작하는 1~32자의 소문자·숫자·하이픈입니다.\nTTY 전용이며 --json/--non-interactive를 지원하지 않습니다. y/yes 승인 전에는 관리 폴더나 세션을 만들지 않습니다.\n공급 자료·제품 설정·공개 network 또는 기존 native를 연결해 새 설정 revision을 준비합니다. 설치·등록·초기화·시작은 수행하지 않습니다.\n중단한 작업은 setup resume <이름>으로 이어갑니다. Mac 기본 관리 위치는 ~/Library/Application Support/BXDL이며 다른 OS는 --home을 지정하세요.",
+            "이름을 붙인 설치 준비 세션을 만듭니다. 이름은 소문자로 시작하는 1~32자의 소문자·숫자·하이픈입니다.\nTTY 전용이며 --json/--non-interactive를 지원하지 않습니다. y/yes 승인 전에는 관리 폴더나 세션을 만들지 않습니다.\n공급 자료→네트워크→누락 제품·정책→검토 순서로 질문하고 새 설정 revision을 준비합니다. 이미 저장한 값은 재사용합니다. 설치·등록·초기화·시작은 수행하지 않습니다.\n중단한 작업은 setup resume <이름>으로 이어갑니다. Mac 기본 관리 위치는 ~/Library/Application Support/BXDL이며 다른 OS는 --home을 지정하세요.",
         ),
         ["setup", "resume"] => (
             "bxdl setup resume <이름> [--home <관리-루트>]",
-            "setup new 또는 console에서 만든 준비 세션을 엽니다. 열기만으로 저장·재검증 결과 승인·설치 실행을 하지 않습니다.\n기존 setup --install/--network/제품 초안은 해당 기존 --resume 명령으로 엽니다.\n:help 도움말, :back 검토, :cancel/EOF 저장한 자료를 보존하고 중단. 0은 저장 후 종료입니다.",
+            "setup new 또는 console에서 만든 준비 세션을 엽니다. 열기만으로 저장·재검증 결과 승인·설치 실행을 하지 않습니다.\n기존 setup --install/--network/제품 초안은 해당 기존 --resume 명령으로 엽니다.\n:help 도움말, :back 이전 질문, :cancel/EOF 저장한 자료를 보존하고 중단. 부족한 입력부터 순서대로 이어갑니다.",
+        ),
+        ["setup", "list"] => (
+            "bxdl setup list [--home <관리-루트>] [--json]",
+            "이름을 붙인 설치 준비 목록과 남은 입력 수를 읽습니다. 없는 관리 위치는 빈 목록이며 폴더·잠금·기록을 쓰지 않습니다.\n목록은 저장 기록이며 공급 자료·엔진·서비스를 재검증하지 않습니다. 손상된 세션은 읽기 불가로 남기고 나머지 목록을 보여줍니다.\n다음 명령: bxdl setup show <이름> (같은 --home 사용).",
+        ),
+        ["setup", "show"] => (
+            "bxdl setup show <이름> [--home <관리-루트>] [--json]",
+            "준비한 공개 설정과 남은 입력을 읽습니다. credential 값·경로·비밀 원문은 표시하지 않습니다.\n저장한 PREPARED_RECORDED와 현재 자료 재검증 결과를 분리합니다. 자료가 달라지면 INCOMPLETE이며 기존 기록을 수정하지 않습니다.\n읽기 전용이며 workflow 잠금을 획득하거나 엔진·네트워크·서비스를 호출하지 않습니다.\n다음 명령: bxdl setup resume <이름> 또는 bxdl setup edit <이름> --field httpPort (같은 --home 사용).",
+        ),
+        ["setup", "edit"] => (
+            "bxdl setup edit <이름> --field <제품-항목> [--home <관리-루트>]",
+            "지정한 제품 항목 하나만 질문하고 종료합니다. 저장한 값에서 Enter는 유지하고 :back은 변경 없이 종료합니다. :cancel/EOF는 기존 값을 보존하고 중단합니다.\nTTY 전용이며 --json/비TTY는 입력·쓰기 전에 거절합니다. 같은 값은 새 기록을 쓰지 않습니다. 실제 변경은 기존 검토를 무효화하되 이전 생성 파일을 보존합니다.\n지원 항목: instanceId, nodeId, dataDirectory, httpAddress, httpPort, p2pAddress, p2pPort, chainDescription, validatorKeystore, validatorPasswordFile, tlsKeyStore, tlsKeyPasswordFile, tlsTrustStore, tlsTrustPasswordFile.\n비밀번호 원문 대신 기존 파일 경로를 입력하세요. 공급 자료·정책 수정은 setup resume <이름>의 검토에서 진행합니다.\n다음 명령: bxdl setup resume <이름> (같은 --home 사용). 설치·등록·초기화·시작은 수행하지 않습니다.",
         ),
         ["setup"] => (
             "bxdl setup [--workspace <dir>] [--resume | --from <instance.json>] [--output <new.json>]\n  bxdl setup --workspace <dir> (--from <instance.json> | --resume) --non-interactive [--output <new.json>] [--json]",

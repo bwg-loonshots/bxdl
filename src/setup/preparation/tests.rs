@@ -430,7 +430,7 @@ fn cli_prepares_verified_package_and_resume_edit_publishes_new_revision_only() {
         f.source.to_str().unwrap().into(),
     ];
     let answers = format!(
-        "y\n2\n1\n{}\n2\n2\n2\ny\n2\n3\n{}\n3\n1\n{}\n1\nPKCS12\nPKCS12\nnew-network\nyes\nno\n5\ny\n0\n",
+        "y\n{}\n2\ny\n{}\n1\n{}\nPKCS12\nPKCS12\nnew-network\nyes\nno\ny\n",
         f.archive.display(),
         f.lock.display(),
         f.network.display()
@@ -444,16 +444,13 @@ fn cli_prepares_verified_package_and_resume_edit_publishes_new_revision_only() {
         String::from_utf8(err).unwrap()
     );
     assert_eq!(code, 0, "{text}");
-    assert!(text.contains("PREPARED_RECORDED"), "{text}");
     assert!(text.contains("설정 파일 준비를 마쳤습니다"), "{text}");
-    assert!(
-        text.contains("준비 당시 package의 CLI가 현재 도구와 다릅니다"),
-        "{text}"
-    );
     assert!(!text.contains(CANARY));
     assert!(!text.contains("credential-0"));
     let workspace = home.join("sessions/local");
     let p = Preparation::resume(&workspace).unwrap();
+    assert_eq!(p.summary().preparation, "PREPARED_RECORDED");
+    assert_eq!(p.summary().cli_match, "MISMATCH");
     p.check().unwrap();
     let old_product = fs::read(p.product_path(1)).unwrap();
     let old_native = fs::read(p.native_path(1)).unwrap();
@@ -468,7 +465,7 @@ fn cli_prepares_verified_package_and_resume_edit_publishes_new_revision_only() {
     let (mut out, mut err) = (Vec::new(), Vec::new());
     let code = crate::cli::run_with_input(
         &args,
-        &mut Cursor::new("1\n5\n18081\n5\ny\n0\n"),
+        &mut Cursor::new("edit httpPort\n18081\ny\n"),
         true,
         &mut out,
         &mut err,

@@ -180,6 +180,15 @@ impl Home {
     /// Bounded inventory of the explicit managed namespace, never a disk scan.
     /// Opening a selected name separately verifies its preparation record.
     pub(crate) fn session_names(&self) -> Result<Vec<String>> {
+        self.session_entries(false)
+    }
+
+    /// Query commands retain invalid named entries so corruption is visible.
+    pub(crate) fn preparation_names(&self) -> Result<Vec<String>> {
+        self.session_entries(true)
+    }
+
+    fn session_entries(&self, include_invalid: bool) -> Result<Vec<String>> {
         self.recheck()?;
         match self.root.symlink_metadata("sessions") {
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
@@ -199,7 +208,7 @@ impl Home {
             };
             if super::install_flow::valid_name(name) {
                 let metadata = sessions.symlink_metadata(name).map_err(|_| io_error())?;
-                if metadata.is_dir() && !metadata.is_symlink() {
+                if include_invalid || (metadata.is_dir() && !metadata.is_symlink()) {
                     names.push(name.to_owned());
                 }
             }

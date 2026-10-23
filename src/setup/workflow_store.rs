@@ -1,6 +1,7 @@
-//! An explicitly resumed, private installation-session container. The open
-//! object holds an exclusive lock until dropped. This prevents accidental
-//! concurrent wizards; it is not isolation from another process of the same UID.
+//! An explicitly resumed, private installation-session container. Mutable opens
+//! hold an exclusive lock until dropped; inspection is read-only without a lock.
+//! Snapshot checks reject concurrent publications. Locks prevent accidental
+//! concurrent wizards, not another process of the same UID.
 use super::store::Store;
 use crate::{
     artifact::decode_strict_json,
@@ -168,19 +169,36 @@ impl WorkflowStore {
     /// Explicit resume only; missing locks, records or directories are never
     /// repaired, and a partial create is never silently adopted.
     pub(crate) fn open(path: &Path) -> Result<Self> {
+        Self::open_existing(path, true)
+    }
+
+    /// Read an existing container without acquiring a workflow lock or opening
+    /// any file for writing. Snapshot rechecks reject concurrent publication.
+    pub(crate) fn inspect(path: &Path) -> Result<Self> {
+        Self::open_existing(path, false)
+    }
+
+    fn open_existing(path: &Path, writable: bool) -> Result<Self> {
         let (path, parent, name) = parent_anchor(path)?;
         let (root, identity) = open_private(&parent, &name)?;
         let visible_lock = root.symlink_metadata(LOCK).map_err(|_| unsafe_state())?;
         require_lock(&visible_lock)?;
         let mut options = file_options();
-        options.read(true).write(true);
+        options.read(true).write(writable);
         let lock = root.open_with(LOCK, &options).map_err(|_| unsafe_state())?;
         let opened_lock = lock.metadata().map_err(|_| unsafe_state())?;
         require_lock(&opened_lock)?;
         if !Identity::of(&visible_lock).matches(&opened_lock) {
             return Err(unsafe_state());
         }
-        let lock = WorkflowLock::acquire(lock)?;
+        let lock = if writable {
+            WorkflowLock::acquire(lock)?
+        } else {
+            WorkflowLock {
+                file: lock,
+                acquired: false,
+            }
+        };
         let record = read_record(&root)?;
         let (workflow_dir, workflow_identity) = open_private(&root, JOURNAL)?;
         let (draft_dir, draft_identity) = open_private(&root, DRAFT)?;
@@ -240,12 +258,18 @@ impl WorkflowStore {
         Ok(raw)
     }
     pub(crate) fn save(&mut self, raw: &[u8]) -> Result<()> {
+        if !self.lock.acquired {
+            return Err(unsafe_state());
+        }
         check_raw(raw)?;
         self.recheck()?;
         self.journal.save(raw)?;
         self.recheck()
     }
     pub(crate) fn require_capacity(&self, revisions: u32) -> Result<()> {
+        if !self.lock.acquired {
+            return Err(unsafe_state());
+        }
         self.recheck()?;
         // Avoid addition overflow in the shared Store's bounded counter.
         if revisions > 4096 {
@@ -316,6 +340,7 @@ impl WorkflowStore {
 /// fork-to-exec window in which an unrelated child can hold the open description.
 struct WorkflowLock {
     file: File,
+    acquired: bool,
 }
 impl WorkflowLock {
     fn acquire(file: File) -> Result<Self> {
@@ -326,14 +351,19 @@ impl WorkflowLock {
         })?;
         // Construct the unlock guard only after acquisition succeeds. An open
         // that fails to acquire must never release another wizard's lock.
-        Ok(Self { file })
+        Ok(Self {
+            file,
+            acquired: true,
+        })
     }
 }
 impl Drop for WorkflowLock {
     fn drop(&mut self) {
         // Unlock the shared open description even if a fork-inherited copy is
         // still open. This also covers errors after acquisition in create/open.
-        let _ = flock(&self.file, FlockOperation::Unlock);
+        if self.acquired {
+            let _ = flock(&self.file, FlockOperation::Unlock);
+        }
     }
 }
 fn file_options() -> OpenOptions {

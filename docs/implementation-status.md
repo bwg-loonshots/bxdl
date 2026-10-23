@@ -6,9 +6,17 @@ Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후
 
 2026-10-22 사용자가 실제 console의 직관성이 부족하다고 평가해 개발 중단을 요청했다. 기존 console 코드·시안·검증 이력은 보존하고 새 메뉴·화면·서비스 연결은 진행하지 않는다. 공통 catalog/home/target와 Preparation 검증·저장 API는 직접 CLI에서 재사용한다.
 
-**CLI-01의 이름 연결·목록과 CLI-02의 독립 관리 CLI·이름 기반 운용을 구현·검증했다.** 이후에는 순차 설치 준비/재개(CLI-03), 실제 설치 실행(CLI-04), 자동완성·Mac 배포 조합·사용자 과업(CLI-05)을 진행한다. [최신 설계](../design/2026-10-22-cli-simplification.md)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
+**CLI-01 이름 연결·목록, CLI-02 독립 관리 CLI·이름 기반 운용, CLI-03 순차 설치 준비·조회·수정을 구현·검증했다.** 다음은 실제 설치 실행(CLI-04), 자동완성·Mac 배포 조합·사용자 과업(CLI-05)이다. [최신 설계](../design/2026-10-22-cli-simplification.md)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
 
-현재 `setup new/resume`도 7개 번호 메뉴를 사용한다. 이를 아직 CLI 우선 UX로 개선했다고 주장하지 않으며 CLI-03에서 필요한 값만 순차 질문하는 흐름으로 교체한다. `nodes`/`nodes add`와 이름 기반 운용을 연결했고 선형 문답은 계획 상태다. 아래 UX-01~03의 PASS는 당시 구현의 기술 검증이며 CLI-01 검증은 아래 별도 기록으로 구분한다.
+직접 `setup new/resume`은 저장한 답을 재사용하고 누락된 항목부터 순차 질문한다. 기존 console 메뉴는 보존하며 저장 형식만 공유한다. `setup list/show/edit`로 조회와 제품 한 항목 수정을 직접 실행한다. 아래 UX-01~03의 PASS는 당시 기술 검증 이력이며 새 CLI 단계의 검증과 구분한다.
+
+## CLI-03 — 순차 설치 준비와 직접 조회·수정
+
+공급 자료→네트워크/자기 노드→누락 제품/정책→검토 순서로 진행하며 :help/:back/:cancel/EOF와 저장한 답 재사용을 지원한다. 최종 검토에서 `edit <항목>`·`details`를 사용하고 명시적인 y/yes 승인으로 새 설정 revision을 준비한 뒤 종료한다. 이미 준비한 유효 결과를 다시 승인하면 무쓰기이며 실제 설치·등록·초기화·시작은 실행하지 않는다.
+
+`setup list/show`는 읽기 전용이며 비TTY/JSON schemaVersion 1을 지원한다. 손상된 목록 항목의 부분 결과와 기록된 준비 상태/현재 자료 검사 결과를 구분한다. `setup edit <이름> --field <제품필드>`는 해당 항목만 묻고 종료하며 다른 답·기존 출력은 보존한다. 입력 중 홈/세션/checkpoint 변경을 재검사하고 자격 경로와 원문 답변은 공개 조회에 노출하지 않는다.
+
+`make check` Rust525/Python50·fmt·Clippy, 추가 회귀를 포함한 최종 prepare_cli26개와 fmt·Clippy, Linux 타입 검사, 실제 Mac PTY8개·비TTY JSON3개를 통과했다. [검증 기록](../results/2026-10-23-cli03-sequential-preparation.md)과 [가이드](./preparation.md)를 따른다. 실제 Mac 검증은 합성 패키지의 준비 기능이며 엔진·서비스 재인수가 아니다. CLI-04의 setup apply와 CLI-05의 사용자 과업은 후속이다.
 
 ## CLI-02 — 관리 CLI와 기존 RC.3 실행기 분리
 
@@ -242,7 +250,7 @@ TLS 저장소 형식과 새 네트워크/참가·합의·archive 정책 선택, 
 
 ## 다음 순서
 
-CLI-01/02 완료 후 [CLI-03~05](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)의 직접 CLI 개선을 진행한다. console의 후속 화면·서비스 연결은 중단했다. 아래는 그와 별도로 유지하는 전체 제품의 후속 과제다.
+CLI-01~03 완료 후 [CLI-04~05](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)의 직접 CLI 개선을 진행한다. console의 후속 화면·서비스 연결은 중단했다. 아래는 그와 별도로 유지하는 전체 제품의 후속 과제다.
 
 NIGO PR #230 정식 회신 뒤 완료한 RC.3 전체 설치 UX21사례·독립 검사8항목의 근거는 [전체 UX 결과](../results/2026-10-22-macos-rc3-full-setup.md)에 기록했다. 기존 회신과 앞선 결과의 당시 NOT_RUN, RC.2 원본 INCOMPLETE·경로 원인 미확정은 보존한다.
 

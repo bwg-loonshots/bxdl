@@ -1,6 +1,6 @@
 # CLI 우선 설치·운용 UX 구현 계획
 
-- 작성일/방향 변경: 2026-10-22 / 상태: **console 개발 중단. 기존 UX-01~03 이력 보존. CLI-01/02는 2026-10-23 구현·검증 완료. 다음은 CLI-03 순차 설치 준비다.**
+- 작성일/방향 변경: 2026-10-22 / 상태: **console 개발 중단. 기존 UX-01~03 이력 보존. CLI-01~03은 2026-10-23 구현·검증 완료. 다음은 CLI-04의 준비 결과에서 실제 설치 실행이다.**
 - 기준: [직접 CLI 간소화](./2026-10-22-cli-simplification.md), [통합 설계](./2026-10-22-integrated-operations-ux.md), [화면 명세 S01~S11](./2026-10-22-integrated-operations-ux-screens.md), [화면 시안](./prototypes/integrated-operations-ux.html).
 - 기존 M/BX 작업 ID와 G1/G2를 대체하지 않는다. UX ID는 이번 개선을 나눠 구현·검토하기 위한 하위 추적이다.
 - 최초 설계 코드 기준은 PR #15의 `870ca72`, 설계 merge는 PR #16의 `a8fd55a`다. UX-01의 `operator/{prompt,help,view}.rs`와 UX-02의 `operator/{console,catalog,home,target}.rs`를 구현했다. UX-03의 `operator/install_flow.rs`와 `setup/preparation.rs`도 구현했다. node/support 모듈은 후속 제안이다.
@@ -11,13 +11,13 @@
 
 사용자가 console을 직접 확인하고 직관성이 부족하다고 평가하여 개발 중단을 요청했다. console의 추가 화면·메뉴·서비스 연결과 별도 시안 개선을 진행하지 않는다. 기존 코드와 저장 자료는 보존하며 삭제/제거는 이번 작업에 포함하지 않는다. [CLI 우선 설계](./2026-10-22-cli-simplification.md)가 이후 구현의 기준이다.
 
-현재 `setup new/resume`도 7개 번호 메뉴로 진입한다. Preparation 도메인과 저장·검증 기능은 재사용하되 이 UI는 CLI-03에서 교체한다. 기존 UX-03 완료 표시는 기술 구현 이력이며 새 순차 CLI 사용성의 완료 판정이 아니다.
+CLI-03에서 직접 `setup new/resume`의 7개 번호 메뉴를 순차 문답으로 교체하고 `setup list/show/edit`을 연결했다. Preparation 저장·검증 형식과 기존 세션을 재사용한다. console의 기존 메뉴는 별도 진입점으로 보존한다. 기존 UX-03 완료 표시는 기술 구현 이력이며 이번 검증을 대신하지 않는다.
 
 | 순서 | 작업 | 사용자에게 보이는 결과 | 구현·검증 범위 | 상태 |
 | --- | --- | --- | --- | --- |
 | CLI-01 | 직접 이름 연결·목록과 도움말 진입 정리 | `nodes`, `nodes add local --instance <control>` | console을 한 번도 열지 않고 기존 등록 연결; 별칭/표시명/ID 분리, 충돌·손상·동시 갱신 거절; 목록 무쓰기·live 미조회 | IMPLEMENTED |
 | CLI-02 | 독립 관리 CLI·이름 기반 일상 운용 | `status/start/stop/logs/diagnose local` | 기존 RC.3 실행기 인증·고정 명령/JSON 위임; 이름/경로 재검증; setup 기존 흐름 연결; CLI×runtime 조합 인수 | IMPLEMENTED |
-| CLI-03 | 번호 메뉴를 순차 준비 문답과 단일 작업 명령으로 교체 | `setup new/resume`, `setup list/show/edit` | 공급→자기 노드→누락 제품/정책→검토→종료; 기존 입력 재사용·한 항목 수정·재개·EOF·비TTY·immutable 결과 | PLAN |
+| CLI-03 | 번호 메뉴를 순차 준비 문답과 단일 작업 명령으로 교체 | `setup new/resume`, `setup list/show/edit` | 공급→자기 노드→누락 제품/정책→검토→종료; 기존 입력 재사용·한 항목 수정·재개·EOF·비TTY·immutable 결과 | IMPLEMENTED |
 | CLI-04 | 준비 결과에서 실제 설치 실행 | `setup apply local`, 별도 `init`·`start` | 기존 workflow intent/소유 증거/잠금 재사용; 승인 범위와 자료 변경 검사; partial/UNKNOWN 보존; 이름 저장 실패와 실제 설치 완료 분리 | PLAN |
 | CLI-05 | 셸 완성·Mac 배포 조합·사용자 과업 | 명령/이름 완성과 실제 명령 중심 인수 | fmt/Clippy/회귀·PTY·관리 CLI/runtime 조합 서비스/네트워크 인수·작성자가 아닌 사용자 과업을 각각 기록 | PLAN |
 
@@ -45,13 +45,24 @@
 5. 미지원/변조 package, bad JSON/exit, timeout/출력 유실, noexec, 손상 진단 salvage, stale alias, private 출력 검사를 완료한다.
 6. 두 관리 CLI bytes로 같은 원본 RC.3 package의 init/start/status/stop/같은 DB 재시작을 시험한다. worker는 기존 bytes이며 package/JRE inventory 불변과 종료 정리를 독립 대조한다.
 
+### CLI-03 구현 단위 — 순차 준비와 단일 작업 명령
+
+2026-10-23 구현·검증을 완료했다. `make check`, 추가 순서 회귀의 최종 준비 테스트·fmt·Clippy, Linux 타입 검사와 빌드, 실제 Mac의 PTY 8개·비TTY JSON 3개를 확인했다. 정확한 실행별 검사 수와 소스 identity는 [CLI-03 검증 기록](../results/2026-10-23-cli03-sequential-preparation.md)을 따른다. 합성 자료로 준비 UX를 검증했으며 NIGO·서비스 실행이나 새 runtime 패키지 인수는 포함하지 않는다. 다음 구현은 CLI-04다.
+
+1. 직접 new/resume의 진입점을 console 메뉴에서 분리한다. 저장된 입력을 기준으로 누락된 질문부터 이어가고 :help/:back/:cancel/EOF를 보존한다. 네트워크 선택이 채운 node/P2P 값과 가져온 제품 값은 중복 질문하지 않는다.
+2. 순차 흐름의 마지막 검토에서 `edit <필드>`와 `details`를 제공한다. `y/yes`를 받아 자료 검증과 immutable 설정 준비 후 종료한다. Enter/n/no는 답을 보존하고 종료한다. 기존 준비 결과가 유효하고 답에 변경이 없으면 새 revision을 중복 생성하지 않는다.
+3. `setup list/show`는 비TTY와 JSON을 지원한다. list는 저장 상태만 조회하며 빈 관리 위치를 생성하지 않는다. show는 기록된 준비 결과가 있으면 현재 참조 자료를 대조한다. saved 상태와 `NOT_PREPARED/NOT_CHECKED/VERIFIED/CHANGED`를 구분한다. 일부 목록 실패/현재 자료 변경은 INCOMPLETE이며 엔진·DB·서비스를 실행하지 않는다.
+4. `setup edit <이름> --field <제품필드>`는 지정 필드 하나만 묻고 종료한다. 동일 값의 no-op, 중단, 손상·대상 교체 거절, 다른 답과 기존 출력 보존을 검증한다. 새 설정 준비는 resume의 별도 승인으로 남긴다.
+5. 기존 세션과 JSON envelope를 유지한다. 조회는 준비 파일·잠금 파일을 쓰거나 배타적 준비 잠금을 획득하지 않으며, 공개 DTO에 credential 경로와 원본 답변을 노출하지 않는다. new/resume/edit의 JSON·비TTY 거절은 입력/쓰기보다 앞선다.
+6. 순차 질문 순서, 중단 후 재개, 뒤로 수정, 준비 실패와 재승인, 외부 자료 변경, 읽기 전용 조회, 동시 변경과 비TTY를 회귀 시험한다. `make check`, Linux 타입 검사와 실제 Mac PTY 결과를 이번 변경 기준으로 기록한다. CLI-04 설치 실행과 CLI-05 사용자 과업/서비스 조합 인수는 별도로 남긴다.
+
 ### 기존 UX ID와의 관계
 
 | 기존 항목 | 현재 취급 |
 | --- | --- |
 | UX-01 공통 prompt/help/view | 재사용. CLI 출력/선형 문답에 필요한 범위만 개선 |
 | UX-02 console 홈 | 개발 중단·기존 구현 보존. catalog/home/target는 CLI-01의 공통 기반으로 재사용 |
-| UX-03 Preparation | 검증·저장·재개 도메인 재사용. 메뉴형 install_flow UI는 CLI-03 교체 대상 |
+| UX-03 Preparation | 검증·저장·재개 도메인 재사용. 직접 CLI는 순차 문답으로 교체하고 console 메뉴는 보존 |
 | UX-04 설치 controller | console 연결을 제외하고 CLI-04로 재배치 |
 | UX-05 반복 운용 | console 화면을 제외하고 CLI-01/02로 앞당김 |
 | UX-06 지원 흐름 | 직접 오류 안내·diagnose로 CLI-02/04에 반영 |

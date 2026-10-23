@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "workItem": "CLI-03",
+  "baseCommit": "adea89b653ee77e31b2b13f92493414c6f03a564",
+  "sourceState": "UNCOMMITTED_WORKTREE",
+  "sourceIdentitySha256": "46be9a756c91e1fae1313df43c25e1707edefb2690ca089b53f741ea4bb8ed04",
+  "sourceFileCount": 86,
+  "scope": "Sequential preparation and read-only queries/single-field edits. No engine/service acceptance.",
+  "checks": {
+    "makeCheck": {
+      "result": "PASS",
+      "rustTests": 525,
+      "pythonTests": 50,
+      "fmt": "PASS",
+      "clippy": "PASS"
+    },
+    "finalPreparationSuite": {
+      "result": "PASS",
+      "tests": 26,
+      "additionalTestsAfterMakeCheck": 1
+    },
+    "finalFmt": "PASS",
+    "finalClippy": "PASS",
+    "linuxTypeCheck": {
+      "result": "PASS",
+      "target": "x86_64-unknown-linux-gnu",
+      "runtimeTested": false
+    },
+    "releaseBuild": "PASS",
+    "releaseReadOnlyListSmoke": "PASS"
+  },
+  "macTerminal": {
+    "timestampUtc": "2026-10-23T05:22:11.036424+00:00",
+    "host": {
+      "system": "Darwin",
+      "release": "25.6.0",
+      "machine": "arm64"
+    },
+    "cases": [
+      {
+        "case": "PTY new approval then cancel",
+        "result": "PASS",
+        "exitCode": 5
+      },
+      {
+        "case": "PTY resume saves missing archive",
+        "result": "PASS",
+        "exitCode": 5
+      },
+      {
+        "case": "PTY resume skips saved archive and EOF preserves state",
+        "result": "PASS",
+        "exitCode": 5
+      },
+      {
+        "case": "PTY edit one field on incomplete draft",
+        "result": "PASS",
+        "exitCode": 0
+      },
+      {
+        "case": "nonTTY list JSON is read only",
+        "result": "PASS",
+        "exitCode": 0
+      },
+      {
+        "case": "nonTTY show JSON is read only",
+        "result": "PASS",
+        "exitCode": 0
+      },
+      {
+        "case": "PTY full imported preparation publishes configuration only",
+        "result": "PASS",
+        "exitCode": 0
+      },
+      {
+        "case": "nonTTY show verifies prepared material",
+        "result": "PASS",
+        "exitCode": 0
+      },
+      {
+        "case": "PTY repeated approved preparation is no-op",
+        "result": "PASS",
+        "exitCode": 0
+      },
+      {
+        "case": "PTY edit invalidates review and preserves immutable files",
+        "result": "PASS",
+        "exitCode": 0
+      },
+      {
+        "case": "PTY resume publishes second revision without overwrite",
+        "result": "PASS",
+        "exitCode": 0
+      }
+    ],
+    "verification": {
+      "sourceFilesUnchanged": true,
+      "operationalRootsAbsent": true,
+      "syntheticCredentialsNotPrinted": true,
+      "engineOrServiceExecuted": false,
+      "generatedConfigurations": 4
+    }
+  },
+  "binaries": {
+    "ptyDebugSha256": "ad6150d0b0b1b51e5c7e22f36c28e5bfe4b119cb927f3f7d971d7a56cbbb4e38",
+    "releaseSha256": "96473572c1460c7b1351c6f3703d328e7144783c39854d4259b37bced579b7a6"
+  },
+  "logSha256": {
+    "makeCheck": "4361b4c7d32eb96371976f34e0c653e415bb0f1672c3e19a0f02516e11cd3e19",
+    "finalPreparationTests": "58a8c319d5ac3aa8eb43e5d78dff49ce8b0d6cb308d9eb1934e91a9990a17428",
+    "finalClippy": "5634a3c820745ca527c780e1bb64892e51272da4b00692cd2ea18a1b6ea91175",
+    "linuxTypeCheck": "3e409f7907e1474f2f93d1042a88e50434a2edcbde4eef87207a5a5505151165",
+    "releaseBuild": "f4bcd3f18b2623b8a7b7a850d57e8ce3725f8b8ea94c69fc5d07fa4e7e491f8c"
+  },
+  "followUp": [
+    "CLI-04 setup apply and named init",
+    "CLI-05 shell completion and user-task/runtime combination acceptance"
+  ]
+}
