@@ -28,6 +28,8 @@ signed run은 시험 중 새로 생성한 Ed25519 키를 사용했고 공개키 
 
 초기 기능 인수 이후 사람용 안내와 저장 기록 보강을 반영해 다시 빌드했다. 아래 PASS와 JSON hash는 최종 A/B에만 해당하며 앞선 임시 빌드를 누적 집계하지 않는다.
 
+인수 이후 [BXDL PR #18](https://github.com/bwg-loonshots/bxdl/pull/18)의 Linux CI가 CLI-04 테스트 파일의 Mac 전용 `Workflow` import를 unused import로 거절했다. 해당 import에 기존 사용 테스트와 같은 Mac arm64 조건을 추가했다. `src/setup/preparation/tests/application.rs`의 테스트 컴파일 조건만 바뀌었으며 실행 제품 코드·배포 payload는 변경하지 않았다. 위 소스 fingerprint는 실제 A/B 인수 당시의 테스트 소스까지 포함하는 역사적 값으로 보존한다. CI 보강 이후 공유 소스는 PR의 후속 커밋으로 식별하며 당시 A/B 바이너리를 다시 빌드한 것으로 기록하지 않는다.
+
 ## 자동 검사
 
 | 검사 | 결과 |
