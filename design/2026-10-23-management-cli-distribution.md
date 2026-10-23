@@ -2,6 +2,7 @@
 
 - 상태: **DONE — 구현·자동 검사·실제 Mac signed13/unsigned13 인수 PASS**
 - 근거: [최종 검증 기록](../results/2026-10-23-cli05-management-distribution.md) · 합성 revision의 개발 인수이며 공식 release는 별도
+- 후속: [CLI05-03 지정 Mac 서비스·네트워크 인수](../results/2026-10-23-cli05-runtime-acceptance.md) PASS. 실제 Git commit의 CLI 배포본·고정 RC.3 조합이며 진단 완전수집 OPEN, CLI05-04 사람 과업 NOT_RUN
 - 기준: [관리 CLI/노드 실행기 분리](./2026-10-23-independent-management-cli.md), [CLI 우선 구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md)
 - 선행: CLI05-01 zsh 자동완성 완료, 기존 `BXDL_RC3_EXECUTOR_V1` 유지
 - 대상: macOS arm64 사용자 권한 설치. NIGO·JRE·노드 package 재배포는 포함하지 않는다.
@@ -79,4 +80,4 @@ CLI와 자동완성은 같은 release에서 함께 전환한다. PATH·fpath의 
 | 명령과 셸 UX | install/update/info/rollback·help·completion·사용 안내 | 비TTY/JSON/NoInput, 현재 경로/버전, fresh zsh Tab |
 | 실제 Mac 인수 | 서로 다른 두 CLI 배포물로 설치→업데이트→복귀 | 기존 catalog/sessions/control/data 불변과 선택한 바이너리/완성 대조 |
 
-자동 검사의 fixture 실행과 실제 release 바이너리/ZLE 인수를 구분해 기록한다. 실제 노드·LaunchAgent·네트워크를 운용하는 CLI/runtime 조합 재인수는 CLI05-03, 작성자가 아닌 사용자의 과업은 CLI05-04로 남긴다. Linux 실행, Mac Intel, `.pkg`/Homebrew, 자동 온라인 업데이트, 노드 upgrade/migration·제거와 정식 공급망 인수는 이번 단계의 완료 조건에 포함하지 않는다.
+자동 검사의 fixture 실행과 실제 release 바이너리/ZLE 인수를 구분해 기록한다. 이 CLI05-02의 당시 결과는 실제 노드·LaunchAgent·네트워크 시험을 포함하지 않았다. 이후 [CLI05-03](../results/2026-10-23-cli05-runtime-acceptance.md)에서 설치 진입점을 사용한 서비스16사례와 실행 중 CLI 전환3회·4-validator·두 복구·wrong-pin·정상 정리를 확인했다. 동일 source tree의 실제 PR head/merge commit을 각각 빌드했으며 기존 RC.3 payload/JRE/worker는 그대로다. 단일 노드 진단은 실제 partial의 정확한 표현을 인수한 범위로, 완전수집은 OPEN이다. 작성자가 아닌 사용자의 CLI05-04 과업은 NOT_RUN으로 남긴다. Linux 실행, Mac Intel, `.pkg`/Homebrew, 자동 온라인 업데이트, 노드 upgrade/migration·제거와 정식 공급망 인수는 이번 단계의 완료 조건에 포함하지 않는다.
