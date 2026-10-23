@@ -265,6 +265,8 @@ fn schema_bounds_ids_labels_and_timestamps() {
             label: "same label".into(),
             target: snapshot,
             recorded_at: now().unwrap(),
+            alias: None,
+            binding_sha256: None,
         });
     }
     assert!(record.validate().is_ok());
@@ -398,4 +400,65 @@ fn managed_preparation_round_trip_preserves_kind_and_never_installs() {
     for namespace in ["packages", "instances", "data"] {
         assert!(!home.join(namespace).exists());
     }
+}
+
+#[test]
+fn command_names_and_versioned_binding_pairs_are_strict() {
+    for name in ["a", "node-01", &"a".repeat(32)] {
+        assert!(valid_name(name));
+    }
+    for name in [
+        "",
+        "A",
+        "-node",
+        "1node",
+        " node",
+        "node ",
+        "node_1",
+        "한글",
+        "../local",
+        &"a".repeat(33),
+    ] {
+        assert!(!valid_name(name), "{name}");
+    }
+    let (_temporary, root) = fixture();
+    let mut node = draft(&root, "draft");
+    node.kind = Kind::Instance;
+    node.state = target::RecordState::Registered;
+    node.cli = target::CliMatch::Unavailable;
+    let mut record = Record::empty();
+    record.entries.push(Entry {
+        id: "a".repeat(32),
+        label: "label".into(),
+        target: node,
+        recorded_at: now().unwrap(),
+        alias: Some("local".into()),
+        binding_sha256: Some("b".repeat(64)),
+    });
+    assert!(record.validate().is_err());
+    record.schema_version = 2;
+    assert!(record.validate().is_ok());
+    let original = serde_json::to_value(&record).unwrap();
+    for (field, bad) in [
+        ("alias", serde_json::json!("BAD")),
+        ("bindingSha256", serde_json::json!("bad")),
+        ("alias", serde_json::Value::Null),
+        ("bindingSha256", serde_json::Value::Null),
+    ] {
+        let mut value = original.clone();
+        value["entries"][0][field] = bad;
+        assert!(decode(&serde_json::to_vec(&value).unwrap()).is_err());
+    }
+    let mut duplicate = record.entries[0].clone();
+    duplicate.id = "c".repeat(32);
+    duplicate.target.identity.inode += 1;
+    duplicate.target.path = root.join("second");
+    record.entries.push(duplicate);
+    assert!(record.validate().is_err());
+    record.entries[1].alias = Some("other".into());
+    assert!(record.validate().is_ok());
+    record.entries[1].target.kind = Kind::DraftSession;
+    record.entries[1].target.state = target::RecordState::DraftIncomplete;
+    record.entries[1].target.cli = target::CliMatch::NotApplicable;
+    assert!(record.validate().is_err());
 }

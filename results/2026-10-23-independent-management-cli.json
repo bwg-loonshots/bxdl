@@ -1,0 +1,264 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "scope": "EXACT_RC3_PACKAGE_WITH_INDEPENDENT_MACOS_MANAGER",
+  "outcome": "PASS",
+  "source": {
+    "baseCommit": "0854dd94bada644a7e8ac9082f23ab3fd92181e5",
+    "state": "UNCOMMITTED_WORKTREE",
+    "identitySha256": "5948db615fa4d6a9ece603980342a2459144a7af065d9434ba763cb291a5fbb7",
+    "identityFileCount": 84,
+    "identityMethod": "Sorted src/**/*.rs + Cargo.toml/Cargo.lock/rust-toolchain.toml as compact JSON array of path/sha256 objects; SHA-256 of UTF-8 JSON"
+  },
+  "managerBuilds": [
+    {
+      "name": "a",
+      "version": "0.1.0-dev",
+      "revision": "independent-cli-a3-20261023",
+      "sha256": "d502fa43ebf2c5821a193d928a31e75d6cef24f777623d83cac7824091916dad"
+    },
+    {
+      "name": "b",
+      "version": "0.1.0-dev",
+      "revision": "independent-cli-b3-20261023",
+      "sha256": "394b5276722a003db66905e25448f1847ecc1ac0100d79d4627f4c03e0752df1"
+    }
+  ],
+  "buildDifference": "SAME_FINAL_SOURCE_WITH_DIFFERENT_REVISION_MARKERS",
+  "runtime": {
+    "files": 270,
+    "runtimeFiles": 259,
+    "archiveSha256": "8a45cb8bf3482333ad43e8c29ad24c2adde8d6fe778eaf27fe2f5c2c842eb017",
+    "manifestSha256": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+    "executorSha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+    "jarSha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "hashSizeModeMembership": "PASS"
+  },
+  "packageRebuilt": false,
+  "engineRebuilt": false,
+  "checks": {
+    "makeCheck": "PASS",
+    "rustTests": 512,
+    "pythonTests": 50,
+    "executorUnitTests": 17,
+    "managedCliIntegrationTests": 12,
+    "fmt": "PASS",
+    "clippy": "PASS",
+    "linux": "TYPE_CHECK_ONLY_PASS",
+    "makeCheckLogSha256": "e6e58e575f30f35f98bfc5a01002afe336dfc7cdde500ea7f4e3159f17562da9",
+    "preservedRc3ReplyCorpus": {
+      "total": 45,
+      "init": 5,
+      "start": 13,
+      "stop": 14,
+      "status": 9,
+      "preflight": 1,
+      "show": 2,
+      "diagnose": 1
+    }
+  },
+  "directOperations": {
+    "outcome": "PASS",
+    "cases": [
+      {
+        "case": "TWO_MANAGER_IDENTITIES_DIFFER_FROM_OLD_PACKAGE",
+        "outcome": "PASS"
+      },
+      {
+        "case": "EXACT_SIGNED_RC3_ARCHIVE_VERIFIED",
+        "outcome": "PASS"
+      },
+      {
+        "case": "UNCHANGED_RC3_PACKAGE_INSTALLED",
+        "outcome": "PASS",
+        "files": 270
+      },
+      {
+        "case": "NEW_MANAGER_REGISTERED_V2_WITH_ORIGINAL_PACKAGE",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NAME_LINK_READ_ACROSS_MANAGER_BUILDS",
+        "outcome": "PASS"
+      },
+      {
+        "case": "DELEGATED_PREFLIGHT_MATCHED_INCOMPLETE",
+        "outcome": "PASS"
+      },
+      {
+        "case": "DELEGATED_INIT_CONFIRMED",
+        "outcome": "PASS"
+      },
+      {
+        "case": "RETAINED_SUPPLY_USED_AFTER_ORIGINAL_PATHS_MOVED",
+        "outcome": "PASS"
+      },
+      {
+        "case": "MANAGER_A_NAMED_START_READY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "MANAGER_B_LOGS_DIAGNOSE_SAME_ATTEMPT",
+        "outcome": "PASS"
+      },
+      {
+        "case": "MANAGER_B_OBSERVES_MANAGER_A_ATTEMPT_BY_EXPLICIT_PATH",
+        "outcome": "PASS"
+      },
+      {
+        "case": "MANAGER_B_NORMAL_STOP_OF_MANAGER_A_ATTEMPT",
+        "outcome": "PASS"
+      },
+      {
+        "case": "MANAGER_B_RESTART_SAME_DB_OLD_EXECUTOR",
+        "outcome": "PASS"
+      },
+      {
+        "case": "MANAGER_A_NORMAL_STOP_OF_MANAGER_B_ATTEMPT",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NO_RECORDED_PID_JOB_OR_TCP_LISTENER_REMAINS",
+        "outcome": "PASS"
+      },
+      {
+        "case": "PACKAGE_ENGINE_JRE_ORIGINAL_SOURCES_UNCHANGED",
+        "outcome": "PASS"
+      }
+    ],
+    "attemptCount": 2,
+    "workerSnapshots": {
+      "count": 2,
+      "allMatchOldExecutor": true,
+      "sha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef"
+    },
+    "normalStops": 2,
+    "cleanup": {
+      "pidsChecked": 22,
+      "remainingPids": 0,
+      "jobsNotLoaded": 2,
+      "tcpListeners": 0,
+      "runRootProcessCount": 0
+    },
+    "packagePayloadFiles": 270,
+    "runtimeFiles": 259,
+    "sameDataProof": "SAME_CONFIGURED_DATA_PATH_AND_ENGINE_INSTANCE_JSON_BYTES_NO_REINITIALIZATION",
+    "dataDirectoryInodeBeforeAfter": "NOT_CAPTURED",
+    "rawResultSha256": "76e6e1e1cae46cf42c1f793e484b5c6b498762f7f197b7fbd26922acc4c05ee8",
+    "postflightSha256": "1a85e91f0eb6dcbc8eef2554a527ed57fc84e5ae1f69568a492ab583f8151173"
+  },
+  "notTested": [
+    "GLOBAL_QUORUM_AND_TRANSACTION_FINALITY_WITH_NEW_MANAGER",
+    "LOGOUT_SLEEP",
+    "CUSTOMER_DB_UPGRADE",
+    "OFFLINE_STORAGE_A7",
+    "MUTATION_CRASH",
+    "LINUX_SYSTEMD_EXECUTION",
+    "DOCKER",
+    "LAUNCHDAEMON",
+    "FULL_G1_M",
+    "CUSTOMER_PRODUCTION_RELEASE"
+  ],
+  "setupPty": {
+    "outcome": "PASS",
+    "cases": [
+      {
+        "case": "NEW_MANAGER_PLANS_ORIGINAL_RC3_WITHOUT_WRITING_PACKAGE",
+        "outcome": "PASS"
+      },
+      {
+        "case": "EXPLICIT_APPLY_INSTALLED_UNCHANGED270_FILES_AND_REGISTERED_V2",
+        "outcome": "PASS"
+      },
+      {
+        "case": "MANAGER_B_RESUMES_MANAGER_A_WORKFLOW_WITH_ORIGINAL_SUPPLY_ABSENT",
+        "outcome": "PASS"
+      },
+      {
+        "case": "MANAGER_B_WORKFLOW_INIT_USES_OLD_EXECUTOR",
+        "outcome": "PASS"
+      },
+      {
+        "case": "MANAGER_B_WORKFLOW_START_WAIT_READY_AND_MANAGER_A_OBSERVES_SAME_NODE",
+        "outcome": "PASS"
+      },
+      {
+        "case": "MANAGER_A_RECONCILES_MANAGER_B_RUNNING_WORKFLOW",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NORMAL_STOP_NO_PID_JOB_OR_LISTENER_REMAINS",
+        "outcome": "PASS"
+      },
+      {
+        "case": "PACKAGE_JAR_JRE_EXECUTOR_AND_ORIGINAL_FIXTURES_UNCHANGED",
+        "outcome": "PASS"
+      }
+    ],
+    "workerSnapshots": {
+      "count": 1,
+      "allMatchOldExecutor": true,
+      "sha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef"
+    },
+    "normalStops": 1,
+    "cleanup": {
+      "pidsChecked": 8,
+      "remainingPids": 0,
+      "jobsNotLoaded": 1,
+      "tcpListeners": 0,
+      "runRootProcessCount": 0
+    },
+    "rawResultSha256": "34d2f1ff79cb2ea1e217d344987f7792f2dcb05ec3dd1662d514be1815f8c6b6"
+  },
+  "runtimeScenario": {
+    "validators": 1,
+    "consensusAutoStart": false,
+    "syncEnabled": false,
+    "peers": 0,
+    "readinessReason": "MANUAL_START_INITIALIZED",
+    "globalConsensus": "NOT_CHECKED"
+  },
+  "priorRuns": [
+    {
+      "run": "DIRECT_A",
+      "outcome": "INCOMPLETE",
+      "reason": "GENESIS_0X_PREFIX_REJECTED_BY_MANAGER",
+      "engineInitialization": "INITIALIZED",
+      "managerResult": "EXECUTOR_OPERATION_UNKNOWN",
+      "initializationReplayed": false,
+      "serviceAttempts": 0,
+      "cleanup": "PASS",
+      "pidsChecked": 11,
+      "recovery": "READ_ONLY_SHOW_WITH_FIXED_MANAGER_PRESERVED_BINDING_JOURNAL_AND_ENGINE_IDENTITY",
+      "rawResultSha256": "788edfe80f9300e4660b54f397871ae34b965739084889c2573cae8d764be6ee"
+    },
+    {
+      "run": "DIRECT_B",
+      "outcome": "INCOMPLETE",
+      "reason": "NULLABLE_HEALTH_REJECTED_BY_MANIFEST_JSON_DECODER",
+      "managerResult": "EXECUTOR_OPERATION_UNKNOWN",
+      "normalStops": 1,
+      "cleanup": "PASS",
+      "pidsChecked": 14,
+      "serviceAttempts": 1,
+      "replayed": false,
+      "rawResultSha256": "933677a2826e9d5fcc8827798473ff5cc3b22e6080e23538cba8cd8de32c9942"
+    },
+    {
+      "run": "SETUP_A",
+      "outcome": "INCOMPLETE",
+      "reason": "PTY_HARNESS_EXPECTED_OLD_PROMPT",
+      "operatorResult": "SETUP_INSTALL_PAUSED",
+      "packageControlDataCreated": false,
+      "harnessOnlyFix": true,
+      "rawResultSha256": "7e5a9aa34d141dab60418df63910a943a05ffb0ff195bd93bfa88f91556a8aa2"
+    }
+  ],
+  "independentReview": {
+    "code": "PASS",
+    "directRuntime": "PASS",
+    "setupRuntime": "PASS",
+    "auditSha256": "1dc808e2ec5ccc4b8240f3cfb57b944f1597593528ccdc2a8c8a0bf5a87183b1"
+  }
+}

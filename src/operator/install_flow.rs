@@ -356,7 +356,7 @@ impl Wizard<'_> {
             if data["cliMatch"].as_str() == Some("MISMATCH") {
                 prompt::say(
                     self.out,
-                    "준비 당시 package의 CLI가 현재 도구와 다릅니다. 실제 설치·시작 전 일치하는 새 package가 필요합니다.\n",
+                    "준비 당시 package의 CLI가 현재 도구와 다릅니다. 실제 설치·시작 전 지원 실행기 profile 또는 CLI 일치를 검증합니다.\n",
                 )?;
             }
         }

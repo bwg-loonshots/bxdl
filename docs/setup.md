@@ -10,7 +10,7 @@
 
 ## 설치 모드: 패키지부터 시작까지
 
-macOS arm64 터미널에서 **설치할 패키지의 `bin/bxdl`과 동일한 bytes의 CLI**를 사용한다. 문자열 버전만 같은 CLI는 충분하지 않다. 도우미는 패키지를 검증한 뒤 CLI 일치를 먼저 검사하며 다른 CLI로 자동 교체하거나 재실행하지 않는다.
+macOS arm64 터미널에서 실행한다. [지원하는 기존 RC.3](./management-cli.md)는 독립 관리 CLI로 설치한 뒤 고정된 패키지 실행기에 init/start/status를 위임한다. 도우미는 패키지 서명·내용과 정확한 실행기 profile을 검사한다. 다른 package는 설치할 `bin/bxdl`과 동일한 bytes의 CLI가 필요하며, 같은 버전 문자열만으로 허용하지 않는다. 패키지 내부 CLI를 덮어쓰지 않는다.
 
 ```bash
 bxdl setup --install --workspace /absolute/existing-parent/new-session
@@ -27,7 +27,7 @@ bxdl setup --install --workspace /absolute/existing-parent/new-session --resume
 
 | 순서 | 입력·선택 | 실제 동작 |
 | --- | --- | --- |
-| 설치 자료 | archive, `signed`와 외부 신뢰 공개키 또는 명시 `unsigned-development`, engine lock, native node.json, 새 설치·인스턴스 경로 | 패키지 신뢰·대상 플랫폼·실행 CLI 일치 확인 |
+| 설치 자료 | archive, `signed`와 외부 신뢰 공개키 또는 명시 `unsigned-development`, engine lock, native node.json, 새 설치·인스턴스 경로 | 패키지 신뢰·대상 플랫폼·지원 실행기 profile 또는 CLI 일치 확인 |
 | 노드 설정 | 아래 14개 필드 또는 `--from`으로 가져온 제품 JSON | 제품 설정과 준비한 native QBFT VALIDATOR/mTLS·참조 파일 대조. 키나 peer 목록을 생성하지 않음 |
 | 계획 | `plan` | 입력 hash와 새 출력 경로를 고정. 엔진 source, 자동 GC ON/OFF, 발행자 허용목록의 설정된 주소 수를 표시 |
 | 파일 설치·등록 | `apply`, 이어서 `y` 또는 `yes` | 새 제품 설정 출력, 패키지 설치·전체 inventory 확인, NIGO cold 검사, 인스턴스 등록 |

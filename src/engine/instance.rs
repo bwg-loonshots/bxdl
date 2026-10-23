@@ -1,6 +1,7 @@
 //! Registered development instances. Registration never initializes data;
 //! explicit one-shot init/resume-init preserves uncertain attempts for inspection.
 pub mod diagnostics;
+pub mod executor;
 pub mod service;
 mod supply;
 use super::{
@@ -598,6 +599,24 @@ pub(crate) fn catalog_record(instance: &Path) -> Result<CatalogRecord> {
         initialization,
         cli_match,
     })
+}
+
+/// Read only the immutable binding identity for an explicit node-name mapping.
+/// No operation lock, engine invocation, or private binding paths are exposed.
+pub(crate) fn catalog_binding_sha256(
+    instance: &Path,
+    schema_version: u32,
+    instance_id: &str,
+) -> Result<String> {
+    let root = Control::open(instance)?;
+    let (binding, binding_file, journal, state) = load(&root)?;
+    if binding.schema_version != schema_version || binding.instance_id != instance_id {
+        return Err(precondition());
+    }
+    binding_file.recheck()?;
+    journal.read().map_err(state_error)?;
+    root.recheck()?;
+    Ok(state.binding_sha256)
 }
 
 pub fn show(instance: &Path) -> Result<Summary> {

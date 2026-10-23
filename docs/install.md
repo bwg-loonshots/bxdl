@@ -16,7 +16,7 @@ bxdl install ./bxdl-development.tar.gz \
 
 payload 검증 실패나 기록 전 강제 중단은 receipt가 없는 부분 폴더를 남긴다. 마지막 receipt 공개·동기화 경계에서 I/O가 실패하면 INSTALL_COMMIT_UNCERTAIN/UNKNOWN/exit 6이며 receipt가 남았는지 확인해야 한다. 결과 출력 실패(exit 7)도 파일 설치 자체가 이미 끝났을 수 있다. 명령을 반복해 덮어쓰거나 자동 resume·삭제하지 않는다. 남은 폴더를 직접 확인하고 다른 새 경로를 지정한다. 파일이 보이거나 실행 권한이 있다는 사실만으로 설치 완료를 판단하지 않는다. 기존 대상은 빈 폴더여도 거부한다. symlink 경로를 사용하지 않으며 같은 UID의 악의적인 동시 변경에 대한 강한 보안 격리를 제공하지 않는다.
 
-현재 수신·재인수 기준은 [NIGO RC.3](../contracts/nigo/engine-rc3-2026-10-22/README.md)이며 자동으로 다운로드하거나 기존 설치를 교체하지 않는다. [RC.3 package 인수](../results/2026-10-22-macos-rc3-package.md)와 [전체 설치 UX 결과](../results/2026-10-22-macos-rc3-full-setup.md)는 당시 고정 CLI/archive의 근거다. CLI가 변경되면 새 package로 다시 인수해야 한다.
+현재 수신·재인수 기준은 [NIGO RC.3](../contracts/nigo/engine-rc3-2026-10-22/README.md)이며 자동으로 다운로드하거나 기존 설치를 교체하지 않는다. [RC.3 package 인수](../results/2026-10-22-macos-rc3-package.md)와 [전체 설치 UX 결과](../results/2026-10-22-macos-rc3-full-setup.md)는 당시 고정 CLI/archive의 근거다. 실행기·NIGO/JRE가 변경되면 새 package로 다시 인수한다. 관리 CLI만 변경하는 경우 지원하는 기존 RC.3 package와의 [호환 조합](./management-cli.md)을 검증하며 package를 재조립하지 않는다.
 
 등록 완료 전까지 원본 archive·외부 신뢰 key·engine lock을 보존한다. 새 V2 등록은 이 세 자료를 관리 보관하고, 기존 V1은 원본 참조를 유지한다. 제품/native·chain·credential과 완료된 설치 세션의 생성 제품 JSON은 두 경우 모두 필요한 운용 입력이다. [등록과 자료 보존 규칙](./instance.md)을 따른다.
 

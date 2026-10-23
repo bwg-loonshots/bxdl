@@ -1,11 +1,13 @@
 # CLI 우선 설치·운용 UX 구현 계획
 
-- 작성일/방향 변경: 2026-10-22 / 상태: **console 개발 중단. 기존 UX-01~03 구현·검증은 보존하고 다음 작업은 CLI-01이다.**
+- 작성일/방향 변경: 2026-10-22 / 상태: **console 개발 중단. 기존 UX-01~03 이력 보존. CLI-01/02는 2026-10-23 구현·검증 완료. 다음은 CLI-03 순차 설치 준비다.**
 - 기준: [직접 CLI 간소화](./2026-10-22-cli-simplification.md), [통합 설계](./2026-10-22-integrated-operations-ux.md), [화면 명세 S01~S11](./2026-10-22-integrated-operations-ux-screens.md), [화면 시안](./prototypes/integrated-operations-ux.html).
 - 기존 M/BX 작업 ID와 G1/G2를 대체하지 않는다. UX ID는 이번 개선을 나눠 구현·검토하기 위한 하위 추적이다.
 - 최초 설계 코드 기준은 PR #15의 `870ca72`, 설계 merge는 PR #16의 `a8fd55a`다. UX-01의 `operator/{prompt,help,view}.rs`와 UX-02의 `operator/{console,catalog,home,target}.rs`를 구현했다. UX-03의 `operator/install_flow.rs`와 `setup/preparation.rs`도 구현했다. node/support 모듈은 후속 제안이다.
 
 ## 1. 현재 실행할 계획 — CLI 우선
+
+2026-10-23 추가 결정: [관리 CLI/노드 실행기 분리](./2026-10-23-independent-management-cli.md)를 CLI-02에 포함한다. 새 관리 CLI를 검증한 기존 RC.3 실행기와 조합해 운용한다. CLI UX 변경만으로 archive를 재조립하는 조건은 이 지원 profile에 적용하지 않는다. 실행기·NIGO/JRE가 바뀌는 경우 새 package 인수는 계속 필요하다.
 
 사용자가 console을 직접 확인하고 직관성이 부족하다고 평가하여 개발 중단을 요청했다. console의 추가 화면·메뉴·서비스 연결과 별도 시안 개선을 진행하지 않는다. 기존 코드와 저장 자료는 보존하며 삭제/제거는 이번 작업에 포함하지 않는다. [CLI 우선 설계](./2026-10-22-cli-simplification.md)가 이후 구현의 기준이다.
 
@@ -13,15 +15,17 @@
 
 | 순서 | 작업 | 사용자에게 보이는 결과 | 구현·검증 범위 | 상태 |
 | --- | --- | --- | --- | --- |
-| CLI-01 | 직접 이름 연결·목록과 도움말 진입 정리 | `nodes`, `nodes add local --instance <control>` | console을 한 번도 열지 않고 기존 등록 연결; 별칭/표시명/ID 분리, 충돌·손상·동시 갱신 거절; 목록 무쓰기·live 미조회 | **NEXT** |
-| CLI-02 | 이름 기반 일상 운용 | `status/start/stop/logs/diagnose local` | 기존 API·`--instance`/JSON/exit 유지; 명시 대상과 dispatch 재검증; 상태·이유·다음 명령 출력; fixture와 정확한 package 조건 확인 | PLAN |
+| CLI-01 | 직접 이름 연결·목록과 도움말 진입 정리 | `nodes`, `nodes add local --instance <control>` | console을 한 번도 열지 않고 기존 등록 연결; 별칭/표시명/ID 분리, 충돌·손상·동시 갱신 거절; 목록 무쓰기·live 미조회 | IMPLEMENTED |
+| CLI-02 | 독립 관리 CLI·이름 기반 일상 운용 | `status/start/stop/logs/diagnose local` | 기존 RC.3 실행기 인증·고정 명령/JSON 위임; 이름/경로 재검증; setup 기존 흐름 연결; CLI×runtime 조합 인수 | IMPLEMENTED |
 | CLI-03 | 번호 메뉴를 순차 준비 문답과 단일 작업 명령으로 교체 | `setup new/resume`, `setup list/show/edit` | 공급→자기 노드→누락 제품/정책→검토→종료; 기존 입력 재사용·한 항목 수정·재개·EOF·비TTY·immutable 결과 | PLAN |
 | CLI-04 | 준비 결과에서 실제 설치 실행 | `setup apply local`, 별도 `init`·`start` | 기존 workflow intent/소유 증거/잠금 재사용; 승인 범위와 자료 변경 검사; partial/UNKNOWN 보존; 이름 저장 실패와 실제 설치 완료 분리 | PLAN |
-| CLI-05 | 셸 완성·새 Mac package·사용자 과업 | 명령/이름 완성과 실제 명령 중심 인수 | fmt/Clippy/회귀·PTY·같은 새 package 서비스/네트워크 인수·작성자가 아닌 사용자 과업을 각각 기록 | PLAN |
+| CLI-05 | 셸 완성·Mac 배포 조합·사용자 과업 | 명령/이름 완성과 실제 명령 중심 인수 | fmt/Clippy/회귀·PTY·관리 CLI/runtime 조합 서비스/네트워크 인수·작성자가 아닌 사용자 과업을 각각 기록 | PLAN |
 
-착수 순서는 **CLI-01 → CLI-02 → CLI-03 → CLI-04 → CLI-05**다. CLI-02는 기존 등록과 작업 API를 이용해 개발하되, CLI가 다른 기존 package에 바이너리를 덮어쓰거나 start 가능을 주장하지 않는다. 실제 새 package 인수는 CLI-04/05와 연결한다. NIGO RC.3/JRE 고정을 유지하며 이 순서의 새 NIGO 선행 구현은 없다.
+착수 순서는 **CLI-01 → CLI-02 → CLI-03 → CLI-04 → CLI-05**다. CLI-02는 패키지 내부 바이너리를 덮어쓰지 않는다. 지원하는 기존 RC.3 profile을 인증한 뒤 내부 실행기로 위임한다. 실행기 동작은 기존 검사를 유지하며 실제 조합 인수를 이번 단계에서 수행한다. 이후 새 runtime package 인수와 전체 사용자 과업은 CLI-04/05와 연결한다. NIGO RC.3/JRE 고정을 유지하며 이 순서의 새 NIGO 선행 구현은 없다.
 
-### 바로 다음 CLI-01의 구현 단위
+### CLI-01 구현 범위와 검증
+
+2026-10-23 아래 범위를 구현했다. [검증 기록](../results/2026-10-23-cli01-node-names.md)과 [사용 가이드](../docs/nodes.md)를 따른다. 실제 이름 기반 서비스 호출은 CLI-02에서 연결한다.
 
 1. 카탈로그에서 직접 명령 이름을 다룰 버전형 저장 계약을 정한다. 기존 레코드·표시명·불변 ID는 보존하고 명시 쓰기에서만 새 이름 정보를 저장한다.
 2. `nodes`는 등록 이름·표시명·저장 상태/시각을 읽기 전용으로 보여준다. 노드의 live status나 디스크 전체 탐색을 수행하지 않는다.
@@ -29,6 +33,17 @@
 4. 명령 이름과 기존 `--instance`가 공유할 대상 해석기를 만들고, 중복 이름·임의 경로 추정·대상 교체·stale mapping을 거절한다. 실제 운용 dispatch는 CLI-02에 연결한다.
 5. 최상위/해당 명령 도움말을 일상 과업 중심으로 정리한다. 기본 안내에서 console로 유도하지 않는다. 아직 구현하지 않은 문법을 실행 가능한 기능으로 표기하지 않는다.
 6. 무쓰기 조회, 기존 노드 불변, 별칭 충돌/동시 갱신, 손상된 catalog와 명시 경로 fallback, 기존 CLI 계약을 검사한다. `make check`와 해당 실제 PTY를 완료 기준으로 삼는다.
+
+### CLI-02 구현 단위 — 관리 CLI 독립 업데이트
+
+아래 6개 단위를 구현·검증했다. [실제 인수 기록](../results/2026-10-23-independent-management-cli.md)의 두 관리 CLI/기존 RC.3 직접 운용16사례·설치 도우미 PTY8사례 및 독립 정리가 PASS다. 최종 `make check` Rust512/Python50·fmt·Clippy와 Linux 타입 검사도 통과했다. 검증 범위는 단일 노드 로컬 수명주기이며 전체 합의/고객 배포 인수를 대신하지 않는다.
+
+1. 기존 RC.3 archive/manifest/CLI hash에 고정한 실행기 profile을 선언한다.
+2. 인증→대상 재검사→고정 argv/JSON 호출→제한된 결과 검증 adapter를 만든다. 구형 private journal과 worker gate는 실행기에 맡긴다.
+3. 기존 `--instance`와 이름 기반 start/status/stop/logs/diagnose를 같은 경로에 연결한다. init/preflight/show도 등록된 RC.3 실행기에 위임한다.
+4. 기존 `setup --install`이 지원 profile을 선택하고 노드 작업을 위임하도록 연결한다. workflow 승인·소유 기록·UNKNOWN과 기존 등록 V2 writer는 유지한다.
+5. 미지원/변조 package, bad JSON/exit, timeout/출력 유실, noexec, 손상 진단 salvage, stale alias, private 출력 검사를 완료한다.
+6. 두 관리 CLI bytes로 같은 원본 RC.3 package의 init/start/status/stop/같은 DB 재시작을 시험한다. worker는 기존 bytes이며 package/JRE inventory 불변과 종료 정리를 독립 대조한다.
 
 ### 기존 UX ID와의 관계
 

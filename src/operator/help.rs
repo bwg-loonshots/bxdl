@@ -9,9 +9,17 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
         return None;
     };
     let (usage, note) = match topic {
+        ["nodes"] => (
+            "bxdl nodes [--home <관리-루트>] [--json]",
+            "저장한 등록 노드 목록을 읽습니다. 이름·표시명·저장 당시 상태와 시각을 보여줍니다.\n예: bxdl nodes\n목록 조회는 폴더를 만들거나 노드·서비스·네트워크를 조회하지 않습니다. 없는 관리 위치는 빈 목록입니다.\n기존 노드 연결: bxdl nodes add local --instance <control-경로>\nMac 기본 위치는 ~/Library/Application Support/BXDL입니다. 다른 OS 또는 별도 목록은 --home을 지정하세요.\n이름 기반 운용: bxdl status local. 기존 --instance 경로도 지원합니다. 이름에는 같은 --home을 지정하세요.",
+        ),
+        ["nodes", "add"] => (
+            "bxdl nodes add <이름> --instance <기존-control-경로> [--home <관리-루트>] [--json]",
+            "기존 등록 노드에 명령 이름을 연결합니다. console이나 항목 ID는 필요하지 않습니다.\n예: bxdl nodes add local --instance /path/to/control\n이름은 소문자로 시작하는 1~32자의 소문자·숫자·하이픈입니다. 표시명·engine instanceId와 별개입니다.\n이 명령 자체가 목록 저장 요청이며 추가 문답 없이 관리 폴더와 이름 기록만 저장합니다. 설치·등록·DB·서비스는 변경하지 않습니다.\n다른 대상이 쓰는 이름과 기존 이름 변경은 거절합니다. 동일 이름·동일 대상 재요청은 기록을 다시 쓰지 않습니다.\n기존 목록은 읽을 때 변환하지 않고, 이름을 처음 저장할 때만 새 목록 형식을 사용합니다.\n다음 명령: bxdl nodes (별도 관리 위치에서는 같은 --home 지정). 이름 기반 status/start/stop/logs/diagnose와 기존 --instance를 지원합니다.",
+        ),
         ["console"] => (
             "bxdl console [--home <관리-루트>] [--instance <기존-control-경로>]",
-            "TTY 전용 홈·목록·기존 자료 조회입니다. --json과 비TTY 실행은 입력/쓰기 전에 거절합니다.\n홈/목록은 폴더를 만들지 않습니다. 명시 경로를 읽은 뒤 y/yes로 승인한 목록 저장만 관리 위치를 준비합니다.\nMac 기본 위치는 ~/Library/Application Support/BXDL입니다. 다른 OS는 --home을 지정하세요.\n등록 노드와 기존 설치/제품초안/네트워크 세션을 연결하며 재등록·형식변환·임의 CLI 실행은 하지 않습니다.\n목록은 저장 기록이며 현재 서비스 상태는 미조회입니다. 새 설치 자료 준비는 홈 1번에서 setup new/resume과 같은 흐름으로 진행합니다. 실제 설치·시작·중지·지원 보고서 통합은 후속입니다.\n:help 도움말, :back 이전 화면, :cancel/EOF 저장 자료를 보존하고 중단. Enter는 변경을 승인하지 않습니다.",
+            "TTY 전용 홈·목록·기존 자료 조회입니다. --json과 비TTY 실행은 입력/쓰기 전에 거절합니다.\n홈/목록은 폴더를 만들지 않습니다. 명시 경로를 읽은 뒤 y/yes로 승인한 목록 저장만 관리 위치를 준비합니다.\nMac 기본 위치는 ~/Library/Application Support/BXDL입니다. 다른 OS는 --home을 지정하세요.\n등록 노드와 기존 설치/제품초안/네트워크 세션을 연결하며 재등록·형식변환·임의 CLI 실행은 하지 않습니다.\n목록은 저장 기록이며 현재 서비스 상태는 미조회입니다. 새 설치 자료 준비는 홈 1번에서 setup new/resume과 같은 흐름으로 진행합니다. console의 추가 개발은 중단했습니다. 직접 CLI 개선을 우선합니다.\n:help 도움말, :back 이전 화면, :cancel/EOF 저장 자료를 보존하고 중단. Enter는 변경을 승인하지 않습니다.",
         ),
         ["setup", "new"] => (
             "bxdl setup new <이름> [--home <관리-루트>] [--from <instance.json>]",
@@ -27,22 +35,22 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
         ),
         ["setup", "--install"] => (
             "bxdl setup --install --workspace <new-session> [--from <instance.json>]\n  bxdl setup --install --workspace <session> --resume",
-            "macOS arm64 터미널에서 패키지와 같은 bytes의 CLI를 사용합니다. 부모 폴더는 미리 준비하세요.\narchive·외부 신뢰키·engine lock·native 설정과 기존 키 자료를 준비합니다.\ninputs/edit으로 항목 하나를 수정하고 plan으로 재검토합니다. apply·init·start는 각각 별도로 y/yes 확인을 받습니다.\n:help 도움말, :back 이전 항목/검토, :cancel/EOF 저장 후 중단. Enter는 실행을 승인하지 않습니다.\n완료 세션의 generated 제품 JSON은 운용 입력이므로 보존하세요. --json/--non-interactive는 지원하지 않습니다.",
+            "macOS arm64 터미널에서 실행합니다. 지원하는 RC.3 패키지는 독립 관리 CLI를 사용하고 그 외에는 기존 동일 CLI 조건을 유지합니다. 부모 폴더는 미리 준비하세요.\narchive·외부 신뢰키·engine lock·native 설정과 기존 키 자료를 준비합니다.\ninputs/edit으로 항목 하나를 수정하고 plan으로 재검토합니다. apply·init·start는 각각 별도로 y/yes 확인을 받습니다.\n:help 도움말, :back 이전 항목/검토, :cancel/EOF 저장 후 중단. Enter는 실행을 승인하지 않습니다.\n완료 세션의 generated 제품 JSON은 운용 입력이므로 보존하세요. --json/--non-interactive는 지원하지 않습니다.",
         ),
         ["setup", "--network"] => (
             "bxdl setup --network --workspace <new-session> --from <instance.json> --network-file <network.json> [--output <new-node.json>]\n  bxdl setup --network --workspace <session> --resume [--output <new-node.json>]",
             "승인된 공개 목록과 기존 제품 설정으로 native node.json을 준비합니다. 키 발급·cold 검사·노드 실행은 하지 않습니다.\n:help 도움말, :back 이전 항목/검토, :cancel/EOF 저장 후 중단. edit은 번호로 한 정책만 수정합니다.\n출력은 새 파일에만 y/yes 확인 후 저장하며 Enter는 거절합니다. --json/--non-interactive는 지원하지 않습니다.",
         ),
         ["start"] => (
-            "bxdl start --instance <control-dir> [--timeout-seconds <1..600>] [--json]",
-            "등록·초기화한 노드를 현재 Mac 사용자의 LaunchAgent로 명시 시작합니다. 설치 package와 같은 bytes의 CLI가 필요합니다.\n기본 관측 시간은 120초입니다. 시간이 끝나도 실행은 계속될 수 있으므로 status --wait로 같은 시도를 확인하세요.\n로그인 자동 시작·자동 재시작은 하지 않습니다. 터미널 종료와 달리 사용자 로그아웃은 노드를 종료합니다.",
+            "bxdl start <이름> [--home <관리-루트>] [기존 옵션]\n  bxdl start --instance <control-dir> [--timeout-seconds <1..600>] [--json]",
+            "등록·초기화한 노드를 현재 Mac 사용자의 LaunchAgent로 명시 시작합니다. 지원하는 RC.3 패키지는 검증된 내부 실행기에 위임합니다. 관리 CLI를 바꾸어도 기존 패키지는 유지합니다. 그 외 패키지는 기존 동일 CLI 조건을 유지합니다.\n기본 관측 시간은 120초입니다. 시간이 끝나도 실행은 계속될 수 있으므로 status --wait로 같은 시도를 확인하세요.\n로그인 자동 시작·자동 재시작은 하지 않습니다. 터미널 종료와 달리 사용자 로그아웃은 노드를 종료합니다.",
         ),
         ["status"] => (
-            "bxdl status --instance <control-dir> [--timeout-seconds <1..120>] [--json]\n  bxdl status --instance <control-dir> --wait [--timeout-seconds <1..600>] [--json]",
+            "bxdl status <이름> [--home <관리-루트>] [기존 옵션]\n  bxdl status --instance <control-dir> [--timeout-seconds <1..120>] [--json]\n  bxdl status --instance <control-dir> --wait [--timeout-seconds <1..600>] [--json]",
             "현재 시도의 서비스·엔진·로컬 준비 상태를 관측합니다. 초기화·시작·중지는 수행하지 않습니다.\n단일 조회 기본 10초, --wait 기본 120초입니다. 대기 만료는 시작 실패나 종료 확정이 아닙니다.\n로컬 READY만으로 네트워크 합의·거래 확정을 보장하지 않습니다.",
         ),
         ["stop"] => (
-            "bxdl stop --instance <control-dir> [--timeout-seconds <1..600>] [--json]",
+            "bxdl stop <이름> [--home <관리-루트>] [기존 옵션]\n  bxdl stop --instance <control-dir> [--timeout-seconds <1..600>] [--json]",
             "등록한 현재 시작 시도의 정상 종료를 요청하고 확인합니다. 기본 제한 시간은 60초입니다.\n종료 대기 만료·결과 불명에서는 새 start를 반복하지 말고 status와 정제 기록을 확인하세요.\nSERVICE_STOPPED_VERIFIED 이후에도 다음 start는 별도로 명시해야 합니다. 데이터는 삭제하지 않습니다.",
         ),
         ["init"] => (
@@ -54,11 +62,11 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
             "미완료 초기화의 재개 조건을 검사하고 조건이 맞을 때만 이어갑니다. 일반적인 UNKNOWN 복구 명령이 아닙니다.\n기존 기록을 삭제하거나 DB를 재초기화하지 않습니다. 노드를 시작하지 않습니다.",
         ),
         ["logs"] => (
-            "bxdl logs --instance <control-dir> [--tail <1..200>] [--max-bytes <4096..1048576>] [--timeout-seconds <1..30>] [--json]",
+            "bxdl logs <이름> [--home <관리-루트>] [기존 옵션]\n  bxdl logs --instance <control-dir> [--tail <1..200>] [--max-bytes <4096..1048576>] [--timeout-seconds <1..30>] [--json]",
             "최신 초기화·서비스 시도의 정제한 저장 기록을 읽습니다. live 상태 확인·raw 출력·follow는 제공하지 않습니다.\n기본 한도: tail 50개, 262144 bytes, 5초. 누락·한도 초과는 partial로 표시합니다.",
         ),
         ["diagnose"] => (
-            "bxdl diagnose --instance <control-dir> --output <new.json> [--tail <1..200>] [--max-bytes <4096..1048576>] [--timeout-seconds <1..30>] [--json]",
+            "bxdl diagnose <이름> [--home <관리-루트>] --output <new.json> [기존 옵션]\n  bxdl diagnose --instance <control-dir> --output <new.json> [--tail <1..200>] [--max-bytes <4096..1048576>] [--timeout-seconds <1..30>] [--json]",
             "정제한 저장 기록을 새 JSON 지원 보고서에 저장합니다. 기존 파일을 덮어쓰거나 자동 전송하지 않습니다.\nJVM·네트워크·서비스 호출 없이 수집하므로 현재 실행 상태를 검증한 보고서가 아닙니다.",
         ),
         ["preflight"] => (

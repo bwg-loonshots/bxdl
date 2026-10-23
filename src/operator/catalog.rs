@@ -22,6 +22,10 @@ pub(crate) struct Entry {
     pub label: String,
     pub target: Snapshot,
     pub recorded_at: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub alias: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub binding_sha256: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -40,7 +44,7 @@ impl Record {
         }
     }
     fn validate(&self) -> Result<()> {
-        if self.schema_version != 1 || self.kind != "BXDL_CONSOLE_CATALOG" {
+        if !matches!(self.schema_version, 1 | 2) || self.kind != "BXDL_CONSOLE_CATALOG" {
             return Err(corrupt());
         }
         if self.entries.len() > MAX_ENTRIES {
@@ -49,6 +53,7 @@ impl Record {
         let mut ids = BTreeSet::new();
         let mut targets = BTreeSet::new();
         let mut paths = BTreeSet::new();
+        let mut aliases = BTreeSet::new();
         for entry in &self.entries {
             if !valid_id(&entry.id)
                 || !valid_label(&entry.label)
@@ -58,6 +63,16 @@ impl Record {
                 || !paths.insert(&entry.target.path)
             {
                 return Err(corrupt());
+            }
+            match (&entry.alias, &entry.binding_sha256) {
+                (None, None) => {}
+                (Some(alias), Some(binding))
+                    if self.schema_version == 2
+                        && entry.target.kind == target::Kind::Instance
+                        && valid_name(alias)
+                        && valid_hash(binding)
+                        && aliases.insert(alias) => {}
+                _ => return Err(corrupt()),
             }
             entry.target.validate().map_err(|_| corrupt())?;
         }
@@ -142,7 +157,105 @@ impl Catalog {
             label: label.to_owned(),
             target,
             recorded_at: now()?,
+            alias: None,
+            binding_sha256: None,
         });
+        self.save(record)?;
+        Ok(id)
+    }
+
+    /// Explicitly connect a command name. An existing display label and ID are
+    /// preserved; re-adding the same name/target does not append a revision.
+    pub(crate) fn add_named(&mut self, name: &str, target: Snapshot) -> Result<String> {
+        if !valid_name(name) {
+            return Err(invalid_name());
+        }
+        if target.kind != target::Kind::Instance {
+            return Err(error(
+                "NODE_TARGET_INVALID",
+                "노드 이름은 기존 등록된 control에만 연결할 수 있습니다.",
+            ));
+        }
+        check_target_location(self.home.path(), &target)?;
+        let target = target::recheck(&target)?;
+        let binding = target::binding_sha256(&target)?;
+        let _guard = self.home.lock()?;
+        self.check_current()?;
+        // Check both sides of identity: a reused path must not silently replace
+        // its earlier root, nor may a moved root change its remembered path.
+        let position = self
+            .record
+            .entries
+            .iter()
+            .position(|entry| same_target(&entry.target, &target));
+        if let Some(index) = position {
+            let entry = &self.record.entries[index];
+            if entry.target.path != target.path
+                || entry.target.identity != target.identity
+                || entry.target.kind != target.kind
+                || entry.target.schema_version != target.schema_version
+                || entry.target.name != target.name
+            {
+                return Err(target_changed());
+            }
+            if entry
+                .alias
+                .as_deref()
+                .is_some_and(|existing| existing != name)
+            {
+                return Err(error(
+                    "NODE_TARGET_NAMED",
+                    "이 노드에는 이미 다른 이름이 연결되어 있습니다. 기존 이름을 사용하세요.",
+                ));
+            }
+            if entry
+                .binding_sha256
+                .as_deref()
+                .is_some_and(|expected| expected != binding)
+            {
+                return Err(target_changed());
+            }
+        }
+        if self
+            .record
+            .entries
+            .iter()
+            .enumerate()
+            .any(|(index, entry)| entry.alias.as_deref() == Some(name) && Some(index) != position)
+        {
+            return Err(error(
+                "NODE_NAME_EXISTS",
+                "이 이름은 다른 노드에 연결되어 있습니다. 다른 이름을 지정하세요.",
+            ));
+        }
+        if target::binding_sha256(&target)? != binding {
+            return Err(target_changed());
+        }
+        let mut record = self.record.clone();
+        let id = if let Some(index) = position {
+            let entry = &mut record.entries[index];
+            if entry.alias.as_deref() == Some(name) {
+                return Ok(entry.id.clone());
+            }
+            entry.alias = Some(name.to_owned());
+            entry.binding_sha256 = Some(binding);
+            entry.id.clone()
+        } else {
+            if record.entries.len() >= MAX_ENTRIES {
+                return Err(home::limit());
+            }
+            let id = unique_id(&record.entries)?;
+            record.entries.push(Entry {
+                id: id.clone(),
+                label: name.to_owned(),
+                target,
+                recorded_at: now()?,
+                alias: Some(name.to_owned()),
+                binding_sha256: Some(binding),
+            });
+            id
+        };
+        record.schema_version = 2;
         self.save(record)?;
         Ok(id)
     }
@@ -180,6 +293,11 @@ impl Catalog {
         }
         check_target_location(self.home.path(), &target)?;
         let target = target::recheck(&target)?;
+        if let Some(expected) = &entry.binding_sha256 {
+            if target::binding_sha256(&target)? != *expected {
+                return Err(target_changed());
+            }
+        }
         let _guard = self.home.lock()?;
         self.check_current()?;
         let mut record = self.record.clone();
@@ -193,7 +311,7 @@ impl Catalog {
         self.save(record)
     }
 
-    fn check_current(&self) -> Result<()> {
+    pub(super) fn check_current(&self) -> Result<()> {
         self.home.recheck()?;
         let raw = self
             .store
@@ -253,11 +371,52 @@ fn decode(raw: &[u8]) -> Result<Record> {
     if raw.len() > MAX_BYTES {
         return Err(home::limit());
     }
-    let record: Record = serde_json::from_value(decode_strict_json(raw).map_err(|_| corrupt())?)
-        .map_err(|_| corrupt())?;
+    let value: serde_json::Value = decode_strict_json(raw).map_err(|_| corrupt())?;
+    let version = value
+        .get("schemaVersion")
+        .and_then(serde_json::Value::as_u64);
+    if let Some(entries) = value.get("entries").and_then(serde_json::Value::as_array) {
+        for entry in entries {
+            for key in ["alias", "bindingSha256"] {
+                if let Some(field) = entry.get(key) {
+                    if version != Some(2) || field.is_null() {
+                        return Err(corrupt());
+                    }
+                }
+            }
+        }
+    }
+    let record: Record = serde_json::from_value(value).map_err(|_| corrupt())?;
     record.validate()?;
     Ok(record)
 }
+pub(crate) fn valid_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.len() <= 32
+        && name.as_bytes()[0].is_ascii_lowercase()
+        && name
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
+}
+fn valid_hash(hash: &str) -> bool {
+    hash.len() == 64
+        && hash
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+}
+pub(super) fn invalid_name() -> BxdlError {
+    error(
+        "NODE_NAME_INVALID",
+        "노드 이름은 소문자로 시작하는 1~32자의 소문자·숫자·하이픈으로 지정하세요.",
+    )
+}
+fn target_changed() -> BxdlError {
+    error(
+        "NODE_TARGET_CHANGED",
+        "저장한 노드와 현재 등록의 식별 정보가 다릅니다. 기존 이름을 다른 대상으로 바꾸지 않았습니다.",
+    )
+}
+
 fn valid_label(label: &str) -> bool {
     !label.trim().is_empty()
         && label == label.trim()

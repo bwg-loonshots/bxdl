@@ -664,7 +664,7 @@ impl Workflow {
         }
         self.journal.initialization = Phase::InProgress;
         self.save()?;
-        match instance::initialize(required(&plan.inputs.instance)?, resume, TIMEOUT) {
+        match super::runtime::initialize(required(&plan.inputs.instance)?, resume, TIMEOUT) {
             Ok(observed) => {
                 self.observe_initialization(&observed);
                 self.save()?;
@@ -687,7 +687,7 @@ impl Workflow {
         let plan = self.plan()?;
         self.journal.start = Phase::InProgress;
         self.save()?;
-        match instance::service::start(required(&plan.inputs.instance)?, TIMEOUT) {
+        match super::runtime::start(required(&plan.inputs.instance)?, TIMEOUT) {
             Ok(summary) => self.set_service(summary),
             Err(failure) => {
                 self.clear_service_observation(&failure.code);
@@ -752,7 +752,7 @@ impl Workflow {
         self.clear_service_observation("SERVICE_OBSERVATION_UNKNOWN");
         let plan = self.plan()?;
         let result =
-            instance::service::status(required(&plan.inputs.instance)?, Duration::from_secs(15));
+            super::runtime::status(required(&plan.inputs.instance)?, Duration::from_secs(15));
         self.accept_service_observation(result)
     }
 
@@ -766,7 +766,7 @@ impl Workflow {
         let plan = self.plan()?;
         // Read the current attempt through the service adapter. This path never
         // invokes initialization, bootstrap, kickstart, or automatic retries.
-        let result = instance::service::wait_ready_for(
+        let result = super::runtime::wait_ready_for(
             required(&plan.inputs.instance)?,
             &expected_attempt,
             TIMEOUT,

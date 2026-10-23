@@ -2,7 +2,7 @@
 
 NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구다. **Rust로 구현하며 macOS Apple Silicon에서 설치·운용 UX를 먼저 완성한다.** Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
 
-개선 우선순위를 **직접 CLI 중심**으로 변경했다. `bxdl console`의 추가 개발은 중단하고 기존 구현은 보존한다. 다음은 console 없이 기존 노드에 이름을 연결하는 명령이며, 이름 기반 운용과 순차 설치 준비를 이어서 구현한다. 현재 `setup new/resume`의 번호 메뉴는 교체 예정이며 아직 새 순차 흐름은 제공하지 않는다. [현재 작업 계획](./design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
+개선 우선순위를 **직접 CLI 중심**으로 변경했다. `bxdl console`의 추가 개발은 중단하고 기존 구현은 보존한다. `bxdl nodes`와 `bxdl nodes add <이름> --instance <경로>`로 console 없이 목록 조회와 기존 노드 이름 연결을 제공한다. 이름 기반 운용을 연결하고 관리 CLI가 기존 RC.3 패키지 실행기에 작업을 위임하도록 분리했다. 순차 설치 준비는 후속이다. 현재 `setup new/resume`의 번호 메뉴는 교체 예정이며 아직 새 순차 흐름은 제공하지 않는다. [현재 작업 계획](./design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
 
 현재 구현은 개발용 패키지 조립·검증, **Mac의 새 폴더 설치**, 초안 모드와 **명시 설치·등록·초기화·시작을 연결한 setup 설치 도우미**, **제품·NIGO 설정의 결합 cold 검사**, **인스턴스 등록과 명시적 init/resume-init**, **Mac 사용자 LaunchAgent의 start/status/stop**, **오프라인 logs/diagnose**다. 새 setup CLI와 동일한 CLI를 담은 개발용 package로 취소·재개, 설치·초기화, 단일 노드 시작·정상 종료·같은 데이터 재시작을 확인했다. [검증 범위와 남은 인수](./results/2026-09-27-setup-install-flow.md)를 따르며 전체 G1-M은 후속이다. 엔진 JAR/JRE·고객 키·DB를 이 저장소에 동봉하지 않는다.
 
@@ -22,10 +22,15 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 
 **offline Storage A7은 NOT_RUN**, 기존 설치 upgrade와 전체 G1-M은 후속이다. RC.2 원본 INCOMPLETE·경로 원인 미확정과 RC.3 수신/앞선 시험/NIGO 회신의 당시 미선택·NOT_RUN은 각 시점의 이력으로 보존한다.
 
+관리 CLI는 노드 패키지 밖에서 독립적으로 업데이트할 수 있다. 현재 지원 대상은 검증한 기존 RC.3 패키지이며 설치본의 CLI·NIGO JAR·JRE를 교체하지 않는다. 실행기 자체를 변경할 때는 새 패키지 인수가 필요하다. [분리 설계](./design/2026-10-23-independent-management-cli.md)와 [운용 가이드](./docs/management-cli.md)를 따른다. [독립 관리 CLI 인수](./results/2026-10-23-independent-management-cli.md)의 직접 운용16사례·설치 도우미 PTY8사례, payload/worker 불변과 정상 종료 독립 대조가 PASS다.
+
 ## 구현한 명령
 
 | 명령 | 실제 동작 |
 | --- | --- |
+| `bxdl nodes [--home <dir>] [--json]` | 저장한 노드 목록·이름·저장 당시 상태/시각 조회. 현재 실행 상태는 미조회 ([가이드](./docs/nodes.md)) |
+| `bxdl nodes add <이름> --instance <control> [--home <dir>] [--json]` | 기존 등록에 고유 이름 연결. 추가 문답 없이 목록만 저장하며 노드·DB·서비스는 변경하지 않음 |
+| `bxdl status/start/stop/logs <이름>`, `bxdl diagnose <이름> --output <새.json>` | 같은 관리 목록의 이름을 해석해 노드 운용. `--home` 지원, 기존 `--instance` 경로도 유지 |
 | `bxdl setup new <이름>` / `bxdl setup resume <이름>` | 같은 이름으로 자료·제품·network/native 설정 준비·재개. 실제 설치는 후속 ([가이드](./docs/preparation.md)) |
 | `bxdl console [--home <dir>] [--instance <control>]` | **추가 개발 중단·기존 구현 보존.** 홈·내 목록·기존 등록/세션의 저장 기록 조회. 승인한 목록 저장/갱신/숨기기와 새 설치 자료 준비 ([가이드](./docs/console.md)) |
 | `bxdl version --json` | Rust CLI identity·Mac 우선 target·구현 capability·엔진/서비스 미인수 상태 |
@@ -55,11 +60,11 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 
 `upgrade/uninstall`은 exit 4와 CAPABILITY_NOT_IMPLEMENTED를 반환한다. 기본 setup 저장 성공은 초안 저장이며 설치 모드의 `finish`도 현재 단계까지만 저장한다. init 성공은 실행 중 노드·서비스 준비 완료가 아니다. logs/diagnose는 raw 로그·비밀·경로·hash를 내보내지 않고 누락은 partial로 표시한다. 보고서 생성 성공을 노드 안전·정상 판정으로 해석하지 않는다. [사용법과 한도](./docs/cli.md#오프라인-기록과-지원-보고서)를 따른다.
 
-start는 설치 package의 `bin/bxdl`과 같은 바이트의 CLI로 호출한다. 기존 설치본에 새 CLI만 덮어쓰는 업데이트는 지원하지 않는다. 로그인된 Mac 사용자 세션에서 수동 시작하며 로그인 자동 시작·자동 재시작은 제공하지 않는다. 정상 종료가 검증된 뒤에만 다음 명시 start를 허용한다. 실패·UNKNOWN 복구와 보존된 snapshot/private 로그의 자동 정리는 후속이다.
+지원하는 기존 RC.3는 외부 관리 CLI로 start를 호출하면 인증된 package의 고정 실행기에 위임한다. 다른 package는 기존 동일 bytes 조건을 적용한다. 관리 CLI는 설치본 밖에서 교체하며 package 내부 CLI는 덮어쓰지 않는다. 로그인된 Mac 사용자 세션에서 수동 시작하며 로그인 자동 시작·자동 재시작은 제공하지 않는다. 정상 종료가 검증된 뒤에만 다음 명시 start를 허용한다. 실패·UNKNOWN 복구와 보존된 snapshot/private 로그의 자동 정리는 후속이다.
 
 ## 설치 도우미와 설정 준비
 
-Mac arm64에서 패키지와 함께 공급된 동일 CLI로 새 설치를 진행하려면 별도 설치 세션을 지정한다. 부모 폴더는 미리 있어야 하며 자동 생성하지 않는다.
+Mac arm64에서 새 설치를 진행하려면 별도 설치 세션을 지정한다. 검증된 기존 RC.3는 독립 관리 CLI로 설치·운용할 수 있으며, 다른 package는 공급된 동일 CLI 조건을 적용한다. 부모 폴더는 미리 있어야 하며 자동 생성하지 않는다.
 
 ```bash
 bxdl setup --install --workspace /absolute/existing-parent/new-session

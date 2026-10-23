@@ -67,7 +67,7 @@ bxdl resume-init --instance "/absolute/bxdl/instances/validator-a" \
 
 ## 초기화 후 시작·조회·종료
 
-현재 사용자가 GUI 세션에 로그인한 macOS arm64에서 명시적으로 LaunchAgent를 시작한다. **start에 사용하는 CLI는 등록된 설치 package의 `bin/bxdl`과 같은 바이트여야 한다.** 아래 경로는 서비스 명령을 포함한 package로 새로 설치·등록·초기화한 경로로 바꾼다. 기존 초기화용 package에 새 CLI만 덮어쓰거나 기존 DB를 새 등록에 채택하는 업데이트는 지원하지 않는다.
+현재 사용자가 GUI 세션에 로그인한 macOS arm64에서 명시적으로 LaunchAgent를 시작한다. **지원하는 기존 RC.3 profile은 독립 관리 CLI가 인증한 package의 `bin/bxdl`에 작업을 위임한다.** 그 외 package의 native start는 같은 바이트 조건을 유지한다. [관리 CLI 가이드](./management-cli.md)를 따른다. 아래 경로는 서비스 명령을 포함한 package로 새로 설치·등록·초기화한 경로로 바꾼다. 기존 초기화용 package에 새 CLI만 덮어쓰거나 기존 DB를 새 등록에 채택하는 업데이트는 지원하지 않는다.
 
 ```bash
 BXDL_PACKAGE="/absolute/bxdl/releases/candidate-02"
@@ -105,7 +105,7 @@ status는 해당 attempt의 launchd·report·로컬 bootstrap/health를 대조�
 | 정상 종료 검증됨 | 별도 명시 start를 선택할 수 있음. 실행 직전 기존 조건 재검사 |
 | GUI 세션 없음 | 해당 사용자 GUI 세션과 상태 확인. SSH 접속만으로 GUI 세션이 생기지 않음 |
 | 실패·UNKNOWN·시도/보고서 불일치 | 정제 로그·진단과 상태 확인. init/start를 반복해 자동 복구하지 않음 |
-| 실행 CLI 불일치 | 검증된 설치 package의 동일 bytes CLI 사용. 기존 설치 바이너리를 덮어쓰지 않음 |
+| 실행 CLI 불일치 | 지원하는 RC.3는 독립 관리 CLI가 고정 실행기에 위임. 다른 package는 검증된 동일 bytes CLI 사용. 설치 바이너리를 덮어쓰지 않음 |
 
 다음 start는 이전 시도가 `STOPPED_VERIFIED`여야 한다. stop이 **동일 시도의 정상 STOPPED report + launchd의 살아 있는 프로세스 부재 + control 잠금 획득**을 함께 확인해 이를 먼저 게시한다. 이후 프로세스 부재를 재확인하고 job 등록을 정리한다. status만으로는 이 기록을 게시하지 않는다. 검증 뒤 등록 정리만 실패했다면 종료 근거는 보존하며, 명시 stop 재호출로 정리를 다시 확인한다. 다음 start도 이전 job의 비활성과 등록 정리를 확인한 뒤 새 시도를 준비한다.
 

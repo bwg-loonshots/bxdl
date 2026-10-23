@@ -2,7 +2,7 @@
 
 - 작성일/방향 변경: 2026-10-22
 - 최신 사용자 결정: **console 개발을 중단하고 직접 CLI 개선을 우선한다.** 사용자가 현재 console을 확인한 뒤 직관성이 부족하다고 평가했다.
-- 상태: 이 문서는 새 우선순위와 목표 계약이다. 기존 UX-01~03 구현·검증 이력을 보존하며, 아래 CLI-01~05의 새 동작은 아직 구현하지 않았다.
+- 상태: 이 문서는 새 우선순위와 목표 계약이다. 기존 UX-01~03 구현·검증 이력을 보존하며, 2026-10-23 CLI-01/02를 구현·검증했다. [독립 관리 CLI 설계](./2026-10-23-independent-management-cli.md)에 따라 기존 RC.3 실행기 위임과 이름 기반 운용을 제공한다. CLI-03~05는 계획이다.
 - 연결: [현재 구현 상태](../docs/implementation-status.md), [작업 순서](./2026-10-22-integrated-operations-ux-implementation-plan.md).
 
 ## 1. 바꾸는 방향
@@ -15,14 +15,14 @@ console 홈·메뉴·화면 시안의 추가 개발과 실제 서비스 연결�
 
 ## 2. 목표 명령
 
-다음 문법은 **계획**이다. 현재 실행 가능한 동작은 [CLI 가이드](../docs/cli.md)를 따른다.
+아래 CLI-01 목록/이름 연결과 CLI-02 이름 기반 운용을 구현했다. CLI-03 이후는 **계획**이며 현재 실행 가능한 동작은 [CLI 가이드](../docs/cli.md)를 따른다.
 
 | 과업 | 목표 문법 | 의미/단계 |
 | --- | --- | --- |
-| 내 노드 목록 | `bxdl nodes [--home <root>]` | CLI-01. 저장 목록 조회, live 상태는 미조회 |
-| 기존 노드에 이름 붙이기 | `bxdl nodes add local --instance <control> [--home <root>]` | CLI-01. 지원되는 기존 등록을 확인하고 탐색 목록에 연결. 설치/엔진 재등록 아님 |
-| 상태·시작·중지 | `bxdl status local`, `bxdl start local`, `bxdl stop local` | CLI-02. 명시한 한 노드에 기존 작업 API 호출 |
-| 기록·지원 자료 | `bxdl logs local`, `bxdl diagnose local --output report.json` | CLI-02. 기존 정제 범위와 partial 계약 유지 |
+| 내 노드 목록 | `bxdl nodes [--home <root>]` | CLI-01 구현. 저장 목록 조회, live 상태는 미조회 |
+| 기존 노드에 이름 붙이기 | `bxdl nodes add local --instance <control> [--home <root>]` | CLI-01 구현. 지원되는 기존 등록을 확인하고 탐색 목록에 연결. 설치/엔진 재등록 아님 |
+| 상태·시작·중지 | `bxdl status local`, `bxdl start local`, `bxdl stop local` | CLI-02 구현. 명시한 한 노드의 검증된 실행기/기존 API 호출 |
+| 기록·지원 자료 | `bxdl logs local`, `bxdl diagnose local --output report.json` | CLI-02 구현. 기존 정제 범위와 partial 계약 유지 |
 | 새 설치 자료 준비 | `bxdl setup new local [--home <root>] [--from <instance.json>]` | CLI-03. 기존 진입 명령 유지, 번호 메뉴를 순차 문답으로 교체 |
 | 준비 이어가기 | `bxdl setup resume local [--home <root>]` | CLI-03. 현재 저장 단계와 다음 필요한 입력부터 계속 |
 | 준비 목록·내용 확인 | `bxdl setup list`, `bxdl setup show local` | CLI-03. 무쓰기 조회, 완료/부족/변경 사항과 다음 명령 표시 |
@@ -43,9 +43,9 @@ console 홈·메뉴·화면 시안의 추가 개발과 실제 서비스 연결�
 - 준비 세션명과 engine instanceId를 노드 별칭으로 자동 채택하지 않는다. 설치 시 같은 이름을 제안할 수 있지만 충돌과 등록 대상 identity를 확인해야 한다.
 - 위치 인자 이름과 기존 `--instance`는 둘 중 하나만 받는다. 대상 누락·미지 이름·손상·대상 교체는 usage 또는 검증 오류이며 마지막 노드/유일 노드로 추정하지 않는다.
 
-이름 연결은 기존 등록/준비 파일을 읽고 탐색 정보를 저장하는 별도 작업이다. 데이터 채택·설치·초기화·서비스 변경을 하지 않는다. 기존 카탈로그의 표시명을 임의로 실행 이름으로 전환하지 않는다. 새 별칭 저장 계약과 기존 record 읽기 호환, 동시 갱신·고유성 검사, 실패 시 기존 정보 보존을 CLI-01에서 구현한다.
+이름 연결은 기존 등록/준비 파일을 읽고 탐색 정보를 저장하는 별도 작업이다. 데이터 채택·설치·초기화·서비스 변경을 하지 않는다. 기존 카탈로그의 표시명을 임의로 실행 이름으로 전환하지 않는다. 새 별칭 저장 계약과 기존 record 읽기 호환, 동시 갱신·고유성 검사, 실패 시 기존 정보 보존을 CLI-01에서 구현했다. V1 읽기는 무변환이고 명시 add만 catalog V2를 기록한다. `nodes add` 자체가 목록 저장 요청이며 문답은 없다. 같은 이름/대상 재요청은 무쓰기이며 구형 CLI의 V2 목록 읽기는 지원하지 않는다.
 
-운용 이름을 해석한 뒤 dispatch 직전에 목록 revision과 control root/binding identity를 다시 검사한다. 기존 lock·파일 pin·설치 CLI 일치 조건·UNKNOWN 처리도 유지한다. 사용자가 승인한 대상이 다른 매핑이나 다른 시도로 바뀌면 이전 승인을 전이하지 않는다. 셸 문자열·외부 CLI 실행 경로를 별칭에 저장하지 않는다.
+운용 이름을 해석한 뒤 dispatch 직전에 목록 revision과 control root/binding identity를 다시 검사한다. 기존 실행기의 lock·파일 pin·CLI 일치 검사·UNKNOWN 처리도 유지한다. 변경된 목록/root/binding을 발견하면 거절한다. 구형 실행기는 expected-attempt 원자적 승인 인자가 없으므로 직전 재검사와 child 잠금 사이의 한계는 [실행기 분리 설계](./2026-10-23-independent-management-cli.md)를 따른다. 셸 문자열·외부 CLI 실행 경로를 별칭에 저장하지 않는다.
 
 ## 4. 한 명령의 출력과 다음 행동
 
@@ -86,16 +86,16 @@ CLI-04에서 `setup apply`를 기존 install workflow에 연결한다. 검토 �
 
 실제 작업 완료 뒤 이름/목록 저장이 실패해도 설치를 반복하지 않는다. 기존 control 경로로 확인·운용할 수 있게 안내한다. 초기화 불명과 서비스 종료 불명을 보존하고, 정상 종료 확인 뒤 다음 명시 start를 허용한다.
 
-현재 CLI와 package CLI가 다른 기존 RC.3 설치에 새 이름을 붙였다고 start가 허용되는 것은 아니다. 새 CLI를 포함한 package 인수와 기존 정확한 CLI 조건이 필요하다. engine/JRE pin을 UX 편의 때문에 변경하지 않으며 NIGO에 새 console/registry 구현을 요구하지 않는다.
+관리 CLI와 package CLI의 bytes가 달라도 지정한 RC.3 profile은 검증한 패키지 실행기로 위임한다. 기존 archive·실행기 bytes와 서명/inventory는 유지하며 관리 CLI×runtime 조합을 검증한다. 미지원 package의 native 경로는 기존 exact CLI 조건을 유지한다. engine/JRE pin을 UX 편의 때문에 변경하지 않으며 NIGO에 새 console/registry 구현을 요구하지 않는다.
 
 ## 7. 완료 기준
 
 메뉴 화면 수보다 다음 과업이 console 없이 되는지 검증한다.
 
 - 새 터미널에서 기존 control에 이름을 붙이고 목록→status→logs를 실행한다.
-- 같은 이름으로 명시 stop을 확인하고 별도 start를 실행한다. 실제 서비스 인수는 같은 새 package로 수행한다.
+- 같은 이름으로 명시 stop을 확인하고 별도 start를 실행한다. 실제 서비스 인수는 동일한 기존 RC.3 package와 새 관리 CLI의 조합으로 수행한다. runtime 변경 시에만 새 package를 인수한다.
 - 처음 설치 준비에서 누락 값만 답하고, 잘못된 값 하나를 수정하고, 다음 날 이름으로 재개한다.
 - 오류 메시지에서 다음 명령을 찾는다. 비TTY 명령은 무입력 동작 또는 명확한 usage 오류로 종료한다.
 - 기존 경로 명령·JSON·종료 코드·저장 포맷과 정상/UNKNOWN 안전 조건이 유지된다.
 
-코드 검사, 실제 Mac PTY, 새 package/서비스 인수, 작성자가 아닌 사람의 과업을 따로 기록한다. 과거 UX-03 Rust464/Python50 PASS는 기존 구현의 이력이며 아직 구현하지 않은 순차 CLI의 사용성 근거가 아니다. 안전 제거 REM-01 등 G1-M의 별도 필수 과제도 유지한다.
+코드 검사, 실제 Mac PTY, 관리 CLI/runtime 조합 인수, 작성자가 아닌 사람의 과업을 따로 기록한다. 과거 UX-03 Rust464/Python50 PASS는 기존 구현의 이력이며 아직 구현하지 않은 순차 CLI의 사용성 근거가 아니다. 안전 제거 REM-01 등 G1-M의 별도 필수 과제도 유지한다.

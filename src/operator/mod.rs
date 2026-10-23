@@ -9,3 +9,5 @@ pub(crate) mod home;
 pub(crate) mod target;
 
 pub(crate) mod install_flow;
+
+pub(crate) mod nodes;

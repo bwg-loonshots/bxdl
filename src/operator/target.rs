@@ -79,7 +79,7 @@ impl CliMatch {
     pub(crate) fn label(self) -> &'static str {
         match self {
             Self::Match => "현재 CLI와 패키지 CLI의 파일 내용 일치 · 실행 승인 아님",
-            Self::Mismatch => "CLI 파일 내용 불일치 · 해당 패키지 CLI 필요",
+            Self::Mismatch => "CLI 파일 내용 불일치 · 실행기 호환 검사 필요",
             Self::Unavailable => "CLI 파일 내용 비교 불가",
             Self::NotApplicable => "이 세션에는 CLI 비교를 적용하지 않음",
         }
@@ -266,10 +266,113 @@ pub(crate) fn recheck(expected: &Snapshot) -> Result<Snapshot> {
     if current.identity != expected.identity
         || current.schema_version != expected.schema_version
         || current.path != expected.path
+        || (current.kind == Kind::Instance && current.name != expected.name)
     {
         return Err(replaced());
     }
     Ok(current)
+}
+
+/// A selected node with pinned root/binding identity and, for names, a pinned
+/// catalog revision. It never authorizes an engine action by itself.
+pub(crate) struct ResolvedInstance {
+    catalog: Option<super::catalog::Catalog>,
+    snapshot: Snapshot,
+    binding_sha256: String,
+}
+impl ResolvedInstance {
+    pub(crate) fn snapshot(&self) -> &Snapshot {
+        &self.snapshot
+    }
+    /// Call again immediately before dispatch, in addition to the operation's
+    /// existing input pins and locks. No prompt should span this final check.
+    pub(crate) fn recheck(&self) -> Result<Snapshot> {
+        if let Some(catalog) = &self.catalog {
+            catalog.check_current()?;
+        }
+        let current = recheck(&self.snapshot)?;
+        if current.name != self.snapshot.name || binding_sha256(&current)? != self.binding_sha256 {
+            return Err(replaced());
+        }
+        if let Some(catalog) = &self.catalog {
+            catalog.check_current()?;
+        }
+        Ok(current)
+    }
+}
+
+/// Both direct paths and names use the same explicit target selection. Path
+/// mode intentionally ignores catalog/home state, preserving the fallback.
+pub(crate) fn resolve_instance(
+    home: Option<&Path>,
+    name: Option<&str>,
+    instance: Option<&Path>,
+) -> Result<ResolvedInstance> {
+    let resolved = match (name, instance) {
+        (None, Some(path)) => {
+            let snapshot = inspect(Kind::Instance, path)?;
+            let binding_sha256 = binding_sha256(&snapshot)?;
+            ResolvedInstance {
+                catalog: None,
+                snapshot,
+                binding_sha256,
+            }
+        }
+        (Some(name), None) => {
+            if !super::catalog::valid_name(name) {
+                return Err(super::catalog::invalid_name());
+            }
+            let missing = || {
+                BxdlError::new(
+                    "NODE_NAME_MISSING",
+                    "등록한 노드 이름이 없습니다. bxdl nodes로 저장 목록을 확인하세요.",
+                )
+            };
+            let home = home.ok_or_else(|| {
+                BxdlError::new(
+                    "NODE_HOME_REQUIRED",
+                    "이름을 해석할 관리 위치가 필요합니다.",
+                )
+            })?;
+            let catalog = super::catalog::Catalog::open(home)?.ok_or_else(missing)?;
+            let entry = catalog
+                .entries()
+                .iter()
+                .find(|entry| entry.alias.as_deref() == Some(name))
+                .ok_or_else(missing)?;
+            let snapshot = entry.target.clone();
+            let binding_sha256 = entry.binding_sha256.clone().ok_or_else(missing)?;
+            ResolvedInstance {
+                catalog: Some(catalog),
+                snapshot,
+                binding_sha256,
+            }
+        }
+        _ => {
+            return Err(BxdlError::new(
+                "NODE_TARGET_REQUIRED",
+                "노드 이름 또는 --instance 경로 중 하나만 지정하세요.",
+            ));
+        }
+    };
+    resolved.recheck()?;
+    Ok(resolved)
+}
+
+pub(super) fn binding_sha256(expected: &Snapshot) -> Result<String> {
+    if expected.kind != Kind::Instance {
+        return Err(invalid());
+    }
+    if root_identity(&expected.path)? != expected.identity {
+        return Err(replaced());
+    }
+    let binding =
+        instance::catalog_binding_sha256(&expected.path, expected.schema_version, &expected.name)
+            .map_err(safe_error)?;
+    if root_identity(&expected.path)? != expected.identity {
+        return Err(replaced());
+    }
+    Ok(binding)
 }
 
 /// Guard the concrete files/directories written by catalog creation and saves.

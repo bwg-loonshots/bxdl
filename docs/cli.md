@@ -18,15 +18,24 @@ engine 명령과 결합/등록형 preflight는 고정한 JVM의 cold 명령을 �
 
 ## 명령별 도움말과 대화형 입력
 
-`bxdl help`와 인자 없는 실행의 전체 도움말을 유지한다. `bxdl start --help`, `bxdl setup --install --help`, `bxdl setup --network --help`처럼 해당 명령·모드의 사용법을 직접 볼 수 있다. 도움말 조회는 질문을 읽거나 설치·초기화·서비스를 실행하지 않는다. 도움말 호출에는 해당 명령·모드와 도움말 옵션만 지정하며 실행 옵션·파일 경로를 함께 넣지 않는다.
+`bxdl help`와 인자 없는 실행은 내 노드·운용·설치·제작 과업별 진입점을 보여준다. 상세 옵션은 각 명령 도움말에서 확인한다. `bxdl start --help`, `bxdl setup --install --help`, `bxdl setup --network --help`처럼 해당 명령·모드의 사용법을 직접 볼 수 있다. 도움말 조회는 질문을 읽거나 설치·초기화·서비스를 실행하지 않는다. 도움말 호출에는 해당 명령·모드와 도움말 옵션만 지정하며 실행 옵션·파일 경로를 함께 넣지 않는다.
 
 제품·설치·네트워크 문답의 모든 입력 단계에서 `:help`, `:back`, `:cancel`을 공통으로 사용한다. 도움말은 현재 질문으로 돌아오고, 뒤로가기는 앞 질문 또는 이전 검토 단계로 돌아가며, 취소/EOF는 저장한 checkpoint를 보존한다. 예약 문자가 파일명이라면 `./:help` 같은 명시 경로로 지정한다. 항목 편집은 번호 하나를 고르고 저장한 뒤 검토로 돌아간다. 파일 출력·apply·init·start의 대화형 확인은 `y`/`yes`만 승인하며 빈 Enter는 거절이다.
 
-`bxdl console [--home <관리-루트>] [--instance <기존-control>]`은 홈·목록·기존 자료 읽기를 제공한다. 홈 조회는 무쓰기이며 목록 저장/갱신/숨기기는 개별 승인한다. 홈 1번은 `setup new/resume`과 같은 자료 준비를 제공한다. 실제 통합 설치·현재 서비스 조회·시작·중지는 후속이다. [console 사용 가이드](./console.md)를 따른다. HTML과 Python 터미널 체험판은 별도의 시안이며 제품 웹서버를 실행하지 않는다.
+`bxdl console [--home <관리-루트>] [--instance <기존-control>]`은 홈·목록·기존 자료 읽기를 제공한다. 홈 조회는 무쓰기이며 목록 저장/갱신/숨기기는 개별 승인한다. 홈 1번은 `setup new/resume`과 같은 자료 준비를 제공한다. console의 추가 개발은 중단했으며 실제 운용 연결은 직접 CLI에서 진행한다. [console 사용 가이드](./console.md)를 따른다. HTML과 Python 터미널 체험판은 별도의 시안이며 제품 웹서버를 실행하지 않는다.
 
 ## JSON envelope
 
 `schemaVersion`, `command`, `outcome`, `reasonCode`, `message`, `observedAt`, 선택 `data`로 구성된다. outcome은 SUCCEEDED/FAILED/INCOMPLETE/UNSUPPORTED/UNKNOWN이다. Rust 이식 후에도 명령·exit·envelope를 유지한다. `version`은 CLI build와 capability만 표시하며 설치된 bundle을 탐색하지 않는다. data에 implementation=rust, primaryTarget=darwin-arm64, macosServiceAcceptance=NOT_CHECKED를 추가하고 기존 linuxServiceAcceptance도 유지한다.
+
+## 직접 노드 목록과 이름 연결
+
+```sh
+bxdl nodes add local --instance /path/to/control
+bxdl nodes
+```
+
+두 명령은 `--home <관리-루트>`와 `--json`을 지원하며 비TTY에서도 입력을 읽지 않는다. `add`는 기존 등록에 이름을 연결하는 명시 저장 요청이다. 목록은 저장 당시 상태이며 `currentStatus=NOT_OBSERVED`다. `status/start/stop/logs <이름>`과 `diagnose <이름> --output <새.json>`을 지원한다. 이름에는 같은 `--home`을 사용하고 기존 `--instance`와는 섞지 않는다. [독립 관리 CLI](./management-cli.md)는 검증한 RC.3 package의 실행기에 위임한다. [노드 이름 가이드](./nodes.md)에 충돌·호환·출력 계약을 설명한다.
 
 ## 이름 있는 설치 준비
 
@@ -157,7 +166,7 @@ bxdl status --instance <absolute-control-dir> --wait [--timeout-seconds <1..600>
 bxdl stop --instance <absolute-control-dir> [--timeout-seconds <1..600>] [--json]
 ```
 
-macOS arm64의 현재 사용자 GUI 로그인 세션에서 이미 등록·초기화한 개발 인스턴스를 제어한다. start는 설치된 package의 `bin/bxdl`과 같은 바이트의 CLI를 요구한다. 새 CLI만 기존 package에 덮어쓰면 전체 inventory 검증에 실패하며, 외부의 다른 CLI로 시작하면 `SERVICE_CLI_MISMATCH`다. 새 CLI를 담은 archive와 새 설치본을 준비해야 하며 기존 등록/data의 업데이트·migration은 제공하지 않는다.
+macOS arm64의 현재 사용자 GUI 로그인 세션에서 이미 등록·초기화한 개발 인스턴스를 제어한다. [지원하는 RC.3](./management-cli.md)는 독립 관리 CLI가 인증한 package의 고정 실행기에 위임한다. 실행기의 동일 bytes 검사와 전체 inventory 검증을 유지하므로 package 안의 CLI는 덮어쓰지 않는다. 미지원 package의 native start는 다른 bytes의 외부 CLI에 `SERVICE_CLI_MISMATCH`를 반환한다. 관리 CLI 교체는 기존 등록/data의 업데이트·migration을 수행하지 않는다.
 
 start마다 control 아래에 고유 attempt·worker/JAR snapshot·plist·report를 만든다. 수동 bootstrap의 `RunAtLoad=true`, `KeepAlive=false`를 사용하며 `~/Library/LaunchAgents` 자동 로그인 등록은 하지 않는다. worker는 한 번 실행 허가를 소비하고 입력·전체 설치본·cold·INITIALIZED/genesis를 다시 검증한 뒤 같은 PID로 Java를 실행한다. `service-run`은 이 내부 진입점이며 직접 실행·kickstart로 실패 시도를 재사용할 수 없다.
 
