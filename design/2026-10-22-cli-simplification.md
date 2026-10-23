@@ -2,7 +2,7 @@
 
 - 작성일/방향 변경: 2026-10-22
 - 최신 사용자 결정: **console 개발을 중단하고 직접 CLI 개선을 우선한다.** 사용자가 현재 console을 확인한 뒤 직관성이 부족하다고 평가했다.
-- 상태: 이 문서는 새 우선순위와 목표 계약이다. 기존 UX-01~03 구현·검증 이력을 보존하며, 2026-10-23 CLI-01/02를 구현·검증했다. [독립 관리 CLI 설계](./2026-10-23-independent-management-cli.md)에 따라 기존 RC.3 실행기 위임과 이름 기반 운용을 제공한다. CLI-03의 순차 문답과 조회·수정을 구현·검증했다. [검증 기록](../results/2026-10-23-cli03-sequential-preparation.md)을 따르며 다음은 CLI-04, 이후 CLI-05다.
+- 상태: 이 문서는 새 우선순위와 목표 계약이다. 기존 UX-01~03 구현·검증 이력을 보존하며, 2026-10-23 CLI-01/02를 구현·검증했다. [독립 관리 CLI 설계](./2026-10-23-independent-management-cli.md)에 따라 기존 RC.3 실행기 위임과 이름 기반 운용을 제공한다. CLI-03의 순차 문답과 조회·수정을 구현·검증했다. [CLI-03 검증 기록](../results/2026-10-23-cli03-sequential-preparation.md)을 보존한다. CLI-04의 준비 결과에서 설치·등록·이름 연결과 이름 기반 초기화도 구현·검증했다. [CLI-04 검증 기록](../results/2026-10-23-cli04-apply-and-lifecycle.md)을 따른다. 이후 CLI-05가 남는다.
 - 연결: [현재 구현 상태](../docs/implementation-status.md), [작업 순서](./2026-10-22-integrated-operations-ux-implementation-plan.md).
 
 ## 1. 바꾸는 방향
@@ -15,7 +15,7 @@ console 홈·메뉴·화면 시안의 추가 개발과 실제 서비스 연결�
 
 ## 2. 목표 명령
 
-CLI-01 목록/이름 연결과 CLI-02 이름 기반 운용을 구현했다. CLI-03의 순차 준비·조회·수정도 구현했다. CLI-04/05는 **계획**이다. 명령 사용법은 [CLI 가이드](../docs/cli.md), 검증 상태는 [구현 현황](../docs/implementation-status.md)을 따른다.
+CLI-01 목록/이름 연결과 CLI-02 이름 기반 운용을 구현했다. CLI-03의 순차 준비·조회·수정도 구현했다. CLI-04도 **구현·검증 완료**이며 CLI-05는 **계획**이다. 명령 사용법은 [CLI 가이드](../docs/cli.md), 검증 상태는 [구현 현황](../docs/implementation-status.md)을 따른다.
 
 | 과업 | 목표 문법 | 의미/단계 |
 | --- | --- | --- |
@@ -25,10 +25,10 @@ CLI-01 목록/이름 연결과 CLI-02 이름 기반 운용을 구현했다. CLI-
 | 기록·지원 자료 | `bxdl logs local`, `bxdl diagnose local --output report.json` | CLI-02 구현. 기존 정제 범위와 partial 계약 유지 |
 | 새 설치 자료 준비 | `bxdl setup new local [--home <root>] [--from <instance.json>]` | CLI-03. 기존 진입 명령 유지, 번호 메뉴를 순차 문답으로 교체 |
 | 준비 이어가기 | `bxdl setup resume local [--home <root>]` | CLI-03. 현재 저장 단계와 다음 필요한 입력부터 계속 |
-| 준비 목록·내용 확인 | `bxdl setup list`, `bxdl setup show local` | CLI-03. 비TTY/JSON 무쓰기 조회, 기록 상태·부족 항목·현재 자료 대조 결과·다음 행동 분리 |
+| 준비 목록·내용 확인 | `bxdl setup list`, `bxdl setup show local` | CLI-03의 비TTY/JSON 무쓰기 조회. CLI-04에서 준비 기록과 설치 실행 기록을 분리 표시하고 현재 runtime은 status로 확인 |
 | 제품 한 항목 수정 | `bxdl setup edit local --field httpPort` | CLI-03. 지정 필드만 질문하고 변경 영향·다음 명령 표시 후 종료 |
-| 설치·등록 실행 | `bxdl setup apply local` | CLI-04. 준비한 자료/계획을 다시 검사하고 기존 설치·등록 API 연결 |
-| 초기화 | `bxdl init local --confirm-initialize` | CLI-04. 기존 확인 조건 유지. 설치나 start와 일괄 승인하지 않음 |
+| 설치·등록 실행 | `bxdl setup apply local [--home <root>]` | CLI-04. TTY y/yes 승인 뒤 설치·cold 검사·등록·이름 연결. 완료 재호출은 검증과 이름 복구만 수행 |
+| 초기화·조건부 재개 | `bxdl init local --confirm-initialize`, `bxdl resume-init local --confirm-resume` | CLI-04. 이름/--home 또는 기존 --instance. 기존 확인·재개 조건 유지. 설치나 start와 일괄 승인하지 않음 |
 | 자동완성 | `bxdl completion <shell>` | CLI-05. 검증한 셸의 명령·옵션·등록 이름 후보 제공 |
 
 이름을 받는 명령에는 동일한 `--home <root>` 규칙을 적용한다. Mac 기본 관리 위치와 기존 명령의 `--instance <path>`를 유지한다. `install <archive> --destination ...`의 기존 파일 설치 의미도 바꾸지 않는다. `restart/up/down` 등 중복 동사를 추가하지 않는다.
@@ -40,7 +40,7 @@ CLI-01 목록/이름 연결과 CLI-02 이름 기반 운용을 구현했다. CLI-
 - 표시 이름은 사람용 설명이며 중복·한글을 허용한다. 명령의 실행 대상으로 해석하지 않는다.
 - 카탈로그의 불변 opaque ID는 실제 항목을 식별한다. 이름 변경과 무관하게 유지한다.
 - 노드 명령 이름과 준비 세션명은 각각 관리 루트 내 고유 이름이다. `^[a-z][a-z0-9-]{0,31}$`를 적용하며 대문자 변환·공백 제거·경로 추정을 하지 않는다.
-- 준비 세션명과 engine instanceId를 노드 별칭으로 자동 채택하지 않는다. 설치 시 같은 이름을 제안할 수 있지만 충돌과 등록 대상 identity를 확인해야 한다.
+- 준비만으로 세션명이나 engine instanceId를 노드 별칭으로 채택하지 않는다. `setup apply`의 검토·승인 범위에 같은 세션 이름의 노드 연결을 포함하고 충돌과 등록 대상 identity를 확인한다. 이미 같은 이름/대상을 연결했다면 재저장하지 않는다.
 - 위치 인자 이름과 기존 `--instance`는 둘 중 하나만 받는다. 대상 누락·미지 이름·손상·대상 교체는 usage 또는 검증 오류이며 마지막 노드/유일 노드로 추정하지 않는다.
 
 이름 연결은 기존 등록/준비 파일을 읽고 탐색 정보를 저장하는 별도 작업이다. 데이터 채택·설치·초기화·서비스 변경을 하지 않는다. 기존 카탈로그의 표시명을 임의로 실행 이름으로 전환하지 않는다. 새 별칭 저장 계약과 기존 record 읽기 호환, 동시 갱신·고유성 검사, 실패 시 기존 정보 보존을 CLI-01에서 구현했다. V1 읽기는 무변환이고 명시 add만 catalog V2를 기록한다. `nodes add` 자체가 목록 저장 요청이며 문답은 없다. 같은 이름/대상 재요청은 무쓰기이며 구형 CLI의 V2 목록 읽기는 지원하지 않는다.
@@ -84,9 +84,17 @@ local  시작 중
 
 ## 6. 실제 설치 실행과 호환
 
-CLI-04에서 `setup apply`를 기존 install workflow에 연결한다. 검토 당시 입력/출력 identity·승인 범위를 재대조하고 실제 작업은 기존 durable intent·소유 증거·잠금으로 보호한다. 설치·등록까지만 수행하며 init과 start는 별도 명령으로 남긴다. 준비 재개나 show만으로 작업을 수행하지 않는다.
+`setup apply <이름> [--home <root>]`는 준비를 실제 설치로 연결한다. TTY에서 준비 revision·선택 자료·출력 위치·이름 연결 범위를 검토하고 `y/yes`로 최종 승인한다. Enter/n/no는 실행을 거절하고 취소/EOF는 기존 자료를 보존한다. `--json`/비TTY는 입력·쓰기 전에 거절한다. 준비 재개나 show는 실행 승인이 아니다.
 
-실제 작업 완료 뒤 이름/목록 저장이 실패해도 설치를 반복하지 않는다. 기존 control 경로로 확인·운용할 수 있게 안내한다. 초기화 불명과 서비스 종료 불명을 보존하고, 정상 종료 확인 뒤 다음 명시 start를 허용한다.
+준비는 `sessions/<이름>`, 실행은 `operations/<이름>`에 별도로 보존한다. 준비 저장 형식은 변환하지 않는다. 실행 source는 준비 컨테이너 identity·검토 hash·제품/native revision/hash·공급 identity·대상 위치를 결속한다. 승인 전후에 자료·대상·카탈로그를 재대조하며 실제 파일 설치·cold 검사·control 등록은 기존 workflow의 durable intent·소유 증거·잠금으로 보호한다. DB init과 LaunchAgent start는 포함하지 않는다.
+
+완료한 `apply`를 다시 실행하면 기존 설치·등록의 완료 근거와 연결한 준비 revision을 검사하고 필요한 이름 연결만 복구한다. 이미 완료한 설치를 반복하지 않는다. 같은 이름이 다른 노드에 연결되어 있으면 덮어쓰지 않으며 설치 완료와 이름 연결 실패를 별도 결과로 보존한다. 기존 control 경로의 조회·운용 안내를 제공한다. 준비의 `SOURCE_CHANGED`, 미확정 intent·`UNKNOWN`, 소유 근거 없는 부분 출력은 자동 재설치·재등록하거나 성공으로 채택하지 않는다.
+
+완료 V2 등록은 control에 보관한 공급 자료로 검증하므로 원래 archive/key/lock의 부재만으로 재설치를 요구하지 않는다. 준비 revision·제품/native·chain/credential 참조와 설치/control identity는 계속 확인한다. 준비를 수정해 검토를 무효화하거나 revision을 바꾸면 기존 실행과 일치하지 않는 것으로 거절한다. 이를 migration이나 자동 복구로 취급하지 않는다.
+
+`setup list/show`는 준비 기록과 별도의 설치 실행 기록을 읽기 전용으로 표시한다. sessions/operations 이름을 합쳐 조회하며 준비 세션의 삭제·손상으로 별도 실행 기록이 숨겨지지 않도록 준비 읽기 실패와 실행 요약을 분리한다. 준비의 `PREPARED_RECORDED`·현재 자료 대조와 설치 완료를 합치지 않는다. 현재 서비스 상태는 `status`로 관측한다. 설치 결과가 존재해도 새 조회만으로 파일 설치·등록·이름 연결을 재시도하지 않는다.
+
+이름 기반 `init`과 `resume-init`은 기존 확인 플래그·timeout·UNKNOWN/exit 계약을 유지한다. 이름과 `--instance`는 배타적이며 `--home`은 이름에만 적용한다. 목록/root/binding을 해석하고 native 호출 또는 고정 RC.3 executor dispatch 직전에 다시 검사한다. 확인 플래그 누락·미지 이름·대상 교체에서 다른 노드를 추정해 선택하지 않는다.
 
 관리 CLI와 package CLI의 bytes가 달라도 지정한 RC.3 profile은 검증한 패키지 실행기로 위임한다. 기존 archive·실행기 bytes와 서명/inventory는 유지하며 관리 CLI×runtime 조합을 검증한다. 미지원 package의 native 경로는 기존 exact CLI 조건을 유지한다. engine/JRE pin을 UX 편의 때문에 변경하지 않으며 NIGO에 새 console/registry 구현을 요구하지 않는다.
 

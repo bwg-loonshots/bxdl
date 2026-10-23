@@ -62,6 +62,17 @@ struct Record {
     record: Identity,
 }
 
+/// Stable container/marker identity used to bind a prepared revision to an
+/// independent execution journal. No timestamps or mutable checkpoint identity.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct ContainerIdentity {
+    root_device: u64,
+    root_inode: u64,
+    record_device: u64,
+    record_inode: u64,
+}
+
 pub(crate) struct WorkflowStore {
     path: PathBuf,
     draft_path: PathBuf,
@@ -235,6 +246,16 @@ impl WorkflowStore {
             return Err(unsafe_state());
         }
         Ok(store)
+    }
+
+    pub(crate) fn identity(&self) -> Result<ContainerIdentity> {
+        self.recheck()?;
+        Ok(ContainerIdentity {
+            root_device: self.record.root.device,
+            root_inode: self.record.root.inode,
+            record_device: self.record.record.device,
+            record_inode: self.record.record.inode,
+        })
     }
 
     pub(crate) fn path(&self) -> &Path {

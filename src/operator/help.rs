@@ -31,11 +31,15 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
         ),
         ["setup", "list"] => (
             "bxdl setup list [--home <관리-루트>] [--json]",
-            "이름을 붙인 설치 준비 목록과 남은 입력 수를 읽습니다. 없는 관리 위치는 빈 목록이며 폴더·잠금·기록을 쓰지 않습니다.\n목록은 저장 기록이며 공급 자료·엔진·서비스를 재검증하지 않습니다. 손상된 세션은 읽기 불가로 남기고 나머지 목록을 보여줍니다.\n다음 명령: bxdl setup show <이름> (같은 --home 사용).",
+            "이름을 붙인 설치 준비 목록·남은 입력과 별도 설치 실행 기록을 읽습니다. 없는 관리 위치는 빈 목록이며 폴더·잠금·기록을 쓰지 않습니다.\n목록은 저장 기록이며 공급 자료·엔진·서비스를 재검증하지 않습니다. 손상된 세션은 읽기 불가로 남기고 나머지 목록을 보여줍니다.\n다음 명령: bxdl setup show <이름> (같은 --home 사용).",
         ),
         ["setup", "show"] => (
             "bxdl setup show <이름> [--home <관리-루트>] [--json]",
-            "준비한 공개 설정과 남은 입력을 읽습니다. credential 값·경로·비밀 원문은 표시하지 않습니다.\n저장한 PREPARED_RECORDED와 현재 자료 재검증 결과를 분리합니다. 자료가 달라지면 INCOMPLETE이며 기존 기록을 수정하지 않습니다.\n읽기 전용이며 workflow 잠금을 획득하거나 엔진·네트워크·서비스를 호출하지 않습니다.\n다음 명령: bxdl setup resume <이름> 또는 bxdl setup edit <이름> --field httpPort (같은 --home 사용).",
+            "준비한 공개 설정·남은 입력과 별도 설치 실행 기록을 읽습니다. credential 값·경로·비밀 원문은 표시하지 않습니다.\n저장한 PREPARED_RECORDED와 현재 자료 재검증 결과를 분리합니다. 자료가 달라지면 INCOMPLETE이며 기존 기록을 수정하지 않습니다. 설치 완료 기록도 현재 서비스 상태는 아니며 status로 확인하세요.\n읽기 전용이며 workflow 잠금을 획득하거나 엔진·네트워크·서비스를 호출하지 않습니다.\n다음 명령: bxdl setup resume <이름> 또는 bxdl setup edit <이름> --field httpPort (같은 --home 사용).",
+        ),
+        ["setup", "apply"] => (
+            "bxdl setup apply <이름> [--home <관리-루트>]",
+            "준비한 자료와 설치 범위를 검토한 뒤 y/yes로 설치·cold 검사·등록·노드 이름 연결을 승인합니다. Enter/n/no는 거절하고 :cancel/EOF는 중단합니다.\nTTY 전용이며 --json/비TTY는 입력·쓰기 전에 거절합니다. 초기화와 시작은 포함하지 않습니다.\n준비 기록 sessions/<이름>과 별도로 operations/<이름>에 설치 실행 기록을 보존합니다. setup list/show에서 두 기록을 구분해 조회하고 현재 실행 상태는 status로 확인하세요.\n완료한 apply를 다시 실행하면 기존 완료 근거를 검증하고 필요한 이름 연결만 복구합니다. 자료 변경·UNKNOWN에서 자동 재설치하거나 기존 폴더를 채택하지 않습니다.\n이름 연결이 실패해도 이미 완료한 설치·등록은 보존합니다. 안내된 control 경로로 조회하고 같은 apply의 복구 안내를 따르세요.\n다음 명령: bxdl init <이름> --confirm-initialize, 이후 bxdl start <이름> (별도 관리 위치에서는 같은 --home 지정).",
         ),
         ["setup", "edit"] => (
             "bxdl setup edit <이름> --field <제품-항목> [--home <관리-루트>]",
@@ -66,12 +70,12 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
             "등록한 현재 시작 시도의 정상 종료를 요청하고 확인합니다. 기본 제한 시간은 60초입니다.\n종료 대기 만료·결과 불명에서는 새 start를 반복하지 말고 status와 정제 기록을 확인하세요.\nSERVICE_STOPPED_VERIFIED 이후에도 다음 start는 별도로 명시해야 합니다. 데이터는 삭제하지 않습니다.",
         ),
         ["init"] => (
-            "bxdl init --instance <control-dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]",
-            "등록된 새 데이터 경로를 한 번 초기화합니다. 노드·서비스를 시작하지 않습니다.\n체인·자산 등록 정책을 먼저 검토하세요. 실패·불명 결과에서 init을 자동 반복하지 않습니다.",
+            "bxdl init <이름> [--home <관리-루트>] --confirm-initialize [--timeout-seconds <1..600>] [--json]\n  bxdl init --instance <control-dir> --confirm-initialize [--timeout-seconds <1..600>] [--json]",
+            "등록된 새 데이터 경로를 한 번 초기화합니다. 노드·서비스를 시작하지 않습니다. 이름과 --instance는 둘 중 하나만 받으며 --home은 이름에만 사용합니다.\n체인·자산 등록 정책을 먼저 검토하세요. 실패·불명 결과에서 init을 자동 반복하지 않습니다.",
         ),
         ["resume-init"] => (
-            "bxdl resume-init --instance <control-dir> --confirm-resume [--timeout-seconds <1..600>] [--json]",
-            "미완료 초기화의 재개 조건을 검사하고 조건이 맞을 때만 이어갑니다. 일반적인 UNKNOWN 복구 명령이 아닙니다.\n기존 기록을 삭제하거나 DB를 재초기화하지 않습니다. 노드를 시작하지 않습니다.",
+            "bxdl resume-init <이름> [--home <관리-루트>] --confirm-resume [--timeout-seconds <1..600>] [--json]\n  bxdl resume-init --instance <control-dir> --confirm-resume [--timeout-seconds <1..600>] [--json]",
+            "미완료 초기화의 재개 조건을 검사하고 조건이 맞을 때만 이어갑니다. 일반적인 UNKNOWN 복구 명령이 아닙니다. 이름과 --instance는 둘 중 하나만 받으며 --home은 이름에만 사용합니다.\n기존 기록을 삭제하거나 DB를 재초기화하지 않습니다. 노드를 시작하지 않습니다.",
         ),
         ["logs"] => (
             "bxdl logs <이름> [--home <관리-루트>] [기존 옵션]\n  bxdl logs --instance <control-dir> [--tail <1..200>] [--max-bytes <4096..1048576>] [--timeout-seconds <1..30>] [--json]",
@@ -87,7 +91,7 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
         ),
         ["install"] => (
             "bxdl install <tar.gz> --destination <new-dir> (--public-key <trusted.pem> | --allow-unsigned-development) [--json]",
-            "macOS arm64의 새 폴더에 검증한 package 파일만 설치합니다. 부모 폴더는 미리 준비하세요.\n신뢰키는 패키지 밖의 독립적으로 신뢰한 경로에서 제공합니다. 등록·초기화·서비스 시작은 하지 않습니다.\n문답 설치 흐름은 bxdl setup --install --help를 확인하세요.",
+            "macOS arm64의 새 폴더에 검증한 package 파일만 설치합니다. 부모 폴더는 미리 준비하세요.\n신뢰키는 패키지 밖의 독립적으로 신뢰한 경로에서 제공합니다. 등록·초기화·서비스 시작은 하지 않습니다.\n이름 있는 준비 자료의 설치는 bxdl setup apply --help, 기존 설치 문답은 bxdl setup --install --help를 확인하세요.",
         ),
         ["instance", "register"] => (
             "bxdl instance register --instance <new-dir> --package <installed-dir> --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development) --config <instance.json> --engine-config <node.json> --lock <json> --allow-development [--timeout-seconds <1..120>] [--json]",

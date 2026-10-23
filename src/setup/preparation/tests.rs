@@ -20,6 +20,9 @@ fn write_json(path: &Path, value: &Value) {
 }
 impl Fixture {
     fn new() -> Self {
+        Self::with_executor(false)
+    }
+    fn with_executor(executor: bool) -> Self {
         let temp = tempfile::tempdir().unwrap();
         let root = fs::canonicalize(temp.path()).unwrap();
         fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
@@ -61,22 +64,38 @@ impl Fixture {
         ))
         .unwrap();
         let jar = b"fixture jar never executed";
-        let java = b"fixture java never executed";
+        let cold = json!({
+            "command":"preflight","status":"INCOMPLETE","reason":"RUNTIME_CHECKS_REQUIRED",
+            "contractStatus":"PROPOSED","backend":"rocksdb","chainFingerprint":"c".repeat(64),
+            "nodeIdentity":format!("0x{}:0x{}", "a".repeat(64), "b".repeat(40)),
+            "checks":[{"check":"CONFIGURATION","status":"PASS"},{"check":"KEY_MATERIAL","status":"PASS"},
+                {"check":"DATABASE_AND_WAL","status":"NOT_CHECKED","reason":"REQUIRES_EXCLUSIVE_OPEN"},
+                {"check":"PORTS_AND_PEERS","status":"NOT_CHECKED","reason":"NETWORK_NOT_ACCESSED"},
+                {"check":"NATIVE_RUNTIME","status":"NOT_CHECKED","reason":"REQUIRES_RUNTIME_LOAD"}]
+        });
+        let calls = root.join("fixture-calls");
+        // Same bounded shell contract as tests/setup_install.rs: no JVM/DB/service.
+        let java = if executor {
+            format!("#!/bin/sh\nfor argument in \"$@\"; do\ncase \"$argument\" in\nengine-info) printf 'engine-info\\n' >> '{}'; printf '%s\\n' '{}'; exit 0;;\npreflight) printf 'preflight\\n' >> '{}'; printf '%s\\n' '{}'; exit 3;;\ninit|resume-init|run) printf '%s\\n' \"$argument\" >> '{}'; exit 74;;\nesac\ndone\nexit 77\n", calls.display(), identity, calls.display(), cold, calls.display()).into_bytes()
+        } else {
+            b"fixture java never executed".to_vec()
+        };
         write_json(
             &lock,
-            &json!({"schemaVersion":1,"jarSha256":digest(jar),"jarSizeBytes":jar.len(),"javaSha256":digest(java),"expected":identity}),
+            &json!({"schemaVersion":1,"jarSha256":digest(jar),"jarSizeBytes":jar.len(),"javaSha256":digest(&java),"expected":identity}),
         );
         let stage = root.join("stage");
         for directory in ["bin", "engine", "runtime/bin", "licenses"] {
             fs::create_dir_all(stage.join(directory)).unwrap();
         }
-        write(
-            &stage.join("bin/bxdl"),
-            b"fixture CLI deliberately mismatched",
-            0o755,
-        );
+        let cli = if executor {
+            fs::read(std::env::current_exe().unwrap()).unwrap()
+        } else {
+            b"fixture CLI deliberately mismatched".to_vec()
+        };
+        write(&stage.join("bin/bxdl"), &cli, 0o755);
         write(&stage.join("engine/nigo-node.jar"), jar, 0o644);
-        write(&stage.join("runtime/bin/java"), java, 0o755);
+        write(&stage.join("runtime/bin/java"), &java, 0o755);
         write(
             &stage.join("licenses/THIRD_PARTY_NOTICES"),
             b"test only",
@@ -90,7 +109,7 @@ impl Fixture {
             "product":{"name":"BXDL","version":"0.1.0-dev","revision":"development"},"channel":"development",
             "platform":{"os":"darwin","arch":"arm64","libc":"none","minGlibc":"none","javaMajor":21,"backend":"rocksdb"},
             "engine":{"revision":identity["source"]["commit"],"jarSha256":digest(jar),"contractStatus":"proposed","contractRevision":identity["contract"]["fingerprint"]},
-            "runtime":{"vendor":"test-only","version":"21-test","javaSha256":digest(java)}}),
+            "runtime":{"vendor":"test-only","version":"21-test","javaSha256":digest(&java)}}),
         );
         artifact::build(&artifact::BuildOptions {
             root: stage,
@@ -534,3 +553,5 @@ fn stale_checkpoint_and_review_corruption_are_rejected_without_repair() {
     );
     f.assert_no_operations();
 }
+
+mod application;

@@ -1,6 +1,6 @@
 # 개발 인스턴스 등록·초기화와 Mac 서비스
 
-macOS arm64에서 설치한 개발 package와 제품/native 설정을 한 인스턴스로 등록한다. 이후에는 `--instance` 경로로 검사·초기화를 호출하므로 JAR·Java·설정 경로를 매번 입력하지 않는다. **초기화는 데이터 저장소를 만들고 닫는 한 번의 작업**이며 노드나 OS 서비스를 시작하지 않는다.
+macOS arm64에서 설치한 개발 package와 제품/native 설정을 한 인스턴스로 등록한다. 이후에는 기존 `--instance` 경로로 검사하고 등록한 이름 또는 경로로 초기화를 호출하므로 JAR·Java·설정 경로를 매번 입력하지 않는다. **초기화는 데이터 저장소를 만들고 닫는 한 번의 작업**이며 노드나 OS 서비스를 시작하지 않는다.
 
 ## 등록 전에 준비할 자료
 
@@ -39,6 +39,16 @@ bxdl preflight --instance "/absolute/bxdl/instances/validator-a" --json
 
 ## 새 데이터의 명시 초기화
 
+`setup apply local`은 설치·cold 검사·등록 뒤 이름을 연결한다. 기존 등록은 `nodes add local --instance <control>`로 연결할 수 있다. 다음과 같이 이름으로 초기화해도 기존 확인 조건과 고정 RC.3 실행기 검증을 유지한다.
+
+```bash
+bxdl init local --confirm-initialize
+# 별도 관리 위치를 사용했다면 같은 --home을 지정한다.
+bxdl init local --home '/absolute/BXDL-lab' --confirm-initialize
+```
+
+이름과 `--instance`는 함께 사용할 수 없다. `--home`은 이름을 사용할 때만 받는다. 아래 명시 경로 방식도 유지한다.
+
 ```bash
 bxdl init --instance "/absolute/bxdl/instances/validator-a" \
   --confirm-initialize --json
@@ -63,7 +73,7 @@ bxdl resume-init --instance "/absolute/bxdl/instances/validator-a" \
   --confirm-resume --json
 ```
 
-`resume-init`은 해당 등록의 미완료 시도만 대상으로 하며 외부 INITIALIZING 데이터의 새 등록·인수를 제공하지 않는다. 재초기화 버튼이 아니다. 새 데이터·ledger 누락·INITIALIZED·identity 불일치에는 적용하지 않는다. 재개할 수 없는 UNKNOWN의 수동 조정/채택·rollback·복구 명령은 아직 없다. 기록과 데이터를 보존한 채 별도 검토가 필요하다. 이미 성공한 인스턴스의 init/resume-init 반복도 거부한다.
+`bxdl resume-init local --confirm-resume`도 같은 조건으로 이름을 해석하며 필요한 경우 같은 `--home`을 지정한다. `resume-init`은 해당 등록의 미완료 시도만 대상으로 하며 외부 INITIALIZING 데이터의 새 등록·인수를 제공하지 않는다. 재초기화 버튼이 아니다. 새 데이터·ledger 누락·INITIALIZED·identity 불일치에는 적용하지 않는다. 재개할 수 없는 UNKNOWN의 수동 조정/채택·rollback·복구 명령은 아직 없다. 기록과 데이터를 보존한 채 별도 검토가 필요하다. 이미 성공한 인스턴스의 init/resume-init 반복도 거부한다.
 
 ## 초기화 후 시작·조회·종료
 

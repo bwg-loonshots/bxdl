@@ -1,5 +1,6 @@
 //! Integrated preparation accepts an explicit name and saves only approved
-//! configuration work. It must not install, initialize, or start a node.
+//! configuration work. Only separately approved apply may install/register;
+//! preparation and query commands never initialize or start a node.
 #![cfg(unix)]
 
 use bxdl::cli;
@@ -203,6 +204,14 @@ fn prepare_sources(fixture: &Fixture) -> PathBuf {
 /// A small verified archive permits testing preparation publication without
 /// starting a process or requiring a vendor runtime download.
 fn prepare_package(fixture: &Fixture, sources: &Path) -> (PathBuf, PathBuf) {
+    prepare_package_with_java(fixture, sources, None)
+}
+
+fn prepare_package_with_java(
+    fixture: &Fixture,
+    sources: &Path,
+    java_script: Option<&[u8]>,
+) -> (PathBuf, PathBuf) {
     let archive = sources.join("package.tar.gz");
     let lock = sources.join("engine.lock.json");
     let identity: Value = serde_json::from_slice(include_bytes!(
@@ -210,7 +219,7 @@ fn prepare_package(fixture: &Fixture, sources: &Path) -> (PathBuf, PathBuf) {
     ))
     .unwrap();
     let jar = b"fixture jar never executed";
-    let java = b"fixture java never executed";
+    let java = java_script.unwrap_or(b"fixture java never executed");
     let digest = |bytes: &[u8]| format!("{:x}", Sha256::digest(bytes));
     write(
         &lock,
@@ -227,10 +236,15 @@ fn prepare_package(fixture: &Fixture, sources: &Path) -> (PathBuf, PathBuf) {
     for directory in ["bin", "engine", "runtime/bin", "licenses"] {
         fs::create_dir_all(stage.join(directory)).unwrap();
     }
+    let cli = if java_script.is_some() {
+        fs::read(std::env::current_exe().unwrap()).unwrap()
+    } else {
+        b"fixture CLI never executed".to_vec()
+    };
     for (name, raw, mode) in [
-        ("bin/bxdl", b"fixture CLI never executed".as_slice(), 0o755),
+        ("bin/bxdl", cli.as_slice(), 0o755),
         ("engine/nigo-node.jar", jar.as_slice(), 0o644),
-        ("runtime/bin/java", java.as_slice(), 0o755),
+        ("runtime/bin/java", java, 0o755),
         (
             "licenses/THIRD_PARTY_NOTICES",
             b"test only".as_slice(),
@@ -1204,4 +1218,454 @@ fn query_next_input_follows_network_dependencies_before_product_and_policy_field
     );
     assert_eq!(snapshot(&fixture.root), before);
     show("node", "UNVERIFIED");
+}
+
+#[test]
+fn apply_rejects_nonterminal_json_and_options_before_reading_or_writing() {
+    let f = Fixture::new();
+    let before = snapshot(&f.root);
+    invoke(&f.arguments("apply", "local"), &mut NoInput, false).assert_code(2);
+    for tail in [
+        vec!["--json"],
+        vec!["--from", CANARY],
+        vec!["--confirm"],
+        vec!["--instance", CANARY],
+        vec!["--non-interactive"],
+        vec!["extra"],
+    ] {
+        let mut args = f.arguments("apply", "local");
+        args.extend(strings(&tail));
+        invoke(&args, &mut NoInput, true).assert_code(2);
+    }
+    invoke(&f.arguments("apply", "../bad"), &mut NoInput, true).assert_code(2);
+    invoke(&strings(&["setup", "apply", "--help"]), &mut NoInput, false).assert_code(0);
+    assert_eq!(snapshot(&f.root), before);
+}
+
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+fn prepared_for_apply(f: &Fixture) -> (PathBuf, PathBuf) {
+    let sources = prepare_sources(f);
+    let (archive, lock) = prepare_package(f, &sources);
+    let mut args = f.arguments("new", "local");
+    args.extend(strings(&[
+        "--from",
+        sources.join("instance.json").to_str().unwrap(),
+    ]));
+    let input = format!(
+        "y\n{}\n2\ny\n{}\n1\n{}\n\n\n\n\n\ny\n",
+        archive.display(),
+        lock.display(),
+        sources.join("network.json").display()
+    );
+    invoke(&args, &mut Cursor::new(input), true).assert_code(0);
+    (archive, lock)
+}
+
+#[test]
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+fn apply_requires_prepared_approval_and_decline_preserves_every_file() {
+    let f = Fixture::new();
+    let before = snapshot(&f.root);
+    invoke(&f.arguments("apply", "local"), &mut NoInput, true).assert_code(3);
+    assert_eq!(snapshot(&f.root), before);
+    prepared_for_apply(&f);
+    let before = snapshot(&f.root);
+    for answer in ["n\n", "\n", "YES\n", ":cancel\n", "", ":help\n:back\n"] {
+        f.run("apply", "local", answer).assert_code(5);
+        assert_eq!(snapshot(&f.root), before);
+    }
+    for directory in ["operations", "packages", "instances", "data"] {
+        assert!(!f.home.join(directory).exists());
+    }
+}
+
+#[test]
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+fn changed_supplier_or_draft_is_rejected_before_apply_confirmation() {
+    let f = Fixture::new();
+    let (archive, _) = prepared_for_apply(&f);
+    let bytes = fs::read(&archive).unwrap();
+    let replacement = f.root.join("replacement.tar.gz");
+    write(&replacement, &bytes);
+    fs::rename(replacement, &archive).unwrap();
+    let before = snapshot(&f.root);
+    invoke(&f.arguments("apply", "local"), &mut NoInput, true).assert_code(3);
+    assert_eq!(snapshot(&f.root), before);
+    let mut args = f.arguments("edit", "local");
+    args.extend(strings(&["--field", "httpPort"]));
+    invoke(&args, &mut Cursor::new("18081\n"), true).assert_code(0);
+    let before = snapshot(&f.root);
+    invoke(&f.arguments("apply", "local"), &mut NoInput, true).assert_code(3);
+    assert_eq!(snapshot(&f.root), before);
+    assert!(!f.home.join("operations").exists());
+}
+
+#[test]
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+fn failed_install_precheck_keeps_bound_operation_and_readonly_diagnostics() {
+    let f = Fixture::new();
+    prepared_for_apply(&f);
+    // The inert archive intentionally has an incompatible CLI. Approval records
+    // a bound operation but must never install or execute this fixture.
+    let r = f.run("apply", "local", "y\n");
+    r.assert_code(5);
+    assert!(f.home.join("operations/local").exists());
+    assert!(!f.home.join("packages/local").exists());
+    assert!(!f.home.join("instances/local").exists());
+    assert!(!f.root.join("must-not-create-data").exists());
+    let before = snapshot(&f.root);
+    let mut args = f.arguments("show", "local");
+    args.push("--json".into());
+    let r = invoke(&args, &mut NoInput, false);
+    r.assert_code(0);
+    let data: Value = serde_json::from_str(&r.stdout).unwrap();
+    let app = &data["data"]["application"];
+    assert_eq!(app["summary"]["installation"], "PENDING");
+    assert_eq!(app["summary"]["registration"], "PENDING");
+    assert_eq!(app["summary"]["sourceMatch"], "MATCH");
+    assert_eq!(app["nameBinding"], "MISSING");
+    invoke(
+        &strings(&[
+            "setup",
+            "list",
+            "--home",
+            f.home.to_str().unwrap(),
+            "--json",
+        ]),
+        &mut NoInput,
+        false,
+    )
+    .assert_code(0);
+    assert_eq!(snapshot(&f.root), before);
+    let mut edit = f.arguments("edit", "local");
+    edit.extend(strings(&["--field", "httpPort"]));
+    invoke(&edit, &mut Cursor::new("18081\n"), true).assert_code(0);
+    let before = snapshot(&f.root);
+    invoke(&f.arguments("apply", "local"), &mut NoInput, true).assert_code(3);
+    let r = invoke(&args, &mut NoInput, false);
+    r.assert_code(5);
+    let data: Value = serde_json::from_str(&r.stdout).unwrap();
+    assert_eq!(
+        data["data"]["application"]["summary"]["installation"],
+        "PENDING"
+    );
+    assert_eq!(
+        data["data"]["application"]["summary"]["sourceMatch"],
+        "UNAVAILABLE"
+    );
+    assert_eq!(snapshot(&f.root), before);
+}
+
+#[test]
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+fn apply_rechecks_archive_and_catalog_replacement_after_confirmation_without_creating_outputs() {
+    struct ReplacingConfirmation {
+        input: Cursor<Vec<u8>>,
+        selected: PathBuf,
+        root: PathBuf,
+        after_replacement: Option<BTreeMap<PathBuf, Entry>>,
+    }
+    impl ReplacingConfirmation {
+        fn replace_once(&mut self) {
+            if self.after_replacement.is_none() {
+                let replacement = self.root.join("confirmation-replacement");
+                let previous = fs::metadata(&self.selected).unwrap().ino();
+                write(&replacement, fs::read(&self.selected).unwrap());
+                fs::rename(replacement, &self.selected).unwrap();
+                assert_ne!(fs::metadata(&self.selected).unwrap().ino(), previous);
+                self.after_replacement = Some(snapshot(&self.root));
+            }
+        }
+    }
+    impl io::Read for ReplacingConfirmation {
+        fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+            self.replace_once();
+            io::Read::read(&mut self.input, buffer)
+        }
+    }
+    impl io::BufRead for ReplacingConfirmation {
+        fn fill_buf(&mut self) -> io::Result<&[u8]> {
+            self.replace_once();
+            io::BufRead::fill_buf(&mut self.input)
+        }
+        fn consume(&mut self, amount: usize) {
+            io::BufRead::consume(&mut self.input, amount);
+        }
+    }
+    for target in ["archive", "catalog"] {
+        let fixture = Fixture::new();
+        let (archive, _) = prepared_for_apply(&fixture);
+        let selected = if target == "archive" {
+            archive
+        } else {
+            fs::read_dir(fixture.home.join("catalog"))
+                .unwrap()
+                .map(|entry| entry.unwrap().path())
+                .max()
+                .unwrap()
+        };
+        let mut input = ReplacingConfirmation {
+            input: Cursor::new(b"y\n".to_vec()),
+            selected,
+            root: fixture.root.clone(),
+            after_replacement: None,
+        };
+        let result = invoke(&fixture.arguments("apply", "local"), &mut input, true);
+        result.assert_code(3);
+        assert!(input.after_replacement.is_some());
+        assert_eq!(snapshot(&fixture.root), input.after_replacement.unwrap());
+        for directory in ["operations", "packages", "instances", "data"] {
+            assert!(
+                !fixture.home.join(directory).exists(),
+                "{target}: {directory}"
+            );
+        }
+        assert!(!fixture.root.join("must-not-create-data").exists());
+    }
+}
+
+#[test]
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+fn missing_preparation_preserves_bound_execution_in_readonly_partial_show_and_list() {
+    let fixture = Fixture::new();
+    prepared_for_apply(&fixture);
+    fixture.run("apply", "local", "y\n").assert_code(5);
+    fs::rename(
+        fixture.home.join("sessions/local"),
+        fixture.root.join("preserved-preparation"),
+    )
+    .unwrap();
+    let before = snapshot(&fixture.root);
+    let mut show = fixture.arguments("show", "local");
+    show.push("--json".into());
+    let result = invoke(&show, &mut NoInput, false);
+    result.assert_code(5);
+    let report: Value = serde_json::from_str(&result.stdout).unwrap();
+    assert_eq!(report["outcome"], "INCOMPLETE");
+    assert!(report["data"]["inspection"].is_null());
+    assert!(report["data"]["reasonCode"].is_string());
+    let application = &report["data"]["application"];
+    assert_eq!(application["record"], "READABLE");
+    assert_eq!(application["summary"]["installation"], "PENDING");
+    assert_eq!(application["summary"]["registration"], "PENDING");
+    assert_eq!(application["summary"]["sourceMatch"], "UNAVAILABLE");
+    assert_eq!(application["runtime"], "NOT_OBSERVED");
+    let result = invoke(
+        &strings(&[
+            "setup",
+            "list",
+            "--home",
+            fixture.home.to_str().unwrap(),
+            "--json",
+        ]),
+        &mut NoInput,
+        false,
+    );
+    result.assert_code(5);
+    let report: Value = serde_json::from_str(&result.stdout).unwrap();
+    assert_eq!(report["outcome"], "INCOMPLETE");
+    assert_eq!(report["data"]["partial"], true);
+    let entries = report["data"]["entries"].as_array().unwrap();
+    assert_eq!(entries.len(), 1);
+    assert_eq!(entries[0]["name"], "local");
+    assert_eq!(entries[0]["record"], "UNAVAILABLE");
+    assert_eq!(
+        entries[0]["application"]["summary"]["installation"],
+        "PENDING"
+    );
+    assert_eq!(
+        entries[0]["application"]["summary"]["registration"],
+        "PENDING"
+    );
+    assert_eq!(entries[0]["application"]["runtime"], "NOT_OBSERVED");
+    assert_eq!(snapshot(&fixture.root), before);
+}
+
+#[test]
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+fn registration_survives_catalog_save_failure_and_reapply_only_restores_the_name() {
+    fn quoted(value: &str) -> String {
+        format!("'{}'", value.replace('\'', "'\"'\"'"))
+    }
+    let fixture = Fixture::new();
+    let sources = prepare_sources(&fixture);
+    let identity: Value = serde_json::from_slice(include_bytes!(
+        "../contracts/nigo/development-clean-2026-09-18/evidence/engine-info.json"
+    ))
+    .unwrap();
+    let cold = json!({
+        "command":"preflight", "status":"INCOMPLETE", "reason":"RUNTIME_CHECKS_REQUIRED",
+        "contractStatus":"PROPOSED", "backend":"rocksdb", "chainFingerprint":"c".repeat(64),
+        "nodeIdentity":format!("0x{}:0x{}", "11".repeat(32), "22".repeat(20)),
+        "checks":[
+            {"check":"CONFIGURATION", "status":"PASS"},
+            {"check":"KEY_MATERIAL", "status":"PASS"},
+            {"check":"DATABASE_AND_WAL", "status":"NOT_CHECKED", "reason":"REQUIRES_EXCLUSIVE_OPEN"},
+            {"check":"PORTS_AND_PEERS", "status":"NOT_CHECKED", "reason":"NETWORK_NOT_ACCESSED"},
+            {"check":"NATIVE_RUNTIME", "status":"NOT_CHECKED", "reason":"REQUIRES_RUNTIME_LOAD"}
+        ]
+    });
+    let calls = fixture.root.join("fake-java-calls");
+    let replaced = fixture.root.join("catalog-replaced");
+    let replacement = fixture.root.join("catalog-replacement");
+    let java = format!(
+        "#!/bin/sh\nfor argument in \"$@\"; do\ncase \"$argument\" in\nengine-info) printf 'engine-info\\n' >> {calls}; printf '%s\\n' {identity}; exit 0;;\npreflight)\nprintf 'preflight\\n' >> {calls}\nif [ ! -e {replaced} ]; then\nfor checkpoint in {catalog}/revision*.json; do :; done\n/bin/cp \"$checkpoint\" {replacement} || exit 76\n/bin/chmod 600 {replacement} || exit 76\n/bin/mv {replacement} \"$checkpoint\" || exit 76\n: > {replaced}\n/bin/chmod 600 {replaced}\nfi\nprintf '%s\\n' {cold}; exit 3;;\ninit|resume-init|run) printf '%s\\n' \"$argument\" >> {calls}; exit 74;;\nesac\ndone\nexit 77\n",
+        calls = quoted(calls.to_str().unwrap()),
+        identity = quoted(&identity.to_string()),
+        replaced = quoted(replaced.to_str().unwrap()),
+        catalog = quoted(fixture.home.join("catalog").to_str().unwrap()),
+        replacement = quoted(replacement.to_str().unwrap()),
+        cold = quoted(&cold.to_string()),
+    );
+    let (archive, lock) = prepare_package_with_java(&fixture, &sources, Some(java.as_bytes()));
+    let mut args = fixture.arguments("new", "local");
+    args.extend(strings(&[
+        "--from",
+        sources.join("instance.json").to_str().unwrap(),
+    ]));
+    let input = format!(
+        "y\n{}\n2\ny\n{}\n1\n{}\n\n\n\n\n\ny\n",
+        archive.display(),
+        lock.display(),
+        sources.join("network.json").display()
+    );
+    invoke(&args, &mut Cursor::new(input), true).assert_code(0);
+    let catalog = fs::read_dir(fixture.home.join("catalog"))
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .max()
+        .unwrap();
+    let original_catalog_inode = fs::metadata(&catalog).unwrap().ino();
+    let original_catalog_bytes = fs::read(&catalog).unwrap();
+    let result = fixture.run("apply", "local", "y\n");
+    result.assert_code(5);
+    assert!(
+        result.text().contains("SETUP_NAME_BINDING_PENDING"),
+        "{}",
+        result.text()
+    );
+    assert!(
+        result.text().contains("등록 CONFIRMED"),
+        "{}",
+        result.text()
+    );
+    assert!(result.text().contains("이름 FAILED"), "{}", result.text());
+    assert!(replaced.is_file());
+    assert_ne!(
+        fs::metadata(&catalog).unwrap().ino(),
+        original_catalog_inode
+    );
+    assert_eq!(fs::read(&catalog).unwrap(), original_catalog_bytes);
+    assert!(!fixture.root.join("must-not-create-data").exists());
+    let control = fixture.home.join("instances/local");
+    let package_before = snapshot(&fixture.home.join("packages/local"));
+    let control_before = snapshot(&control);
+    let operation_before = snapshot(&fixture.home.join("operations/local"));
+    let preparation_before = snapshot(&fixture.home.join("sessions/local"));
+    let calls_before = fs::read_to_string(&calls).unwrap();
+    assert!(calls_before.lines().any(|line| line == "preflight"));
+    assert!(
+        calls_before
+            .lines()
+            .all(|line| matches!(line, "engine-info" | "preflight"))
+    );
+    let mut show = fixture.arguments("show", "local");
+    show.push("--json".into());
+    let result = invoke(&show, &mut NoInput, false);
+    result.assert_code(5);
+    let report: Value = serde_json::from_str(&result.stdout).unwrap();
+    let application = &report["data"]["application"];
+    assert_eq!(application["summary"]["installation"], "CONFIRMED");
+    assert_eq!(application["summary"]["registration"], "CONFIRMED");
+    assert_eq!(application["summary"]["verification"], "PASSED");
+    assert_eq!(application["nameBinding"], "MISSING");
+    assert_eq!(report["data"]["nextCommand"][2], "apply");
+    fixture.run("apply", "local", "y\n").assert_code(0);
+    assert_eq!(
+        snapshot(&fixture.home.join("packages/local")),
+        package_before
+    );
+    assert_eq!(snapshot(&control), control_before);
+    assert_eq!(
+        snapshot(&fixture.home.join("operations/local")),
+        operation_before
+    );
+    assert_eq!(
+        snapshot(&fixture.home.join("sessions/local")),
+        preparation_before
+    );
+    assert_eq!(fs::read_to_string(&calls).unwrap(), calls_before);
+    let result = invoke(&show, &mut NoInput, false);
+    result.assert_code(0);
+    let report: Value = serde_json::from_str(&result.stdout).unwrap();
+    assert_eq!(report["data"]["application"]["nameBinding"], "CONNECTED");
+    assert_eq!(report["data"]["nextCommand"][1], "init");
+    assert!(!fixture.root.join("must-not-create-data").exists());
+}
+
+#[test]
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+fn apply_rejects_reserved_management_outputs_and_mac_aliases_before_confirmation() {
+    for (field, suffix, parent_alias) in [
+        ("destination", "catalog/evil", false),
+        ("instance", "sessions/evil", false),
+        ("dataDirectory", "operations/evil", false),
+        ("destination", "instances/evil", false),
+        ("instance", "packages/evil", false),
+        ("dataDirectory", "packages/evil", false),
+        ("destination", "evil", false),
+        ("destination", "packages/nested/evil", false),
+        ("destination", "CATALOG/evil", false),
+        ("instance", "SESSIONS/evil", false),
+        ("destination", "catalog/evil", true),
+        ("dataDirectory", "OPERATIONS/evil", true),
+    ] {
+        let fixture = Fixture::new();
+        prepared_for_apply(&fixture);
+        let home = if parent_alias {
+            fixture.root.join("MANAGEMENT PARENT/관리 홈")
+        } else {
+            fixture.home.clone()
+        };
+        let rejected_output = home.join(suffix);
+        {
+            let mut preparation =
+                bxdl::setup::preparation::Preparation::resume(&fixture.home.join("sessions/local"))
+                    .unwrap();
+            if field == "dataDirectory" {
+                preparation
+                    .set_field(field, rejected_output.to_str().unwrap())
+                    .unwrap();
+            } else {
+                let mut inputs = preparation.inputs().clone();
+                match field {
+                    "destination" => inputs.destination = Some(rejected_output.clone()),
+                    "instance" => inputs.instance = Some(rejected_output.clone()),
+                    _ => unreachable!(),
+                }
+                preparation.set_inputs(inputs).unwrap();
+            }
+            preparation.prepare().unwrap();
+        }
+        let before = snapshot(&fixture.root);
+        let result = invoke(&fixture.arguments("apply", "local"), &mut NoInput, true);
+        result.assert_code(3);
+        assert!(
+            [
+                "SETUP_MANAGED_OUTPUT_INVALID",
+                "SETUP_PREPARATION_PATH_CONFLICT",
+                "SETUP_PATH_CONFLICT",
+            ]
+            .iter()
+            .any(|reason| result.text().contains(reason)),
+            "{field} {suffix} parent_alias={parent_alias}: {}",
+            result.text()
+        );
+        assert_eq!(snapshot(&fixture.root), before);
+        assert!(!rejected_output.exists());
+        for namespace in ["operations", "packages", "instances", "data"] {
+            assert!(!fixture.home.join(namespace).exists());
+        }
+        assert!(!fixture.root.join("must-not-create-data").exists());
+    }
 }

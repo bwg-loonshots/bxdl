@@ -2,7 +2,7 @@
 
 NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구다. **Rust로 구현하며 macOS Apple Silicon에서 설치·운용 UX를 먼저 완성한다.** Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
 
-개선 우선순위를 **직접 CLI 중심**으로 변경했다. `bxdl console`의 추가 개발은 중단하고 기존 구현은 보존한다. `bxdl nodes`와 `bxdl nodes add <이름> --instance <경로>`로 console 없이 목록 조회와 기존 노드 이름 연결을 제공한다. 이름 기반 운용을 연결하고 관리 CLI가 기존 RC.3 패키지 실행기에 작업을 위임하도록 분리했다. `setup new/resume`은 저장한 답을 재사용해 필요한 질문부터 순서대로 진행하며, `setup list/show/edit`으로 준비 목록·내용 조회와 제품 항목 하나 수정을 제공한다. 실제 설치로 연결하는 `setup apply`는 후속 CLI-04 작업이다. [현재 작업 계획](./design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다. 순차 문답·조회·수정의 자동 검사와 실제 Mac 시험 범위는 [CLI-03 검증 결과](./results/2026-10-23-cli03-sequential-preparation.md)에 기록했다.
+개선 우선순위를 **직접 CLI 중심**으로 변경했다. `bxdl console`의 추가 개발은 중단하고 기존 구현은 보존한다. `bxdl nodes`와 `bxdl nodes add <이름> --instance <경로>`로 console 없이 목록 조회와 기존 노드 이름 연결을 제공한다. 이름 기반 운용을 연결하고 관리 CLI가 기존 RC.3 패키지 실행기에 작업을 위임하도록 분리했다. `setup new/resume`은 저장한 답을 재사용해 필요한 질문부터 순서대로 진행하며, `setup list/show/edit`으로 준비 목록·내용 조회와 제품 항목 하나 수정을 제공한다. `setup apply <이름>`은 별도 TTY 승인 뒤 설치·cold 검사·등록·이름 연결까지 수행한다. 준비와 설치 실행 기록은 나누어 조회하며 초기화·시작은 `init <이름> --confirm-initialize`, `start <이름>`로 별도 실행한다. CLI-04의 자동 검사와 기존 RC.3를 그대로 사용한 Mac 설치·초기화·시작·종료·재적용을 통과했다. [CLI-04 검증 기록](./results/2026-10-23-cli04-apply-and-lifecycle.md)에 실행별 범위를 구분했다. [현재 작업 계획](./design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다. 순차 문답·조회·수정의 자동 검사와 실제 Mac 시험 범위는 [CLI-03 검증 결과](./results/2026-10-23-cli03-sequential-preparation.md)에 기록했다.
 
 현재 구현은 개발용 패키지 조립·검증, **Mac의 새 폴더 설치**, 초안 모드와 **명시 설치·등록·초기화·시작을 연결한 setup 설치 도우미**, **제품·NIGO 설정의 결합 cold 검사**, **인스턴스 등록과 명시적 init/resume-init**, **Mac 사용자 LaunchAgent의 start/status/stop**, **오프라인 logs/diagnose**다. 새 setup CLI와 동일한 CLI를 담은 개발용 package로 취소·재개, 설치·초기화, 단일 노드 시작·정상 종료·같은 데이터 재시작을 확인했다. [검증 범위와 남은 인수](./results/2026-09-27-setup-install-flow.md)를 따르며 전체 G1-M은 후속이다. 엔진 JAR/JRE·고객 키·DB를 이 저장소에 동봉하지 않는다.
 
@@ -32,8 +32,9 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 | `bxdl nodes add <이름> --instance <control> [--home <dir>] [--json]` | 기존 등록에 고유 이름 연결. 추가 문답 없이 목록만 저장하며 노드·DB·서비스는 변경하지 않음 |
 | `bxdl status/start/stop/logs <이름>`, `bxdl diagnose <이름> --output <새.json>` | 같은 관리 목록의 이름을 해석해 노드 운용. `--home` 지원, 기존 `--instance` 경로도 유지 |
 | `bxdl setup new <이름>` / `bxdl setup resume <이름>` | 공급 자료 → 내 노드 → 누락 제품·정책 → 검토의 순차 준비·재개. 명시 승인으로 immutable 설정 파일만 준비 ([가이드](./docs/preparation.md)) |
-| `bxdl setup list [--home <dir>] [--json]` / `bxdl setup show <이름> [--home <dir>] [--json]` | 준비 기록 읽기 전용 조회. show는 현재 자료 대조를 저장 상태와 분리하며 엔진은 실행하지 않음 |
+| `bxdl setup list [--home <dir>] [--json]` / `bxdl setup show <이름> [--home <dir>] [--json]` | 준비 기록과 별도 설치 실행 기록을 읽기 전용 조회. show는 현재 자료·완료 근거 대조를 기록 상태와 분리하며 엔진은 실행하지 않음 |
 | `bxdl setup edit <이름> --field <제품필드> [--home <dir>]` | 제품 항목 하나만 문답·저장 후 종료. 다른 답과 기존 출력 보존, 새 준비 검토는 별도 |
+| `bxdl setup apply <이름> [--home <dir>]` | TTY에서 y/yes로 설치·cold 검사·등록·이름 연결 승인. 완료 재호출은 검증·이름 복구만, init/start는 별도 |
 | `bxdl console [--home <dir>] [--instance <control>]` | **추가 개발 중단·기존 구현 보존.** 홈·내 목록·기존 등록/세션의 저장 기록 조회. 승인한 목록 저장/갱신/숨기기와 새 설치 자료 준비 ([가이드](./docs/console.md)) |
 | `bxdl version --json` | Rust CLI identity·Mac 우선 target·구현 capability·엔진/서비스 미인수 상태 |
 | `bxdl package build ...` | expected hash에 고정한 stage를 결정적인 development archive로 조립·선택 서명·자체 검증 |
@@ -51,8 +52,8 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 | `bxdl instance register --instance <new-dir> ...` | 설치본·원본 archive·신뢰 key·제품/native 설정을 검증하고, 새 V2 등록의 공급 자료 보관본과 private 기록 생성 |
 | `bxdl instance show --instance <dir>` | 저장된 초기화 상태와 현재 작업 잠금 관측. 노드 health 검사가 아님 |
 | `bxdl preflight --instance <dir>` | 등록한 입력·설치본을 다시 검증하고 결합 cold 검사 |
-| `bxdl init --instance <dir> --confirm-initialize` | 새/빈 데이터에 명시 초기화, 프로세스 종료·출력·report·엔진 journal 대조 |
-| `bxdl resume-init --instance <dir> --confirm-resume` | 같은 identity의 INITIALIZING journal과 기존 ledger가 있는 미완료 시도만 명시 재개 |
+| `bxdl init <이름> --confirm-initialize` 또는 기존 `--instance <dir>` | 새/빈 데이터에 명시 초기화, 프로세스 종료·출력·report·엔진 journal 대조 |
+| `bxdl resume-init <이름> --confirm-resume` 또는 기존 `--instance <dir>` | 같은 identity의 INITIALIZING journal과 기존 ledger가 있는 미완료 시도만 명시 재개 |
 | `bxdl start --instance <dir>` | 초기화한 인스턴스를 시도별 LaunchAgent로 명시 시작. gate를 통과한 worker가 같은 PID로 Java 실행 |
 | `bxdl status --instance <dir>` | 해당 시도의 launchd·report·로컬 HTTP와 마지막 시작 검사 단계 조회. 전역 quorum 검사가 아님 |
 | `bxdl status --instance <dir> --wait` | 현재 시도의 준비 상태를 기본120초 읽기 관측. 기한 만료·실제 실패·시도 변경 구분 |

@@ -1,6 +1,7 @@
 //! Direct named preparation queries and one-field edits. Queries never acquire
 //! workflow locks or create management/session state.
 use super::{
+    application,
     home::Home,
     install_flow,
     prompt::{self, Input, Policy},
@@ -36,6 +37,8 @@ pub(crate) struct Entry {
     pub inspection: Option<Inspection>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reason_code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub application: Option<application::View>,
     pub next_command: Vec<String>,
 }
 
@@ -44,7 +47,11 @@ pub(crate) struct Entry {
 pub(crate) struct Detail {
     pub schema_version: u32,
     pub name: String,
-    pub inspection: Inspection,
+    pub inspection: Option<Inspection>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason_code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub application: Option<application::View>,
     pub next_command: Vec<String>,
 }
 
@@ -123,6 +130,8 @@ pub(crate) fn list(home: &Path) -> Result<Listing> {
                     (None, Some(error.code))
                 }
             };
+        let application = application::inspect(root.path(), &name, false)?;
+        result.partial |= application.as_ref().is_some_and(application::View::partial);
         root.recheck()?;
         result.entries.push(Entry {
             record: if inspection.is_some() {
@@ -133,6 +142,7 @@ pub(crate) fn list(home: &Path) -> Result<Listing> {
             next_command: command("show", &name, &home),
             name,
             inspection,
+            application,
             reason_code,
         });
     }
@@ -142,11 +152,21 @@ pub(crate) fn list(home: &Path) -> Result<Listing> {
 
 pub(crate) fn show(home: &Path, name: &str) -> Result<Detail> {
     let home = setup::absolute(home)?;
-    let (root, workspace) = open_selected(&home, name)?;
-    let inspection = Preparation::inspect(&workspace, true)?;
+    validate_name(name)?;
+    let root = Home::open(&home)?.ok_or_else(missing)?;
+    let workspace = root.path().join("sessions").join(name);
+    let application = application::inspect(root.path(), name, true)?;
+    let (inspection, reason_code) = match Preparation::inspect(&workspace, application.is_none()) {
+        Ok(value) => (Some(value), None),
+        Err(error) if application.is_some() => (None, Some(error.code)),
+        Err(error) => return Err(error),
+    };
     root.recheck()?;
-    let action = if inspection.verification == "VERIFIED" {
-        "show"
+    let action = if inspection
+        .as_ref()
+        .is_some_and(|value| value.verification == "VERIFIED")
+    {
+        "apply"
     } else {
         "resume"
     };
@@ -154,7 +174,12 @@ pub(crate) fn show(home: &Path, name: &str) -> Result<Detail> {
         schema_version: 1,
         name: name.into(),
         inspection,
-        next_command: command(action, name, &home),
+        reason_code,
+        next_command: application.as_ref().map_or_else(
+            || command(action, name, &home),
+            |view| application::next_command(&home, name, view),
+        ),
+        application,
     })
 }
 

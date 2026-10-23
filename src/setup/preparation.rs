@@ -1,6 +1,7 @@
 //! Persisted preparation of one installation. This module verifies supplied
 //! materials and writes private, immutable configuration snapshots only. It
 //! never extracts a package, registers a node, opens a DB or starts an engine.
+mod application;
 use super::{Session, absolute, error, paths, store, workflow_store::WorkflowStore};
 use crate::{
     artifact,
@@ -8,6 +9,7 @@ use crate::{
     engine::setup_plan,
     error::{BxdlError, Result},
 };
+pub(crate) use application::ApplicationSource;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};

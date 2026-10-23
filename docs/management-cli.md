@@ -20,7 +20,7 @@
 
 첫 호환 profile은 [RC.3 인수 기록](../results/2026-10-22-macos-rc3-package.md)의 archive `8a45cb8b…`, 실행기 `b7d677b4…` 조합이다. 다른 RC.3 재빌드나 같은 `0.1.0-dev` 문자열은 이 profile에 자동 포함되지 않는다. [분리 설계](../design/2026-10-23-independent-management-cli.md)에 전체 hash·계약을 기록했다.
 
-등록된 RC.3의 `instance show`, `preflight`, `init`/`resume-init`, `start`, `status`/`--wait`, `stop`, `logs`, `diagnose`를 위임한다. init/resume-init은 기존 명시 확인 플래그가 필요하다. 최초 설치와 등록은 기존 API를 사용하며, `setup --install`도 이 RC.3를 선택해 노드 작업을 내부 실행기에 위임할 수 있다. `setup new/resume`의 번호 메뉴를 바꾸는 작업은 별도 후속이다.
+등록된 RC.3의 `instance show`, `preflight`, `init`/`resume-init`, `start`, `status`/`--wait`, `stop`, `logs`, `diagnose`를 위임한다. init/resume-init은 기존 명시 확인 플래그가 필요하다. 최초 설치와 등록은 기존 API를 사용하며, `setup --install`도 이 RC.3를 선택해 노드 작업을 내부 실행기에 위임할 수 있다. `setup new/resume`은 순차 문답으로 자료를 준비하며, `setup apply <이름>`은 TTY 승인 뒤 기존 installer/등록 API로 설치·cold 검사·등록·이름 연결까지 진행한다. `init <이름> --confirm-initialize`와 조건부 `resume-init <이름> --confirm-resume`도 이름 또는 기존 `--instance`를 선택해 같은 고정 RC.3 실행기에 위임한다. 초기화와 start를 설치 승인에 묶지 않는다.
 
 미지원 package는 새 CLI가 임의로 내부 실행기를 실행하지 않는다. 기존 native 경로의 조건을 적용하며, 특히 start는 기존과 같이 package CLI 일치를 요구한다. 지원 profile에서 서명·파일 검증이 실패하면 실행 방식 변경이나 자동 복구 없이 거절한다.
 

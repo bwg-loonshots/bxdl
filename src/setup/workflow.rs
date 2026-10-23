@@ -1,6 +1,12 @@
 //! Explicit new-install orchestration. The workflow never repairs or adopts an
 //! unrelated installation and never turns an uncertain engine result into success.
-use super::{Session, absolute, error, paths, store, workflow_store::WorkflowStore};
+mod application;
+pub(crate) use application::ApplicationSummary;
+
+use super::{
+    Session, absolute, error, paths, preparation::ApplicationSource, store,
+    workflow_store::WorkflowStore,
+};
 use crate::{
     artifact,
     engine::{instance, setup_plan},
@@ -39,7 +45,7 @@ struct Step {
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(super) struct Inputs {
+pub(crate) struct Inputs {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub archive: Option<PathBuf>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -76,6 +82,8 @@ struct Journal {
     schema_version: u32,
     kind: String,
     operation_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    origin: Option<ApplicationSource>,
     input_base: PathBuf,
     inputs: Inputs,
     revision: u32,
@@ -142,6 +150,7 @@ impl Workflow {
             schema_version: 1,
             kind: "BXDL_INSTALL_WORKFLOW".into(),
             operation_id: operation_id()?,
+            origin: None,
             input_base,
             inputs: Inputs::default(),
             revision: 0,
@@ -204,6 +213,12 @@ impl Workflow {
                 return Err(invalid());
             }
         }
+        if let Some(origin) = &j.origin {
+            origin.validate()?;
+            if origin.inputs != j.inputs {
+                return Err(application::source_changed());
+            }
+        }
         if let Some(plan) = &j.plan {
             if plan.revision != j.revision
                 || plan.inputs != j.inputs
@@ -212,6 +227,9 @@ impl Workflow {
                 || Some(digest(&serde_json::to_vec(plan).map_err(|_| invalid())?)) != j.plan_sha256
             {
                 return Err(invalid());
+            }
+            if let Some(origin) = &j.origin {
+                application::check_plan_origin(plan, origin)?;
             }
             complete_inputs(&plan.inputs)?;
             self.disjoint(plan)?;
@@ -257,7 +275,13 @@ impl Workflow {
     }
 
     pub(super) fn set_inputs(&mut self, inputs: Inputs) -> Result<()> {
-        if !self.pristine() {
+        if !self.pristine()
+            || self
+                .journal
+                .origin
+                .as_ref()
+                .is_some_and(|origin| origin.inputs != inputs)
+        {
             return Err(locked_plan());
         }
         if self.journal.inputs == inputs {
@@ -271,7 +295,7 @@ impl Workflow {
     }
 
     pub(super) fn edit(&mut self) -> Result<()> {
-        if !self.pristine() {
+        if !self.pristine() || self.journal.origin.is_some() {
             return Err(locked_plan());
         }
         self.journal.plan = None;
@@ -281,7 +305,7 @@ impl Workflow {
     }
 
     pub(super) fn set_field(&mut self, name: &str, answer: &str) -> Result<()> {
-        if !self.pristine() {
+        if !self.pristine() || self.journal.origin.is_some() {
             return Err(locked_plan());
         }
         if matches!(
@@ -350,6 +374,9 @@ impl Workflow {
         }
         complete_inputs(&self.journal.inputs)?;
         self.storage.recheck()?;
+        if let Some(origin) = &self.journal.origin {
+            origin.recheck(true)?;
+        }
         let inputs = self.journal.inputs.clone();
         let product = self.draft.config_bytes()?;
         if self.draft.preflight()?.outcome == "FAIL" {
@@ -444,6 +471,11 @@ impl Workflow {
     fn verify_plan(&self) -> Result<artifact::Report> {
         self.storage.recheck()?;
         self.validate()?;
+        // Bound operations keep the preparation contract even when opened by
+        // the legacy low-level installation wizard instead of setup apply.
+        if let Some(origin) = &self.journal.origin {
+            origin.recheck(false)?;
+        }
         let plan = self.plan()?;
         if digest(&self.draft.config_bytes()?) != plan.product_sha256 {
             return Err(changed());
@@ -549,10 +581,15 @@ impl Workflow {
     }
 
     pub(super) fn apply(&mut self) -> Result<()> {
+        self.apply_with_guard(&mut || Ok(()))
+    }
+
+    fn apply_with_guard(&mut self, guard: &mut impl FnMut() -> Result<()>) -> Result<()> {
         let report = self.verify_plan()?;
         let plan = self.plan()?;
         self.storage.require_capacity(12)?;
         if self.journal.generated == Phase::Pending {
+            guard()?;
             require_new_directory(&plan.prepared.data_directory)?;
             self.journal.generated = Phase::InProgress;
             self.save()?;
@@ -564,6 +601,7 @@ impl Workflow {
             return Err(unknown());
         }
         if self.journal.installation.phase == Phase::Pending {
+            guard()?;
             self.verify_plan()?;
             require_new_directory(required(&plan.inputs.destination)?)?;
             self.journal.installation.phase = Phase::InProgress;
@@ -612,6 +650,7 @@ impl Workflow {
         let owner = self.journal.installation.root.ok_or_else(unknown)?;
         install::verify_installed_owned(required(&plan.inputs.destination)?, &report, &owner)?;
         if self.journal.registration.phase == Phase::Pending {
+            guard()?;
             self.verify_plan()?;
             require_new_directory(required(&plan.inputs.instance)?)?;
             require_new_directory(&plan.prepared.data_directory)?;

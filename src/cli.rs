@@ -32,14 +32,16 @@ pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
 설치·준비:
   bxdl setup new <이름>                    설치 자료·설정 준비
   bxdl setup resume <이름>                 저장한 준비 이어가기
-  bxdl setup list                         저장한 설치 준비 목록
-  bxdl setup show <이름>                   준비 내용·남은 입력 확인
+  bxdl setup list                         준비 목록·설치 실행 기록
+  bxdl setup show <이름>                   준비 내용·설치 실행 기록 확인
   bxdl setup edit <이름> --field httpPort  제품 항목 하나 수정
-  bxdl setup --install --workspace <세션>  실제 설치·등록·초기화·시작 문답
+  bxdl setup apply <이름>                  확인 후 설치·등록·이름 연결
+  bxdl setup --install --workspace <세션>  기존 설치·등록·초기화·시작 문답
   bxdl setup --install --workspace <세션> --resume
-  bxdl init --instance <경로> --confirm-initialize
-  bxdl resume-init --instance <경로> --confirm-resume
-  setup new/resume은 순차 문답입니다. setup apply의 실제 설치 연결은 후속입니다.
+  bxdl init local --confirm-initialize
+  bxdl resume-init local --confirm-resume
+  init/resume-init은 기존 --instance도 지원하며 확인 플래그가 필요합니다.
+  setup apply는 TTY에서 y/yes로 승인합니다. 초기화·시작은 별도 명령입니다.
 
 설정·패키지 제작:
   bxdl setup --help                       제품 초안·비대화형 입력
@@ -234,7 +236,7 @@ pub fn run_with_input<'a>(
         }
         if matches!(
             response.command.as_str(),
-            "setup list" | "setup show" | "setup edit"
+            "setup list" | "setup show" | "setup edit" | "setup apply"
         ) {
             return if print_preparation_summary(out, &data, &response.command).is_ok() {
                 exit
@@ -310,11 +312,19 @@ fn print_preparation_summary(
                             .unwrap_or("UNKNOWN")
                     )?;
                 }
+                print_application_summary(out, &entry["application"])?;
             }
         }
         writeln!(out, "상세 확인: bxdl setup show <이름> (같은 --home 사용)")?;
     } else if command == "setup show" {
         let snapshot = &data["inspection"];
+        if snapshot.is_null() {
+            writeln!(
+                out,
+                "준비 기록 확인 불가 [{}] · 설치 실행 기록과 기존 출력 보존",
+                data["reasonCode"].as_str().unwrap_or("UNKNOWN")
+            )?;
+        }
         writeln!(
             out,
             "{} · 저장 상태 {} · 현재 자료 {}",
@@ -353,7 +363,13 @@ fn print_preparation_summary(
         if let Some(code) = snapshot["verificationCode"].as_str() {
             writeln!(out, "자료 확인 결과: {code}")?;
         }
-        writeln!(out, "설치 NOT_PERFORMED · 엔진/실행 상태 NOT_CHECKED")?;
+        if data["application"].is_null() {
+            writeln!(out, "설치 NOT_PERFORMED · 엔진/실행 상태 NOT_CHECKED")?;
+        } else {
+            print_application_summary(out, &data["application"])?;
+        }
+    } else if command == "setup apply" {
+        print_application_summary(out, &data["application"])?;
     }
     if let Some(words) = data["nextCommand"].as_array() {
         let rendered: Vec<String> = words
@@ -371,6 +387,46 @@ fn print_preparation_summary(
             })
             .collect();
         writeln!(out, "다음 명령: {}", rendered.join(" "))?;
+    }
+    Ok(())
+}
+
+fn print_application_summary(out: &mut dyn Write, view: &Value) -> std::io::Result<()> {
+    if view.is_null() {
+        return Ok(());
+    }
+    if view["record"] == "UNAVAILABLE" {
+        return writeln!(
+            out,
+            "설치 실행 기록 확인 불가 [{}] · 기존 출력 보존",
+            view["reasonCode"].as_str().unwrap_or("UNKNOWN")
+        );
+    }
+    let s = &view["summary"];
+    writeln!(
+        out,
+        "설치 {} · 등록 {} · 이름 {}",
+        s["installation"].as_str().unwrap_or("UNKNOWN"),
+        s["registration"].as_str().unwrap_or("UNKNOWN"),
+        view["nameBinding"].as_str().unwrap_or("UNKNOWN")
+    )?;
+    writeln!(
+        out,
+        "준비 연결 {} · 설치 검증 {} · 실행 상태 미조회",
+        s["sourceMatch"].as_str().unwrap_or("UNKNOWN"),
+        s["verification"].as_str().unwrap_or("NOT_CHECKED")
+    )?;
+    if let Some(code) = view["reasonCode"]
+        .as_str()
+        .or_else(|| s["verificationCode"].as_str())
+    {
+        writeln!(out, "확인 결과: {code}")?;
+    }
+    if let Some(path) = s["instance"].as_str() {
+        writeln!(
+            out,
+            "control: {path} (이름 없이 --instance 경로로도 운용 가능)"
+        )?;
     }
     Ok(())
 }
@@ -936,7 +992,14 @@ fn dispatch_preparation_command(
         },
         "show" => match operator::preparation_commands::show(&home, &positions[0]) {
             Ok(detail) => {
-                let changed = detail.inspection.verification == "CHANGED";
+                let changed = detail
+                    .inspection
+                    .as_ref()
+                    .is_none_or(|inspection| inspection.verification == "CHANGED")
+                    || detail
+                        .application
+                        .as_ref()
+                        .is_some_and(operator::application::View::partial);
                 report(
                     &command,
                     if changed { "INCOMPLETE" } else { "SUCCEEDED" },
@@ -1004,6 +1067,61 @@ fn dispatch_preparation_command(
     }
 }
 
+fn dispatch_application(
+    args: &[String],
+    json_mode: bool,
+    interactive: bool,
+    input: &mut dyn BufRead,
+    prompts: &mut dyn Write,
+) -> (ResultEnvelope, i32) {
+    let command = "setup apply";
+    let Some((flags, positions)) = parse(&args[1..], &[("home", true)]) else {
+        return invalid(command);
+    };
+    if json_mode || positions.len() != 1 || !operator::install_flow::valid_name(&positions[0]) {
+        return invalid(command);
+    }
+    if !interactive {
+        return failure(
+            command,
+            BxdlError::new(
+                "SETUP_INTERACTIVE_TERMINAL_REQUIRED",
+                "설치 적용은 터미널에서 최종 경로를 확인하고 승인하세요.",
+            ),
+            2,
+        );
+    }
+    let home = match flags
+        .get("home")
+        .map(|path| setup::absolute(Path::new(path)))
+        .unwrap_or_else(operator::home::default_home)
+    {
+        Ok(home) => home,
+        Err(error) => return failure(command, error, 2),
+    };
+    match operator::application::run(&home, &positions[0], input, prompts) {
+        Ok(finish) => report(
+            command,
+            finish.outcome,
+            &finish.code,
+            finish.message,
+            finish.summary,
+            finish.exit,
+        ),
+        Err(error) => {
+            let exit = if matches!(
+                error.code.as_str(),
+                "SETUP_INPUT_FAILED" | "SETUP_OUTPUT_FAILED"
+            ) {
+                7
+            } else {
+                3
+            };
+            failure(command, error, exit)
+        }
+    }
+}
+
 fn dispatch_setup(
     args: &[String],
     json_mode: bool,
@@ -1011,6 +1129,9 @@ fn dispatch_setup(
     input: &mut dyn BufRead,
     prompts: &mut dyn Write,
 ) -> (ResultEnvelope, i32) {
+    if args.first().is_some_and(|arg| arg == "apply") {
+        return dispatch_application(args, json_mode, interactive, input, prompts);
+    }
     if args
         .first()
         .is_some_and(|arg| matches!(arg.as_str(), "list" | "show" | "edit"))
@@ -1369,7 +1490,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["nodes.list", "nodes.add", "nodes.named-operations", "executor.rc3-legacy-v1", "runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "setup.preparation.sequential", "setup.preparation.list", "setup.preparation.show", "setup.preparation.edit", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
+                        "capabilities": ["nodes.list", "nodes.add", "nodes.named-operations", "executor.rc3-legacy-v1", "runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "setup.preparation.sequential", "setup.preparation.list", "setup.preparation.show", "setup.preparation.edit", "setup.apply", "nodes.named-initialization", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
                         "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),
@@ -2071,27 +2192,39 @@ fn dispatch_initialization(command: &str, args: &[String]) -> (ResultEnvelope, i
         args,
         &[
             ("instance", true),
+            ("home", true),
             (confirm, false),
             ("timeout-seconds", true),
         ],
     ) else {
         return invalid(command);
     };
-    if !pos.is_empty() || !flags.contains_key("instance") || !flags.contains_key(confirm) {
+    if !flags.contains_key(confirm) {
         return invalid(command);
     }
+    let Some(target) = TargetSpec::parse(&flags, &pos) else {
+        return invalid(command);
+    };
     let Some(timeout) = timeout_flag(&flags, 120, 600) else {
         return invalid(command);
     };
+    let target = match target.resolve() {
+        Ok(target) => target,
+        Err(error) => return instance_failure(command, error),
+    };
+    let instance = target.path();
     if let Some(response) = delegated(
         command,
-        Path::new(&flags["instance"]),
+        instance,
         &engine::instance::executor::Request::Initialize { resume, timeout },
-        || Ok(()),
+        || target.recheck(),
     ) {
         return response;
     }
-    match engine::instance::initialize(Path::new(&flags["instance"]), resume, timeout) {
+    if let Err(error) = target.recheck() {
+        return instance_failure(command, error);
+    }
+    match engine::instance::initialize(instance, resume, timeout) {
         Ok(value) if value.initialization == "INITIALIZED" => report(
             command,
             "SUCCEEDED",

@@ -6,9 +6,19 @@ Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후
 
 2026-10-22 사용자가 실제 console의 직관성이 부족하다고 평가해 개발 중단을 요청했다. 기존 console 코드·시안·검증 이력은 보존하고 새 메뉴·화면·서비스 연결은 진행하지 않는다. 공통 catalog/home/target와 Preparation 검증·저장 API는 직접 CLI에서 재사용한다.
 
-**CLI-01 이름 연결·목록, CLI-02 독립 관리 CLI·이름 기반 운용, CLI-03 순차 설치 준비·조회·수정을 구현·검증했다.** 다음은 실제 설치 실행(CLI-04), 자동완성·Mac 배포 조합·사용자 과업(CLI-05)이다. [최신 설계](../design/2026-10-22-cli-simplification.md)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
+**CLI-01 이름 연결·목록, CLI-02 독립 관리 CLI·이름 기반 운용, CLI-03 순차 설치 준비·조회·수정을 구현·검증했다.** CLI-04의 실제 설치 실행·이름 연결·이름 기반 초기화도 구현·검증했다. 이후 자동완성·Mac 배포 조합·사용자 과업(CLI-05)이 남는다. [최신 설계](../design/2026-10-22-cli-simplification.md)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
 
 직접 `setup new/resume`은 저장한 답을 재사용하고 누락된 항목부터 순차 질문한다. 기존 console 메뉴는 보존하며 저장 형식만 공유한다. `setup list/show/edit`로 조회와 제품 한 항목 수정을 직접 실행한다. 아래 UX-01~03의 PASS는 당시 기술 검증 이력이며 새 CLI 단계의 검증과 구분한다.
+
+## CLI-04 — 준비 결과의 설치 실행과 이름 기반 초기화
+
+`setup apply <이름> [--home <관리-루트>]`는 TTY에서 y/yes로 최종 승인받아 기존 workflow를 통해 설치·cold 검사·control 등록·노드 이름 연결을 수행한다. Enter/n/no와 취소/EOF는 실행을 승인하지 않으며 JSON·비TTY를 입력/쓰기 전에 거절한다. DB 초기화와 LaunchAgent 시작은 별도 명령이다.
+
+준비 `sessions/<이름>`과 설치 실행 `operations/<이름>`은 분리한다. 준비 revision·파일 identity/hash·대상 경로를 결속하고 기존 lock·intent·소유 근거를 유지한다. 완료 apply 재호출은 현재 source·설치·등록 완료 근거를 검증하고 필요한 이름 연결만 복구한다. 이름 충돌/저장 실패는 실제 설치 완료와 별도로 표시하며 SOURCE_CHANGED·UNKNOWN에서 자동 재설치하지 않는다. 완료 V2 등록의 원본 archive/key/lock 부재는 보관된 trust 자료로 확인한다.
+
+`setup list/show`는 준비와 별도 실행 요약을 무쓰기 조회하며 현재 runtime을 관측하지 않는다. sessions/operations의 이름을 합쳐 준비가 손상·삭제되어도 남은 실행 기록을 표시한다. show는 완료 설치 근거를 엔진 실행 없이 재검증한다. 이름 기반 `init/resume-init`은 기존 확인 플래그와 --instance 대안, timeout/exit/UNKNOWN 및 고정 RC.3 실행기 계약을 유지하며 호출 직전에 catalog/root/binding을 재검사한다.
+
+**검증 상태: PASS.** 전체 `make check` Rust545/Python50, 최종 경로 보호를 포함한 prepare_cli34·fmt·Clippy·Linux 타입 검사·release 빌드와 최종 RC.3 Mac 12개 사례를 통과했다. 중복을 제외한 Rust 검사는 546개이며, [CLI-04 검증 기록](../results/2026-10-23-cli04-apply-and-lifecycle.md)에 실행별 코드와 검사 범위를 구분했다. 아래 CLI-03·CLI-02의 PASS는 각각 당시 구현의 근거다. [실행 사용 가이드](./preparation.md#준비한-자료로-설치-실행)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
 
 ## CLI-03 — 순차 설치 준비와 직접 조회·수정
 
@@ -16,7 +26,7 @@ Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후
 
 `setup list/show`는 읽기 전용이며 비TTY/JSON schemaVersion 1을 지원한다. 손상된 목록 항목의 부분 결과와 기록된 준비 상태/현재 자료 검사 결과를 구분한다. `setup edit <이름> --field <제품필드>`는 해당 항목만 묻고 종료하며 다른 답·기존 출력은 보존한다. 입력 중 홈/세션/checkpoint 변경을 재검사하고 자격 경로와 원문 답변은 공개 조회에 노출하지 않는다.
 
-`make check` Rust525/Python50·fmt·Clippy, 추가 회귀를 포함한 최종 prepare_cli26개와 fmt·Clippy, Linux 타입 검사, 실제 Mac PTY8개·비TTY JSON3개를 통과했다. [검증 기록](../results/2026-10-23-cli03-sequential-preparation.md)과 [가이드](./preparation.md)를 따른다. 실제 Mac 검증은 합성 패키지의 준비 기능이며 엔진·서비스 재인수가 아니다. CLI-04의 setup apply와 CLI-05의 사용자 과업은 후속이다.
+`make check` Rust525/Python50·fmt·Clippy, 추가 회귀를 포함한 최종 prepare_cli26개와 fmt·Clippy, Linux 타입 검사, 실제 Mac PTY8개·비TTY JSON3개를 통과했다. [검증 기록](../results/2026-10-23-cli03-sequential-preparation.md)과 [가이드](./preparation.md)를 따른다. 실제 Mac 검증은 합성 패키지의 준비 기능이며 엔진·서비스 재인수가 아니다. CLI-04의 setup apply 검증과 CLI-05의 사용자 과업은 별도 범위다.
 
 ## CLI-02 — 관리 CLI와 기존 RC.3 실행기 분리
 
@@ -250,7 +260,7 @@ TLS 저장소 형식과 새 네트워크/참가·합의·archive 정책 선택, 
 
 ## 다음 순서
 
-CLI-01~03 완료 후 [CLI-04~05](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)의 직접 CLI 개선을 진행한다. console의 후속 화면·서비스 연결은 중단했다. 아래는 그와 별도로 유지하는 전체 제품의 후속 과제다.
+CLI-01~04 구현·검증을 완료했다. 다음은 [CLI-05](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)의 자동완성·배포 조합·사용자 과업 검증이다. console의 후속 화면·서비스 연결은 중단했다. 아래는 그와 별도로 유지하는 전체 제품의 후속 과제다.
 
 NIGO PR #230 정식 회신 뒤 완료한 RC.3 전체 설치 UX21사례·독립 검사8항목의 근거는 [전체 UX 결과](../results/2026-10-22-macos-rc3-full-setup.md)에 기록했다. 기존 회신과 앞선 결과의 당시 NOT_RUN, RC.2 원본 INCOMPLETE·경로 원인 미확정은 보존한다.
 

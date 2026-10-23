@@ -256,7 +256,15 @@ fn latest_catalog(home: &Path) -> PathBuf {
 
 #[test]
 fn named_operation_help_is_exact_available_without_a_terminal_and_matches_json() {
-    for command in ["start", "status", "stop", "logs", "diagnose"] {
+    for command in [
+        "start",
+        "status",
+        "stop",
+        "logs",
+        "diagnose",
+        "init",
+        "resume-init",
+    ] {
         let human = invoke(&words(&[command, "--help"]), &mut NoInput, false);
         human.assert_code(0);
         assert!(human.stdout.contains("--home"), "{}", human.stdout);
@@ -527,6 +535,168 @@ fn identified_rc3_authentication_failures_never_fall_back_or_run_the_package_cli
             if failure != "missing-source" {
                 assert_eq!(direct.json()["reasonCode"], "EXECUTOR_PROFILE_UNSUPPORTED");
             }
+        }
+        for (command, confirmation) in [
+            ("init", "--confirm-initialize"),
+            ("resume-init", "--confirm-resume"),
+        ] {
+            let direct = fixture.explicit(command, &[confirmation]);
+            let named = fixture.named(command, &[confirmation]);
+            direct.assert_code(3);
+            named.assert_code(direct.code);
+            assert_eq!(direct.json()["reasonCode"], named.json()["reasonCode"]);
+            if failure != "missing-source" {
+                assert_eq!(direct.json()["reasonCode"], "EXECUTOR_PROFILE_UNSUPPORTED");
+            }
+        }
+        assert!(!marker.exists());
+        assert_eq!(snapshot(&fixture.root), before);
+    }
+}
+
+#[test]
+fn initialization_requires_exact_confirmation_and_unambiguous_targets_without_writes() {
+    let fixture = Fixture::new();
+    let marker = fixture.fake_package_cli();
+    fixture.add();
+    let control = fixture.control.to_str().unwrap();
+    let home = fixture.home.to_str().unwrap();
+    let before = snapshot(&fixture.root);
+    for (command, confirmation, wrong_confirmation) in [
+        ("init", "--confirm-initialize", "--confirm-resume"),
+        ("resume-init", "--confirm-resume", "--confirm-initialize"),
+    ] {
+        for tail in [
+            vec!["local", "--home", home],
+            vec!["--instance", control],
+            vec!["local", "--home", home, wrong_confirmation],
+            vec!["local", "--home", home, confirmation, wrong_confirmation],
+            vec!["local", "--home", home, confirmation, confirmation],
+            vec![confirmation],
+            vec!["--home", home, confirmation],
+            vec!["local", "other", "--home", home, confirmation],
+            vec!["local", "--instance", control, confirmation],
+            vec!["--instance", control, "--home", home, confirmation],
+            vec!["local", "--home", home, "--home", home, confirmation],
+            vec!["--instance", control, "--instance", control, confirmation],
+            vec!["local", "--home", home, "--unknown", CANARY, confirmation],
+        ] {
+            let mut args = vec![command];
+            args.extend(tail);
+            fixture.run(&args).assert_code(2);
+        }
+        for timeout in ["0", "601", "-1", "1.5", "no"] {
+            fixture
+                .named(command, &[confirmation, "--timeout-seconds", timeout])
+                .assert_code(2);
+        }
+        for name in ["Local", "node_1", "../local", CANARY] {
+            fixture
+                .run(&[command, name, "--home", home, confirmation])
+                .assert_code(2);
+        }
+    }
+    assert!(!marker.exists());
+    assert_eq!(snapshot(&fixture.root), before);
+}
+
+#[test]
+fn initialization_does_not_guess_names_or_create_an_unknown_management_home() {
+    let fixture = Fixture::new();
+    fixture.add();
+    let before = snapshot(&fixture.root);
+    let other_home = fixture.root.join("another-home");
+    for (command, confirmation) in [
+        ("init", "--confirm-initialize"),
+        ("resume-init", "--confirm-resume"),
+    ] {
+        for (name, home) in [
+            ("unknown", fixture.home.as_path()),
+            ("local", other_home.as_path()),
+        ] {
+            let result = fixture.run(&[
+                command,
+                name,
+                "--home",
+                home.to_str().unwrap(),
+                confirmation,
+            ]);
+            result.assert_code(3);
+            assert_eq!(result.json()["reasonCode"], "NODE_NAME_MISSING");
+        }
+    }
+    assert_eq!(snapshot(&fixture.root), before);
+}
+
+#[test]
+fn named_initialization_preserves_legacy_failure_without_running_an_unsupported_executor() {
+    let fixture = Fixture::new();
+    let marker = fixture.fake_package_cli();
+    fixture.add();
+    let before = snapshot(&fixture.root);
+    for (command, confirmation) in [
+        ("init", "--confirm-initialize"),
+        ("resume-init", "--confirm-resume"),
+    ] {
+        for timeout in ["1", "600"] {
+            let args = [confirmation, "--timeout-seconds", timeout];
+            let direct = fixture.explicit(command, &args);
+            let named = fixture.named(command, &args);
+            direct.assert_code(3);
+            named.assert_code(direct.code);
+            assert_eq!(named.json()["reasonCode"], direct.json()["reasonCode"]);
+            assert_eq!(named.json()["outcome"], direct.json()["outcome"]);
+        }
+    }
+    assert!(!marker.exists());
+    assert_eq!(snapshot(&fixture.root), before);
+}
+
+#[test]
+fn named_initialization_rejects_changed_catalog_control_and_binding_without_writes() {
+    for change in ["catalog", "control", "binding"] {
+        let fixture = Fixture::new();
+        let marker = fixture.fake_package_cli();
+        fixture.add();
+        let expected = match change {
+            "catalog" => {
+                let path = latest_catalog(&fixture.home);
+                let mut value: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+                value["schemaVersion"] = 99.into();
+                write(&path, serde_json::to_vec(&value).unwrap());
+                "CONSOLE_CATALOG_CORRUPT"
+            }
+            "control" => {
+                fs::rename(&fixture.control, fixture.root.join("original-control")).unwrap();
+                instance_at(&fixture.control, &fixture.root);
+                "CONSOLE_TARGET_CHANGED"
+            }
+            "binding" => {
+                let path = fixture.control.join("binding.json");
+                let mut value: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+                value["archiveSha256"] = "d".repeat(64).into();
+                let bytes = serde_json::to_vec(&value).unwrap();
+                write(&path, &bytes);
+                let journal_path = fixture.control.join("journal/revision00000001.json");
+                let mut journal: Value =
+                    serde_json::from_slice(&fs::read(&journal_path).unwrap()).unwrap();
+                journal["bindingSha256"] = hex::encode(Sha256::digest(bytes)).into();
+                write(&journal_path, serde_json::to_vec(&journal).unwrap());
+                "CONSOLE_TARGET_CHANGED"
+            }
+            _ => unreachable!(),
+        };
+        let before = snapshot(&fixture.root);
+        for (command, confirmation) in [
+            ("init", "--confirm-initialize"),
+            ("resume-init", "--confirm-resume"),
+        ] {
+            let named = fixture.named(command, &[confirmation]);
+            named.assert_code(3);
+            assert_eq!(named.json()["reasonCode"], expected);
+            let direct = fixture.explicit(command, &[confirmation]);
+            direct.assert_code(3);
+            assert_ne!(direct.json()["reasonCode"], expected);
         }
         assert!(!marker.exists());
         assert_eq!(snapshot(&fixture.root), before);

@@ -161,41 +161,56 @@ impl Home {
     /// Explicitly approved preparation only. No package, control or data parent
     /// is created here, and existing namespaces must pass the home checks.
     pub(crate) fn ensure_sessions(&self) -> Result<PathBuf> {
+        self.ensure_namespace("sessions")
+    }
+
+    /// Called only after approval, and only for fixed managed namespaces.
+    pub(crate) fn ensure_namespace(&self, name: &str) -> Result<PathBuf> {
+        if !matches!(
+            name,
+            "sessions" | "operations" | "packages" | "instances" | "data"
+        ) {
+            return Err(unsafe_home());
+        }
         let _guard = self.lock()?;
         self.recheck()?;
-        match self.root.symlink_metadata("sessions") {
+        match self.root.symlink_metadata(name) {
             Ok(metadata) => require_private(&metadata)?,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
                 self.root
-                    .create_dir_with("sessions", DirBuilder::new().mode(0o700))
+                    .create_dir_with(name, DirBuilder::new().mode(0o700))
                     .map_err(|_| io_error())?;
                 sync(&self.root)?;
             }
             Err(_) => return Err(io_error()),
         }
         self.recheck()?;
-        Ok(self.path.join("sessions"))
+        Ok(self.path.join(name))
     }
 
     /// Bounded inventory of the explicit managed namespace, never a disk scan.
     /// Opening a selected name separately verifies its preparation record.
     pub(crate) fn session_names(&self) -> Result<Vec<String>> {
-        self.session_entries(false)
+        self.namespace_entries("sessions", false)
     }
 
     /// Query commands retain invalid named entries so corruption is visible.
     pub(crate) fn preparation_names(&self) -> Result<Vec<String>> {
-        self.session_entries(true)
+        let mut names = self.namespace_entries("sessions", true)?;
+        names.extend(self.namespace_entries("operations", true)?);
+        names.sort();
+        names.dedup();
+        Ok(names)
     }
 
-    fn session_entries(&self, include_invalid: bool) -> Result<Vec<String>> {
+    fn namespace_entries(&self, namespace: &str, include_invalid: bool) -> Result<Vec<String>> {
         self.recheck()?;
-        match self.root.symlink_metadata("sessions") {
+        match self.root.symlink_metadata(namespace) {
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
             Err(_) => return Err(io_error()),
             Ok(metadata) => require_private(&metadata)?,
         }
-        let (sessions, _) = open_private(&self.root, "sessions")?;
+        let (sessions, _) = open_private(&self.root, namespace)?;
         let mut names = Vec::new();
         for (index, entry) in sessions.entries().map_err(|_| io_error())?.enumerate() {
             if index >= 256 {
@@ -255,7 +270,8 @@ impl Home {
             let name = item.file_name();
             match name.to_str().ok_or_else(unsafe_home)? {
                 RECORD | LOCK | CATALOG => (),
-                "sessions" | "configs" | "packages" | "instances" | "data" | "reports" => {
+                "sessions" | "operations" | "configs" | "packages" | "instances" | "data"
+                | "reports" => {
                     require_private(
                         &self
                             .root

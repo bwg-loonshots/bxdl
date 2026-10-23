@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "title": "CLI-04 named apply 및 Mac RC.3 lifecycle 인수",
+  "outcome": "PASS",
+  "generatedAtUtc": "2026-10-23T06:16:11.753780+00:00",
+  "scope": "UNCHANGED_RC3_PACKAGE_SINGLE_VALIDATOR_MANUAL_START_LOCAL_READINESS",
+  "globalConsensus": "NOT_CHECKED",
+  "host": {
+    "system": "Darwin",
+    "machine": "arm64"
+  },
+  "finalBuild": {
+    "outcome": "PASS",
+    "timestampUtc": "2026-10-23T06:11:46.501806+00:00",
+    "managerSha256": "8449d8fa3e8f5fc84f7a8b30ba620291b6ea3af729dfa44049b887c53c5e735a",
+    "sourceIdentitySha256": "bb3d576b08a1791e868091b3e7b936e1c2df71434ca547d17b7e898ef2dc2f27",
+    "productSourceIdentitySha256": "4621366453357314dc710d6fb4f5c231ab12233b8e80452dd6f69b6ff393de75",
+    "readinessReason": "MANUAL_START_INITIALIZED",
+    "cases": [
+      {
+        "case": "SEQUENTIAL_FROM_NATIVE_PREPARES_ONLY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "PREPARED_LIST_SHOW_READ_ONLY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "APPLY_DECLINE_CREATES_NO_OPERATIONAL_ROOTS",
+        "outcome": "PASS"
+      },
+      {
+        "case": "APPROVED_APPLY_INSTALLS_ORIGINAL_PACKAGE_REGISTERS_AND_ALIASES_WITHOUT_DB",
+        "outcome": "PASS"
+      },
+      {
+        "case": "APPLIED_LIST_SHOW_EXECUTION_SUMMARIES_READ_ONLY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NAMED_INIT_EXPLICIT_CONFIRMATION_CREATES_DB",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NAMED_START_STATUS_LOCAL_READY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NAMED_NORMAL_STOP",
+        "outcome": "PASS"
+      },
+      {
+        "case": "REAPPLY_INITIALIZED_STOPPED_PRESERVES_PACKAGE_CONTROL_DATA_INODE_AND_CONTENT",
+        "outcome": "PASS"
+      },
+      {
+        "case": "STOPPED_LIST_SHOW_READ_ONLY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NO_RECORDED_PID_LAUNCHD_JOB_OR_TCP_LISTENER_REMAINS",
+        "outcome": "PASS"
+      },
+      {
+        "case": "ORIGINAL_SUPPLY_FIXTURES_INSTALLED_PACKAGE_ENGINE_JRE_AND_EXECUTOR_UNCHANGED",
+        "outcome": "PASS"
+      }
+    ],
+    "workerSnapshots": {
+      "count": 1,
+      "allMatchOldExecutor": true,
+      "sha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef"
+    },
+    "notTested": [
+      "GLOBAL_QUORUM",
+      "TRANSACTION_FINALITY",
+      "LOGOUT_SLEEP",
+      "CRASH_RECOVERY",
+      "LINUX_SYSTEMD"
+    ],
+    "caseCount": 12,
+    "cleanup": {
+      "pidsChecked": 19,
+      "remainingPids": 0,
+      "serviceJobCount": 1,
+      "allServiceJobsNotLoaded": true,
+      "tcpListenerCount": 0,
+      "listenerObservation": "PASS",
+      "remainingRunRootProcesses": 0
+    }
+  },
+  "previousBuildSupplement": {
+    "outcome": "PASS",
+    "timestampUtc": "2026-10-23T06:05:30.923547+00:00",
+    "managerSha256": "32ef19baa72624eb3ffd5a5dfd698b3f477dec22f6706326d7411a73e5a36e67",
+    "sourceIdentitySha256": "8583dd537a8f55da9888c4136806a9fe1e1884c7176a9693304dc8b52c86279b",
+    "productSourceIdentitySha256": "97c695b889c0d531e2e367ab945bb8516f28c21c8f50d0c80e2a44a73a85f32d",
+    "readinessReason": "MANUAL_START_INITIALIZED",
+    "cases": [
+      {
+        "case": "SEQUENTIAL_FROM_NATIVE_PREPARES_ONLY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "PREPARED_LIST_SHOW_READ_ONLY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "APPLY_DECLINE_CREATES_NO_OPERATIONAL_ROOTS",
+        "outcome": "PASS"
+      },
+      {
+        "case": "APPROVED_APPLY_INSTALLS_ORIGINAL_PACKAGE_REGISTERS_AND_ALIASES_WITHOUT_DB",
+        "outcome": "PASS"
+      },
+      {
+        "case": "APPLIED_LIST_SHOW_EXECUTION_SUMMARIES_READ_ONLY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NAMED_INIT_EXPLICIT_CONFIRMATION_CREATES_DB",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NAMED_START_STATUS_LOCAL_READY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NAMED_NORMAL_STOP",
+        "outcome": "PASS"
+      },
+      {
+        "case": "REAPPLY_INITIALIZED_STOPPED_PRESERVES_PACKAGE_CONTROL_DATA_INODE_AND_CONTENT",
+        "outcome": "PASS"
+      },
+      {
+        "case": "STOPPED_LIST_SHOW_READ_ONLY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NO_RECORDED_PID_LAUNCHD_JOB_OR_TCP_LISTENER_REMAINS",
+        "outcome": "PASS"
+      },
+      {
+        "case": "ORIGINAL_SUPPLY_FIXTURES_INSTALLED_PACKAGE_ENGINE_JRE_AND_EXECUTOR_UNCHANGED",
+        "outcome": "PASS"
+      }
+    ],
+    "workerSnapshots": {
+      "count": 1,
+      "allMatchOldExecutor": true,
+      "sha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef"
+    },
+    "notTested": [
+      "GLOBAL_QUORUM",
+      "TRANSACTION_FINALITY",
+      "LOGOUT_SLEEP",
+      "CRASH_RECOVERY",
+      "LINUX_SYSTEMD"
+    ],
+    "caseCount": 12,
+    "cleanup": {
+      "pidsChecked": 19,
+      "remainingPids": 0,
+      "serviceJobCount": 1,
+      "allServiceJobsNotLoaded": true,
+      "tcpListenerCount": 0,
+      "listenerObservation": "PASS",
+      "remainingRunRootProcesses": 0
+    },
+    "additionalCases": [
+      {
+        "case": "OTHER_CONTROL_ALIAS_CONFLICT_FAILS_BEFORE_OPERATIONAL_CREATION",
+        "outcome": "PASS"
+      },
+      {
+        "case": "EDITED_UNREVIEWED_PREPARATION_FAILS_CLOSED_AND_PRESERVES_REGISTERED_NODE",
+        "outcome": "PASS"
+      },
+      {
+        "case": "CHANGED_PREPARATION_LIST_SHOW_PRESERVE_EXECUTION_SUMMARY_READ_ONLY",
+        "outcome": "PASS"
+      }
+    ],
+    "additionalCaseCount": 3,
+    "totalCaseCount": 15,
+    "scopeNote": "Before the final reserved-management-namespace guard; extra refusal cases were not rerun with the final binary. The final binary reran the complete 12-case lifecycle in a fresh root."
+  },
+  "initialDebugTrial": {
+    "schemaVersion": 1,
+    "outcome": "OBSERVATION_COMPLETE",
+    "acceptanceOutcome": "INCOMPLETE",
+    "classification": "DEBUG_HARNESS_180_SECOND_TIMEOUT",
+    "originalFailure": "PTY_PROMPT_TIMEOUT_apply-approve",
+    "automaticKill": false,
+    "automaticRetry": false,
+    "installation": "CONFIRMED",
+    "registration": "CONFIRMED",
+    "catalogRevisionCount": 2,
+    "dataCreated": false,
+    "servicePlistCount": 0,
+    "cleanup": {
+      "pidsChecked": 6,
+      "remainingPids": 0,
+      "remainingRunRootProcesses": 0,
+      "tcpListenerCount": 0,
+      "listenerObservation": "PASS"
+    },
+    "managerSha256": "9fed946de173069ded3d1145ed2e3d33c1a7793bbb7a4153b766240cb7b304c0",
+    "suppliesAndInputsUnchanged": true
+  },
+  "samePackage": {
+    "archiveSha256": "8a45cb8bf3482333ad43e8c29ad24c2adde8d6fe778eaf27fe2f5c2c842eb017",
+    "publicKeySha256": "0f03b13417dbb9c362a8762afc7e45bedbf20a983024105b2dcbf55b4dc40f17",
+    "engineLockSha256": "2d6ebff73f8f9c741922b3324fc1d5fc162be64e53ce830cb546ee6fb5d8c344",
+    "archiveSizeBytes": 207160872,
+    "manifestSha256": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+    "executorSha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+    "jarSha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "payloadFileCount": 270,
+    "jreFileCount": 259,
+    "hashSizeModeMembership": "PASS",
+    "packageRebuilt": false,
+    "engineRebuilt": false,
+    "newCredentialsIssued": false
+  },
+  "verification": {
+    "databaseAbsentBeforeExplicitInit": true,
+    "packageControlAndDatabasePreservedByApprovedReapply": true,
+    "sameDataDirectoryDeviceAndInode": true,
+    "sameEngineInstanceIdentity": true,
+    "readOnlyListShowMetadataAndContentUnchanged": true,
+    "finalManagerBinaryUnchanged": true,
+    "finalProductSourceFilesUnchanged": true,
+    "finalProductSourceFileCount": 67
+  },
+  "evidence": {
+    "publication": "Sanitized summaries and hashes only; private raw fixtures and credentials are not stored in this repository.",
+    "finalCoreResultSha256": "fcafaf0a5c8d63d6171e2ae3d53654a683afa3e0ead9e344823506c83a4be899",
+    "finalSourceMapSha256": "8798c9cae7dbebd6fd316e2310ae99166d4fe67b631b7386d39eab9230bc6547",
+    "finalProductSourceMapSha256": "4a4ad525c1efa84c52c57ff0b3d328fd3e851cc6d67927cb219d87c72ac4752b",
+    "finalHarnessSha256": "c81c96fe397a3f51fcb1dff0d3239792f8a76412e139b72ba33fb65d8819cafe",
+    "sharedHarnessSupportSha256": "f7625dd79cf9827f3f14c4d8f9acea0278a089933fba80f553c70ea7e513f0b8",
+    "previousCoreResultSha256": "11dc2e425d069ed8de79bbc56ced217dedfe88b1cda1b0e582f868f6a304d217",
+    "previousAdditionalResultSha256": "a2ba1f3382f3ac9dfe2d159fa9521a0826f1817c89c7e2475cda3da6187b58de",
+    "debugTrialResultSha256": "678a944461925763bf7dd690036877098e5eafa11471093e3ab86b9289208d01",
+    "debugPostflightSha256": "d2a54dfd481b094d14a6e47e692b254bb782dcba8b4f6ebc57a87214ee62f42e",
+    "allTrialsPostflightSha256": "f57f1586160e3a8bddd2ec1063db3a0de8fb1205ae04053357a30e9e0a17f780"
+  },
+  "allTrialsPostflight": {
+    "schemaVersion": 1,
+    "outcome": "PASS",
+    "trialCount": 3,
+    "pidsChecked": 51,
+    "remainingPids": 0,
+    "serviceJobsChecked": 2,
+    "allServiceJobsNotLoaded": true,
+    "remainingRunRootProcesses": 0,
+    "tcpPortsChecked": 6,
+    "tcpListeners": 0,
+    "listenerObservation": "PASS",
+    "debugTrialDataCreated": false
+  },
+  "automatedChecks": {
+    "standardMakeCheck": {
+      "outcome": "PASS",
+      "rustTests": 545,
+      "pythonTests": 50,
+      "fmt": "PASS",
+      "clippy": "PASS",
+      "scope": "Before the final managed-output namespace guard; includes prepare_cli 33."
+    },
+    "finalPreparationRegression": {
+      "outcome": "PASS",
+      "tests": 34,
+      "newTestCasesWithinOneTest": 12,
+      "scope": "Final namespace guard; includes all prepare_cli tests and catalog-save-failure recovery."
+    },
+    "finalFmt": "PASS",
+    "finalClippy": "PASS",
+    "finalLinuxTypeCheck": "PASS",
+    "finalLinuxRuntime": "NOT_CHECKED",
+    "finalReleaseBuild": "PASS",
+    "uniqueRustTests": 546,
+    "logSha256": {
+      "standard": "ee86b220e2c6cf1504a1312c62d8f01a0409c1e90f280052458b39135772d6d3",
+      "finalPreparation": "3310325be33a7c46fa4d6edb0356fdf69f2323a8a3740afddc90e672fe375d5c",
+      "finalLinux": "ab8bc052d989b6f329d1d0aa36d585783a5605d93c787e4c76e808eeeb77282f",
+      "finalReleaseBuild": "c860a90a6cbbae0ec48cf3016f8a875058bdd59687be49729baafe8069a75004"
+    }
+  }
+}
