@@ -9,6 +9,10 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
         return None;
     };
     let (usage, note) = match topic {
+        ["completion"] | ["completion", "zsh"] => (
+            "bxdl completion zsh",
+            "zsh 자동완성 스크립트를 표준출력으로 내보냅니다. 비TTY에서도 사용할 수 있으며 --json과 함께 요청하면 사용법 오류입니다.\ncompinit 실행 뒤 source <(bxdl completion zsh)로 현재 셸에 적용하세요. 셸 설정 파일은 자동 수정하지 않습니다.\n명령·옵션·등록 노드 이름·설치 준비 이름을 해당 위치에서 제안합니다. 이름은 입력 중인 --home 또는 Mac 기본 관리 위치에서 읽습니다.\n자동완성은 관리 위치·기록을 쓰거나 노드·엔진·서비스를 호출하지 않습니다. 제안된 이름이 현재 정상 상태나 실행 승인을 뜻하지는 않습니다.\n현재 지원 셸은 zsh이며 bash/fish는 지원하지 않습니다. 설치·사용 예시는 docs/completion.md를 따르세요.",
+        ),
         ["nodes"] => (
             "bxdl nodes [--home <관리-루트>] [--json]",
             "저장한 등록 노드 목록을 읽습니다. 이름·표시명·저장 당시 상태와 시각을 보여줍니다.\n예: bxdl nodes\n목록 조회는 폴더를 만들거나 노드·서비스·네트워크를 조회하지 않습니다. 없는 관리 위치는 빈 목록입니다.\n기존 노드 연결: bxdl nodes add local --instance <control-경로>\nMac 기본 위치는 ~/Library/Application Support/BXDL입니다. 다른 OS 또는 별도 목록은 --home을 지정하세요.\n이름 기반 운용: bxdl status local. 기존 --instance 경로도 지원합니다. 이름에는 같은 --home을 지정하세요.",

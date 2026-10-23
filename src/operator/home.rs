@@ -191,19 +191,35 @@ impl Home {
     /// Bounded inventory of the explicit managed namespace, never a disk scan.
     /// Opening a selected name separately verifies its preparation record.
     pub(crate) fn session_names(&self) -> Result<Vec<String>> {
-        self.namespace_entries("sessions", false)
+        self.namespace_entries("sessions", false, false)
     }
 
     /// Query commands retain invalid named entries so corruption is visible.
     pub(crate) fn preparation_names(&self) -> Result<Vec<String>> {
-        let mut names = self.namespace_entries("sessions", true)?;
-        names.extend(self.namespace_entries("operations", true)?);
+        let mut names = self.namespace_entries("sessions", true, false)?;
+        names.extend(self.namespace_entries("operations", true, false)?);
         names.sort();
         names.dedup();
         Ok(names)
     }
 
-    fn namespace_entries(&self, namespace: &str, include_invalid: bool) -> Result<Vec<String>> {
+    /// Shell hints only: private directories, without opening records or locks.
+    pub(crate) fn completion_names(&self, include_operations: bool) -> Result<Vec<String>> {
+        let mut names = self.namespace_entries("sessions", false, true)?;
+        if include_operations {
+            names.extend(self.namespace_entries("operations", false, true)?);
+        }
+        names.sort();
+        names.dedup();
+        Ok(names)
+    }
+
+    fn namespace_entries(
+        &self,
+        namespace: &str,
+        include_invalid: bool,
+        private_only: bool,
+    ) -> Result<Vec<String>> {
         self.recheck()?;
         match self.root.symlink_metadata(namespace) {
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
@@ -223,7 +239,9 @@ impl Home {
             };
             if super::install_flow::valid_name(name) {
                 let metadata = sessions.symlink_metadata(name).map_err(|_| io_error())?;
-                if include_invalid || (metadata.is_dir() && !metadata.is_symlink()) {
+                if (include_invalid || (metadata.is_dir() && !metadata.is_symlink()))
+                    && (!private_only || require_private(&metadata).is_ok())
+                {
                     names.push(name.to_owned());
                 }
             }

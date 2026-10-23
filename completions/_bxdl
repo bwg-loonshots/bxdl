@@ -1,0 +1,53 @@
+#compdef bxdl bxdl' bxdl"
+# BXDL zsh completion. Source after compinit, or put this file on fpath before
+# compinit. Completion reads names only; it never authorizes node operations.
+_bxdl() {
+  emulate -L zsh
+  setopt localoptions extendedglob noshwordsplit
+
+  (( CURRENT >= 2 && CURRENT <= ${#words} )) || return 1
+  local executable="${(Q)words[1]}" raw kind candidate word
+  local -a arguments response candidates
+  local -i index
+  # Expand only an unquoted ~/ prefix. Quoted tildes, variables and command
+  # substitutions remain literal; never ask the shell to evaluate input.
+  [[ $words[1] == '~/'* && $HOME == /* ]] && executable="${HOME%/}/${executable[3,-1]}"
+  for (( index = 2; index <= ${#words}; index++ )); do
+    word="${(Q)words[index]}"
+    (( index == CURRENT )) && word="${(Q)PREFIX}"
+    if [[ $words[index] == '~/'* && $HOME == /* ]]; then
+      word="${HOME%/}/${word[3,-1]}"
+    fi
+    arguments+=( "$word" )
+  done
+  raw=$(command "$executable" completion __complete --cursor "$((CURRENT-2))" -- "${arguments[@]}" 2>/dev/null) || return 1
+  (( ${#raw} <= 65536 )) || return 1
+  response=( "${(@f)raw}" )
+  (( ${#response} >= 1 && ${#response} <= 1025 )) || return 1
+  kind=$response[1]
+  [[ $PREFIX == --*=* ]] && compset -P 1 '*='
+  case $kind in
+    values)
+      candidates=( "${(@)response[2,-1]}" )
+      (( ${#candidates} )) || return 1
+      # The protocol contains tokens, never shell expressions or descriptions.
+      for candidate in "${candidates[@]}"; do
+        [[ $candidate =~ '^[A-Za-z0-9_-]+$' ]] || return 1
+      done
+      compadd -Q -- "${candidates[@]}"
+      ;;
+    files) _files ;;
+    directories) _directories ;;
+    none) return 1 ;;
+    *) return 1 ;;
+  esac
+}
+
+# During autoload the old wrapper is executing; call the definition above.
+# During source, register it without invoking completion outside ZLE.
+if [[ ${funcstack[1]} == _bxdl ]]; then
+  _bxdl "$@"
+elif (( $+functions[compdef] )); then
+  # zsh derives these basenames before unquoting a quoted executable path.
+  compdef _bxdl bxdl "bxdl'" 'bxdl"'
+fi

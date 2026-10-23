@@ -15,3 +15,5 @@ pub(crate) mod nodes;
 pub(crate) mod preparation_commands;
 
 pub(crate) mod application;
+
+pub(crate) mod completion;

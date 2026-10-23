@@ -2,7 +2,7 @@
 
 - 작성일/방향 변경: 2026-10-22
 - 최신 사용자 결정: **console 개발을 중단하고 직접 CLI 개선을 우선한다.** 사용자가 현재 console을 확인한 뒤 직관성이 부족하다고 평가했다.
-- 상태: 이 문서는 새 우선순위와 목표 계약이다. 기존 UX-01~03 구현·검증 이력을 보존하며, 2026-10-23 CLI-01/02를 구현·검증했다. [독립 관리 CLI 설계](./2026-10-23-independent-management-cli.md)에 따라 기존 RC.3 실행기 위임과 이름 기반 운용을 제공한다. CLI-03의 순차 문답과 조회·수정을 구현·검증했다. [CLI-03 검증 기록](../results/2026-10-23-cli03-sequential-preparation.md)을 보존한다. CLI-04의 준비 결과에서 설치·등록·이름 연결과 이름 기반 초기화도 구현·검증했다. [CLI-04 검증 기록](../results/2026-10-23-cli04-apply-and-lifecycle.md)을 따른다. 이후 CLI-05가 남는다.
+- 상태: 이 문서는 새 우선순위와 목표 계약이다. 기존 UX-01~03 구현·검증 이력을 보존하며, 2026-10-23 CLI-01/02를 구현·검증했다. [독립 관리 CLI 설계](./2026-10-23-independent-management-cli.md)에 따라 기존 RC.3 실행기 위임과 이름 기반 운용을 제공한다. CLI-03의 순차 문답과 조회·수정을 구현·검증했다. [CLI-03 검증 기록](../results/2026-10-23-cli03-sequential-preparation.md)을 보존한다. CLI-04의 준비 결과에서 설치·등록·이름 연결과 이름 기반 초기화도 구현·검증했다. [CLI-04 검증 기록](../results/2026-10-23-cli04-apply-and-lifecycle.md)을 따른다. CLI-05 중 zsh 자동완성(CLI05-01)의 구현·검증을 완료했으며 Mac 배포·조합 인수·사용자 과업은 후속 계획이다.
 - 연결: [현재 구현 상태](../docs/implementation-status.md), [작업 순서](./2026-10-22-integrated-operations-ux-implementation-plan.md).
 
 ## 1. 바꾸는 방향
@@ -15,7 +15,7 @@ console 홈·메뉴·화면 시안의 추가 개발과 실제 서비스 연결�
 
 ## 2. 목표 명령
 
-CLI-01 목록/이름 연결과 CLI-02 이름 기반 운용을 구현했다. CLI-03의 순차 준비·조회·수정도 구현했다. CLI-04도 **구현·검증 완료**이며 CLI-05는 **계획**이다. 명령 사용법은 [CLI 가이드](../docs/cli.md), 검증 상태는 [구현 현황](../docs/implementation-status.md)을 따른다.
+CLI-01 목록/이름 연결과 CLI-02 이름 기반 운용을 구현했다. CLI-03의 순차 준비·조회·수정도 구현했다. CLI-04도 **구현·검증 완료**다. CLI-05 중 **CLI05-01 zsh 자동완성은 구현·검증 완료**이며 나머지 배포·조합 인수·사용자 과업은 **계획**이다. 명령 사용법은 [CLI 가이드](../docs/cli.md), 검증 상태는 [구현 현황](../docs/implementation-status.md)을 따른다.
 
 | 과업 | 목표 문법 | 의미/단계 |
 | --- | --- | --- |
@@ -29,7 +29,9 @@ CLI-01 목록/이름 연결과 CLI-02 이름 기반 운용을 구현했다. CLI-
 | 제품 한 항목 수정 | `bxdl setup edit local --field httpPort` | CLI-03. 지정 필드만 질문하고 변경 영향·다음 명령 표시 후 종료 |
 | 설치·등록 실행 | `bxdl setup apply local [--home <root>]` | CLI-04. TTY y/yes 승인 뒤 설치·cold 검사·등록·이름 연결. 완료 재호출은 검증과 이름 복구만 수행 |
 | 초기화·조건부 재개 | `bxdl init local --confirm-initialize`, `bxdl resume-init local --confirm-resume` | CLI-04. 이름/--home 또는 기존 --instance. 기존 확인·재개 조건 유지. 설치나 start와 일괄 승인하지 않음 |
-| 자동완성 | `bxdl completion <shell>` | CLI-05. 검증한 셸의 명령·옵션·등록 이름 후보 제공 |
+| 자동완성 | `bxdl completion zsh` | CLI05-01 구현·검증 완료. 명령·옵션·등록 노드/설치 준비 이름 후보 제공. bash/fish는 미지원 |
+
+zsh 자동완성은 현재 입력 위치의 명령·옵션·정해진 값과 선택한 관리 루트의 이름을 제안한다. 입력 중인 `--home`을 우선하고 없으면 Mac 기본 관리 위치를 사용한다. 노드 이름은 저장 catalog만 읽고 실제 target/control·엔진·서비스를 검사하지 않는다. 준비 이름도 관리 namespace만 읽으며 준비 내용을 재검증하지 않는다. 없는/손상된 관리 위치에서 이름을 추측하거나 폴더를 만들지 않는다. 경로 값은 zsh의 파일/디렉터리 완성으로 연결한다. 셸 설정은 사용자 선택으로 적용하며 [가이드](../docs/completion.md)를 따른다. 전체 검사와 최종 release의 실제 zsh 13시나리오·인용 경로 결과는 [CLI05-01 검증 기록](../results/2026-10-23-cli05-zsh-completion.md)에 구분했다.
 
 이름을 받는 명령에는 동일한 `--home <root>` 규칙을 적용한다. Mac 기본 관리 위치와 기존 명령의 `--instance <path>`를 유지한다. `install <archive> --destination ...`의 기존 파일 설치 의미도 바꾸지 않는다. `restart/up/down` 등 중복 동사를 추가하지 않는다.
 

@@ -6,9 +6,19 @@ Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후
 
 2026-10-22 사용자가 실제 console의 직관성이 부족하다고 평가해 개발 중단을 요청했다. 기존 console 코드·시안·검증 이력은 보존하고 새 메뉴·화면·서비스 연결은 진행하지 않는다. 공통 catalog/home/target와 Preparation 검증·저장 API는 직접 CLI에서 재사용한다.
 
-**CLI-01 이름 연결·목록, CLI-02 독립 관리 CLI·이름 기반 운용, CLI-03 순차 설치 준비·조회·수정을 구현·검증했다.** CLI-04의 실제 설치 실행·이름 연결·이름 기반 초기화도 구현·검증했다. 이후 자동완성·Mac 배포 조합·사용자 과업(CLI-05)이 남는다. [최신 설계](../design/2026-10-22-cli-simplification.md)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
+**CLI-01 이름 연결·목록, CLI-02 독립 관리 CLI·이름 기반 운용, CLI-03 순차 설치 준비·조회·수정을 구현·검증했다.** CLI-04의 실제 설치 실행·이름 연결·이름 기반 초기화도 구현·검증했다. CLI-05 중 zsh 자동완성(CLI05-01)의 구현·검증을 완료했으며 독립 Mac 배포·조합 인수·사용자 과업은 후속 계획이다. [최신 설계](../design/2026-10-22-cli-simplification.md)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
 
 직접 `setup new/resume`은 저장한 답을 재사용하고 누락된 항목부터 순차 질문한다. 기존 console 메뉴는 보존하며 저장 형식만 공유한다. `setup list/show/edit`로 조회와 제품 한 항목 수정을 직접 실행한다. 아래 UX-01~03의 PASS는 당시 기술 검증 이력이며 새 CLI 단계의 검증과 구분한다.
+
+## CLI05-01 — zsh 자동완성
+
+**상태: CLI05-01 DONE.** 공개 `bxdl completion zsh`는 비TTY에서도 zsh 스크립트를 stdout으로 출력한다. `--json` 혼합은 사용법 오류이며 JSON 요청에는 기존 오류 envelope를 반환한다. `completion`/`completion zsh`의 정확한 도움말과 [셸 적용 가이드](./completion.md)를 제공한다.
+
+명령·옵션·정해진 값과 입력 위치에 맞는 이름을 제안한다. 노드 이름은 선택한 관리 루트의 catalog, 준비 이름은 관리 namespace만 읽는다. 명시 `--home` 또는 Mac 기본 관리 위치를 사용하며 폴더·잠금·기록 생성, 대상 control 검사, 엔진·서비스·네트워크 호출을 하지 않는다. 경로 입력은 zsh의 파일/디렉터리 완성을 사용한다. 셸 설정/PATH를 자동 수정하지 않으며 bash/fish는 지원하지 않는다.
+
+전체 `make check` Rust561/Python58, 이후 `completion_cli`15개, zsh 프런트엔드10개와 최종 보강2개, 최종 release의 실제 zsh13시나리오·인용 바이너리 경로를 통과했다. fmt·Clippy·Linux 타입 검사·release 빌드와 내장 스크립트 대조도 통과했다. [검증 기록](../results/2026-10-23-cli05-zsh-completion.md)에 전체 실행과 후속 검사를 구분했다. 검사 횟수를 합산한 누적 건수로 제시하지 않는다.
+
+이번 범위는 CLI05-01이다. CLI05-02 독립 Mac 관리 CLI 배포, CLI05-03 기존 RC.3와의 배포 조합 인수, CLI05-04 작성자가 아닌 사용자의 과업은 PLAN이다. 실제 사용자 과업은 NOT_RUN이며 CLI-05 전체 완료나 고객 배포 인수를 뜻하지 않는다. 기존 RC.3 package·실행기·NIGO/JRE pin과 새 NIGO 선행 요구사항은 바꾸지 않는다.
 
 ## CLI-04 — 준비 결과의 설치 실행과 이름 기반 초기화
 
@@ -56,7 +66,7 @@ Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후
 
 명령별 `--help`와 공통 상태 안내를 추가했다. 알려진 cold `INCOMPLETE`, 관측 기한 만료, 실제 실패, 상태 불명, 정상 종료 확인 필요/완료를 구별하며 JSON envelope·exit code·저장 schema와 실행 승인 조건은 유지한다. `make check`(Rust 383개·Python 50개·fmt·Clippy)와 실제 PTY 초안 수정·출력 거절 검증을 통과했다. [UX-01 검증 기록](../results/2026-10-22-ux01-common-prompts.md)을 따른다.
 
-통합 홈의 기존 구현 이력은 위 UX-02/03을 따르며 현재 추가 개발은 중단했다. NIGO/engine lock/JRE·기존 accepted archive는 바꾸지 않는다. 변경 CLI를 기존 package에 덮어쓰지 않으며 새 archive의 실제 서비스·네트워크 인수는 CLI-05에서 별도로 수행한다.
+통합 홈의 기존 구현 이력은 위 UX-02/03을 따르며 현재 추가 개발은 중단했다. NIGO/engine lock/JRE·기존 accepted archive는 바꾸지 않는다. 변경 CLI를 기존 package에 덮어쓰지 않으며 독립 관리 CLI와 기존 runtime의 실제 서비스·네트워크 조합 인수는 CLI-05 후속 단계에서 별도로 수행한다. 실행기 자체나 NIGO/JRE가 바뀔 때만 새 runtime package 인수가 필요하다.
 
 ## 등록 자료 보관과 시작 진단 — 2026-10-22
 
@@ -260,7 +270,7 @@ TLS 저장소 형식과 새 네트워크/참가·합의·archive 정책 선택, 
 
 ## 다음 순서
 
-CLI-01~04 구현·검증을 완료했다. 다음은 [CLI-05](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)의 자동완성·배포 조합·사용자 과업 검증이다. console의 후속 화면·서비스 연결은 중단했다. 아래는 그와 별도로 유지하는 전체 제품의 후속 과제다.
+CLI-01~04 구현·검증을 완료했다. [CLI-05](../design/2026-10-22-integrated-operations-ux-implementation-plan.md) 중 CLI05-01 zsh 자동완성의 구현·검증을 완료했으며 독립 Mac 배포·조합 인수·사용자 과업은 후속 계획이다. console의 후속 화면·서비스 연결은 중단했다. 아래는 그와 별도로 유지하는 전체 제품의 후속 과제다.
 
 NIGO PR #230 정식 회신 뒤 완료한 RC.3 전체 설치 UX21사례·독립 검사8항목의 근거는 [전체 UX 결과](../results/2026-10-22-macos-rc3-full-setup.md)에 기록했다. 기존 회신과 앞선 결과의 당시 NOT_RUN, RC.2 원본 INCOMPLETE·경로 원인 미확정은 보존한다.
 

@@ -1,0 +1,65 @@
+{
+  "status": "PASS",
+  "binarySha256": "ca9b794c28d757d565fa7fad7fe3827932bf4437bce0c96e5630ae9ead39e439",
+  "zshVersion": "zsh 5.9 (arm64-apple-darwin25.0)",
+  "registration": "source <(bxdl completion zsh)",
+  "scenarios": [
+    {
+      "input": "bxdl diagn",
+      "status": "PASS"
+    },
+    {
+      "input": "bxdl status --home '<HOME>' loc",
+      "status": "PASS"
+    },
+    {
+      "input": "bxdl status led --home '<HOME>'",
+      "status": "PASS"
+    },
+    {
+      "input": "bxdl --json status --home '<HOME>' loc",
+      "status": "PASS"
+    },
+    {
+      "input": "bxdl setup resume --home '<HOME>' al",
+      "status": "PASS"
+    },
+    {
+      "input": "bxdl setup show --home '<HOME>' comp",
+      "status": "PASS"
+    },
+    {
+      "input": "bxdl setup edit alpha --field=httpP",
+      "status": "PASS"
+    },
+    {
+      "input": "bxdl install pac",
+      "status": "PASS"
+    },
+    {
+      "input": "bxdl status --home=man",
+      "status": "PASS"
+    },
+    {
+      "input": "bxdl status --home=data=1/ne",
+      "status": "PASS"
+    },
+    {
+      "input": "bxdl status --home ~/management\\ home loc",
+      "status": "PASS"
+    },
+    {
+      "input": "bxdl status -- unknown",
+      "status": "PASS"
+    },
+    {
+      "input": "bxdl status --home <TEST_ROOT>/missing loc",
+      "status": "PASS"
+    }
+  ],
+  "quotedBinaryPathWithSpaces": "PASS",
+  "managementSnapshotUnchanged": true,
+  "privateCanaryAbsentFromTerminal": true,
+  "missingHomeNotCreated": true,
+  "executedNodeCommands": 0
+}

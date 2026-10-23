@@ -58,6 +58,9 @@ pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
   bxdl engine inspect --help              엔진 identity 검사
   bxdl engine preflight --help            native 설정 cold 검사
 
+자동완성:
+  bxdl completion zsh                    zsh 자동완성 스크립트 출력
+
 도움말:
   bxdl <명령> --help                       필수 입력·예제·다음 단계
   bxdl help <명령>                         같은 명령별 안내
@@ -180,6 +183,18 @@ pub fn run_with_input<'a>(
             ),
             0,
         )
+    } else if args.first().is_some_and(|arg| arg == "completion") {
+        if json_mode {
+            invalid("completion")
+        } else if let Some(script) = operator::completion::output(&args[1..]) {
+            return if stdout.write_all(script.as_bytes()).is_ok() {
+                0
+            } else {
+                7
+            };
+        } else {
+            invalid("completion")
+        }
     } else if args.first().is_some_and(|arg| arg == "console") {
         dispatch_console(&args[1..], json_mode, interactive, input, stderr)
     } else if args.first().is_some_and(|arg| arg == "setup") {
@@ -1490,7 +1505,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["nodes.list", "nodes.add", "nodes.named-operations", "executor.rc3-legacy-v1", "runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "setup.preparation.sequential", "setup.preparation.list", "setup.preparation.show", "setup.preparation.edit", "setup.apply", "nodes.named-initialization", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
+                        "capabilities": ["completion.zsh", "nodes.list", "nodes.add", "nodes.named-operations", "executor.rc3-legacy-v1", "runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "setup.preparation.sequential", "setup.preparation.list", "setup.preparation.show", "setup.preparation.edit", "setup.apply", "nodes.named-initialization", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
                         "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),
