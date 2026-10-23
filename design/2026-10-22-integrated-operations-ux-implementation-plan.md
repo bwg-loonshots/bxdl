@@ -1,6 +1,6 @@
 # CLI 우선 설치·운용 UX 구현 계획
 
-- 작성일/방향 변경: 2026-10-22 / 상태: **console 개발 중단. 기존 UX-01~03 이력 보존. CLI-01~04는 2026-10-23 구현·검증 완료. CLI-05 중 CLI05-01/02 구현·검증과 CLI05-03 지정 Mac 조합 인수를 완료했다. 진단 완전수집은 OPEN, CLI05-04 사람 과업은 NOT_RUN이다.**
+- 작성일/방향 변경: 2026-10-22 / 상태: **console 개발 중단. 기존 UX-01~03 이력 보존. CLI-01~04는 2026-10-23 구현·검증 완료. CLI-05 중 CLI05-01/02 구현·검증과 CLI05-03 지정 Mac 조합 인수를 완료했다. 후속 신규 초기화 보고서 권한 개선·수집 재검증 완료. 기존 `0644` 보고서는 미복구 partial이며 CLI05-04 사람 과업은 NOT_RUN이다.**
 - 기준: [직접 CLI 간소화](./2026-10-22-cli-simplification.md), [통합 설계](./2026-10-22-integrated-operations-ux.md), [화면 명세 S01~S11](./2026-10-22-integrated-operations-ux-screens.md), [화면 시안](./prototypes/integrated-operations-ux.html).
 - 기존 M/BX 작업 ID와 G1/G2를 대체하지 않는다. UX ID는 이번 개선을 나눠 구현·검토하기 위한 하위 추적이다.
 - 최초 설계 코드 기준은 PR #15의 `870ca72`, 설계 merge는 PR #16의 `a8fd55a`다. UX-01의 `operator/{prompt,help,view}.rs`와 UX-02의 `operator/{console,catalog,home,target}.rs`를 구현했다. UX-03의 `operator/install_flow.rs`와 `setup/preparation.rs`도 구현했다. node/support 모듈은 후속 제안이다.
@@ -19,7 +19,7 @@ CLI-03에서 직접 `setup new/resume`의 7개 번호 메뉴를 순차 문답으
 | CLI-02 | 독립 관리 CLI·이름 기반 일상 운용 | `status/start/stop/logs/diagnose local` | 기존 RC.3 실행기 인증·고정 명령/JSON 위임; 이름/경로 재검증; setup 기존 흐름 연결; CLI×runtime 조합 인수 | IMPLEMENTED |
 | CLI-03 | 번호 메뉴를 순차 준비 문답과 단일 작업 명령으로 교체 | `setup new/resume`, `setup list/show/edit` | 공급→자기 노드→누락 제품/정책→검토→종료; 기존 입력 재사용·한 항목 수정·재개·EOF·비TTY·immutable 결과 | IMPLEMENTED |
 | CLI-04 | 준비 결과에서 실제 설치 실행 | `setup apply local`, 별도 `init`·`start` | 기존 workflow intent/소유 증거/잠금 재사용; 승인 범위와 자료 변경 검사; partial/UNKNOWN 보존; 이름 저장 실패와 실제 설치 완료 분리 | DONE · 자동 검사·RC.3 Mac 12개 PASS |
-| CLI-05 | 셸 완성·Mac 배포 조합·사용자 과업 | 명령/이름 완성과 실제 명령 중심 인수 | 자동 검사·실제 zsh·관리 CLI/runtime 조합 서비스/네트워크 인수·작성자가 아닌 사용자 과업을 각각 기록 | CLI05-01/02/03 DONE · 진단 완전수집 OPEN · CLI05-04 PLAN |
+| CLI-05 | 셸 완성·Mac 배포 조합·사용자 과업 | 명령/이름 완성과 실제 명령 중심 인수 | 자동 검사·실제 zsh·관리 CLI/runtime 조합 서비스/네트워크 인수·작성자가 아닌 사용자 과업을 각각 기록 | CLI05-01/02/03 DONE · 신규 보고서 수집 개선 DONE · CLI05-04 NOT_RUN |
 
 착수 순서는 **CLI-01 → CLI-02 → CLI-03 → CLI-04 → CLI-05**다. CLI-02는 패키지 내부 바이너리를 덮어쓰지 않는다. 지원하는 기존 RC.3 profile을 인증한 뒤 내부 실행기로 위임한다. 실행기 동작은 기존 검사를 유지하며 실제 조합 인수를 이번 단계에서 수행한다. 이후 새 runtime package 인수와 전체 사용자 과업은 CLI-04/05와 연결한다. NIGO RC.3/JRE 고정을 유지하며 이 순서의 새 NIGO 선행 구현은 없다.
 
@@ -78,7 +78,7 @@ CLI-03에서 직접 `setup new/resume`의 7개 번호 메뉴를 순차 문답으
 | --- | --- | --- | --- |
 | CLI05-01 | `completion zsh`, 명령·옵션·값·노드/준비 이름 완성, 직접 적용 가이드 | 자동 회귀·실제 Mac zsh Tab/인용/경로·무쓰기/미호출 검사 | DONE · 자동 검사·최종 release 실제 zsh PASS |
 | CLI05-02 | 독립 Mac 관리 CLI 배포·설치/업데이트 안내 | 기존 RC.3 설치본을 보존하는 CLI 교체·버전 확인·기존 이름 목록 재사용 | DONE · [배포 설계](./2026-10-23-management-cli-distribution.md) · 실제 Mac signed13/unsigned13 PASS |
-| CLI05-03 | 관리 CLI/runtime 조합 인수 | 고정 기존 RC.3와 설치·일상 운용·네트워크 과업의 실제 결과, payload/JRE 불변·정상 정리 | DONE · [지정 Mac 조합 PASS](../results/2026-10-23-cli05-runtime-acceptance.md), 진단 완전수집 OPEN |
+| CLI05-03 | 관리 CLI/runtime 조합 인수 | 고정 기존 RC.3와 설치·일상 운용·네트워크 과업의 실제 결과, payload/JRE 불변·정상 정리 | DONE · [지정 Mac 조합 PASS](../results/2026-10-23-cli05-runtime-acceptance.md), 당시 진단 partial 보존 |
 | CLI05-04 | 작성자가 아닌 사용자의 실제 과업 | 처음 설치·한 항목 수정·다음 날 재개·새 터미널 운용·실패 진단 기록 | PLAN · 사용자 과업 NOT_RUN |
 
 CLI05-01은 다음 계약을 지킨다.
@@ -94,7 +94,20 @@ CLI05-02는 [전용 배포 설계](./2026-10-23-management-cli-distribution.md)�
 
 CLI05-03은 [별도 결과](../results/2026-10-23-cli05-runtime-acceptance.md)에서 실제 설치한 CLI의 서비스 16사례와 고정 RC.3의 4-validator·두 복구·wrong-pin 인수를 PASS했다. 같은 source tree의 실제 Git PR head `994c48f`→merge `3a0bb5c`→head→merge 전환 3회에서 기존 attempt/PID·data·초기화 journal·설정·worker를 보존했다. 네트워크 12개 실행 시도·거래 8개/제출 9회, payload/JRE/worker 불변·정상 정리를 확인했다. 제품 코드·JAR·runtime 재조립·니고 변경은 없었다. 위 CLI05-01/02의 당시 NOT_RUN과 이 결과를 구분한다.
 
-서비스에서는 init report mode 0644와 private reader의 읽기 거절을 관측했고, `logs`·`diagnose` 결과는 **INCOMPLETE / LOGS_PARTIAL / DIAGNOSTIC_PARTIAL**이었다. 실제 umask 미기록으로 원인은 확정하지 않는다. CLI05-03 완료는 이 partial의 정확한 표현을 확인한 지정 범위이며, **진단 완전수집의 원인 확인·보완·재인수는 OPEN**이다. 다음 사용자 과업 CLI05-04는 작성자가 아닌 사람이 수행해야 하며 NOT_RUN을 유지한다. Mac 로그아웃/sleep·안전 제거·A7·J5와 기존 엔진/DB upgrade는 별도다.
+서비스에서는 init report mode 0644와 private reader의 읽기 거절을 관측했고, `logs`·`diagnose` 결과는 **INCOMPLETE / LOGS_PARTIAL / DIAGNOSTIC_PARTIAL**이었다. 해당 실행의 실제 umask 미기록과 당시 원인 미확정은 보존한다. CLI05-03 완료는 이 partial의 정확한 표현을 확인한 지정 범위다. 이후 신규 보고서 개선과 재검증은 아래에서 별도로 기록하며 기존 CLI05-03 결과를 성공으로 바꾸지 않는다.
+
+### CLI05-03 후속 — 초기화 보고서 생성 권한 개선
+
+[별도 설계](./2026-10-23-private-initialization-report.md)에 따라 standalone CLI의 Unix 첫 진입에서 `umask 077`을 설정했다. 기존 RC.3 실행기와 NIGO writer의 bytes를 유지하면서 자식 프로세스에 mask를 상속한다. native init/resume-init도 같은 생성 정책을 적용한다. 부모 셸과 라이브러리 직접 호출의 mask, 기존 내장 CLI의 직접 실행, 기존 파일 권한은 바꾸지 않는다.
+
+다음 범위를 구현·검증했다. 전체 자동 검사 집계와 실제 비교 조건별 결과는 [새 검증 기록](../results/2026-10-23-private-initialization-report.md)을 따른다.
+
+1. caller mask `002/022/077`에서 실제 바이너리의 native init을 실행해 새 보고서 `0600`·상속 mask `077`, 부모 셸 불변과 UNKNOWN 유지·무재시도를 검증했다.
+2. 새 노드 archive 외부 파일의 `0600`, archive bytes 동일성과 설치 payload의 명시 `0755/0644`·receipt `0600` 보존을 검증했다.
+3. 기존 RC.3와 실제 Mac 4개 실행 조건에서 각 서비스16사례 및 독립 검사를 통과했다. 비교 조건의 partial과 수정 CLI의 신규 보고서 수집 성공을 구분한다.
+4. reader의 private 검사를 유지하고 기존 `0644` 보고서를 chmod·교체·자동 재초기화하지 않는다. 기존 보고서의 partial은 남으며 명시 복구 정책은 별도 후속 과제다.
+
+다음 사용자 과업 CLI05-04는 작성자가 아닌 사람이 수행해야 하며 **NOT_RUN**을 유지한다. Mac 로그아웃/sleep·안전 제거·A7·J5와 기존 엔진/DB upgrade는 별도다.
 
 ### 기존 UX ID와의 관계
 

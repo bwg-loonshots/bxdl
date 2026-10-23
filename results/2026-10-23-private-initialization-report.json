@@ -1,0 +1,656 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "workItem": "CLI05-03-DIAG-01",
+  "outcome": "PASS",
+  "scope": "CONTROLLED_UMASK_REPRODUCTION_AND_FRESH_INIT_REPORT_DIAGNOSTICS",
+  "interpretation": "Old CLI caller022 is an expected INCOMPLETE baseline. Fixed CLI caller022/002 collects new initialization reports. Existing0644 remains unchanged and partial.",
+  "host": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "macVersion": "26.6.2"
+  },
+  "historicalCli0503ResultModified": false,
+  "rootCause": {
+    "writer": "EngineProcessReport FileChannel.open(CREATE_NEW, WRITE) without explicit POSIX mode",
+    "oldInitPath": "manager -> fixed RC.3 executor -> JVM inherits caller umask",
+    "oldServicePath": "existing LaunchAgent Umask=63 gives077",
+    "diagnosticReader": "exact0600 required; unchanged",
+    "historicalCli0503CallerMask": "NOT_RECORDED",
+    "actualJvmMaskInstrumented": false
+  },
+  "implementation": {
+    "entrypoint": "src/main.rs",
+    "policy": "standalone Unix process sets077 before threads or children",
+    "parentShellChanged": false,
+    "libraryRunnerMaskChanged": false,
+    "newDependency": false,
+    "unsafeCodeAdded": false,
+    "existingFileRepair": false,
+    "directOldEmbeddedCliPolicyChanged": false,
+    "nodeArchiveOuterMode": "0600",
+    "archiveInternalBytesAndExplicitInstallModesUnchanged": true
+  },
+  "managerBuilds": {
+    "old": {
+      "version": "0.1.0-dev",
+      "revision": "3a0bb5caa08096454fcb6c88b3186e9a3be02a19",
+      "binarySha256": "99bb09583a9615548d23eb5d088027ccc2831ba5cc0c0f3dacac388209bf2fb8"
+    },
+    "fixed": {
+      "baseRevision": "d0e6d0da39a9ae08b9a0475969dedf92a7eea3c6",
+      "revision": "development",
+      "policy": "explicit-unsigned-development",
+      "binarySha256": "226949d83d86fb77c31a4317523c89d12f781b451161598aea4167f130d8a81f",
+      "archiveSha256": "ee4eb6662c99fdde15489ece28b183dffd8f0c418792c7345647ad7ef57674ba",
+      "sourceInventorySha256": "db26981258b93daadda506d119f46c6761e765c9f412b014967c2364415ee1a3"
+    },
+    "executionEntry": "INSTALLED_STABLE_ENTRY",
+    "fixedIsOfficialRelease": false,
+    "subsequentDocumentationEditsBundledIntoTestedArchive": false
+  },
+  "runtime": {
+    "fileCount": 270,
+    "jreFileCount": 259,
+    "pins": {
+      "archive": "8a45cb8bf3482333ad43e8c29ad24c2adde8d6fe778eaf27fe2f5c2c842eb017",
+      "publicKey": "0f03b13417dbb9c362a8762afc7e45bedbf20a983024105b2dcbf55b4dc40f17",
+      "engineLock": "2d6ebff73f8f9c741922b3324fc1d5fc162be64e53ce830cb546ee6fb5d8c344",
+      "manifest": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+      "executor": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+      "jar": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+      "java": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c"
+    },
+    "hashSizeModeMembership": "PASS",
+    "profile": "BXDL_RC3_EXECUTOR_V1",
+    "payloadBytes": 325299323,
+    "jreModules": 49,
+    "nigoSourceRevision": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1",
+    "jreVersion": "Temurin21.0.12.1+1-LTS",
+    "runtimePackageRebuilt": false,
+    "engineRebuilt": false,
+    "executorReplaced": false
+  },
+  "serviceCases": [
+    {
+      "case": "INSTALLED_STABLE_ENTRY_AND_CURRENT_CLI_IDENTITY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "SEQUENTIAL_PREPARATION_CREATES_CONFIGURATION_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "PREPARED_LIST_SHOW_READ_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "APPLY_DECLINE_PRESERVES_PREPARATION_AND_CREATES_NO_NODE",
+      "outcome": "PASS"
+    },
+    {
+      "case": "APPROVED_APPLY_INSTALLS_AND_REGISTERS_WITHOUT_INITIALIZING",
+      "outcome": "PASS"
+    },
+    {
+      "case": "APPLIED_LIST_SHOW_READ_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "NAMED_EXPLICIT_INIT_CREATES_FRESH_DB",
+      "outcome": "PASS"
+    },
+    {
+      "case": "NAMED_START_LOCAL_READY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "NAMED_LOGS_AND_DIAGNOSE_COLLECT_INITIALIZATION_REPORT",
+      "outcome": "PASS"
+    },
+    {
+      "case": "NAMED_NORMAL_STOP",
+      "outcome": "PASS"
+    },
+    {
+      "case": "SAME_DATA_RESTART_LOCAL_READY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "RESTARTED_NODE_NORMAL_STOP",
+      "outcome": "PASS"
+    },
+    {
+      "case": "STOPPED_REAPPLY_PRESERVES_PACKAGE_CONTROL_DB_INODE_AND_CONTENT",
+      "outcome": "PASS"
+    },
+    {
+      "case": "STOPPED_LIST_SHOW_READ_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "ORIGINAL_SUPPLY_PAYLOAD_JRE_EXECUTOR_AND_FIXTURE_UNCHANGED",
+      "outcome": "PASS"
+    },
+    {
+      "case": "NO_RECORDED_PID_LAUNCHD_JOB_OR_TCP_LISTENER_REMAINS",
+      "outcome": "PASS"
+    }
+  ],
+  "baselineCaseDifference": "old-022 preserves actual partial instead of requiring complete init collection",
+  "conditions": [
+    {
+      "condition": "old-022",
+      "originalResultSha256": "65e0f57ca44ea7572beacf96066d44a60c08d2dc34e34d67a31e8f6076cd20c8",
+      "originalOutcome": "PASS",
+      "caseCount": 16,
+      "callerUmask": {
+        "requested": "022",
+        "inherited": "022",
+        "applied": "022",
+        "scope": "HARNESS_PROCESS_BEFORE_CLI_AND_PTY_SPAWN",
+        "cliMayOverrideInheritedMask": true
+      },
+      "managerSha256": "99bb09583a9615548d23eb5d088027ccc2831ba5cc0c0f3dacac388209bf2fb8",
+      "expectCompleteDiagnostics": false,
+      "initializationReport": {
+        "mode": "0644",
+        "parentMode": "0700",
+        "sha256": "4148aba43f4f8184006e6a665fce38ee1a311b5d7f7e87c9d18c90624b770d3e",
+        "bytes": 1856,
+        "inodeHashModeTimesUnchangedAcrossDiagnosisAndLifecycle": true,
+        "statuses": [
+          "CHECKING",
+          "STARTING",
+          "INITIALIZED"
+        ]
+      },
+      "lifecycle": {
+        "sameDataIdentity": true,
+        "newServiceAttempts": 2,
+        "normalStops": 2,
+        "globalConsensus": "NOT_CHECKED"
+      },
+      "runtime": {
+        "payloadFiles": 270,
+        "payloadBytes": 325299323,
+        "jreFiles": 259,
+        "workerFiles": 2,
+        "allHashSizeModeMembershipMatchFixedRc3": true,
+        "originalInputFilesUnchanged": 12,
+        "copiedInputFilesUnchanged": 12
+      },
+      "cleanup": {
+        "normalStops": 2,
+        "jobsAbsent": 2,
+        "recordedPidUnion": 27,
+        "javaReportPids": 3,
+        "remainingPids": 0,
+        "portsChecked": 2,
+        "remainingListeners": 0,
+        "serviceReportModes": [
+          "0600",
+          "0600"
+        ]
+      },
+      "diagnostics": [
+        {
+          "command": "logs",
+          "outcome": "INCOMPLETE",
+          "reasonCode": "LOGS_PARTIAL",
+          "partial": true,
+          "initializationSource": [
+            {
+              "name": "initialization.report",
+              "reason": "MISSING_UNSAFE_OR_CHANGING_INPUT",
+              "result": "UNAVAILABLE"
+            }
+          ],
+          "sourceEvidenceSha256": "f83242ea9659df3fc3f8960a6b021f1acfdcdf7fc27624da1445ad974ac8e209",
+          "initializedEventCollected": false
+        },
+        {
+          "command": "diagnose",
+          "outcome": "INCOMPLETE",
+          "reasonCode": "DIAGNOSTIC_PARTIAL",
+          "partial": true,
+          "initializationSource": [
+            {
+              "name": "initialization.report",
+              "reason": "MISSING_UNSAFE_OR_CHANGING_INPUT",
+              "result": "UNAVAILABLE"
+            }
+          ],
+          "sourceEvidenceSha256": "e125568ab16b79390a101af8bf9442530d869229772936c0a11f6d00ac33135b",
+          "initializedEventCollected": false
+        }
+      ]
+    },
+    {
+      "condition": "old-077",
+      "originalResultSha256": "02d45277f046e392b04378cd7758d5de1bc948fe3527ff6e0f902016f687b4d8",
+      "originalOutcome": "PASS",
+      "caseCount": 16,
+      "callerUmask": {
+        "requested": "077",
+        "inherited": "022",
+        "applied": "077",
+        "scope": "HARNESS_PROCESS_BEFORE_CLI_AND_PTY_SPAWN",
+        "cliMayOverrideInheritedMask": true
+      },
+      "managerSha256": "99bb09583a9615548d23eb5d088027ccc2831ba5cc0c0f3dacac388209bf2fb8",
+      "expectCompleteDiagnostics": true,
+      "initializationReport": {
+        "mode": "0600",
+        "parentMode": "0700",
+        "sha256": "35c4cdfcd3c9ed3477595dbf83c0c0c942f7febdccd6bbe6a67c7b28485983cd",
+        "bytes": 1856,
+        "inodeHashModeTimesUnchangedAcrossDiagnosisAndLifecycle": true,
+        "statuses": [
+          "CHECKING",
+          "STARTING",
+          "INITIALIZED"
+        ]
+      },
+      "lifecycle": {
+        "sameDataIdentity": true,
+        "newServiceAttempts": 2,
+        "normalStops": 2,
+        "globalConsensus": "NOT_CHECKED"
+      },
+      "runtime": {
+        "payloadFiles": 270,
+        "payloadBytes": 325299323,
+        "jreFiles": 259,
+        "workerFiles": 2,
+        "allHashSizeModeMembershipMatchFixedRc3": true,
+        "originalInputFilesUnchanged": 12,
+        "copiedInputFilesUnchanged": 12
+      },
+      "cleanup": {
+        "normalStops": 2,
+        "jobsAbsent": 2,
+        "recordedPidUnion": 27,
+        "javaReportPids": 3,
+        "remainingPids": 0,
+        "portsChecked": 2,
+        "remainingListeners": 0,
+        "serviceReportModes": [
+          "0600",
+          "0600"
+        ]
+      },
+      "diagnostics": [
+        {
+          "command": "logs",
+          "outcome": "SUCCEEDED",
+          "reasonCode": "LOGS_COLLECTED",
+          "partial": false,
+          "initializationSource": [
+            {
+              "name": "initialization.report",
+              "reason": "PRIVATE_SNAPSHOT",
+              "result": "COLLECTED",
+              "sizeBytes": 1856
+            }
+          ],
+          "sourceEvidenceSha256": "28c796bef1ff28dd7103a60b524bbb36ec5aae2325eea7daa4b730722f53a549",
+          "initializedEventCollected": true
+        },
+        {
+          "command": "diagnose",
+          "outcome": "SUCCEEDED",
+          "reasonCode": "DIAGNOSTIC_WRITTEN",
+          "partial": false,
+          "initializationSource": [
+            {
+              "name": "initialization.report",
+              "reason": "PRIVATE_SNAPSHOT",
+              "result": "COLLECTED",
+              "sizeBytes": 1856
+            }
+          ],
+          "sourceEvidenceSha256": "0e2869b5a8cddb13f00e0d36f1fce0fed469df61fac41a2c217033d256f97a33",
+          "initializedEventCollected": true
+        }
+      ]
+    },
+    {
+      "condition": "fixed-022",
+      "originalResultSha256": "fde2f335cbab4888ea1199bbe6384ca631d63989e2d0f97feb2fba1dbafcb606",
+      "originalOutcome": "PASS",
+      "caseCount": 16,
+      "callerUmask": {
+        "requested": "022",
+        "inherited": "022",
+        "applied": "022",
+        "scope": "HARNESS_PROCESS_BEFORE_CLI_AND_PTY_SPAWN",
+        "cliMayOverrideInheritedMask": true
+      },
+      "managerSha256": "226949d83d86fb77c31a4317523c89d12f781b451161598aea4167f130d8a81f",
+      "expectCompleteDiagnostics": true,
+      "initializationReport": {
+        "mode": "0600",
+        "parentMode": "0700",
+        "sha256": "aa9c425139c515b2cb64fbaad56cca063f7b35901b69613479af2eedb300de77",
+        "bytes": 1856,
+        "inodeHashModeTimesUnchangedAcrossDiagnosisAndLifecycle": true,
+        "statuses": [
+          "CHECKING",
+          "STARTING",
+          "INITIALIZED"
+        ]
+      },
+      "lifecycle": {
+        "sameDataIdentity": true,
+        "newServiceAttempts": 2,
+        "normalStops": 2,
+        "globalConsensus": "NOT_CHECKED"
+      },
+      "runtime": {
+        "payloadFiles": 270,
+        "payloadBytes": 325299323,
+        "jreFiles": 259,
+        "workerFiles": 2,
+        "allHashSizeModeMembershipMatchFixedRc3": true,
+        "originalInputFilesUnchanged": 12,
+        "copiedInputFilesUnchanged": 12
+      },
+      "cleanup": {
+        "normalStops": 2,
+        "jobsAbsent": 2,
+        "recordedPidUnion": 27,
+        "javaReportPids": 3,
+        "remainingPids": 0,
+        "portsChecked": 2,
+        "remainingListeners": 0,
+        "serviceReportModes": [
+          "0600",
+          "0600"
+        ]
+      },
+      "diagnostics": [
+        {
+          "command": "logs",
+          "outcome": "SUCCEEDED",
+          "reasonCode": "LOGS_COLLECTED",
+          "partial": false,
+          "initializationSource": [
+            {
+              "name": "initialization.report",
+              "reason": "PRIVATE_SNAPSHOT",
+              "result": "COLLECTED",
+              "sizeBytes": 1856
+            }
+          ],
+          "sourceEvidenceSha256": "326f7cda0e4a4fb68cc296451a49c9f37d0287f20aeef6d4c21139e12d8e6d53",
+          "initializedEventCollected": true
+        },
+        {
+          "command": "diagnose",
+          "outcome": "SUCCEEDED",
+          "reasonCode": "DIAGNOSTIC_WRITTEN",
+          "partial": false,
+          "initializationSource": [
+            {
+              "name": "initialization.report",
+              "reason": "PRIVATE_SNAPSHOT",
+              "result": "COLLECTED",
+              "sizeBytes": 1856
+            }
+          ],
+          "sourceEvidenceSha256": "99b94c9873ee3694924d3353547bffc4a0f443ce4246fe91ff1af6c06523140a",
+          "initializedEventCollected": true
+        }
+      ]
+    },
+    {
+      "condition": "fixed-002",
+      "originalResultSha256": "8a24d6f646e0d5a4194ffd5f596855f9c9c43c18c031100348007921f759e1ea",
+      "originalOutcome": "PASS",
+      "caseCount": 16,
+      "callerUmask": {
+        "requested": "002",
+        "inherited": "022",
+        "applied": "002",
+        "scope": "HARNESS_PROCESS_BEFORE_CLI_AND_PTY_SPAWN",
+        "cliMayOverrideInheritedMask": true
+      },
+      "managerSha256": "226949d83d86fb77c31a4317523c89d12f781b451161598aea4167f130d8a81f",
+      "expectCompleteDiagnostics": true,
+      "initializationReport": {
+        "mode": "0600",
+        "parentMode": "0700",
+        "sha256": "6915be891440270514d009f3d712e3c3f381fdbf21a2d582a7369acdafdbb9c8",
+        "bytes": 1856,
+        "inodeHashModeTimesUnchangedAcrossDiagnosisAndLifecycle": true,
+        "statuses": [
+          "CHECKING",
+          "STARTING",
+          "INITIALIZED"
+        ]
+      },
+      "lifecycle": {
+        "sameDataIdentity": true,
+        "newServiceAttempts": 2,
+        "normalStops": 2,
+        "globalConsensus": "NOT_CHECKED"
+      },
+      "runtime": {
+        "payloadFiles": 270,
+        "payloadBytes": 325299323,
+        "jreFiles": 259,
+        "workerFiles": 2,
+        "allHashSizeModeMembershipMatchFixedRc3": true,
+        "originalInputFilesUnchanged": 12,
+        "copiedInputFilesUnchanged": 12
+      },
+      "cleanup": {
+        "normalStops": 2,
+        "jobsAbsent": 2,
+        "recordedPidUnion": 27,
+        "javaReportPids": 3,
+        "remainingPids": 0,
+        "portsChecked": 2,
+        "remainingListeners": 0,
+        "serviceReportModes": [
+          "0600",
+          "0600"
+        ]
+      },
+      "diagnostics": [
+        {
+          "command": "logs",
+          "outcome": "SUCCEEDED",
+          "reasonCode": "LOGS_COLLECTED",
+          "partial": false,
+          "initializationSource": [
+            {
+              "name": "initialization.report",
+              "reason": "PRIVATE_SNAPSHOT",
+              "result": "COLLECTED",
+              "sizeBytes": 1856
+            }
+          ],
+          "sourceEvidenceSha256": "d212121ff40320390637d0f244309c720d53906f8bad51189e03adee4f915693",
+          "initializedEventCollected": true
+        },
+        {
+          "command": "diagnose",
+          "outcome": "SUCCEEDED",
+          "reasonCode": "DIAGNOSTIC_WRITTEN",
+          "partial": false,
+          "initializationSource": [
+            {
+              "name": "initialization.report",
+              "reason": "PRIVATE_SNAPSHOT",
+              "result": "COLLECTED",
+              "sizeBytes": 1856
+            }
+          ],
+          "sourceEvidenceSha256": "6f4bc07e2532162b05b1c8f887391191b89d07d612645cfdd916f86d7d7c0399",
+          "initializedEventCollected": true
+        }
+      ]
+    }
+  ],
+  "globalConsensus": "NOT_CHECKED",
+  "cleanup": {
+    "conditions": 4,
+    "cases": 64,
+    "normalStops": 8,
+    "jobsAbsent": 8,
+    "workers": 8,
+    "recordedPidUnion": 108,
+    "portsChecked": 8,
+    "remainingPids": 0,
+    "remainingListeners": 0,
+    "remainingRunRootProcesses": 0
+  },
+  "legacyRequery": {
+    "scope": "READ_ONLY_INDEPENDENT_LEGACY_0644_DIAGNOSTIC_REQUERY_AUDIT",
+    "originalLegacyRecordSha256": "a4fd62f449c1dc6b7eb452892dc9ce22b63fd4804745ea39103328fee4487ac3",
+    "originalServiceResultSha256": "65e0f57ca44ea7572beacf96066d44a60c08d2dc34e34d67a31e8f6076cd20c8",
+    "manager": {
+      "fixedStableEntryAndSelectedPayloadMatch": true,
+      "binarySha256": "226949d83d86fb77c31a4317523c89d12f781b451161598aea4167f130d8a81f"
+    },
+    "report": {
+      "mode": "0644",
+      "parentMode": "0700",
+      "bytes": 1856,
+      "sha256": "4148aba43f4f8184006e6a665fce38ee1a311b5d7f7e87c9d18c90624b770d3e",
+      "matchesOriginalCreationAndPrePostRequeryMetadata": true,
+      "inodeHashModeMtimeCtimeUnchanged": true
+    },
+    "diagnostics": [
+      {
+        "command": "logs",
+        "outcome": "INCOMPLETE",
+        "reasonCode": "LOGS_PARTIAL",
+        "partial": true,
+        "initializationSource": {
+          "name": "initialization.report",
+          "reason": "MISSING_UNSAFE_OR_CHANGING_INPUT",
+          "result": "UNAVAILABLE"
+        },
+        "sourceEvidenceSha256": "a4728aea402df97e320577d9171ed5b9188e6fcffce20e792bb36dd62e241335",
+        "exitCodeRecordedByOriginalScript": 5
+      },
+      {
+        "command": "diagnose",
+        "outcome": "INCOMPLETE",
+        "reasonCode": "DIAGNOSTIC_PARTIAL",
+        "partial": true,
+        "initializationSource": {
+          "name": "initialization.report",
+          "reason": "MISSING_UNSAFE_OR_CHANGING_INPUT",
+          "result": "UNAVAILABLE"
+        },
+        "sourceEvidenceSha256": "a50dd2bbd56087fa9dae873865908bdfcef258ddf5bc5f20f47a1caa2b0f5cea",
+        "exitCodeRecordedByOriginalScript": 5
+      }
+    ],
+    "diagnosticOutput": {
+      "mode": "0600",
+      "sha256": "0f9034552e4b8eba908f9e0eba008a07fc7c708ee7d1cb656a82dc0c502f6fe2",
+      "matchesStdoutData": true
+    },
+    "controlData": {
+      "currentControlEntries": 70,
+      "currentDataEntries": 30,
+      "currentSnapshotSha256": "7bf553c621c145095551e67049d6fe863261e9dd57a190dffd1ab7fa25a62656",
+      "originalScriptAssertedFullBeforeAfterSnapshotEquality": true,
+      "independentFullBeforeSnapshotReconstruction": false,
+      "noAdditionalInitOrRunAttempt": true
+    },
+    "originalScriptReview": {
+      "onlyCliCommands": [
+        "logs",
+        "diagnose"
+      ],
+      "stableEntryUsedWithoutResolvingForExecution": true,
+      "noInitStartStopChmodOrDelete": true,
+      "snapshotCoversDeviceInodeModeSizeMtimeCtimeAndRegularFileBytes": true,
+      "originalExecutionExitCodesRecorded": true
+    },
+    "limitations": [
+      "Original script compares full control/data before and after snapshots in memory; separate pre-requery snapshots were not retained. Audit verifies the script logic, retained summary, current entry counts and original report identity but cannot independently reconstruct that full prior snapshot.",
+      "Exit codes are retained original-script observations, not encoded in stdout JSON; audit cross-checks their recorded values and assertion logic.",
+      "Source-script hash is measured at audit time, not an independently recorded execution-time freeze.",
+      "No CLI, node, service, or permission-change command was executed by this audit. Prior four-condition OS cleanup evidence was not rerun here.",
+      "This confirms preserved rejection of an existing 0644 initialization report; no automatic historical report repair or full historical diagnostic collection is claimed."
+    ],
+    "outcome": "PASS"
+  },
+  "independentAudit": {
+    "fourConditions": {
+      "outcome": "PASS",
+      "sha256": "465ac6c75f83f17836848ed615d1372ffbfbfd0c7ffa11e425b13c173a7bcfc7",
+      "limitations": [
+        "Single local manual-start validator per condition, not global quorum or transaction acceptance.",
+        "Saved created/before/after/final initialization-report metadata are compared with the current file; creation-time claims rely on the frozen execution harness observations.",
+        "Pre-query and pre-reapply snapshots were asserted during execution but not retained separately; audit does not reconstruct them.",
+        "Caller/harness umask is recorded; the JVM own umask is inferred from inheritance and resulting report mode, not separately instrumented.",
+        "The fixed binary is an explicit unsigned development build identified by source inventory and binary hash, not an official release.",
+        "No permission repair, CLI/service command, restart, forced kill, source or original-result modification performed by this audit.",
+        "No network acceptance, logout/sleep/crash, existing-runtime/DB upgrade, Linux/systemd/Docker, J5/customer release, or CLI05-04 human task acceptance."
+      ]
+    },
+    "legacy": {
+      "outcome": "PASS",
+      "sha256": "e8bcf5e642058c37fc45f4cc63a0a92dc265df072bba00f852914cccf1efce89"
+    },
+    "isAdditionalRuntimeExecution": false
+  },
+  "automatedValidation": {
+    "makeCheck": {
+      "outcome": "PASS",
+      "fmt": "PASS",
+      "clippy": "PASS",
+      "rustPassed": 592,
+      "pythonTotal": 99,
+      "pythonPassed": 97,
+      "pythonOptInSkipped": 2,
+      "logSha256": "763e844e8f697816d97f99e850c5af63f2ec3e8096beca5e161b7a9e0a1db3af"
+    },
+    "linuxTypeCheck": {
+      "outcome": "PASS",
+      "target": "x86_64-unknown-linux-gnu",
+      "actualLinuxExecution": false,
+      "logSha256": "346d014d9414c589be4bd8840780044c61bfa3a431f9a02bd27ab23f12a42869"
+    },
+    "newRustRegressions": 2,
+    "newOfflinePythonRegressions": 5,
+    "harnessSha256": {
+      "run_management_service.py": "73162398ed67e79290f2e93867bd4365fc349ef6f681bdee6ff52a7839c821ff",
+      "support.py": "f7625dd79cf9827f3f14c4d8f9acea0278a089933fba80f553c70ea7e513f0b8"
+    },
+    "testSourceSha256": {
+      "tests/setup_install.rs": "7f56a166bc93fae03ac2aa48129fbbc05a48b0f23c95ac8dd090515509f0d1d6",
+      "tests/acceptance/test_management_service.py": "ae8988c98bea391c33df9e54e4518aa059c7eb1a40e6d07276aa5b6bd2d13ecd"
+    },
+    "productionMainSha256": "12fb9f98f3eabfcaca83d6368d3ff8b2caac3fea6f482103c3dba1ce98012662"
+  },
+  "evidence": {
+    "inventorySha256": "746fc931d584ca1230415d0e955a78ce588c341a3e323ad39d1b10dc76090288",
+    "files": 215,
+    "rawArtifactsPublished": false,
+    "storage": "PRIVATE_OWNED_TEST_DIRECTORY"
+  },
+  "notTested": [
+    "EXISTING_0644_REPAIR",
+    "REAL_RESUME_INIT_RECOVERY",
+    "FOUR_VALIDATOR_NETWORK_AFTER_FIX",
+    "LIVE_CLI_UPDATE_AFTER_FIX",
+    "LOGOUT_SLEEP",
+    "CRASH_POWER_CUT",
+    "RUNTIME_DB_UPGRADE",
+    "LINUX_SYSTEMD_RUNTIME",
+    "DOCKER",
+    "LAUNCHDAEMON",
+    "LONG_RUNNING_PERFORMANCE",
+    "J5_CUSTOMER_RELEASE",
+    "CLI05_04_NON_AUTHOR_HUMAN_TASKS"
+  ]
+}

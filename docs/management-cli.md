@@ -134,7 +134,7 @@ python3 tools/build-management-cli.py --development --allow-unsigned-development
 bxdl cli bundle verify /downloads/bxdl-cli.tar.gz --public-key /trusted/bxdl-cli-public.pem --json
 ```
 
-이 형식의 Ed25519 manifest 서명과 SHA-256 검사는 Apple code signing·notarization이나 정식 고객 배포 인수를 대신하지 않는다. 이번 단계의 배포 대상은 Mac arm64이며 `.pkg`/Homebrew, 자동 온라인 업데이트, 설치 제거, Linux 실제 설치는 후속 범위다. 후속 CLI05-03의 지정 서비스·네트워크 조합 인수는 [별도 결과](../results/2026-10-23-cli05-runtime-acceptance.md)를 따른다. 진단 완전수집은 OPEN이며 작성자가 아닌 사용자의 CLI05-04 과업은 NOT_RUN이다.
+이 형식의 Ed25519 manifest 서명과 SHA-256 검사는 Apple code signing·notarization이나 정식 고객 배포 인수를 대신하지 않는다. 이번 단계의 배포 대상은 Mac arm64이며 `.pkg`/Homebrew, 자동 온라인 업데이트, 설치 제거, Linux 실제 설치는 후속 범위다. 후속 CLI05-03의 지정 서비스·네트워크 조합 인수는 [별도 결과](../results/2026-10-23-cli05-runtime-acceptance.md)를 따른다. 후속 [초기화 보고서 권한 개선과 재검증](../results/2026-10-23-private-initialization-report.md)은 신규 보고서를 대상으로 완료했다. 기존 `0644` 보고서 복구와 작성자가 아닌 사용자의 CLI05-04 과업은 완료하지 않았으며 사람 과업은 NOT_RUN이다.
 
 ## 지원 범위
 
@@ -150,11 +150,21 @@ bxdl cli bundle verify /downloads/bxdl-cli.tar.gz --public-key /trusted/bxdl-cli
 
 ## 동작과 결과
 
-명령·JSON envelope·exit 의미는 기존 계약을 유지한다. service의 READY는 로컬 상태이며 합의 전체의 확인이 아니다. logs/diagnose는 저장 기록이고 현재 runtime을 관측하지 않는다. CLI05-03 단일 노드 실행에서는 init report mode 0644와 private reader의 읽기 거절을 관측했고, `logs`·`diagnose`가 `LOGS_PARTIAL`·`DIAGNOSTIC_PARTIAL` / INCOMPLETE를 반환했다. 실제 실행 umask는 기록하지 않았으므로 원인은 미확정이며 진단 완전수집은 후속 OPEN이다. partial 보고서가 생성돼도 모든 기록을 읽은 것으로 해석하지 않는다. 위임 전 archive와 설치 inventory 인증 비용도 있으므로 `--timeout-seconds`를 전체 명령의 벽시계 상한으로 해석하지 않는다.
+명령·JSON envelope·exit 의미는 기존 계약을 유지한다. service의 READY는 로컬 상태이며 합의 전체의 확인이 아니다. logs/diagnose는 저장 기록이고 현재 runtime을 관측하지 않는다. CLI05-03 단일 노드 실행에서는 init report mode 0644와 private reader의 읽기 거절을 관측했고, `logs`·`diagnose`가 `LOGS_PARTIAL`·`DIAGNOSTIC_PARTIAL` / INCOMPLETE를 반환했다. 해당 실행의 실제 umask는 기록하지 않았으므로 당시 원인은 미확정으로 보존한다. 후속 조사는 보고서 writer의 생성 권한이 상속된 mask에 의존하는 경로를 확인했고, 새 관리 CLI 아래의 신규 보고서 생성·수집을 보완했다. 기존 `0644` 보고서는 그대로 보존하므로 새 CLI로 조회해도 partial일 수 있다. partial 보고서가 생성돼도 모든 기록을 읽은 것으로 해석하지 않는다. 위임 전 archive와 설치 inventory 인증 비용도 있으므로 `--timeout-seconds`를 전체 명령의 벽시계 상한으로 해석하지 않는다.
 
 작업이 실행기에 전달된 뒤 결과를 확정할 수 없으면 변경 가능 작업은 `EXECUTOR_OPERATION_UNKNOWN`/exit 6으로 종료한다. 원문 출력은 노출하지 않으며 자동으로 재시도·초기화·start하지 않는다. 관리 CLI 종료/timeout은 노드 중지나 작업 취소를 보장하지 않는다. `status`와 기존 기록을 확인한다.
 
 노드의 실제 초기화·시작 journal과 worker snapshot은 기존 실행기가 작성한다. 구형 실행기의 stop은 잠금을 얻었을 때 현재 실행 시도를 대상으로 한다. 관리 CLI는 이름의 root/binding을 직전 재검사하지만, 구형 실행기가 지원하지 않는 원자적 expected-attempt 승인 전달을 제공한다고 주장하지 않는다.
+
+## 파일 생성 권한과 초기화 보고서
+
+새 standalone `bxdl`은 Unix 프로세스의 첫 진입에서 `umask 077`을 설정한다. 호출한 셸의 mask는 바꾸지 않으며, 이후 직접 실행하는 JVM과 지원 RC.3의 고정 실행기/JVM에는 `077`이 상속된다. 새 init/resume-init 시도의 보고서를 처음부터 `0600`으로 만들기 위한 정책이다. 초기화 승인·결과 판정·UNKNOWN 처리와 명령/JSON 계약은 유지한다. [설계](../design/2026-10-23-private-initialization-report.md)와 [검증 결과](../results/2026-10-23-private-initialization-report.md)를 따른다.
+
+라이브러리 API를 직접 호출할 때는 process-wide mask를 바꾸지 않는다. 기존 패키지의 내장 CLI를 관리 CLI 없이 직접 실행하는 경우에도 새 정책이 추가되지 않는다. 관리 CLI를 업데이트해도 기존 `0644` 보고서를 chmod·덮어쓰기하거나 초기화를 다시 실행하지 않는다. private reader의 `0600` 검사는 유지되므로 기존 보고서의 누락 사유와 partial 상태를 보존한다. 수집만을 위해 초기화를 재실행하지 않는다.
+
+이 정책은 새 CLI가 생성하는 파일 전체에 적용된다. 새 노드 `package build` archive의 외부 파일은 `0600`으로 생성되며 archive 내부 payload의 bytes·mode와 설치 시 명시하는 실행 파일 `0755`·일반 payload `0644`는 유지한다. 기존 archive의 권한은 바꾸지 않는다. 셸의 `>` 리다이렉션으로 만든 출력 파일은 호출한 셸이 먼저 열기 때문에 이 정책의 대상이 아니다.
+
+실제 Mac 비교 검증은 4개 실행 조건의 서비스16사례와 독립 검사를 구분해 기록했다. 수정 CLI 아래에서 새로 생성한 초기화 보고서의 private 권한과 수집 성공을 확인했지만, 기존 파일 복구나 모든 누락·손상 원인의 해소를 뜻하지 않는다. CLI05-04 사용자 과업은 계속 NOT_RUN이다.
 
 ## 업데이트 기준
 

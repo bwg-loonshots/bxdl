@@ -17,6 +17,7 @@ use std::{
     io::Cursor,
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
+    process::{Command, Stdio},
     sync::{Mutex, MutexGuard},
 };
 
@@ -64,6 +65,9 @@ struct Fixture {
 
 impl Fixture {
     fn new(same_cli: bool) -> Self {
+        Self::with_report_probe(same_cli, false)
+    }
+    fn with_report_probe(same_cli: bool, report_probe: bool) -> Self {
         let temp = tempfile::tempdir().unwrap();
         let root = fs::canonicalize(temp.path()).unwrap();
         fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).unwrap();
@@ -85,9 +89,21 @@ impl Fixture {
                 {"check":"PORTS_AND_PEERS","status":"NOT_CHECKED","reason":"NETWORK_NOT_ACCESSED"},
                 {"check":"NATIVE_RUNTIME","status":"NOT_CHECKED","reason":"REQUIRES_RUNTIME_LOAD"}]
         });
+        // Probe only the inherited creation mask, not successful engine initialization.
+        // noclobber gives the fresh report an exclusive-create boundary without chmod.
+        let collect_report = if report_probe {
+            "report=\nfor argument in \"$@\"; do\ncase \"$argument\" in --report=*) report=${argument#--report=};; esac\ndone\n"
+        } else {
+            ""
+        };
+        let create_report = if report_probe {
+            "[ -n \"$report\" ] || exit 75; (set -C; umask > \"$report\") || exit 75; "
+        } else {
+            ""
+        };
         // Absolute, test-owned marker; all interpolated JSON and paths are fixture-controlled.
         let java = format!(
-            "#!/bin/sh\nfor argument in \"$@\"; do\ncase \"$argument\" in\nengine-info) printf 'engine-info\\n' >> '{}'; printf '%s\\n' '{}'; exit 0;;\npreflight) printf 'preflight\\n' >> '{}'; printf '%s\\n' '{}'; exit 3;;\ninit|resume-init|run) printf '%s\\n' \"$argument\" >> '{}'; printf '%s\\n' '{{\"status\":\"FAILED\",\"reason\":\"PRECONDITION_OR_IO_FAILURE\"}}'; exit 74;;\nesac\ndone\nexit 77\n",
+            "#!/bin/sh\n{collect_report}for argument in \"$@\"; do\ncase \"$argument\" in\nengine-info) printf 'engine-info\\n' >> '{}'; printf '%s\\n' '{}'; exit 0;;\npreflight) printf 'preflight\\n' >> '{}'; printf '%s\\n' '{}'; exit 3;;\ninit|resume-init|run) printf '%s\\n' \"$argument\" >> '{}'; {create_report}printf '%s\\n' '{{\"status\":\"FAILED\",\"reason\":\"PRECONDITION_OR_IO_FAILURE\"}}'; exit 74;;\nesac\ndone\nexit 77\n",
             calls.display(),
             identity,
             calls.display(),
@@ -241,6 +257,201 @@ impl Fixture {
             .map(str::to_owned)
             .collect()
     }
+}
+
+// A child shell supplies the caller's mask. No process-wide setting changes in
+// the parallel libtest process; arguments and paths are never interpolated.
+fn binary_under_mask(mask: &str, args: &[String]) -> (Value, i32) {
+    const SCRIPT: &str = "umask \"$1\" || exit 91\nshift\nbefore=$(umask)\n\"$@\"\nstatus=$?\n[ \"$(umask)\" = \"$before\" ] || exit 92\nexit \"$status\"\n";
+    let output = Command::new("/bin/sh")
+        .args(["-c", SCRIPT, "bxdl-caller-mask-test", mask])
+        .arg(env!("CARGO_BIN_EXE_bxdl"))
+        .args(args)
+        .env_clear()
+        .env("PATH", "/usr/bin:/bin")
+        .stdin(Stdio::null())
+        .output()
+        .unwrap();
+    assert!(output.stderr.is_empty(), "unexpected fixture stderr");
+    assert!(!String::from_utf8_lossy(&output.stdout).contains(CANARY));
+    let value = serde_json::from_slice(&output.stdout).expect("one complete JSON envelope");
+    (value, output.status.code().expect("CLI exited normally"))
+}
+
+#[test]
+fn standalone_init_keeps_reports_private_and_unknown_under_each_caller_mask() {
+    let _scenario = scenario();
+    for mask in ["002", "022", "077"] {
+        // Direct registration does not need the workflow's same-CLI admission
+        // gate. Tiny fixture bytes avoid archiving the libtest binary per mask.
+        let f = Fixture::with_report_probe(false, true);
+        let (installed, code) = binary_under_mask(
+            mask,
+            &[
+                "install".into(),
+                path(&f.archive),
+                "--destination".into(),
+                path(&f.destination),
+                "--public-key".into(),
+                path(&f.public_key),
+                "--json".into(),
+            ],
+        );
+        assert_eq!(code, 0, "{installed}");
+        let (registered, code) = binary_under_mask(
+            mask,
+            &[
+                "instance".into(),
+                "register".into(),
+                "--instance".into(),
+                path(&f.instance),
+                "--package".into(),
+                path(&f.destination),
+                "--archive".into(),
+                path(&f.archive),
+                "--public-key".into(),
+                path(&f.public_key),
+                "--config".into(),
+                path(&f.source),
+                "--engine-config".into(),
+                path(&f.native),
+                "--lock".into(),
+                path(&f.lock),
+                "--allow-development".into(),
+                "--json".into(),
+            ],
+        );
+        assert_eq!(code, 0, "{registered}");
+        assert_eq!(registered["data"]["initialization"], "NOT_STARTED");
+        let (result, code) = binary_under_mask(
+            mask,
+            &[
+                "init".into(),
+                "--instance".into(),
+                path(&f.instance),
+                "--confirm-initialize".into(),
+                "--json".into(),
+            ],
+        );
+        assert_eq!(code, 6, "caller mask {mask}: {result}");
+        assert_eq!(result["outcome"], "UNKNOWN");
+        assert_eq!(result["data"]["initialization"], "UNKNOWN");
+        let attempt = result["data"]["attemptId"].as_str().unwrap();
+        let report = f
+            .instance
+            .join("operations")
+            .join(attempt)
+            .join("report.jsonl");
+        assert_eq!(
+            fs::metadata(&report).unwrap().permissions().mode() & 0o7777,
+            0o600
+        );
+        let observed = fs::read_to_string(&report).unwrap();
+        assert_eq!(u32::from_str_radix(observed.trim(), 8).unwrap(), 0o077);
+        assert!(f.data.is_dir());
+        assert_eq!(fs::read_dir(&f.data).unwrap().count(), 0);
+        let calls = f.calls();
+        assert_eq!(
+            calls
+                .iter()
+                .filter(|command| command.as_str() == "init")
+                .count(),
+            1
+        );
+        assert!(
+            !calls
+                .iter()
+                .any(|command| matches!(command.as_str(), "resume-init" | "run"))
+        );
+        let (shown, code) = binary_under_mask(
+            mask,
+            &[
+                "instance".into(),
+                "show".into(),
+                "--instance".into(),
+                path(&f.instance),
+                "--json".into(),
+            ],
+        );
+        assert_eq!(code, 0, "{shown}");
+        assert_eq!(shown["data"]["initialization"], "UNKNOWN");
+        assert_eq!(shown["data"]["attemptId"], attempt);
+        assert_eq!(fs::read_to_string(&report).unwrap(), observed);
+        assert_eq!(f.calls(), calls);
+    }
+}
+
+#[test]
+fn standalone_private_archive_preserves_package_bytes_and_installed_modes() {
+    let _scenario = scenario();
+    let f = Fixture::new(false);
+    let archive = f.root.join("private output.tar.gz");
+    let (built, code) = binary_under_mask(
+        "002",
+        &[
+            "package".into(),
+            "build".into(),
+            "--root".into(),
+            path(&f.root.join("stage")),
+            "--spec".into(),
+            path(&f.root.join("spec.json")),
+            "--output".into(),
+            path(&archive),
+            "--signing-key".into(),
+            path(&f.root.join("throwaway-signing.pem")),
+            "--json".into(),
+        ],
+    );
+    assert_eq!(code, 0, "{built}");
+    assert_eq!(
+        fs::metadata(&archive).unwrap().permissions().mode() & 0o7777,
+        0o600
+    );
+    assert_eq!(fs::read(&archive).unwrap(), fs::read(&f.archive).unwrap());
+    let destination = f.root.join("standalone installed package");
+    let (installed, code) = binary_under_mask(
+        "002",
+        &[
+            "install".into(),
+            path(&archive),
+            "--destination".into(),
+            path(&destination),
+            "--public-key".into(),
+            path(&f.public_key),
+            "--json".into(),
+        ],
+    );
+    assert_eq!(code, 0, "{installed}");
+    assert_eq!(
+        installed["data"]["archiveSha256"],
+        built["data"]["archiveSha256"]
+    );
+    assert_eq!(
+        fs::metadata(&destination).unwrap().permissions().mode() & 0o7777,
+        0o700
+    );
+    for (relative, mode) in [
+        ("bin/bxdl", 0o755),
+        ("runtime/bin/java", 0o755),
+        ("engine/nigo-node.jar", 0o644),
+        ("manifest.json", 0o644),
+        ("manifest.sig", 0o644),
+        ("licenses/THIRD_PARTY_NOTICES", 0o644),
+        ("licenses/SBOM.json", 0o644),
+        (".bxdl-install.json", 0o600),
+    ] {
+        assert_eq!(
+            fs::metadata(destination.join(relative))
+                .unwrap()
+                .permissions()
+                .mode()
+                & 0o7777,
+            mode,
+            "{relative}"
+        );
+    }
+    assert!(!f.data.exists());
+    assert!(!f.calls.exists());
 }
 
 fn interact(workflow: &mut Workflow, text: &str) -> (bool, String) {

@@ -221,7 +221,22 @@ python3 -B tests/acceptance/run_management_service.py \
 `serviceMayRemain`과 `lastCommandStage`를 확인하여 시험 소유 control의 상태를 관측하고 필요하면 별도 정상 stop을
 수행한다. 이 후속 정리는 실패한 시험을 PASS로 바꾸지 않는다.
 
-서비스 도구는 `logs`/`diagnose`의 완전수집 성공과 partial 반환을 구분한다. 이번 실제 결과는 `INCOMPLETE`·`LOGS_PARTIAL`·`DIAGNOSTIC_PARTIAL`이며 init report mode0644와 private reader 거절을 관측했다. 실행 당시 umask는 기록하지 않아 원인은 미확정이다. 서비스16사례의 PASS는 partial의 정확한 표현을 포함한 인수 판정이며, 진단 완전수집 자체는 **OPEN**이다. 기존 report 권한이나 판정을 바꿔 완전수집 PASS로 만들지 않는다.
+서비스 도구는 `logs`/`diagnose`의 완전수집 성공과 partial 반환을 구분한다. 최초 CLI05-03 결과는 `INCOMPLETE`·`LOGS_PARTIAL`·`DIAGNOSTIC_PARTIAL`이며 init report mode0644와 private reader 거절을 관측했다. 당시 umask는 기록하지 않았으므로 최초 결과의 원인 미확정·완전수집 미완료 기록은 보존한다. 서비스16사례의 PASS는 partial의 정확한 표현을 포함한 판정이며 기존 report 권한이나 판정을 바꿔 완전수집 PASS로 만들지 않는다.
+
+후속 [초기화 보고서 권한 재현·개선 결과](../../results/2026-10-23-private-initialization-report.md)는 같은 RC.3 runtime과 별도 새 출력·control·DB로 다음 네 조건을 비교했다. 각 조건의 서비스16사례와 독립 종료 감사가 통과했다.
+
+| 관리 CLI | 호출자 umask | 새 init report mode | `logs` / `diagnose` |
+| --- | --- | --- | --- |
+| 개선 전 | 022 | 0644 | INCOMPLETE / INCOMPLETE |
+| 개선 전 | 077 | 0600 | SUCCEEDED / SUCCEEDED |
+| 개선 후 | 022 | 0600 | SUCCEEDED / SUCCEEDED |
+| 개선 후 | 002 | 0600 | SUCCEEDED / SUCCEEDED |
+
+`--caller-umask 002|022|077`은 CLI·PTY를 실행하기 전에 하네스의 단일 스레드 진입점에서 umask를 적용하고, 상속값과 적용값을 `callerUmask`에 기록한다. 생략하면 상속된 값을 측정하여 유지한다. 이 값은 **하네스가 자식에게 전달하는 값**이며 CLI가 자체 시작 정책으로 변경할 수 있다. import나 직접 `execute()` 호출은 프로세스 umask를 변경하지 않는다.
+
+개선 CLI의 완전수집 검사는 위 서비스 명령에 `--caller-umask 022 --expect-complete-diagnostics`를 추가한다. 002 조건도 별도 새 출력과 미사용 포트로 실행한다. 완전수집 옵션은 두 응답의 SUCCEEDED·`partial=false`, `initialization.report`의 COLLECTED/PRIVATE_SNAPSHOT과 INITIALIZED 이벤트, 실제 report mode0600을 요구한다. 구 CLI의022 재현은 이 옵션 없이 실제 partial을 기록한다. 옵션을 생략한 PASS를 완전수집 성공으로 해석하지 않는다.
+
+`initializationReport`에는 생성 직후·진단 전후·서비스 생애주기 종료 시의 mode·hash·inode·metadata를 기록하고 불변성을 비교한다. 기존0644 보고서는 새 CLI를 설치해도 자동 chmod·교체·재초기화하지 않으며 계속 partial로 보존한다. 기대 결과가 다르면 원 결과는 INCOMPLETE로 남고 자동 재시도·강제 종료하지 않는다. 위 `serviceMayRemain`/`lastCommandStage` 안내에 따라 시험 소유 서비스만 별도로 관측·정상 종료한다. 이 후속 검증은 단일 노드의 새 초기화·진단 수집 범위이며 전체 네트워크, 실제 로그아웃, crash나 기존 DB 복구 인수를 대신하지 않는다.
 
 네트워크 인수 전에 위 준비기로 **새 RC.3 fixture**를 만들고, 전용 CLI root에는 첫 관리 CLI를 설치한다.
 `--bundle-next`는 같은 신뢰키로 검증할 다음 CLI 배포본이며 `--revision`은 그 CLI의 실제 full Git commit이다.

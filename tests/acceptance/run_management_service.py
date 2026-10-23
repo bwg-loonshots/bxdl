@@ -160,6 +160,40 @@ def diagnostic_summary(logs, diagnose, report_sha256):
     }
 
 
+def diagnostic_collection(response, require_complete=False):
+    """Inspect actual collection results; policy-withheld raw streams are allowed."""
+    data = response.get("data", {})
+    h.require(isinstance(data, dict), "DIAGNOSTIC_DATA_INVALID")
+    sources, events = data.get("sources", []), data.get("events", [])
+    h.require(isinstance(sources, list) and isinstance(events, list) and
+              all(isinstance(item, dict) for item in [*sources, *events]), "DIAGNOSTIC_COLLECTION_INVALID")
+    initialization_sources = [item for item in sources if item.get("name") == "initialization.report"]
+    initialization_events = [item for item in events if item.get("source") == "initialization.report"]
+    if require_complete:
+        h.require(response.get("outcome") == "SUCCEEDED" and data.get("partial") is False,
+                  "COMPLETE_DIAGNOSTICS_REQUIRED")
+        h.require(len(initialization_sources) == 1 and
+                  initialization_sources[0].get("result") == "COLLECTED" and
+                  initialization_sources[0].get("reason") == "PRIVATE_SNAPSHOT",
+                  "INITIALIZATION_REPORT_NOT_COLLECTED")
+        h.require(any(item.get("command") == "init" and item.get("status") == "INITIALIZED"
+                      for item in initialization_events), "INITIALIZATION_EVENT_NOT_COLLECTED")
+    return {"partial": data.get("partial"), "initializationSources": initialization_sources,
+            "initializationEvents": initialization_events}
+
+
+def report_observation(path):
+    """Read the fresh init report without chmod, replacement, or permission repair."""
+    def identity(metadata):
+        return {"device": metadata.st_dev, "inode": metadata.st_ino,
+                "mode": f"{stat.S_IMODE(metadata.st_mode):04o}", "bytes": metadata.st_size,
+                "mtimeNs": metadata.st_mtime_ns, "ctimeNs": metadata.st_ctime_ns}
+    before = identity(h.regular(path))
+    digest = h.sha(path)
+    h.require(identity(h.regular(path)) == before, "INITIALIZATION_REPORT_CHANGED_DURING_READ")
+    return {**before, "sha256": digest}
+
+
 def data_identity(data):
     s = data.stat()
     return {"device": s.st_dev, "inode": s.st_ino, "engineInstanceSha256": h.sha(data / "engine-instance.json")}
@@ -235,6 +269,8 @@ def execute(args):
         "managerEntry": str(entry), "entryTargetSha256": h.sha(entry), "cliRoot": str(cli_root), "harnessSha256": harness_hashes,
         "packageRebuilt": False, "engineRebuilt": False, "newCredentialsIssued": False,
         "globalConsensus": "NOT_CHECKED", "cases": [],
+        "callerUmask": getattr(args, "caller_umask_observation", {"status": "NOT_RECORDED"}),
+        "expectCompleteDiagnostics": getattr(args, "expect_complete_diagnostics", False),
         "cleanup": {"outcome": "NOT_OBSERVED", "automaticStopOnFailure": False,
                     "operatorObservationRequired": True},
         "serviceMayRemain": False,
@@ -336,6 +372,11 @@ def execute(args):
         note("APPLIED_LIST_SHOW_READ_ONLY")
         initialized = command(named("init", "--confirm-initialize", "--timeout-seconds", "120"), "named-init")["data"]
         h.require(initialized["initialization"] == "INITIALIZED", "INIT_NOT_CONFIRMED")
+        init_attempt = initialized.get("attemptId")
+        h.require(isinstance(init_attempt, str) and
+                  re.fullmatch(r"[A-Za-z0-9_-]{1,80}", init_attempt), "INIT_ATTEMPT_INVALID")
+        init_report = control / "operations" / init_attempt / "report.jsonl"
+        result["initializationReport"] = {"created": report_observation(init_report)}
         identity = data_identity(data)
         result["dataIdentity"] = identity
         note("NAMED_EXPLICIT_INIT_CREATES_FRESH_DB")
@@ -350,12 +391,29 @@ def execute(args):
             attempts.append({"attemptId": ready["attemptId"], "pid": ready.get("pid"), "readinessReason": ready.get("reason")})
             note("NAMED_START_LOCAL_READY" if index == 0 else "SAME_DATA_RESTART_LOCAL_READY")
             if index == 0:
+                before_diagnostics = report_observation(init_report)
+                h.require(before_diagnostics == result["initializationReport"]["created"],
+                          "INITIALIZATION_REPORT_CHANGED_BEFORE_DIAGNOSTICS")
                 logs = command(named("logs"), "named-logs", (0, 5))
                 diagnose = command(named("diagnose", "--output", root / "diagnostic.json"), "named-diagnose", (0, 5))
                 h.require(logs.get("outcome") in ("SUCCEEDED", "INCOMPLETE") and
                           diagnose.get("outcome") in ("SUCCEEDED", "INCOMPLETE") and (root / "diagnostic.json").is_file(), "DIAGNOSTIC_RESULT_MISSING")
                 result["diagnostics"] = diagnostic_summary(logs, diagnose, h.sha(root / "diagnostic.json"))
-                note("NAMED_LOGS_AND_DIAGNOSE_PRESERVE_ACTUAL_PARTIAL_STATUS")
+                after_diagnostics = report_observation(init_report)
+                result["initializationReport"].update({
+                    "beforeDiagnostics": before_diagnostics, "afterDiagnostics": after_diagnostics,
+                    "unchangedByDiagnostics": before_diagnostics == after_diagnostics,
+                })
+                h.require(before_diagnostics == after_diagnostics, "DIAGNOSTICS_MUTATED_INITIALIZATION_REPORT")
+                complete = result["expectCompleteDiagnostics"]
+                result["diagnostics"]["collection"] = {
+                    "logs": diagnostic_collection(logs, complete),
+                    "diagnose": diagnostic_collection(diagnose, complete),
+                }
+                if complete:
+                    h.require(before_diagnostics["mode"] == "0600", "PRIVATE_INITIALIZATION_REPORT_REQUIRED")
+                note("NAMED_LOGS_AND_DIAGNOSE_COLLECT_INITIALIZATION_REPORT" if complete else
+                     "NAMED_LOGS_AND_DIAGNOSE_PRESERVE_ACTUAL_PARTIAL_STATUS")
             h.stopped(command(named("stop", "--timeout-seconds", "120"), stage + "-stop"), stage)
             result["serviceMayRemain"] = False
             h.require(data_identity(data) == identity, "DATA_IDENTITY_CHANGED")
@@ -367,6 +425,9 @@ def execute(args):
         note("STOPPED_REAPPLY_PRESERVES_PACKAGE_CONTROL_DB_INODE_AND_CONTENT")
         result["stoppedShow"] = queries("stopped")
         note("STOPPED_LIST_SHOW_READ_ONLY")
+        result["initializationReport"]["final"] = report_observation(init_report)
+        h.require(result["initializationReport"]["final"] == result["initializationReport"]["created"],
+                  "INITIALIZATION_REPORT_CHANGED_AFTER_LIFECYCLE")
         result["finalPackage"] = inventory(package)
         h.require(result["initialPackage"] == result["finalPackage"], "PACKAGE_CHANGED")
         for group, folder in [("supply", supply), ("inputs", inputs)]:
@@ -414,8 +475,31 @@ def parser():
     p.add_argument("--instance-id", required=True)
     p.add_argument("--http-port", type=int, required=True)
     p.add_argument("--p2p-port", type=int, required=True)
+    p.add_argument("--caller-umask", choices=("002", "022", "077"),
+                   help="record and apply this harness umask before any CLI/PTY child; default records the inherited mask")
+    p.add_argument("--expect-complete-diagnostics", action="store_true",
+                   help="require complete logs/diagnose collection of the private initialization report")
     return p
 
 
+def main(argv=None):
+    args = parser().parse_args(argv)
+    if not args.run:
+        return execute(args)
+    # This standalone, single-threaded entry point owns its process mask. Never
+    # change a caller's process mask from execute() or parallel offline tests.
+    inherited = os.umask(0o077)
+    applied = inherited if args.caller_umask is None else int(args.caller_umask, 8)
+    os.umask(applied)
+    args.caller_umask_observation = {
+        "requested": args.caller_umask, "inherited": f"{inherited:03o}", "applied": f"{applied:03o}",
+        "scope": "HARNESS_PROCESS_BEFORE_CLI_AND_PTY_SPAWN", "cliMayOverrideInheritedMask": True,
+    }
+    try:
+        return execute(args)
+    finally:
+        os.umask(inherited)
+
+
 if __name__ == "__main__":
-    raise SystemExit(execute(parser().parse_args()))
+    raise SystemExit(main())
