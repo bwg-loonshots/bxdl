@@ -134,7 +134,7 @@ python3 tools/build-management-cli.py --development --allow-unsigned-development
 bxdl cli bundle verify /downloads/bxdl-cli.tar.gz --public-key /trusted/bxdl-cli-public.pem --json
 ```
 
-이 형식의 Ed25519 manifest 서명과 SHA-256 검사는 Apple code signing·notarization이나 정식 고객 배포 인수를 대신하지 않는다. 이번 단계의 배포 대상은 Mac arm64이며 `.pkg`/Homebrew, 자동 온라인 업데이트, 설치 제거, Linux 실제 설치는 후속 범위다. CLI/runtime 서비스·네트워크 재인수와 작성자가 아닌 사용자의 과업도 별도다.
+이 형식의 Ed25519 manifest 서명과 SHA-256 검사는 Apple code signing·notarization이나 정식 고객 배포 인수를 대신하지 않는다. 이번 단계의 배포 대상은 Mac arm64이며 `.pkg`/Homebrew, 자동 온라인 업데이트, 설치 제거, Linux 실제 설치는 후속 범위다. 후속 CLI05-03의 지정 서비스·네트워크 조합 인수는 [별도 결과](../results/2026-10-23-cli05-runtime-acceptance.md)를 따른다. 진단 완전수집은 OPEN이며 작성자가 아닌 사용자의 CLI05-04 과업은 NOT_RUN이다.
 
 ## 지원 범위
 
@@ -144,11 +144,13 @@ bxdl cli bundle verify /downloads/bxdl-cli.tar.gz --public-key /trusted/bxdl-cli
 
 미지원 package는 새 CLI가 임의로 내부 실행기를 실행하지 않는다. 기존 native 경로의 조건을 적용하며, 특히 start는 기존과 같이 package CLI 일치를 요구한다. 지원 profile에서 서명·파일 검증이 실패하면 실행 방식 변경이나 자동 복구 없이 거절한다.
 
-[실제 Mac 검증](../results/2026-10-23-independent-management-cli.md)에서 두 관리 CLI로 같은 기존 RC.3의 직접 운용16사례와 설치 도우미 재개8사례를 확인했다. 이번 READY는 단일 노드의 MANUAL_START_INITIALIZED이며 합의·거래 확정을 보장하지 않는다.
+[기존 Mac 검증](../results/2026-10-23-independent-management-cli.md)에서는 두 관리 CLI로 같은 RC.3의 직접 운용16사례와 설치 도우미 재개8사례를 확인했다. 당시 READY는 단일 노드의 MANUAL_START_INITIALIZED이며 합의·거래 확정 근거가 아니었다.
+
+후속 [CLI05-03 조합 인수](../results/2026-10-23-cli05-runtime-acceptance.md)는 실제 설치한 진입점으로 서비스 16사례와 4-validator 네트워크를 수행했다. 같은 source tree의 PR head `994c48f`와 merge `3a0bb5c` 배포본을 실행 중 3회 전환하면서 동일 attempt/PID·data·초기화 journal·설정·고정 worker를 확인했고, RPC/monitor 근거로 지정 거래·두 복구·wrong-pin을 별도 판정했다. 이 검증도 `status`의 로컬 READY를 전역 합의 판정으로 바꾸지 않는다.
 
 ## 동작과 결과
 
-명령·JSON envelope·exit 의미는 기존 계약을 유지한다. service의 READY는 로컬 상태이며 합의 전체의 확인이 아니다. logs/diagnose는 저장 기록이고 현재 runtime을 관측하지 않는다. 위임 전 archive와 설치 inventory 인증 비용도 있으므로 `--timeout-seconds`를 전체 명령의 벽시계 상한으로 해석하지 않는다.
+명령·JSON envelope·exit 의미는 기존 계약을 유지한다. service의 READY는 로컬 상태이며 합의 전체의 확인이 아니다. logs/diagnose는 저장 기록이고 현재 runtime을 관측하지 않는다. CLI05-03 단일 노드 실행에서는 init report mode 0644와 private reader의 읽기 거절을 관측했고, `logs`·`diagnose`가 `LOGS_PARTIAL`·`DIAGNOSTIC_PARTIAL` / INCOMPLETE를 반환했다. 실제 실행 umask는 기록하지 않았으므로 원인은 미확정이며 진단 완전수집은 후속 OPEN이다. partial 보고서가 생성돼도 모든 기록을 읽은 것으로 해석하지 않는다. 위임 전 archive와 설치 inventory 인증 비용도 있으므로 `--timeout-seconds`를 전체 명령의 벽시계 상한으로 해석하지 않는다.
 
 작업이 실행기에 전달된 뒤 결과를 확정할 수 없으면 변경 가능 작업은 `EXECUTOR_OPERATION_UNKNOWN`/exit 6으로 종료한다. 원문 출력은 노출하지 않으며 자동으로 재시도·초기화·start하지 않는다. 관리 CLI 종료/timeout은 노드 중지나 작업 취소를 보장하지 않는다. `status`와 기존 기록을 확인한다.
 

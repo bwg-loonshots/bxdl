@@ -1,6 +1,6 @@
 # BXDL Mac 4-validator 패키지 인수 도구
 
-실제 RC.2 full 실행은 [2026-10-21 결과](../../results/2026-10-21-macos-rc2-package.md)를 따른다. RC.3도 같은 full 범위를 선택할 수 있으며, 도구 지원과 후보별 실제 실행 판정은 구분한다.
+실제 RC.2 full 실행은 [2026-10-21 결과](../../results/2026-10-21-macos-rc2-package.md)를, 기존 RC.3 패키지 실행은 [2026-10-22 결과](../../results/2026-10-22-macos-rc3-package.md)를 따른다. 독립 관리 CLI의 설치 진입점과 같은 고정 RC.3를 조합한 후속 [CLI05-03 인수 결과](../../results/2026-10-23-cli05-runtime-acceptance.md)는 아래 별도 runner를 사용했다. 도구 지원과 실행별 실제 판정은 구분한다.
 
 이 도구는 새 시험 자료와 격리된 로컬 인스턴스로 BXDL 패키지를 검증한다. 고객 설치기나 고객용 키·CA 발급기가 아니다. 이 문서는 실행 절차와 판정 범위를 설명하며, 현재 시험의 PASS를 선언하지 않는다.
 
@@ -190,3 +190,58 @@ CLI 관측 timeout은 실행 취소가 아니다. 지원 코드는 timeout에 �
 ## 도구 자체 검사
 
 이 디렉터리에서 `python3 -B -m unittest -v test_oracles test_candidates test_listeners`로 판정·불명 cleanup 회귀를 검사한다. 엔진이나 노드를 시작하지 않는다. Rust 제품 검사는 저장소 루트의 `make check`를 사용한다. 이 두 검사는 위 실제 패키지 인수와 별개다.
+
+
+## CLI05-03: 독립 관리 CLI와 기존 RC.3 조합
+
+2026-10-23 실제 결과는 **지정 Mac 서비스·네트워크 범위 PASS**다. [정제 결과](../../results/2026-10-23-cli05-runtime-acceptance.md)에 서비스16사례·네트워크12개 실행 시도·거래8개/제출9회·실행 중 CLI 전환3회와 정확한 binary/runtime identity를 기록한다. A/B는 같은 source tree의 실제 PR head `994c48f`와 merge `3a0bb5c`이며 합성 revision이 아니다. 미래 모든 CLI 또는 정식 고객 배포의 인수를 뜻하지 않는다.
+
+`run_management_service.py`와 `run_management_acceptance.py`는 `cli install`이 만든 **설치 진입점**을 사용한다.
+`--manager-entry`에는 `<bin-dir>/bxdl`을 그대로 전달한다. `current`를 resolve한 payload 바이너리나 별도 복사본을
+실행하면 CLI 업데이트/복귀 경로를 검증할 수 없다. 두 도구 모두 기존 RC.3 archive·공개키·lock·실행기를 정확한
+hash로 확인하며 runtime을 조립하거나 JAR를 재빌드하지 않는다. 기존 package 실행기를 직접 사용하는 위
+`run_acceptance.py`와 구분한다.
+
+서비스 인수는 준비한 단일 validator의 `supply`와 `operational inputs`만 읽어 새 private 출력으로 복사하고
+경로·instanceId·포트를 바꾼다. 기존 control·DB는 입력으로 채택하지 않는다. `--fixture`는 이 두 폴더를 포함하는
+이전 시험 root이고, 대신 `--supply`와 `--inputs`를 명시할 수도 있다.
+
+```sh
+python3 -B tests/acceptance/run_management_service.py \
+  --run --manager-entry /test/service-bin/bxdl --cli-root /test/service-cli \
+  --manager-sha256 EXPECTED_MANAGER_BINARY_SHA256 \
+  --fixture /test/prior-single-validator-fixture \
+  --output /test/new-service-run --instance-id cli05-service-example \
+  --http-port 29680 --p2p-port 30680
+```
+
+순차 `setup new`·조회·apply 거절/승인·별도 명시 init·이름 기반 start/status/logs/diagnose/stop·같은 data 재시작과
+종료 후 재apply의 불변성을 검사한다. 해당 단일 validator는 peers 없는 수동 시작으로 로컬 준비 상태를 검사하며
+네트워크 합의 근거가 아니다. 실패하면 원 결과를 `INCOMPLETE`로 보존하고 자동 재시도·kill·정리하지 않는다.
+`serviceMayRemain`과 `lastCommandStage`를 확인하여 시험 소유 control의 상태를 관측하고 필요하면 별도 정상 stop을
+수행한다. 이 후속 정리는 실패한 시험을 PASS로 바꾸지 않는다.
+
+서비스 도구는 `logs`/`diagnose`의 완전수집 성공과 partial 반환을 구분한다. 이번 실제 결과는 `INCOMPLETE`·`LOGS_PARTIAL`·`DIAGNOSTIC_PARTIAL`이며 init report mode0644와 private reader 거절을 관측했다. 실행 당시 umask는 기록하지 않아 원인은 미확정이다. 서비스16사례의 PASS는 partial의 정확한 표현을 포함한 인수 판정이며, 진단 완전수집 자체는 **OPEN**이다. 기존 report 권한이나 판정을 바꿔 완전수집 PASS로 만들지 않는다.
+
+네트워크 인수 전에 위 준비기로 **새 RC.3 fixture**를 만들고, 전용 CLI root에는 첫 관리 CLI를 설치한다.
+`--bundle-next`는 같은 신뢰키로 검증할 다음 CLI 배포본이며 `--revision`은 그 CLI의 실제 full Git commit이다.
+관리 목록은 새 `--output/management-home`만 허용한다.
+
+```sh
+python3 -B tests/acceptance/run_management_acceptance.py \
+  --run --manager-entry /test/network-bin/bxdl --cli-root /test/network-cli \
+  --manager-home /test/new-network-run/management-home \
+  --bundle-next /test/next-cli.tar.gz --revision FULL_NEXT_CLI_GIT_COMMIT \
+  --archive /test/original-rc3.tar.gz --public-key /trusted/rc3-public.pem \
+  --lock /test/engine-lock.rc3.json --fixture /test/new-rc3-fixture \
+  --output /test/new-network-run
+```
+
+설치·네트워크 설정·등록 뒤 이름으로 운용하며 기존 full의 finality·catch-up·두 복구 경로·wrong-pin oracle을
+재사용한다. 기동한 네 노드를 유지한 채 A→B 업데이트, B→A 복귀, 세 노드가 기동한 상태에서 A→B 재전환을
+수행한다. 전환 직전/직후의 attempt·PID·data/초기화·설정·worker identity를 비교하고 전환 뒤 실제 거래 확정을
+요구한다. 초기화 journal의 파일 목록·hash도 전환 전후와 전체 실행 종료 때 비교한다. 정상 cleanup과 전체 payload/JRE·worker·report에 기록된 Java PID 및 CLI PID·LaunchAgent·실행 root 프로세스·TCP LISTEN 상태도 대조한다. report/프로세스 관측이 누락되거나 불명이면 종료 성공으로 취급하지 않는다.
+
+두 도구의 `result.json`, CLI stdout/PTY 원문, fixture와 정리 관측은 private 출력에 보존한다. 공유 결과에는
+버전·hash·시험 범위와 정제한 판정만 남긴다. 실제 인수 실행과 기본 Python 오프라인 회귀를 구분하며,
+로그아웃/sleep/crash·엔진/DB upgrade·다중 호스트·Linux·J5·CLI05-04 사람 과업까지 확대하지 않는다.

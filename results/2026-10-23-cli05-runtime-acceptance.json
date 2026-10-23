@@ -1,0 +1,1082 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "outcome": "PASS_WITH_DOCUMENTED_DIAGNOSTIC_LIMITATION",
+  "stage": "CLI05-03",
+  "scope": "INSTALLED_MANAGEMENT_CLI_WITH_EXACT_RC3_MAC_ARM64_SERVICE_AND_LOCAL_FOUR_VALIDATOR_NETWORK",
+  "environment": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "macVersion": "26.6.2",
+    "launchdDomain": "gui-user-LaunchAgent",
+    "rustc": "rustc 1.86.0 (05f9846f8 2025-03-31)",
+    "cargo": "cargo 1.86.0 (adf9b6ad1 2025-02-28)",
+    "network": "single-host-loopback-mTLS-DEV_QBFT-ZERO-fee"
+  },
+  "productChanges": {
+    "rustCodeChanged": false,
+    "runtimeRebuilt": false,
+    "engineRebuilt": false,
+    "nigoRepositoryChangedByThisTask": false,
+    "changes": [
+      "repeatable acceptance harnesses and offline guard tests",
+      "sanitized evidence and completion/remaining-scope documentation"
+    ]
+  },
+  "managementCli": {
+    "version": "0.1.0-dev",
+    "target": "darwin-arm64",
+    "distributions": [
+      {
+        "name": "A",
+        "revision": "994c48f9f872e1ebfbb9acd91d9ae673ef637bbf",
+        "sourceTree": "e0ad51db0c68bd4375c334a73d9041d0a5d94fc0",
+        "sourceCleanAtBuild": true,
+        "binarySha256": "c9a35e7a5e747210687443efa8a5ed3fa981f8d4b3281c999f80ff56457d9527",
+        "binarySize": 4219792,
+        "archiveSha256": "6d4a277b3f3b6509127708876af8957f5f7e85b4bed72a4f953bd3b4616e564d",
+        "archiveSize": 1906839,
+        "buildLogSha256": "eb8eb45bf9357e5df3815274dbbd0259c20c3ace90fe81ae57e7f72838f36582"
+      },
+      {
+        "name": "B",
+        "revision": "3a0bb5caa08096454fcb6c88b3186e9a3be02a19",
+        "sourceTree": "e0ad51db0c68bd4375c334a73d9041d0a5d94fc0",
+        "sourceCleanAtBuild": true,
+        "binarySha256": "99bb09583a9615548d23eb5d088027ccc2831ba5cc0c0f3dacac388209bf2fb8",
+        "binarySize": 4219792,
+        "archiveSha256": "2d3862fd02b3e9fddd8f1354f1ac36aaeb22680ab48fda7838249908b0863939",
+        "archiveSize": 1906845,
+        "buildLogSha256": "3491fa4a209e183f954e5969f5127a6ee43d081a92bc3bee2ff6d8ad337dda35"
+      }
+    ],
+    "sameSourceTreeDifferentRealGitRevisions": true,
+    "revisionType": "actual clean PR head and merge commits; no synthetic revision injection",
+    "testPublicKeySha256": "77f8c0682c2225a1cfa3bfd0c51088665951107c1db3830f20edb84be8c20ba2",
+    "authentication": "verified-external-ed25519",
+    "privateSigningKeyRemovedAfterBuild": true,
+    "executionEntry": "cli-install-owned stable bin/bxdl symlink; never bypassed with resolved payload",
+    "serviceSelected": "B",
+    "networkSelections": [
+      "A",
+      "B",
+      "A",
+      "B"
+    ],
+    "transitions": [
+      {
+        "action": "update",
+        "selected": {
+          "version": "0.1.0-dev",
+          "revision": "3a0bb5caa08096454fcb6c88b3186e9a3be02a19",
+          "manifestSha256": "ae6176c9ced9d2515e82cc89838eeecf410733028bc4ef3599a0dd1b4ce78ee7",
+          "binarySha256": "99bb09583a9615548d23eb5d088027ccc2831ba5cc0c0f3dacac388209bf2fb8",
+          "releaseId": "0.1.0-dev-3a0bb5caa08096454fcb6c88b3186e9a3be02a19"
+        },
+        "runningNodes": [
+          "n1",
+          "n2",
+          "n3",
+          "n4"
+        ],
+        "sameAttemptsAndPids": true,
+        "sameDataIdentityAndBoundInputs": true,
+        "sameFixedWorker": true
+      },
+      {
+        "action": "rollback",
+        "selected": {
+          "version": "0.1.0-dev",
+          "revision": "994c48f9f872e1ebfbb9acd91d9ae673ef637bbf",
+          "manifestSha256": "7b5b8cb72d652c76c198dc2fc75ca7f9715029547a30785f88601912e5cdd0a2",
+          "binarySha256": "c9a35e7a5e747210687443efa8a5ed3fa981f8d4b3281c999f80ff56457d9527",
+          "releaseId": "0.1.0-dev-994c48f9f872e1ebfbb9acd91d9ae673ef637bbf"
+        },
+        "runningNodes": [
+          "n1",
+          "n2",
+          "n3",
+          "n4"
+        ],
+        "sameAttemptsAndPids": true,
+        "sameDataIdentityAndBoundInputs": true,
+        "sameFixedWorker": true
+      },
+      {
+        "action": "update",
+        "selected": {
+          "version": "0.1.0-dev",
+          "revision": "3a0bb5caa08096454fcb6c88b3186e9a3be02a19",
+          "manifestSha256": "ae6176c9ced9d2515e82cc89838eeecf410733028bc4ef3599a0dd1b4ce78ee7",
+          "binarySha256": "99bb09583a9615548d23eb5d088027ccc2831ba5cc0c0f3dacac388209bf2fb8",
+          "releaseId": "0.1.0-dev-3a0bb5caa08096454fcb6c88b3186e9a3be02a19"
+        },
+        "runningNodes": [
+          "n1",
+          "n2",
+          "n3"
+        ],
+        "sameAttemptsAndPids": true,
+        "sameDataIdentityAndBoundInputs": true,
+        "sameFixedWorker": true
+      }
+    ],
+    "limitation": "One implementation tree with distinct revision metadata tests selection/rollback and current runtime compatibility, not arbitrary future implementation compatibility."
+  },
+  "runtime": {
+    "profile": "BXDL_RC3_EXECUTOR_V1",
+    "nigoTag": "nigo-engine-v0.1.0-rc.3",
+    "nigoRevision": "7ec5abd8c98e1cf070763a16f815e9281b74a5c1",
+    "pins": {
+      "archive": "8a45cb8bf3482333ad43e8c29ad24c2adde8d6fe778eaf27fe2f5c2c842eb017",
+      "publicKey": "0f03b13417dbb9c362a8762afc7e45bedbf20a983024105b2dcbf55b4dc40f17",
+      "engineLock": "2d6ebff73f8f9c741922b3324fc1d5fc162be64e53ce830cb546ee6fb5d8c344",
+      "manifest": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+      "executor": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+      "jar": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+      "java": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c"
+    },
+    "archiveBytes": 207160872,
+    "jarBytes": 164088530,
+    "payloadFiles": 270,
+    "payloadBytes": 325299323,
+    "jreFiles": 259,
+    "jreVersion": "Temurin 21.0.12.1+1-LTS",
+    "jreModules": 49,
+    "allInstalledPayloadMembershipHashSizeModeMatch": true,
+    "serviceInstallations": 1,
+    "networkInstallations": 5,
+    "fixedExecutorWorkers": {
+      "service": 2,
+      "network": 12
+    }
+  },
+  "service": {
+    "outcome": "PASS",
+    "caseCount": 16,
+    "cases": [
+      {
+        "case": "INSTALLED_STABLE_ENTRY_AND_CURRENT_CLI_IDENTITY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "SEQUENTIAL_PREPARATION_CREATES_CONFIGURATION_ONLY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "PREPARED_LIST_SHOW_READ_ONLY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "APPLY_DECLINE_PRESERVES_PREPARATION_AND_CREATES_NO_NODE",
+        "outcome": "PASS"
+      },
+      {
+        "case": "APPROVED_APPLY_INSTALLS_AND_REGISTERS_WITHOUT_INITIALIZING",
+        "outcome": "PASS"
+      },
+      {
+        "case": "APPLIED_LIST_SHOW_READ_ONLY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NAMED_EXPLICIT_INIT_CREATES_FRESH_DB",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NAMED_START_LOCAL_READY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NAMED_LOGS_AND_DIAGNOSE_PRESERVE_ACTUAL_PARTIAL_STATUS",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NAMED_NORMAL_STOP",
+        "outcome": "PASS"
+      },
+      {
+        "case": "SAME_DATA_RESTART_LOCAL_READY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "RESTARTED_NODE_NORMAL_STOP",
+        "outcome": "PASS"
+      },
+      {
+        "case": "STOPPED_REAPPLY_PRESERVES_PACKAGE_CONTROL_DB_INODE_AND_CONTENT",
+        "outcome": "PASS"
+      },
+      {
+        "case": "STOPPED_LIST_SHOW_READ_ONLY",
+        "outcome": "PASS"
+      },
+      {
+        "case": "ORIGINAL_SUPPLY_PAYLOAD_JRE_EXECUTOR_AND_FIXTURE_UNCHANGED",
+        "outcome": "PASS"
+      },
+      {
+        "case": "NO_RECORDED_PID_LAUNCHD_JOB_OR_TCP_LISTENER_REMAINS",
+        "outcome": "PASS"
+      }
+    ],
+    "attempts": 2,
+    "localReadinessReason": "MANUAL_START_INITIALIZED",
+    "globalConsensus": "NOT_CHECKED",
+    "freshDbThenSameDataRestart": true,
+    "stoppedReapplyFullSnapshotUnchanged": true,
+    "queriesReadOnly": true,
+    "independentAuditLimit": "Transient before/after query and stopped-reapply snapshots were asserted in the run; audit could not independently reconstruct the unstored before snapshots.",
+    "diagnostics": {
+      "outcome": "INCOMPLETE",
+      "fullDiagnosticCollection": "NOT_CONFIRMED",
+      "responses": [
+        {
+          "command": "named-logs",
+          "outcome": "INCOMPLETE",
+          "reasonCode": "LOGS_PARTIAL",
+          "partial": true,
+          "unavailableSources": [
+            {
+              "name": "initialization.report",
+              "reason": "MISSING_UNSAFE_OR_CHANGING_INPUT",
+              "result": "UNAVAILABLE"
+            }
+          ],
+          "sourceEvidenceSha256": "481089f876f8ee03de2ab540d19ac5fb41972b94bfb65f6b6eaffd3f774999a3"
+        },
+        {
+          "command": "named-diagnose",
+          "outcome": "INCOMPLETE",
+          "reasonCode": "DIAGNOSTIC_PARTIAL",
+          "partial": true,
+          "unavailableSources": [
+            {
+              "name": "initialization.report",
+              "reason": "MISSING_UNSAFE_OR_CHANGING_INPUT",
+              "result": "UNAVAILABLE"
+            }
+          ],
+          "sourceEvidenceSha256": "524f79b7108e40e6ef023aa678c80cf7a73720b3413a5a3fd843f7dda4d4e451"
+        }
+      ],
+      "initializationReportMode": "0644",
+      "serviceReportModes": [
+        "0600",
+        "0600"
+      ],
+      "reportParentMode": "0700",
+      "rawProcessStreams": "WITHHELD_BY_POLICY",
+      "initializationReport": "UNAVAILABLE / MISSING_UNSAFE_OR_CHANGING_INPUT",
+      "permissionPolicy": "Private diagnostic reader rejects non-private initialization report.",
+      "launchTimeUmask": "NOT_RECORDED",
+      "causeInference": "Mode0644 is consistent with ambient022; launch-time umask is unmeasured.",
+      "originalSummaryCodeFields": {
+        "logsCode": null,
+        "diagnoseCode": null
+      },
+      "originalResultPreserved": true,
+      "summaryCorrection": "The original harness read code instead of reasonCode. Audit uses raw stdout; post-run metadata-only harness fix preserves reasonCode with a regression test.",
+      "interpretation": "Case PASS verifies truthful INCOMPLETE preservation and diagnostic output creation, not complete diagnostic collection."
+    },
+    "cleanup": {
+      "recordedPidsChecked": 27,
+      "remainingPids": 0,
+      "jobsNotLoaded": 2,
+      "portsChecked": 2,
+      "tcpListeners": 0,
+      "runRootProcesses": 0,
+      "normalStops": 2,
+      "forcedKill": false
+    }
+  },
+  "network": {
+    "outcome": "PASS",
+    "scenario": "full",
+    "configurationFlow": "installed CLI setup --network PTY, install/register, nodes add, named init/start/status/stop",
+    "newTestCredentialsAndFreshDb": true,
+    "transactions": [
+      {
+        "stage": "four-validator",
+        "nonce": 0,
+        "height": 1,
+        "blockHash": "0xf8512b0107c22c7d6bcdc6e614447ed534c4ede479556944874ac78a9ad000f7",
+        "stateRoot": "0xd0210c72bc5fdfb0566d9ffec7cc4c8ff62e3dbad15df592aed2d770bacd5212",
+        "transactionHash": "0x616a8d099a628a477d36e56085010e178eb392b7ea11ab3cb1132de66e79599e",
+        "nodes": [
+          "n1",
+          "n2",
+          "n3",
+          "n4"
+        ],
+        "receiptIdentityAndBlockMembershipVerified": true
+      },
+      {
+        "stage": "three-validator-while-n4-stopped",
+        "nonce": 1,
+        "height": 2,
+        "blockHash": "0x598c4af794902bd26e8332e4cf3a0b2c38c36a1a44b791cfe04432f88af3134a",
+        "stateRoot": "0x436da27215316f57209bfa78e74cdc9b0bbafb6ee6f268f8d4dc2d83788aa03a",
+        "transactionHash": "0xe93e248b4c542131ef048da75b9a85a8e2cb2b2a5d63accb60beceafee2b0242",
+        "nodes": [
+          "n1",
+          "n2",
+          "n3"
+        ],
+        "receiptIdentityAndBlockMembershipVerified": true
+      },
+      {
+        "stage": "after-rejoin",
+        "nonce": 2,
+        "height": 3,
+        "blockHash": "0x0ad872c70580eed535f11b5c65afcab8f9c82e690186e5f92b661c59f93d7c43",
+        "stateRoot": "0x02a4be895998ccccd9ba30a9a6abd33ee10ac2e0ce251532de0eb658542a7939",
+        "transactionHash": "0x16fad0b37592de2b50cf97324bb278767ae2fad5435745b23d155bc123a21c8e",
+        "nodes": [
+          "n1",
+          "n2",
+          "n3",
+          "n4"
+        ],
+        "receiptIdentityAndBlockMembershipVerified": true
+      },
+      {
+        "stage": "restored-quorum",
+        "nonce": 3,
+        "height": 4,
+        "blockHash": "0x877dcbcd50e36df944397d43d1c6bd35db3da5a987b0ac74033a4bb5132ffd1f",
+        "stateRoot": "0xf4ea67d72358cff4a7df53a4573f94fa7fcc835250f308bac8433841080b8ab1",
+        "transactionHash": "0x8939e1c2d6bb2f119236ee61a23379fc6f17835ac2934aa0e3e7f7cd94bcefbe",
+        "nodes": [
+          "n1",
+          "n2",
+          "n4"
+        ],
+        "receiptIdentityAndBlockMembershipVerified": true
+      },
+      {
+        "stage": "after-four-restored",
+        "nonce": 4,
+        "height": 5,
+        "blockHash": "0x4566de867052fc0e023c39334fc7646b92292ac6a9ff892aa37644023523960c",
+        "stateRoot": "0xc35422fcf5d8780c096b09c32ef670491301ebd71fb4b935dd196a257088c7de",
+        "transactionHash": "0x6d705b135a89fac30df81ecb82aaa8de45f3269fe13cf7ed8381648473d7c0f7",
+        "nodes": [
+          "n1",
+          "n2",
+          "n3",
+          "n4"
+        ],
+        "receiptIdentityAndBlockMembershipVerified": true
+      },
+      {
+        "stage": "same-db-restart-recovered",
+        "nonce": 5,
+        "height": 6,
+        "blockHash": "0x209e079bd20227c01f68a8df5bd1cff84fc65b1ed9d79a7111c0bdda9413b27a",
+        "stateRoot": "0xa454cc58cde08cba79157c4eb3f05e859686e4b748bc74e170206531750203e5",
+        "transactionHash": "0x44542e04e0364833822b7af53166e158b0c8d463bbc307415ff8d9c172c4785e",
+        "nodes": [
+          "n1",
+          "n2",
+          "n3",
+          "n4"
+        ],
+        "receiptIdentityAndBlockMembershipVerified": true
+      },
+      {
+        "stage": "same-db-restart-followup",
+        "nonce": 6,
+        "height": 7,
+        "blockHash": "0x6379f6dc8871088658f12013a3e5ccf2f05cc346f7ad81a0d54c425c6d1cd469",
+        "stateRoot": "0xc5b4a5416d22693f25f3e10aebc00af5a3f1674476de8bfb536e79e0d0ce489a",
+        "transactionHash": "0x95ff05b3f39826a57cdb60f68d5fec04226550a7d24d6f030b8289153ad85934",
+        "nodes": [
+          "n1",
+          "n2",
+          "n3",
+          "n4"
+        ],
+        "receiptIdentityAndBlockMembershipVerified": true
+      },
+      {
+        "stage": "healthy-quorum-during-wrong-pin",
+        "nonce": 7,
+        "height": 8,
+        "blockHash": "0xb4ca5c4b7aa042140c328a323b795a4d3bdf127677228af9b660d1d3f020edcf",
+        "stateRoot": "0x720725c306b431a0e9a9d04768abb94b153b4d4a12e8cad726cea024e8085e24",
+        "transactionHash": "0xe73f504796e2602be8580a8915d08b75c9de0e8e5884d4bb91975c83e86a9fde",
+        "nodes": [
+          "n1",
+          "n3",
+          "n4"
+        ],
+        "receiptIdentityAndBlockMembershipVerified": true
+      }
+    ],
+    "submissionSummary": {
+      "distinctTransactions": 8,
+      "submissionAttempts": 9,
+      "onlyResubmittedNonce": 5,
+      "explicitResubmissions": 1,
+      "liveRecoveryNonce3Submissions": 1,
+      "automaticResubmission": false
+    },
+    "catchup": {
+      "same-db-catchup": {
+        "height": 2,
+        "blockHash": "0x598c4af794902bd26e8332e4cf3a0b2c38c36a1a44b791cfe04432f88af3134a",
+        "stateRoot": "0x436da27215316f57209bfa78e74cdc9b0bbafb6ee6f268f8d4dc2d83788aa03a",
+        "transactionHash": "0xe93e248b4c542131ef048da75b9a85a8e2cb2b2a5d63accb60beceafee2b0242",
+        "nodes": [
+          "n1",
+          "n2",
+          "n3",
+          "n4"
+        ],
+        "historicalReceiptPresent": [
+          true,
+          true,
+          true,
+          false
+        ],
+        "historicalReceiptRequiredByThisCase": false,
+        "contract": "SNAPSHOT_INSTALLS_HEADER_AND_STATE_WITHOUT_HISTORICAL_BODY",
+        "originalFinalityProofNodes": [
+          "n1",
+          "n2",
+          "n3"
+        ],
+        "canonicalHeaderAndStateVerifiedByFrozenRunner": true,
+        "rawCanonicalResponsesRetained": false,
+        "verificationScope": "Catch-up checks canonical header/state. Original finality proof validates receipts/body only on originalFinalityProofNodes; the joining node may lack the historical receipt."
+      },
+      "four-restored": {
+        "height": 4,
+        "blockHash": "0x877dcbcd50e36df944397d43d1c6bd35db3da5a987b0ac74033a4bb5132ffd1f",
+        "stateRoot": "0xf4ea67d72358cff4a7df53a4573f94fa7fcc835250f308bac8433841080b8ab1",
+        "transactionHash": "0x8939e1c2d6bb2f119236ee61a23379fc6f17835ac2934aa0e3e7f7cd94bcefbe",
+        "nodes": [
+          "n1",
+          "n2",
+          "n3",
+          "n4"
+        ],
+        "historicalReceiptPresent": [
+          true,
+          true,
+          false,
+          true
+        ],
+        "historicalReceiptRequiredByThisCase": false,
+        "contract": "SNAPSHOT_INSTALLS_HEADER_AND_STATE_WITHOUT_HISTORICAL_BODY",
+        "originalFinalityProofNodes": [
+          "n1",
+          "n2",
+          "n4"
+        ],
+        "canonicalHeaderAndStateVerifiedByFrozenRunner": true,
+        "rawCanonicalResponsesRetained": false,
+        "verificationScope": "Catch-up checks canonical header/state. Original finality proof validates receipts/body only on originalFinalityProofNodes; the joining node may lack the historical receipt."
+      }
+    },
+    "quorumObservations": [
+      {
+        "stage": "twoOfFour",
+        "seconds": 45,
+        "completed": true,
+        "transactionHash": "0x8939e1c2d6bb2f119236ee61a23379fc6f17835ac2934aa0e3e7f7cd94bcefbe",
+        "nonce": 3,
+        "newValidTransactionSubmitted": true,
+        "newFinality": false,
+        "roundAdvanced": true,
+        "samples": 86,
+        "elapsedSeconds": 45.364953207999974,
+        "baselineFinalizedHeights": [
+          3,
+          3
+        ]
+      },
+      {
+        "stage": "restartTwoOfFour",
+        "seconds": 45,
+        "completed": true,
+        "transactionHash": "0x44542e04e0364833822b7af53166e158b0c8d463bbc307415ff8d9c172c4785e",
+        "nonce": 5,
+        "newValidTransactionSubmitted": true,
+        "newFinality": false,
+        "roundAdvanced": true,
+        "samples": 86,
+        "elapsedSeconds": 45.06452812500004,
+        "baselineFinalizedHeights": [
+          5,
+          5
+        ]
+      }
+    ],
+    "restartRoundSkew": {
+      "stoppedViews": [
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          0
+        ]
+      ],
+      "activeViews": [
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          3
+        ]
+      ],
+      "confirmed": true
+    },
+    "sameDbRestartRecovery": {
+      "outcome": "PASS",
+      "sameFourDataDirectories": true,
+      "dataIdentityAndConfigsUnchanged": true,
+      "newLaunchAttempts": true,
+      "pendingNonce": 5,
+      "followupNonce": 6,
+      "pendingTransactionHash": "0x44542e04e0364833822b7af53166e158b0c8d463bbc307415ff8d9c172c4785e",
+      "explicitResubmissionCount": 1,
+      "totalSubmissionAttemptsForPendingHash": 2,
+      "databaseOrRoundReset": false,
+      "engineBytesReplaced": false,
+      "rc1ToRc2UpgradeTested": false,
+      "engineUpgradeTested": false
+    },
+    "sameDbMeaning": "Preserved directory device/inode, engine identity, initialization journal membership/hash, product/native/binding; ledger/WAL writes during operation are expected.",
+    "wrongPin": {
+      "outboundWrongPinCount": 6,
+      "faultNodePeerCount": 0,
+      "healthyValidatorCount": 3,
+      "faultNodeSyncEnabled": false,
+      "duplicateSignerRunning": false
+    },
+    "finalAudit": {
+      "outcome": "PASS",
+      "payloads": {
+        "n1": {
+          "files": 270,
+          "bytes": 325299323,
+          "runtimeFiles": 259,
+          "manifestSha256": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+          "executorSha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+          "engineJarSha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+          "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c"
+        },
+        "n2": {
+          "files": 270,
+          "bytes": 325299323,
+          "runtimeFiles": 259,
+          "manifestSha256": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+          "executorSha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+          "engineJarSha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+          "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c"
+        },
+        "n3": {
+          "files": 270,
+          "bytes": 325299323,
+          "runtimeFiles": 259,
+          "manifestSha256": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+          "executorSha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+          "engineJarSha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+          "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c"
+        },
+        "n4": {
+          "files": 270,
+          "bytes": 325299323,
+          "runtimeFiles": 259,
+          "manifestSha256": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+          "executorSha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+          "engineJarSha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+          "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c"
+        },
+        "wrong-pin": {
+          "files": 270,
+          "bytes": 325299323,
+          "runtimeFiles": 259,
+          "manifestSha256": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+          "executorSha256": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
+          "engineJarSha256": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
+          "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c"
+        }
+      },
+      "workersChecked": 12,
+      "allWorkersUseFixedExecutor": true,
+      "jobsNotLoaded": 12,
+      "recordedPidsAbsent": 106,
+      "reportPidsIncluded": 17,
+      "runReportsChecked": 12,
+      "rootProcessesAbsent": true,
+      "initializationJournalsUnchanged": true,
+      "supplyUnchanged": true
+    },
+    "cleanup": {
+      "remaining": [],
+      "errors": [],
+      "recordedPidsChecked": 106,
+      "remainingPids": 0,
+      "reportPidsIncluded": 17,
+      "jobsNotLoaded": 12,
+      "portsChecked": 8,
+      "tcpListeners": 0,
+      "runRootProcesses": 0,
+      "normalStops": 12,
+      "forcedKill": false
+    }
+  },
+  "automatedChecks": {
+    "makeCheck": {
+      "outcome": "PASS",
+      "fmt": "PASS",
+      "clippy": "PASS",
+      "rustPassed": 590,
+      "rustFailed": 0,
+      "pythonRun": 93,
+      "pythonPassed": 91,
+      "pythonSkippedOptIn": 2
+    },
+    "postRunMetadataFixPythonDiscovery": {
+      "outcome": "PASS",
+      "run": 94,
+      "passed": 92,
+      "skippedOptIn": 2
+    },
+    "newHarnessOfflineTests": {
+      "network": 25,
+      "service": 7
+    },
+    "realMacRunsSeparateFromUnitTests": true,
+    "linuxChecksThisTurn": "NOT_RUN; no Rust changes"
+  },
+  "harnesses": {
+    "serviceAtExecution": {
+      "run_management_service.py": "abcf23a2894cdea06472213a0295ec4147794c7749401744ac8034fe35ead8eb",
+      "support.py": "f7625dd79cf9827f3f14c4d8f9acea0278a089933fba80f553c70ea7e513f0b8"
+    },
+    "servicePostRunMetadataFix": {
+      "run_management_service.py": "db757b3c9125f3a7f04b7a648d7acf0183d7de34d320acd6c359945717cc8cda",
+      "test_management_service.py": "8e5e1ab521627a15db58d261d5a61f38e35d90e756e87b94d3ace1eefcb18501"
+    },
+    "networkAtExecution": {
+      "run_acceptance.py": "8bc56f35dad2cd3f6b5950ef5aea026a4332b37f45946ba35f0d0f04b9f96618",
+      "support.py": "f7625dd79cf9827f3f14c4d8f9acea0278a089933fba80f553c70ea7e513f0b8",
+      "fixture_guard.py": "6916dacf8d3a77aa983117e2681f5f0a941bf1554065fbd157ee51638d8f15de",
+      "prepare_fixture.py": "76e0480590c3e6d16179970d8fb6bf0ae1efb06f5ce89e49e7b6814421201fa5",
+      "candidates.py": "5fb65469750f922bd3c36472453923326be3972a83f687d64204a8a2ac161781",
+      "run_management_acceptance.py": "78d2dc18c622f114148d6637cec688197ea2fc0b657aeff7911010aab2cc3863",
+      "test_management_acceptance.py": "94b4f4caa1af9c234176a4b6c0ded953e1de7d23db6141e77385f01324234255"
+    },
+    "sourcesUnchangedDuringEachRun": true,
+    "serviceRerunAfterMetadataOnlyFix": false
+  },
+  "independentAudit": {
+    "serviceOutcome": "PASS_WITH_DOCUMENTED_DIAGNOSTIC_LIMITATION",
+    "networkOutcome": "PASS",
+    "method": "Read-only reinspection of original evidence, installed files and live OS cleanup; not a second service/network run.",
+    "sourceResultsPreserved": true,
+    "networkChecks": {
+      "finality": {
+        "outcome": "PASS",
+        "cases": [
+          {
+            "case": "four-validator",
+            "height": 1,
+            "nodes": 4,
+            "receiptCount": 4,
+            "proofSha256": "2393378eba3416fb12a9d9fb317f9145757663306f3442d93553ec9c189ff9ac"
+          },
+          {
+            "case": "three-validator-while-n4-stopped",
+            "height": 2,
+            "nodes": 3,
+            "receiptCount": 3,
+            "proofSha256": "6b08c51fc7d1e04c4f08eda2b13fdbaf8fff9fc5b6d71d0f6ddb899f1575505d"
+          },
+          {
+            "case": "after-rejoin",
+            "height": 3,
+            "nodes": 4,
+            "receiptCount": 4,
+            "proofSha256": "bee29c9f2da7e1b87c5fed5a421834aac3a779628eadc384c88ef70a14643910"
+          },
+          {
+            "case": "restored-quorum",
+            "height": 4,
+            "nodes": 3,
+            "receiptCount": 3,
+            "proofSha256": "50fd181d832ad17a96605609b5dde9a8ba4ac3048ae3e4f93095d1bb7af40863"
+          },
+          {
+            "case": "after-four-restored",
+            "height": 5,
+            "nodes": 4,
+            "receiptCount": 4,
+            "proofSha256": "1464eed7f6966fc2dfc369d3a007266abd2667b7d6abfd38d6ea2d73ba380254"
+          },
+          {
+            "case": "same-db-restart-recovered",
+            "height": 6,
+            "nodes": 4,
+            "receiptCount": 4,
+            "proofSha256": "a7f8d3a25416497e8ecef70333baa46edb63c10d6accddaeaafcec95433bbc0a"
+          },
+          {
+            "case": "same-db-restart-followup",
+            "height": 7,
+            "nodes": 4,
+            "receiptCount": 4,
+            "proofSha256": "458fb315111038128cf8075b97a8142ccc44ef1a913f1f2f03c6d976dbd264db"
+          },
+          {
+            "case": "healthy-quorum-during-wrong-pin",
+            "height": 8,
+            "nodes": 3,
+            "receiptCount": 3,
+            "proofSha256": "bdc8674a6bf3c83ba61e2df03a6865e4aa16e6bc4d60ea1fef3d3490aa4a2068"
+          }
+        ],
+        "distinctTransactions": 8,
+        "receiptIdentityBlockMembershipCanonicalRoots": true
+      },
+      "catchup": {
+        "savedCanonicalSummariesMatchFinalizedProofs": true,
+        "cases": [
+          {
+            "case": "same-db-catchup",
+            "height": 2,
+            "historicalReceiptPresent": [
+              true,
+              true,
+              true,
+              false
+            ],
+            "evidenceSha256": "62578f702ad65d714cb58c5cbdfb5e690b86c3a025d141ed92641c04320f7f3b"
+          },
+          {
+            "case": "four-restored",
+            "height": 4,
+            "historicalReceiptPresent": [
+              true,
+              true,
+              false,
+              true
+            ],
+            "evidenceSha256": "00d0b69def34ffebf2affc442b47f7e0947029aafb1822b0e9b738aeac0d35a2"
+          }
+        ],
+        "limitation": "Raw catch-up monitor block responses are not separately saved; their comparison is attested by the frozen runner. Subsequent transactions retain complete four-node receipt/block proofs."
+      },
+      "quorumLoss": [
+        {
+          "case": "two-of-four",
+          "elapsedSeconds": 45.364953207999974,
+          "sampleSpanSeconds": 44.836192,
+          "maximumGapSeconds": 0.542587,
+          "samples": 86,
+          "initialRounds": [
+            [
+              4,
+              0
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          "finalRounds": [
+            [
+              4,
+              3
+            ],
+            [
+              4,
+              3
+            ]
+          ],
+          "newFinality": false
+        },
+        {
+          "case": "restart-two-of-four",
+          "elapsedSeconds": 45.06452812500004,
+          "sampleSpanSeconds": 44.538577,
+          "maximumGapSeconds": 0.5293,
+          "samples": 86,
+          "initialRounds": [
+            [
+              6,
+              0
+            ],
+            [
+              6,
+              0
+            ]
+          ],
+          "finalRounds": [
+            [
+              6,
+              3
+            ],
+            [
+              6,
+              3
+            ]
+          ],
+          "newFinality": false
+        }
+      ],
+      "submissions": {
+        "distinctTransactions": 8,
+        "attempts": 9,
+        "nonceCounts": {
+          "0": 1,
+          "1": 1,
+          "2": 1,
+          "3": 1,
+          "4": 1,
+          "5": 2,
+          "6": 1,
+          "7": 1
+        },
+        "nonce3LiveRecoveryResubmitted": false,
+        "nonce5ExplicitSameBytesResubmissionCount": 1,
+        "responses": {
+          "ACKNOWLEDGED": 9
+        }
+      },
+      "liveManagerTransitions": {
+        "sequence": "A→B→A→B",
+        "count": 3,
+        "runningNodeCounts": [
+          4,
+          4,
+          3
+        ],
+        "sameAttemptNodeInstancePidDataInodeInitJournalBindingProductNativeWorker": true,
+        "selectedRevisions": [
+          "994c48f9f872e1ebfbb9acd91d9ae673ef637bbf",
+          "3a0bb5caa08096454fcb6c88b3186e9a3be02a19",
+          "994c48f9f872e1ebfbb9acd91d9ae673ef637bbf",
+          "3a0bb5caa08096454fcb6c88b3186e9a3be02a19"
+        ]
+      },
+      "sameDbRestart": {
+        "nodes": [
+          "n1",
+          "n2",
+          "n3",
+          "n4"
+        ],
+        "sameDataInodeEngineIdentityProductNative": true,
+        "newAttemptAndNodeInstance": true,
+        "explicitResubmissionOnlyNonce5": true
+      },
+      "wrongPin": {
+        "outboundWrongPinCount": 6,
+        "matchingEvents": 6,
+        "peerCount": 0,
+        "healthyQuorumProofNodes": 3,
+        "duplicateSignerRunning": false,
+        "originalSignerStoppedBeforeFaultNodeFirstEvent": true,
+        "verifiedStopToFaultStartMilliseconds": 39356
+      },
+      "runtime": {
+        "payloads": [
+          {
+            "node": "n1",
+            "files": 270,
+            "jreFiles": 259,
+            "bytes": 325299323
+          },
+          {
+            "node": "n2",
+            "files": 270,
+            "jreFiles": 259,
+            "bytes": 325299323
+          },
+          {
+            "node": "n3",
+            "files": 270,
+            "jreFiles": 259,
+            "bytes": 325299323
+          },
+          {
+            "node": "n4",
+            "files": 270,
+            "jreFiles": 259,
+            "bytes": 325299323
+          },
+          {
+            "node": "wrong-pin",
+            "files": 270,
+            "jreFiles": 259,
+            "bytes": 325299323
+          }
+        ],
+        "workers": 12,
+        "runReports": 12,
+        "initReports": 5,
+        "unchangedExactRc3Archive": true
+      },
+      "cleanup": {
+        "normalStops": 12,
+        "remainingBookkeeping": 0,
+        "jobsAbsent": 12,
+        "recordedPidUnion": 106,
+        "reportJavaPids": 17,
+        "remainingPids": 0,
+        "rootProcesses": 0,
+        "listeners": [
+          {
+            "port": 29780,
+            "absent": true
+          },
+          {
+            "port": 29781,
+            "absent": true
+          },
+          {
+            "port": 29782,
+            "absent": true
+          },
+          {
+            "port": 29783,
+            "absent": true
+          },
+          {
+            "port": 30780,
+            "absent": true
+          },
+          {
+            "port": 30781,
+            "absent": true
+          },
+          {
+            "port": 30782,
+            "absent": true
+          },
+          {
+            "port": 30783,
+            "absent": true
+          }
+        ],
+        "independentOsReobservation": true,
+        "stopAttemptMembershipMatchesAllRunReportsAndWorkers": true
+      },
+      "sourceFreeze": {
+        "files": 7,
+        "originalSnapshotCurrentMatch": true,
+        "runnerSha256": "78d2dc18c622f114148d6637cec688197ea2fc0b657aeff7911010aab2cc3863"
+      },
+      "managerProvenance": {
+        "sameSourceTree": true,
+        "differentActualGitRevisions": true,
+        "productionBehaviorUpgradeNotTested": true,
+        "finalStableEntrySelectsB": true,
+        "provenanceSha256": "24fd6addb629bb1edcc72a91b018b7ddcf643edca3a0bb47a7d4731db0e0789f"
+      }
+    },
+    "networkLimitations": [
+      "Local macOS arm64 development acceptance, five isolated runtime installations, four normal validators on one host.",
+      "A and B use the same source tree and different actual Git revisions; this validates version activation, delegation, and rollback, not changed production behavior.",
+      "Quorum periods each exceed 45 seconds by elapsed measurement, with 86 discrete samples spanning about 44.5–44.8 seconds; this is sampled observation, not continuous instrumentation.",
+      "Historical snapshot catch-up permits missing old receipts; raw catch-up canonical responses were not separately retained. New transaction proofs include receipt, RPC block, and monitor block data.",
+      "No logout/sleep/crash, multi-host, engine/DB upgrade, Linux/systemd/Docker, formal supply-chain/customer release, or CLI05-04 human task acceptance.",
+      "OS process checks are a postflight point-in-time observation."
+    ],
+    "networkAuditCorrections": [
+      {
+        "initialAuditOutcome": "INCOMPLETE",
+        "initialAuditError": "NORMAL_CLEANUP",
+        "cause": "Auditor initially counted only filenames containing stop and omitted n2-before-wrong-pin. This was an audit counting error, not a source acceptance error.",
+        "correctedOracle": "Recorded command==stop, each original response SUCCEEDED/SERVICE_STOPPED_VERIFIED/STOPPED/NOT_LOADED/operationBusy=false; exact 12 attempt membership matches run reports and fixed workers."
+      }
+    ]
+  },
+  "evidence": {
+    "records": {
+      "serviceResult": {
+        "sha256": "9e46e8fd41cf75d41287df1a26911ce69c1ec82d672302a3fedbddaa30126c15",
+        "bytes": 17348
+      },
+      "networkResult": {
+        "sha256": "14805483f2dce08cf5e0aab1f680fc65287eff893dc613430baca7da88580132",
+        "bytes": 71826
+      },
+      "serviceIndependentAudit": {
+        "sha256": "f199659e1a01d68df3ff13c359718b6f281ce0cf6e2cf7652b121ed0e6a25f45",
+        "bytes": 5437
+      },
+      "networkIndependentAudit": {
+        "sha256": "7bb3b90e29bca1b867016207ea2ec52784c145bba2cc3eff91ce9664aa54e664",
+        "bytes": 9578
+      },
+      "buildProvenance": {
+        "sha256": "24fd6addb629bb1edcc72a91b018b7ddcf643edca3a0bb47a7d4731db0e0789f",
+        "bytes": 5064
+      },
+      "makeCheck": {
+        "sha256": "2289e5870e2b3fc8d552a0e5341315a7f36bbfdaeb27fc5eaa81640776320bcb",
+        "bytes": 61870
+      },
+      "finalPython": {
+        "sha256": "2a1484e286dbf06f435884e50743a28ad7627388690da8cfc356622dd54e889f",
+        "bytes": 247
+      },
+      "serviceProgress": {
+        "sha256": "719a0c5045d4d550b7fab0be968b235e8c23b3e1309099012424e9bd9e6d03e9",
+        "bytes": 675
+      },
+      "networkProgress": {
+        "sha256": "0340fff8a677611deebe37067adb969ee907bc53e5bfd500b211bfbfd94be25d",
+        "bytes": 1184
+      }
+    },
+    "privateInventory": {
+      "sha256": "2a7c032156634e94229a1ed4dcfdcf2d843d3bdd2395c09b52795baf1dc2b90d",
+      "files": 276,
+      "bytes": 1353646
+    },
+    "privateMaterialsExcludedFromGit": [
+      "archives",
+      "credentials",
+      "signed transaction bytes",
+      "DB",
+      "raw stdout/PTY/process logs",
+      "local absolute paths and PID lists"
+    ]
+  },
+  "followups": [
+    {
+      "id": "CLI05-03-DIAG-01",
+      "status": "OPEN",
+      "description": "Reproduce initialization report permissions under a recorded umask and design private report creation/collection fix without weakening reader safeguards or silently changing the pinned RC.3 runtime."
+    },
+    {
+      "id": "CLI05-04",
+      "status": "NOT_RUN",
+      "description": "First-time install, one-field edit, resume next day, new terminal operation and failure diagnosis by a person other than the implementer."
+    }
+  ],
+  "notCovered": [
+    "arbitrary future CLI revisions",
+    "changed runtime archive/executor/NIGO/JRE",
+    "complete diagnostic collection",
+    "CLI05-04 human usability",
+    "actual logout/login or sleep/wake",
+    "mutation crash/power-cut",
+    "existing-runtime upgrade or DB migration",
+    "offline Storage A7",
+    "multi-host, Linux/systemd, Docker, LaunchDaemon",
+    "soak/performance",
+    "J5 and customer release/code signing/notarization"
+  ]
+}

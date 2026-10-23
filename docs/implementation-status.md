@@ -6,15 +6,25 @@ Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후
 
 2026-10-22 사용자가 실제 console의 직관성이 부족하다고 평가해 개발 중단을 요청했다. 기존 console 코드·시안·검증 이력은 보존하고 새 메뉴·화면·서비스 연결은 진행하지 않는다. 공통 catalog/home/target와 Preparation 검증·저장 API는 직접 CLI에서 재사용한다.
 
-**CLI-01 이름 연결·목록, CLI-02 독립 관리 CLI·이름 기반 운용, CLI-03 순차 설치 준비·조회·수정을 구현·검증했다.** CLI-04의 실제 설치 실행·이름 연결·이름 기반 초기화도 구현·검증했다. CLI-05 중 zsh 자동완성(CLI05-01)과 독립 Mac 배포·업데이트(CLI05-02)의 구현·검증을 완료했다. 실제 CLI/runtime 조합 인수와 사용자 과업은 후속 계획이다. [최신 설계](../design/2026-10-22-cli-simplification.md)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
+**CLI-01 이름 연결·목록, CLI-02 독립 관리 CLI·이름 기반 운용, CLI-03 순차 설치 준비·조회·수정을 구현·검증했다.** CLI-04의 실제 설치 실행·이름 연결·이름 기반 초기화도 구현·검증했다. CLI-05 중 zsh 자동완성(CLI05-01)과 독립 Mac 배포·업데이트(CLI05-02)의 구현·검증을 완료했다. 후속 CLI05-03의 지정 Mac 서비스·네트워크 조합 인수도 완료했다. 진단 완전수집은 OPEN이며 CLI05-04 사용자 과업은 NOT_RUN이다. [최신 설계](../design/2026-10-22-cli-simplification.md)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
 
 직접 `setup new/resume`은 저장한 답을 재사용하고 누락된 항목부터 순차 질문한다. 기존 console 메뉴는 보존하며 저장 형식만 공유한다. `setup list/show/edit`로 조회와 제품 한 항목 수정을 직접 실행한다. 아래 UX-01~03의 PASS는 당시 기술 검증 이력이며 새 CLI 단계의 검증과 구분한다.
+
+## CLI05-03 — 독립 관리 CLI와 기존 RC.3의 Mac 조합 인수
+
+**상태: CLI05-03 DONE — 지정 서비스·네트워크 범위와 partial 표현 인수 PASS. 진단 완전수집 OPEN, CLI05-04 사람 과업 NOT_RUN.** [정제 결과와 정확한 identity](../results/2026-10-23-cli05-runtime-acceptance.md)를 따른다.
+
+CLI-only 배포본을 설치한 stable entry로 순차 설치·이름 기반 운용의 서비스16사례를 수행했다. 네트워크에서는 같은 source tree의 실제 Git PR head `994c48f`와 merge `3a0bb5c`를 각각 빌드해 A→B 업데이트·B→A 복귀·A→B 재업데이트3회를 실행했다. 같은 attempt/PID·data identity·초기화 journal·설정·worker를 유지한 채 거래 확정을 확인했다. 서로 다른 미래 구현의 일반 호환을 보장하는 시험은 아니다.
+
+기존 RC.3 archive를 재조립하지 않고4-validator/3-validator 확정·catch-up·live 정족수 복구·같은4DB 전체 재시작 복구·wrong-pin을 재인수했다. 네트워크12개 실행 시도, 거래8개·제출9회와 정상 종료, 고정 payload/JRE/worker와 잔존 PID/job/LISTEN 부재를 확인했다. 제품 코드·NIGO/JRE bytes·니고 저장소는 변경하지 않았다. `make check`의 fmt·Clippy·Rust/Python 검사와 실제 서비스·네트워크 실행은 각각 별도 근거이며 최종 검사 수는 결과 문서를 따른다.
+
+단일 노드의 `logs`·`diagnose`는 실제 **INCOMPLETE / LOGS_PARTIAL / DIAGNOSTIC_PARTIAL**이었다. init report의 mode0644와 private reader의 읽기 거절을 관측했지만 해당 실행의 실제 umask는 기록하지 않아 원인을 확정하지 않는다. 이번 PASS는 partial을 그대로 표시하고 완료로 오인하지 않는지 확인한 범위다. 진단 완전수집의 원인 확인·보완·재인수는 OPEN이며 파일 권한을 바꿔 이번 결과를 성공으로 고치지 않았다.
 
 ## CLI05-02 — 독립 Mac 관리 CLI 배포·업데이트
 
 **상태: CLI05-02 DONE.** CLI 전용 bundle, 사용자 권한의 별도 root·버전별 설치, `cli install/update/info/rollback`, 셸 연결과 실제 Mac 설치·업데이트·복귀를 구현·검증했다. [배포 설계](../design/2026-10-23-management-cli-distribution.md)와 [사용 가이드](./management-cli.md)를 따른다. 최초 외부 공개키 pin 또는 매회 명시 unsigned 개발 정책을 적용하고, 검증한 payload/admission wrapper와 선택 기록을 원자 게시한다. 기존 실행 진입점의 소유·손상·경로 충돌·권한·동시 변경에서 자료를 보존하며 셸 rc를 자동 편집하지 않는다.
 
-[검증 기록](../results/2026-10-23-cli05-management-distribution.md)의 최종 전체 Rust590, Python60 PASS/2 opt-in SKIP, fmt·Clippy·Linux 타입 검사와 별도 실제 Mac signed13+unsigned13사례가 PASS다. 같은 작업 소스에 서로 다른 합성 revision을 주입한 개발 인수 배포본을 사용했으며 공식 release로 표시하지 않는다. 기존 catalog/sessions/operations/control/data/runtime-package fixture 불변과 새 zsh source/fpath를 확인했다. 실제 RC.3 runtime·서비스·네트워크 재인수는 CLI05-03, 작성자가 아닌 사람의 과업은 CLI05-04로 **NOT_RUN**이다. NIGO/JRE pin과 노드 관리 home 형식은 바꾸지 않았다.
+[검증 기록](../results/2026-10-23-cli05-management-distribution.md)의 최종 전체 Rust590, Python60 PASS/2 opt-in SKIP, fmt·Clippy·Linux 타입 검사와 별도 실제 Mac signed13+unsigned13사례가 PASS다. 같은 작업 소스에 서로 다른 합성 revision을 주입한 개발 인수 배포본을 사용했으며 공식 release로 표시하지 않는다. 기존 catalog/sessions/operations/control/data/runtime-package fixture 불변과 새 zsh source/fpath를 확인했다. 이 CLI05-02 결과의 작성 시점에는 실제 RC.3 runtime·서비스·네트워크 재인수와 사람 과업이 **NOT_RUN**이었다. 이후 CLI05-03의 지정 조합 결과는 위에서 별도 기록하며 CLI05-04 사람 과업은 계속 NOT_RUN이다. NIGO/JRE pin과 노드 관리 home 형식은 바꾸지 않았다.
 
 ## CLI05-01 — zsh 자동완성
 
@@ -24,7 +34,7 @@ Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후
 
 전체 `make check` Rust561/Python58, 이후 `completion_cli`15개, zsh 프런트엔드10개와 최종 보강2개, 최종 release의 실제 zsh13시나리오·인용 바이너리 경로를 통과했다. fmt·Clippy·Linux 타입 검사·release 빌드와 내장 스크립트 대조도 통과했다. [검증 기록](../results/2026-10-23-cli05-zsh-completion.md)에 전체 실행과 후속 검사를 구분했다. 검사 횟수를 합산한 누적 건수로 제시하지 않는다.
 
-이번 범위는 CLI05-01이다. CLI05-02 독립 Mac 관리 CLI 배포는 위에서 별도 구현·검증 완료로 기록하며, CLI05-03 기존 RC.3와의 배포 조합 인수와 CLI05-04 작성자가 아닌 사용자의 과업은 PLAN이다. 실제 사용자 과업은 NOT_RUN이며 CLI-05 전체 완료나 고객 배포 인수를 뜻하지 않는다. 기존 RC.3 package·실행기·NIGO/JRE pin과 새 NIGO 선행 요구사항은 바꾸지 않는다.
+위 결과는 CLI05-01 당시 범위다. 후속 CLI05-02 배포와 CLI05-03 지정 RC.3 조합 인수는 각각 위 절의 별도 근거를 따른다. CLI05-03 진단 완전수집은 OPEN이고 CLI05-04 작성자가 아닌 사용자의 과업은 PLAN이다. 실제 사용자 과업은 NOT_RUN이며 CLI-05 전체 완료나 고객 배포 인수를 뜻하지 않는다. 기존 RC.3 package·실행기·NIGO/JRE pin과 새 NIGO 선행 요구사항은 바꾸지 않는다.
 
 ## CLI-04 — 준비 결과의 설치 실행과 이름 기반 초기화
 
