@@ -24,7 +24,7 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 
 관리 CLI는 노드 패키지 밖에서 독립적으로 업데이트할 수 있다. 현재 지원 대상은 검증한 기존 RC.3 패키지이며 설치본의 CLI·NIGO JAR·JRE를 교체하지 않는다. 실행기 자체를 변경할 때는 새 패키지 인수가 필요하다. [분리 설계](./design/2026-10-23-independent-management-cli.md)와 [운용 가이드](./docs/management-cli.md)를 따른다. [독립 관리 CLI 인수](./results/2026-10-23-independent-management-cli.md)의 직접 운용16사례·설치 도우미 PTY8사례, payload/worker 불변과 정상 종료 독립 대조가 PASS다.
 
-CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bxdl completion zsh`로 셸 스크립트를 출력하고 명령·옵션·저장한 이름을 Tab으로 완성한다. 적용 방법은 [자동완성 가이드](./docs/completion.md), 전체 검사와 최종 release의 실제 zsh 13시나리오·인용 경로 결과는 [검증 기록](./results/2026-10-23-cli05-zsh-completion.md)을 따른다. 독립 관리 CLI의 Mac 배포, CLI/runtime 조합 인수와 작성자가 아닌 사용자의 과업 검증은 후속 단계로 남긴다.
+CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bxdl completion zsh`로 셸 스크립트를 출력하고 명령·옵션·저장한 이름을 Tab으로 완성한다. 적용 방법은 [자동완성 가이드](./docs/completion.md), 전체 검사와 최종 release의 실제 zsh 13시나리오·인용 경로 결과는 [검증 기록](./results/2026-10-23-cli05-zsh-completion.md)을 따른다. 독립 관리 CLI의 Mac 배포·업데이트(CLI05-02)도 [전용 설계](./design/2026-10-23-management-cli-distribution.md)에 따라 구현·검증했다. `bxdl cli install/update/info/rollback`으로 별도 사용자 root의 CLI와 자동완성을 함께 선택한다. [검증 기록](./results/2026-10-23-cli05-management-distribution.md)에 자동 검사와 개발 인수 배포본의 실제 Mac signed13/unsigned13사례를 구분했다. CLI/runtime 조합 인수와 작성자가 아닌 사용자의 과업 검증은 후속 단계로 남긴다.
 
 ## 구현한 명령
 
@@ -38,6 +38,10 @@ CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bx
 | `bxdl setup edit <이름> --field <제품필드> [--home <dir>]` | 제품 항목 하나만 문답·저장 후 종료. 다른 답과 기존 출력 보존, 새 준비 검토는 별도 |
 | `bxdl setup apply <이름> [--home <dir>]` | TTY에서 y/yes로 설치·cold 검사·등록·이름 연결 승인. 완료 재호출은 검증·이름 복구만, init/start는 별도 |
 | `bxdl completion zsh` | zsh 자동완성 스크립트 출력. 셸 설정 자동 수정 없음. CLI05-01 구현·검증 완료 ([가이드](./docs/completion.md)) |
+| `bxdl cli install [--from <배포본>] ...` | Mac arm64 관리 CLI를 별도 사용자 root에 설치하고 실행 링크 연결. 최초 공개키 또는 명시 개발 정책 필요 ([가이드](./docs/management-cli.md)) |
+| `bxdl cli update --from <배포본> ...` / `bxdl cli rollback` | 검증한 CLI·자동완성으로 선택 전환 또는 이전 버전 복귀. 노드 package·DB·서비스는 변경하지 않음 |
+| `bxdl cli info [--root <dir>] [--json]` | 실제 호출 파일·현재/이전 선택·PATH·셸 적용 안내를 읽기 전용 조회. 설치가 없어도 폴더 생성 없음 |
+| `bxdl cli bundle build ...` / `bxdl cli bundle verify <배포본> ...` | CLI-only archive 제작 또는 고정 inventory/hash/외부 서명 검증. 기존 노드 package 형식과 별도 |
 | `bxdl console [--home <dir>] [--instance <control>]` | **추가 개발 중단·기존 구현 보존.** 홈·내 목록·기존 등록/세션의 저장 기록 조회. 승인한 목록 저장/갱신/숨기기와 새 설치 자료 준비 ([가이드](./docs/console.md)) |
 | `bxdl version --json` | Rust CLI identity·Mac 우선 target·구현 capability·엔진/서비스 미인수 상태 |
 | `bxdl package build ...` | expected hash에 고정한 stage를 결정적인 development archive로 조립·선택 서명·자체 검증 |

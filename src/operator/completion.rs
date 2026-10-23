@@ -7,6 +7,7 @@ use super::{
 use std::{collections::BTreeMap, path::PathBuf};
 
 const COMMANDS: &[&str] = &[
+    "cli",
     "nodes",
     "setup",
     "init",
@@ -111,6 +112,8 @@ fn values<'a>(items: impl IntoIterator<Item = &'a str>, prefix: &str) -> String 
 
 fn subcommands(command: &str) -> &'static [&'static str] {
     match command {
+        "cli" => &["install", "update", "info", "rollback", "bundle"],
+        "cli bundle" => &["build", "verify"],
         "setup" => &["new", "resume", "list", "show", "edit", "apply"],
         "nodes" => &["add"],
         "config" => &["validate", "fingerprint"],
@@ -127,6 +130,35 @@ fn spec(command: &str) -> Option<Spec> {
     use Position::{File, NewName, Node, None, Preparation, Session, Shell};
     use Value::{Directory as D, Field, File as F, Flag as B, None as N};
     let mut s = match command {
+        "cli install" | "cli update" => Spec::new(
+            command,
+            None,
+            &[
+                ("--root", D),
+                ("--bin-dir", D),
+                ("--from", F),
+                ("--public-key", F),
+                ("--allow-unsigned-development", B),
+            ],
+        ),
+        "cli info" | "cli rollback" => Spec::new(command, None, &[("--root", D), ("--bin-dir", D)]),
+        "cli bundle build" => Spec::new(
+            command,
+            None,
+            &[
+                ("--root", D),
+                ("--output", F),
+                ("--version", N),
+                ("--revision", N),
+                ("--signing-key", F),
+                ("--allow-unsigned-development", B),
+            ],
+        ),
+        "cli bundle verify" => Spec::new(
+            command,
+            File,
+            &[("--public-key", F), ("--allow-unsigned-development", B)],
+        ),
         "nodes" => Spec::new(command, None, &[("--home", D)]),
         "nodes add" => Spec::new(command, NewName, &[("--home", D), ("--instance", D)]),
         "setup new" => Spec::new(command, NewName, &[("--home", D), ("--from", F)]),
@@ -347,50 +379,51 @@ fn complete(words: &[String], original_cursor: usize) -> Option<String> {
     }
     let mut command = line[0].to_owned();
     if command == "help" {
-        return match cursor {
-            1 => Some(values(
+        return if cursor == 1 {
+            Some(values(
                 COMMANDS.iter().copied().filter(|s| *s != "help"),
                 current,
-            )),
-            2 if COMMANDS.contains(&line[1]) => {
-                Some(values(subcommands(line[1]).iter().copied(), current))
+            ))
+        } else {
+            let topic = line[1..cursor].join(" ");
+            if spec(&topic).is_some() || !subcommands(&topic).is_empty() {
+                Some(values(subcommands(&topic).iter().copied(), current))
+            } else {
+                None
             }
-            _ => None,
         };
     }
     if !COMMANDS.contains(&command.as_str()) {
         return None;
     }
-    let subs = subcommands(&command);
     let mut start = 1;
-    if !subs.is_empty() && command != "completion" {
-        if cursor == 1 && !current.starts_with('-') {
+    loop {
+        let subs = subcommands(&command);
+        if subs.is_empty() || command == "completion" {
+            break;
+        }
+        if cursor == start && !current.starts_with('-') {
             // Validate suffix options for each candidate without reading names.
             let candidates = subs.iter().copied().filter(|sub| {
-                let Some(candidate_spec) = spec(&format!("{command} {sub}")) else {
-                    return false;
-                };
                 let mut candidate_line = line.clone();
-                candidate_line[1] = sub;
-                candidate_line.push("");
-                arguments(
-                    &candidate_spec,
+                candidate_line[start] = sub;
+                command_syntax(
+                    &format!("{command} {sub}"),
                     &candidate_line,
-                    2,
-                    candidate_line.len() - 1,
+                    start + 1,
                     json,
-                    true,
                 )
-                .is_some()
             });
             return Some(values(candidates, current));
         }
-        if line.len() > 1 && cursor != 1 && subs.contains(&line[1]) {
+        if line.len() > start && cursor != start && subs.contains(&line[start]) {
             command.push(' ');
-            command.push_str(line[1]);
-            start = 2;
-        } else if !matches!(command.as_str(), "setup" | "nodes") {
-            return if cursor == 1 {
+            command.push_str(line[start]);
+            start += 1;
+        } else if matches!(command.as_str(), "setup" | "nodes") {
+            break;
+        } else {
+            return if cursor == start {
                 Some(values(help_options(&line, cursor), current))
             } else {
                 None
@@ -399,6 +432,37 @@ fn complete(words: &[String], original_cursor: usize) -> Option<String> {
     }
     let spec = spec(&command)?;
     arguments(&spec, &line, start, cursor, json, false)
+}
+
+/// Nested command candidates inspect syntax only. No filesystem lookup or
+/// dispatch is performed while deciding between subcommands.
+fn command_syntax(command: &str, line: &[&str], start: usize, json: bool) -> bool {
+    if let Some(spec) = spec(command) {
+        let mut candidate_line = line.to_vec();
+        candidate_line.push("");
+        return arguments(
+            &spec,
+            &candidate_line,
+            start,
+            candidate_line.len() - 1,
+            json,
+            true,
+        )
+        .is_some();
+    }
+    let subs = subcommands(command);
+    if subs.is_empty() {
+        return false;
+    }
+    let Some(next) = line.get(start) else {
+        return true;
+    };
+    if subs.contains(next) {
+        command_syntax(&format!("{command} {next}"), line, start + 1, json)
+    } else {
+        let help_line: Vec<String> = line.iter().map(|word| (*word).into()).collect();
+        super::help::for_args(&help_line).is_some()
+    }
 }
 
 fn arguments(

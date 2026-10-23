@@ -1,5 +1,7 @@
 # 관리 CLI 독립 업데이트
 
+이 문서의 `design/`·`results/`·다른 문서 상대 링크는 BXDL 저장소 기준이다. CLI-only 배포본의 문서는 `management-cli.md`와 `completion.md`이며, 설치·업데이트·자동완성 명령은 동봉 문서만으로 따라 할 수 있다.
+
 새 관리 CLI를 설치 package 밖에서 실행해도 검증된 기존 RC.3 package를 운용할 수 있다. package 내부의 `bin/bxdl`·NIGO JAR·JRE를 덮어쓰거나 archive를 다시 만들지 않는다. 관리 CLI는 대상과 입력을 검사한 뒤 해당 package의 실행기에 고정 명령·JSON으로 위임한다.
 
 ```sh
@@ -15,6 +17,124 @@
 별도 목록을 쓰면 이름 명령에도 동일한 `--home`을 지정한다. 이름과 `--instance`는 둘 중 하나만 받는다. 기존 경로 명령은 catalog가 없어도 동작하며 `--home`을 섞지 않는다. 관리 CLI를 바꿔도 사용자 목록·control·data를 다시 만들지 않는다.
 
 개발 checkout에서는 `make build`로 만든 `bin/bxdl`을 외부 관리 CLI로 사용한다. 배포 시에도 package 밖의 관리 CLI 실행 파일만 교체한다. `bxdl version --json`의 version/revision은 현재 관리 CLI의 식별 정보이며 NIGO 엔진 버전과 별도로 관리한다. 기존 이름 목록은 같은 사용자/관리 home에서 이어 읽는다.
+
+## Mac 관리 CLI 설치
+
+CLI05-02는 Mac arm64용 CLI 전용 배포본과 사용자 권한의 `cli install/update/info/rollback`을 제공한다. 검증 범위와 현재 상태는 [구현 현황](./implementation-status.md)을 따른다. 관리 CLI 배포본에는 JRE나 NIGO 엔진이 없으므로 Rust/Cargo, Java 또는 노드 실행 없이 CLI를 설치할 수 있다. 기존 노드용 `bxdl install`은 유지한다.
+
+공급받은 배포본을 새 디렉터리에 푼 뒤 그 안의 실행 파일로 최초 설치한다. 서명 배포본의 공개키는 배포본과 별도로 신뢰한 경로에서 받는다. 다음 `./bxdl-cli`는 풀어 둔 디렉터리의 예시다.
+
+```zsh
+./bxdl-cli/bin/bxdl cli install --public-key /trusted/bxdl-cli-public.pem
+```
+
+`--from`을 생략하면 지금 실행한 바이너리를 포함한 배포 디렉터리를 찾는다. checkout에서 빌드한 단독 바이너리에는 이 방식이 적용되지 않는다. 이미 신뢰하는 새 관리 CLI가 있으면 archive 또는 풀어 둔 디렉터리를 직접 지정할 수도 있다.
+
+```zsh
+/path/to/bxdl cli install --from /downloads/bxdl-cli.tar.gz --public-key /trusted/bxdl-cli-public.pem
+```
+
+기본 경로는 다음과 같다. `sudo`가 필요하지 않으며 셸 설정 파일을 자동으로 편집하지 않는다.
+
+| 용도 | 기본 경로 |
+| --- | --- |
+| CLI 배포본·선택 기록 | `~/Library/Application Support/BXDL-CLI` |
+| PATH에 넣을 실행 진입점 | `~/.local/bin/bxdl` |
+| 선택한 CLI의 자동완성 | `~/Library/Application Support/BXDL-CLI/current/share/zsh/site-functions` |
+| 기존 노드 목록·준비·운용 기록 | `~/Library/Application Support/BXDL` |
+
+CLI 위치는 `--root`/`--bin-dir`, 노드 목록 위치는 `--home`으로 지정한다. 서로 다른 저장소다. 사용자 자료가 있는 폴더나 노드·runtime package를 CLI root로 선택하지 않는다. 기존 `bin-dir/bxdl`이 이 설치가 관리하는 링크가 아니면 덮어쓰지 않는다.
+
+현재 터미널에서 설치한 CLI와 자동완성을 사용한다.
+
+```zsh
+export PATH="$HOME/.local/bin:$PATH"
+rehash
+command -v bxdl
+bxdl version --json
+bxdl cli info
+autoload -Uz compinit
+compinit
+source <(bxdl completion zsh)
+```
+
+`command -v bxdl`의 경로가 원하는 진입점인지 확인한다. `cli info`는 CLI root·실행 진입점·이번 명령을 실행한 파일·현재와 이전 버전·PATH의 파일 우선순위를 표시한다. 셸의 alias나 함수까지 검사하지는 않으므로 다른 결과가 나오면 `type -a bxdl`로 셸 설정을 확인한다. 아직 설치하지 않았으면 `NOT_INSTALLED`를 성공 응답으로 돌려주며 폴더를 만들지 않는다.
+
+새 터미널에도 적용하려면 자신의 `.zshrc`에서 다음 PATH/fpath를 설정한다. fpath는 기존 `compinit` 호출 앞에 넣는다. 이미 초기화하는 설정이 있다면 `compinit`을 중복 추가하지 않는다.
+
+```zsh
+export PATH="$HOME/.local/bin:$PATH"
+fpath=("$HOME/Library/Application Support/BXDL-CLI/current/share/zsh/site-functions" $fpath)
+autoload -Uz compinit
+compinit
+```
+
+이 고정 경로는 선택한 CLI와 함께 전환된다. 다른 디렉터리에 복사한 예전 `_bxdl`이 먼저 로드되지 않도록 fpath 순서를 확인한다. 현재 셸이 이미 읽은 완성 함수는 업데이트 뒤 `source <(bxdl completion zsh)`로 다시 읽는다. [자동완성 가이드](./completion.md)에서 Tab 예시를 볼 수 있다.
+
+## 업데이트와 복귀
+
+첫 서명 설치 때 공개키를 CLI root에 고정한다. 이후 업데이트는 그 키로 검증하므로 공개키 옵션을 다시 입력하지 않아도 된다. 인터넷에서 최신 버전을 찾거나 다운로드하지 않으며 공급받은 로컬 archive/디렉터리를 명시한다.
+
+```zsh
+bxdl cli update --from /downloads/bxdl-cli-next.tar.gz
+bxdl version --json
+bxdl cli info
+source <(bxdl completion zsh)
+```
+
+새 배포본의 manifest·inventory·파일 hash·서명을 확인하고 바이너리의 제한된 `version --json`을 대조한 뒤 현재 선택을 전환한다. CLI와 자동완성은 같은 버전으로 바뀐다. 같은 version/revision의 같은 배포본 재요청은 변경하지 않으며, 같은 identity에 다른 파일을 넣은 공급물은 거부한다. 키나 신뢰 정책을 자동으로 바꾸지 않는다.
+
+이전 선택은 보존한다. 문제가 있으면 다음 명령으로 돌아간다.
+
+```zsh
+bxdl cli rollback
+bxdl version --json
+source <(bxdl completion zsh)
+```
+
+복귀도 저장한 이전 배포본의 무결성을 검사한다. CLI 복귀는 노드 엔진의 rollback이나 DB 복구를 수행하지 않는다. 이전 버전이 없거나 저장 파일이 손상됐다면 임의 버전을 선택하지 않고 오류를 반환한다.
+
+별도 위치를 쓰면 최초 설치에 두 위치를 함께 정한다. 이후에는 같은 `--root`만 지정하면 저장한 실행 진입점 위치를 이어 쓴다. 기존 설치에 다른 `--bin-dir`을 지정하는 이동은 지원하지 않는다.
+
+```zsh
+/path/to/bxdl cli install --from /downloads/bxdl-cli.tar.gz \
+  --root "$HOME/team-cli" --bin-dir "$HOME/team-bin" \
+  --public-key /trusted/bxdl-cli-public.pem
+"$HOME/team-bin/bxdl" cli info --root "$HOME/team-cli"
+"$HOME/team-bin/bxdl" cli update --root "$HOME/team-cli" --from /downloads/bxdl-cli-next.tar.gz
+"$HOME/team-bin/bxdl" cli rollback --root "$HOME/team-cli"
+```
+
+실행 명령이 작업 요청이며 번호 메뉴나 TTY 문답을 추가하지 않는다. 자동화에서는 각 명령에 `--json`을 붙인다. 검증·권한·경로 충돌로 전환 전에 실패하면 기존 선택을 유지한다. 오류 뒤에는 `cli info`와 `version --json`으로 상태를 확인한다. 선택 결과를 확정할 수 없다는 오류는 성공으로 취급하지 않는다. 저장소 파일이나 링크를 수동으로 바꿔 오류를 숨기지 않는다.
+
+## 개발 배포본과 제작
+
+서명 없는 개발 배포본은 설치와 업데이트 **매번** 명시 opt-in이 필요하다. signed root의 검증을 우회하는 옵션이 아니다.
+
+```zsh
+./bxdl-cli/bin/bxdl cli install --allow-unsigned-development
+bxdl cli update --from /downloads/bxdl-cli-dev-next.tar.gz --allow-unsigned-development
+```
+
+배포 제작자는 clean commit에서 정확한 Git revision을 포함하는 CLI-only archive를 만든다. 출력 파일은 새 경로여야 하며 기존 파일을 교체하지 않는다. private key는 archive에 포함하지 않는다.
+
+```sh
+python3 tools/build-management-cli.py --output /output/bxdl-cli.tar.gz --signing-key /private/cli-signing.pem
+```
+
+수정 중인 checkout에서는 개발 모드로 빌드할 수 있다. 이때 revision은 `development`이고 서명할 수 없다. 같은 development identity로 내용이 달라진 배포본을 기존 선택 위에 설치할 수 없으므로 서로 다른 개발 실험은 별도 임시 CLI root에서 확인한다.
+
+```sh
+python3 tools/build-management-cli.py --development --allow-unsigned-development --output /output/bxdl-cli-dev.tar.gz
+```
+
+저수준 제작·검증 명령은 `bxdl cli bundle build --help`와 `bxdl cli bundle verify --help`를 따른다. 검증만 하려면 다음처럼 실행한다. `verify`는 배포본을 설치하거나 후보 실행 파일을 실행하지 않는다.
+
+```sh
+bxdl cli bundle verify /downloads/bxdl-cli.tar.gz --public-key /trusted/bxdl-cli-public.pem --json
+```
+
+이 형식의 Ed25519 manifest 서명과 SHA-256 검사는 Apple code signing·notarization이나 정식 고객 배포 인수를 대신하지 않는다. 이번 단계의 배포 대상은 Mac arm64이며 `.pkg`/Homebrew, 자동 온라인 업데이트, 설치 제거, Linux 실제 설치는 후속 범위다. CLI/runtime 서비스·네트워크 재인수와 작성자가 아닌 사용자의 과업도 별도다.
 
 ## 지원 범위
 

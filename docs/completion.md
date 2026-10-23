@@ -1,12 +1,23 @@
 # zsh 자동완성
 
+이 문서의 `design/`·`results/`·다른 문서 상대 링크는 BXDL 저장소 기준이다. CLI-only 배포본의 문서는 `management-cli.md`와 `completion.md`이며, 설치·업데이트·자동완성 명령은 동봉 문서만으로 따라 할 수 있다.
+
 CLI05-01에서 zsh 자동완성을 구현·검증했다. 전체 검사와 최종 release의 실제 zsh 결과는 [검증 기록](../results/2026-10-23-cli05-zsh-completion.md)을 따른다. 현재는 zsh를 지원하며 bash/fish는 지원하지 않는다.
 
 `bxdl completion zsh`는 자동완성 스크립트를 표준출력으로 내보낸다. 셸 설정이나 파일을 자동으로 바꾸지 않으며 비TTY에서도 사용할 수 있다. 이 명령에는 `--json`을 붙이지 않는다. 함께 요청하면 사용법 오류와 JSON 오류 envelope를 반환한다.
 
 ## 현재 터미널에서 사용하기
 
-먼저 새 관리 CLI를 실행할 수 있도록 준비한다. 개발 checkout의 저장소 루트에서는 다음과 같이 빌드하고 이 터미널의 PATH에 추가할 수 있다.
+먼저 새 관리 CLI를 실행할 수 있도록 준비한다. CLI 전용 Mac 배포본은 [독립 설치·업데이트 가이드](./management-cli.md)에 따라 설치한다. 기본 위치에 설치했다면 다음과 같이 PATH를 연결한다.
+
+```zsh
+export PATH="$HOME/.local/bin:$PATH"
+rehash
+command -v bxdl
+bxdl version
+```
+
+개발 checkout의 저장소 루트에서는 직접 빌드하고 이 터미널의 PATH에 추가할 수도 있다.
 
 ```zsh
 make build
@@ -42,7 +53,18 @@ bxdl status --home "/path/to/team home" lo[Tab]
 
 ## 새 터미널에도 적용하기
 
-현재 셸에서 확인한 뒤 직접 관리하는 completion 디렉터리에 스크립트를 저장할 수 있다. 기존 `_bxdl`을 관리하고 있다면 교체할 파일을 먼저 확인한다.
+`cli install`로 설치했다면 선택한 CLI와 함께 전환되는 고정 경로를 사용한다. 자신의 zsh 설정에서 기존 `compinit` 호출 **앞**에 PATH/fpath를 추가한다. 이미 초기화하는 설정이 있다면 `compinit`을 중복 추가하지 않는다.
+
+```zsh
+export PATH="$HOME/.local/bin:$PATH"
+fpath=("$HOME/Library/Application Support/BXDL-CLI/current/share/zsh/site-functions" $fpath)
+autoload -Uz compinit
+compinit
+```
+
+별도 CLI root를 사용했다면 `cli info --root <경로>`가 출력한 fpath를 사용한다. 예전에 다른 디렉터리에 복사한 `_bxdl`이 우선되지 않도록 fpath 순서를 확인한다. 현재 셸에서 이미 로드한 함수는 `source <(bxdl completion zsh)`로 다시 읽는다.
+
+단독 개발 바이너리를 쓰거나 직접 completion 파일을 관리한다면 현재 셸에서 확인한 뒤 원하는 디렉터리에 스크립트를 저장할 수 있다. 기존 `_bxdl`을 관리하고 있다면 교체할 파일을 먼저 확인한다.
 
 ```zsh
 mkdir -p "$HOME/.zsh/completions"
@@ -57,7 +79,7 @@ autoload -Uz compinit
 compinit
 ```
 
-그 뒤 새 터미널을 연다. 설정 프레임워크가 완성 함수를 캐시해 새 파일을 찾지 못하는 경우 현재 셸에서는 위 `source <(bxdl completion zsh)` 방식으로 바로 적용할 수 있다. BXDL은 `.zshrc`·PATH·completion 파일을 자동으로 쓰지 않는다. 관리 CLI를 업데이트한 뒤에는 저장한 `_bxdl`도 같은 명령으로 갱신한다.
+그 뒤 새 터미널을 연다. 설정 프레임워크가 완성 함수를 캐시해 새 파일을 찾지 못하는 경우 현재 셸에서는 위 `source <(bxdl completion zsh)` 방식으로 바로 적용할 수 있다. BXDL은 `.zshrc`·PATH를 자동으로 바꾸지 않는다. `cli install/update`는 전용 설치 root 안에 CLI와 자동완성을 함께 배치한다. 직접 복사한 `_bxdl`을 쓰는 경우에만 관리 CLI 업데이트 뒤 위 출력 명령으로 파일도 갱신한다.
 
 ## 제안하는 정보와 한도
 
@@ -67,4 +89,4 @@ Tab 조회는 관리 폴더·잠금·기록을 만들거나 수정하지 않으�
 
 후보가 나타나지 않으면 `command -v bxdl`과 `bxdl completion zsh --help`로 새 관리 CLI를 선택했는지 확인한다. 별도 관리 위치의 이름은 같은 명령줄에 `--home`을 입력한 뒤 완성한다. 잘못된 명령/옵션 조합이나 후보 조회 실패는 후보 없이 끝나며, 자동으로 다른 관리 위치를 찾아보거나 설정을 복구하지 않는다.
 
-자동완성은 관리 CLI의 입력 편의 기능이다. 기존 RC.3 runtime package를 다시 만들지 않으며 NIGO/JRE·노드 DB·LaunchAgent 동작은 바꾸지 않는다. 독립 Mac 관리 CLI 배포, 새 CLI와 기존 runtime 조합의 서비스/네트워크 인수, 작성자가 아닌 사용자의 과업 검증은 [CLI-05 후속 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)에 따로 남긴다.
+자동완성은 관리 CLI의 입력 편의 기능이다. 기존 RC.3 runtime package를 다시 만들지 않으며 NIGO/JRE·노드 DB·LaunchAgent 동작은 바꾸지 않는다. 독립 Mac 관리 CLI 배포·업데이트는 [사용 가이드](./management-cli.md)를 따른다. 새 CLI와 기존 runtime 조합의 서비스/네트워크 인수, 작성자가 아닌 사용자의 과업 검증은 [CLI-05 후속 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)에 따로 남긴다.

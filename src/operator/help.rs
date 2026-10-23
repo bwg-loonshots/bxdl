@@ -9,6 +9,38 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
         return None;
     };
     let (usage, note) = match topic {
+        ["cli"] => (
+            "bxdl cli install [옵션]\n  bxdl cli update --from <CLI-배포본> [옵션]\n  bxdl cli info [옵션]\n  bxdl cli rollback [옵션]\n  bxdl cli bundle --help  (배포본 제작·검증)",
+            "관리 CLI를 사용자 권한으로 설치·업데이트하고 선택한 버전을 확인하거나 이전 버전으로 복귀합니다.\n기존 bxdl install은 노드 패키지 설치용입니다. cli install/update/rollback은 명령 실행 자체가 변경 요청이며 추가 문답 없이 진행합니다. 비TTY와 --json을 지원하고 표준입력을 읽지 않습니다.\n기본 CLI 설치 위치는 ~/Library/Application Support/BXDL-CLI이며 진입점은 ~/.local/bin/bxdl입니다. --root/--bin-dir로 별도 위치를 지정하며 노드 목록의 --home과 혼용하지 않습니다.\n새 노드 설치·초기화·시작이나 기존 RC.3 패키지·catalog·control·data 변경은 수행하지 않습니다. 네트워크 최신 버전 탐색이나 자동 다운로드는 제공하지 않습니다. 각 하위 명령의 --help를 확인하세요.",
+        ),
+        ["cli", "install"] => (
+            "bxdl cli install [--from <CLI-archive-or-directory>] [--root <CLI-root>] [--bin-dir <entry-dir>] [--public-key <trusted.pem> | --allow-unsigned-development] [--json]",
+            "관리 CLI 전용 배포본을 검증해 새 버전 위치에 설치하고 고정 진입점을 연결합니다. --from을 생략하면 실행 중인 CLI가 속한 압축 해제 배포본을 사용하며 일반 개발 checkout 바이너리는 배포본으로 추정하지 않습니다.\n최초 설치에는 외부 신뢰키 또는 명시 --allow-unsigned-development가 필요합니다. 신뢰키를 배포본 자체에서 채택하지 않습니다. 이미 설치된 같은 배포본은 다시 쓰지 않으며 누락된 본 설치의 진입점만 재연결할 수 있습니다. 같은 identity에 다른 내용이 있거나 다른 bxdl 파일과 충돌하면 거절합니다.\nPATH·셸 설정은 자동 수정하지 않습니다. 출력된 안내를 적용하고 새 터미널에서 bxdl cli info와 bxdl version --json을 확인하세요. 설치는 Mac arm64를 대상으로 하며 노드·JAR·JRE·LaunchAgent는 변경하지 않습니다.",
+        ),
+        ["cli", "update"] => (
+            "bxdl cli update --from <CLI-archive-or-directory> [--root <CLI-root>] [--bin-dir <entry-dir>] [--public-key <trusted.pem> | --allow-unsigned-development] [--json]",
+            "지정한 로컬 관리 CLI 배포본을 검증·설치한 뒤 선택 버전을 전환합니다. --from은 필수이며 온라인 최신 버전 조회·자동 다운로드를 하지 않습니다.\n서명한 설치는 저장한 신뢰키를 재사용할 수 있으며 다른 키·unsigned 정책으로 바꾸지 않습니다. 무서명 개발 설치의 업데이트는 매번 --allow-unsigned-development를 명시해야 합니다. 전환 전 실패 시 기존 선택을 유지하고 이전 버전은 복귀용으로 보존합니다. 결과가 불명확하면 cli info로 기록과 선택 경로를 확인하세요.\nCLI와 같은 버전의 zsh 자동완성 파일도 함께 배치합니다. 이미 열린 셸에는 안내된 다시 읽기 명령을 적용하세요. 기존 노드 목록·준비·control·data 및 RC.3 package를 다시 만들지 않습니다.",
+        ),
+        ["cli", "info"] => (
+            "bxdl cli info [--root <CLI-root>] [--bin-dir <entry-dir>] [--json]",
+            "관리 CLI 설치 위치·선택 버전·이전 버전과 실행 진입점 정보를 읽습니다. 없는 설치 위치를 만들거나 잠금·기록을 쓰지 않습니다.\n현재 실행한 bxdl과 설치된 선택 버전은 다를 수 있습니다. 출력된 경로와 셸의 command -v bxdl을 확인하세요. 별도 위치에 설치했다면 같은 --root를 사용합니다. --bin-dir를 생략하면 설치 기록의 진입점 위치를 재사용합니다.\n노드의 실행 상태나 엔진 호환 조합을 관측하지 않습니다. 노드 상태는 기존 bxdl status <이름>으로 확인하세요.",
+        ),
+        ["cli", "rollback"] => (
+            "bxdl cli rollback [--root <CLI-root>] [--bin-dir <entry-dir>] [--json]",
+            "저장된 이전 관리 CLI를 다시 검증하고 선택 버전을 되돌립니다. 이전 버전이 없거나 보존된 파일이 변경되었으면 거절합니다.\n명령 실행이 복귀 요청이며 표준입력 문답 없이 진행합니다. 노드 패키지 downgrade·DB 복구·목록/설정 형식 변환은 수행하지 않습니다.\n복귀 후 cli info와 version을 확인하고 zsh 자동완성을 다시 읽으세요. 현재 셸의 PATH가 다른 bxdl을 먼저 선택하면 해당 설정을 직접 바로잡아야 합니다.",
+        ),
+        ["cli", "bundle"] => (
+            "bxdl cli bundle build --help\n  bxdl cli bundle verify --help",
+            "관리 CLI 전용 배포본을 제작하거나 검증합니다. 노드 패키지의 package build/verify와 공급 형식이 다릅니다.\nJAR·JRE·노드 데이터는 포함하지 않으며 로컬 입력만 사용합니다. 서명 검증은 외부 신뢰키를 기준으로 하고 개발용 무서명 자료는 명시적으로 선택해야 합니다.",
+        ),
+        ["cli", "bundle", "build"] => (
+            "bxdl cli bundle build --root <stage> --output <new.tar.gz> --version <CLI-version> --revision <Git-revision> (--signing-key <private.pem> | --allow-unsigned-development) [--json]",
+            "준비된 관리 CLI 바이너리·자동완성·사용 가이드를 CLI 전용 manifest와 함께 새 archive로 만듭니다. 입력을 내려받거나 컴파일하지 않습니다.\n배포 빌드는 실제 Git revision을 바이너리와 manifest에 일치시켜야 합니다. 개발 단계의 development revision과 무서명 자료는 고객용 정식 배포 인증이 아닙니다. 기존 출력은 덮어쓰지 않습니다.\n신뢰한 signing key는 stage 밖에 두며 archive에 포함하지 않습니다. 완성한 배포본은 cli bundle verify로 독립 확인할 수 있습니다.",
+        ),
+        ["cli", "bundle", "verify"] => (
+            "bxdl cli bundle verify <CLI-archive-or-directory> (--public-key <trusted.pem> | --allow-unsigned-development) [--json]",
+            "관리 CLI 전용 manifest·파일 목록·크기·해시와 선택한 서명 정책을 검증합니다. archive와 압축 해제된 배포 디렉터리를 받습니다.\n검증만으로 새 폴더를 만들거나 바이너리를 실행하지 않습니다. 신뢰키는 공급 자료 밖에서 독립적으로 확인해 제공하세요.\n이 결과는 Mac 코드서명·공증이나 실제 노드 운용 인수를 뜻하지 않습니다. 설치/업데이트는 별도 cli install/update 명령입니다.",
+        ),
         ["completion"] | ["completion", "zsh"] => (
             "bxdl completion zsh",
             "zsh 자동완성 스크립트를 표준출력으로 내보냅니다. 비TTY에서도 사용할 수 있으며 --json과 함께 요청하면 사용법 오류입니다.\ncompinit 실행 뒤 source <(bxdl completion zsh)로 현재 셸에 적용하세요. 셸 설정 파일은 자동 수정하지 않습니다.\n명령·옵션·등록 노드 이름·설치 준비 이름을 해당 위치에서 제안합니다. 이름은 입력 중인 --home 또는 Mac 기본 관리 위치에서 읽습니다.\n자동완성은 관리 위치·기록을 쓰거나 노드·엔진·서비스를 호출하지 않습니다. 제안된 이름이 현재 정상 상태나 실행 승인을 뜻하지는 않습니다.\n현재 지원 셸은 zsh이며 bash/fish는 지원하지 않습니다. 설치·사용 예시는 docs/completion.md를 따르세요.",

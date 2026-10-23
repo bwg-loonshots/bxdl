@@ -1,5 +1,7 @@
 //! Operator interface. Mutations require a registered instance and explicit intent.
-use crate::{artifact, config, engine, error::BxdlError, install, operator, runtime, setup};
+use crate::{
+    artifact, config, engine, error::BxdlError, install, management, operator, runtime, setup,
+};
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::{
@@ -57,6 +59,13 @@ pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
   bxdl runtime stage --help               고정 JRE 준비
   bxdl engine inspect --help              엔진 identity 검사
   bxdl engine preflight --help            native 설정 cold 검사
+
+관리 CLI 설치·업데이트:
+  bxdl cli install --help                 관리 CLI 최초 설치
+  bxdl cli update --from <새-CLI-배포본>   검증 후 관리 CLI 교체
+  bxdl cli info                          설치·현재 선택 경로 확인
+  bxdl cli rollback                      이전 관리 CLI로 복귀
+  cli 명령의 --root는 CLI 설치 위치이며 노드 목록의 --home과 별개입니다.
 
 자동완성:
   bxdl completion zsh                    zsh 자동완성 스크립트 출력
@@ -233,7 +242,12 @@ pub fn run_with_input<'a>(
     if writeln!(out, "{} [{}]", response.message, response.reason_code).is_err() {
         return 7;
     }
-    if !matches!(response.command.as_str(), "start" | "status" | "stop") || response.data.is_none()
+    if response.command == "cli" || response.command.starts_with("cli ") {
+        if print_management_guidance(out, &response).is_err() {
+            return 7;
+        }
+    } else if !matches!(response.command.as_str(), "start" | "status" | "stop")
+        || response.data.is_none()
     {
         if let Some(view) = operator::view::command(&response.outcome, &response.reason_code) {
             if print_guidance(out, &view).is_err() {
@@ -242,6 +256,16 @@ pub fn run_with_input<'a>(
         }
     }
     if let Some(data) = response.data {
+        if matches!(
+            response.command.as_str(),
+            "cli install" | "cli update" | "cli info" | "cli rollback"
+        ) {
+            return if print_management_summary(out, &data).is_ok() {
+                exit
+            } else {
+                7
+            };
+        }
         if matches!(response.command.as_str(), "nodes" | "nodes add") {
             return if print_nodes_summary(out, &data, response.command == "nodes add").is_ok() {
                 exit
@@ -292,6 +316,86 @@ pub fn run_with_input<'a>(
         }
     }
     exit
+}
+
+fn print_management_guidance(
+    out: &mut dyn Write,
+    response: &ResultEnvelope,
+) -> std::io::Result<()> {
+    match response.reason_code.as_str() {
+        "CLI_ACTIVATION_UNKNOWN" => writeln!(
+            out,
+            "CLI 선택 결과가 확정되지 않았습니다. 같은 --root를 지정한 bxdl cli info로 설치 기록과 진입점을 확인하세요. 확인 전에는 업데이트·복귀를 반복하지 마세요."
+        ),
+        "CLI_BUSY" => writeln!(
+            out,
+            "다른 관리 CLI 작업이 진행 중입니다. 작업이 끝난 뒤 같은 --root를 지정한 bxdl cli info로 결과를 확인하세요."
+        ),
+        "INVALID_ARGUMENTS" => writeln!(out, "사용법: bxdl {} --help", response.command),
+        _ => Ok(()),
+    }
+}
+
+fn print_management_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
+    let status = data["status"].as_str().unwrap_or("UNKNOWN");
+    let label = match status {
+        "NOT_INSTALLED" => "설치 기록 없음",
+        "INSTALLED" => "설치 완료",
+        "UPDATED" => "업데이트 완료",
+        "ROLLED_BACK" => "이전 버전으로 복귀 완료",
+        "UNCHANGED" if data["changed"] == true => "같은 배포본 · 진입점 연결 복구",
+        "UNCHANGED" => "같은 배포본 · 변경 없음",
+        "READY" => "선택한 관리 CLI 확인",
+        _ => status,
+    };
+    writeln!(out, "설치 상태: {label}")?;
+    for (key, label) in [
+        ("root", "CLI 설치 위치"),
+        ("executable", "실행 진입점"),
+        ("invokedExecutable", "이번 명령을 실행한 CLI"),
+    ] {
+        if let Some(value) = data[key].as_str() {
+            writeln!(out, "{label}: {value}")?;
+        }
+    }
+    for (key, label) in [("current", "현재 선택"), ("previous", "이전 버전")] {
+        if let Some(value) = data[key].as_object() {
+            writeln!(
+                out,
+                "{label}: {} · revision {}",
+                value.get("version").and_then(Value::as_str).unwrap_or("?"),
+                value.get("revision").and_then(Value::as_str).unwrap_or("?")
+            )?;
+        }
+    }
+    if let Some(value) = data["pathStatus"].as_str() {
+        let label = match value {
+            "SELECTED" => "설치한 CLI가 선택됨",
+            "SHADOWED" => "다른 bxdl이 먼저 선택됨",
+            "NOT_ON_PATH" => "PATH에서 bxdl을 찾지 못함",
+            _ => value,
+        };
+        writeln!(
+            out,
+            "PATH 확인: {label} · 현재 셸에서는 command -v bxdl로 확인하세요."
+        )?;
+    }
+    if let Some(value) = data["activation"].as_str() {
+        writeln!(out, "선택 기록: {value}")?;
+    }
+    if let Some(lines) = data["shellSetup"]
+        .as_array()
+        .filter(|lines| status != "NOT_INSTALLED" && !lines.is_empty())
+    {
+        writeln!(out, "셸 적용 안내 (설정 파일은 자동 수정하지 않습니다):")?;
+        for line in lines.iter().filter_map(Value::as_str) {
+            writeln!(out, "{line}")?;
+        }
+    }
+    if status == "NOT_INSTALLED" {
+        writeln!(out, "최초 설치: bxdl cli install --help")?;
+    }
+    Ok(())
 }
 
 fn print_preparation_summary(
@@ -1491,6 +1595,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
         );
     }
     match args[0].as_str() {
+        "cli" => dispatch_management(&args[1..]),
         "nodes" => dispatch_nodes(&args[1..]),
         "version" => {
             if args.len() != 1 {
@@ -1505,7 +1610,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["completion.zsh", "nodes.list", "nodes.add", "nodes.named-operations", "executor.rc3-legacy-v1", "runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "setup.preparation.sequential", "setup.preparation.list", "setup.preparation.show", "setup.preparation.edit", "setup.apply", "nodes.named-initialization", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
+                        "capabilities": ["management-cli.v1", "management.bundle.build", "management.bundle.verify", "management.install.macos", "management.update.macos", "management.info", "management.rollback.macos", "completion.zsh", "nodes.list", "nodes.add", "nodes.named-operations", "executor.rc3-legacy-v1", "runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "setup.preparation.sequential", "setup.preparation.list", "setup.preparation.show", "setup.preparation.edit", "setup.apply", "nodes.named-initialization", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
                         "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),
@@ -1904,6 +2009,168 @@ fn dispatch_engine(args: &[String]) -> (ResultEnvelope, i32) {
             6,
         ),
         Err(error) => failure(command, error, 3),
+    }
+}
+
+fn management_failure(command: &str, error: BxdlError) -> (ResultEnvelope, i32) {
+    let code = error.code.as_str();
+    if code == "CLI_ACTIVATION_UNKNOWN" {
+        (result(command, "UNKNOWN", code, &error.message, None), 6)
+    } else if code == "CLI_BUSY" {
+        failure(command, error, 6)
+    } else if code == "CLI_PLATFORM_UNSUPPORTED" {
+        (
+            result(command, "UNSUPPORTED", code, &error.message, None),
+            4,
+        )
+    } else {
+        failure(command, error, 3)
+    }
+}
+
+fn dispatch_management(args: &[String]) -> (ResultEnvelope, i32) {
+    let Some(action) = args.first().map(String::as_str) else {
+        return invalid("cli");
+    };
+    if action == "bundle" {
+        return dispatch_management_bundle(&args[1..]);
+    }
+    if !matches!(action, "install" | "update" | "info" | "rollback") {
+        return invalid("cli");
+    }
+    let command = format!("cli {action}");
+    let mut allowed = vec![("root", true), ("bin-dir", true)];
+    if matches!(action, "install" | "update") {
+        allowed.extend([
+            ("from", true),
+            ("public-key", true),
+            ("allow-unsigned-development", false),
+        ]);
+    }
+    let Some((flags, positions)) = parse(&args[1..], &allowed) else {
+        return invalid(&command);
+    };
+    if !positions.is_empty()
+        || (action == "update" && !flags.contains_key("from"))
+        || (flags.contains_key("public-key") && flags.contains_key("allow-unsigned-development"))
+    {
+        return invalid(&command);
+    }
+    let locations = match management::default_locations(
+        flags.get("root").map(Path::new),
+        flags.get("bin-dir").map(Path::new),
+    ) {
+        Ok(locations) => locations,
+        Err(error) => return management_failure(&command, error),
+    };
+    let options = management::InstallOptions {
+        locations,
+        from: flags.get("from").map(PathBuf::from),
+        trust: management::bundle::VerifyOptions {
+            public_key_path: flags.get("public-key").map(PathBuf::from),
+            allow_unsigned_development: flags.contains_key("allow-unsigned-development"),
+        },
+    };
+    let response = match action {
+        "install" => management::install(&options),
+        "update" => management::update(&options),
+        "info" => management::info(&options.locations),
+        "rollback" => management::rollback(&options.locations),
+        _ => unreachable!(),
+    };
+    match response {
+        Ok(value) => {
+            let code = format!("CLI_{}", value.status);
+            report(
+                &command,
+                "SUCCEEDED",
+                &code,
+                "관리 CLI 결과를 확인했습니다.",
+                value,
+                0,
+            )
+        }
+        Err(error) => management_failure(&command, error),
+    }
+}
+
+fn dispatch_management_bundle(args: &[String]) -> (ResultEnvelope, i32) {
+    match args.first().map(String::as_str) {
+        Some("verify") => {
+            let command = "cli bundle verify";
+            let Some((flags, positions)) = parse(
+                &args[1..],
+                &[("public-key", true), ("allow-unsigned-development", false)],
+            ) else {
+                return invalid(command);
+            };
+            if positions.len() != 1
+                || flags.contains_key("public-key")
+                    == flags.contains_key("allow-unsigned-development")
+            {
+                return invalid(command);
+            }
+            let options = management::bundle::VerifyOptions {
+                public_key_path: flags.get("public-key").map(PathBuf::from),
+                allow_unsigned_development: flags.contains_key("allow-unsigned-development"),
+            };
+            match management::bundle::verify(Path::new(&positions[0]), &options) {
+                Ok(bundle) => report(
+                    command,
+                    "SUCCEEDED",
+                    "CLI_BUNDLE_VERIFIED",
+                    "관리 CLI 배포 파일을 검증했습니다. 실행·설치·Mac 배포 인증은 수행하지 않았습니다.",
+                    bundle.report(),
+                    0,
+                ),
+                Err(error) => management_failure(command, error),
+            }
+        }
+        Some("build") => {
+            let command = "cli bundle build";
+            let Some((flags, positions)) = parse(
+                &args[1..],
+                &[
+                    ("root", true),
+                    ("output", true),
+                    ("version", true),
+                    ("revision", true),
+                    ("signing-key", true),
+                    ("allow-unsigned-development", false),
+                ],
+            ) else {
+                return invalid(command);
+            };
+            if !positions.is_empty()
+                || ["root", "output", "version", "revision"]
+                    .iter()
+                    .any(|name| !flags.contains_key(*name))
+                || flags.contains_key("signing-key")
+                    == flags.contains_key("allow-unsigned-development")
+            {
+                return invalid(command);
+            }
+            let options = management::bundle::BuildOptions {
+                root: PathBuf::from(&flags["root"]),
+                output: PathBuf::from(&flags["output"]),
+                version: flags["version"].clone(),
+                revision: flags["revision"].clone(),
+                signing_key_path: flags.get("signing-key").map(PathBuf::from),
+                allow_unsigned_development: flags.contains_key("allow-unsigned-development"),
+            };
+            match management::bundle::build(&options) {
+                Ok(value) => report(
+                    command,
+                    "SUCCEEDED",
+                    "CLI_BUNDLE_BUILT",
+                    "관리 CLI 배포본을 만들고 검증했습니다. 설치·Mac 배포 인증은 수행하지 않았습니다.",
+                    value,
+                    0,
+                ),
+                Err(error) => management_failure(command, error),
+            }
+        }
+        _ => invalid("cli bundle"),
     }
 }
 
@@ -2720,5 +2987,37 @@ mod startup_summary_tests {
         assert!(text.contains("기록 해석 불가"));
         assert!(text.contains("DETAIL_WITHHELD"));
         assert!(!text.contains("PRIVATE_CANARY"));
+    }
+}
+
+#[cfg(test)]
+mod management_ux_tests {
+    use super::*;
+
+    #[test]
+    fn uncertain_cli_activation_preserves_unknown_and_uses_cli_recovery_guidance() {
+        let (response, exit) = management_failure(
+            "cli update",
+            BxdlError::new("CLI_ACTIVATION_UNKNOWN", "전환 결과 확인 필요"),
+        );
+        assert_eq!(exit, 6);
+        assert_eq!(response.outcome, "UNKNOWN");
+        assert!(response.data.is_none());
+        let mut output = Vec::new();
+        print_management_guidance(&mut output, &response).unwrap();
+        let output = String::from_utf8(output).unwrap();
+        assert!(output.contains("bxdl cli info"));
+        assert!(output.contains("업데이트·복귀를 반복하지 마세요"));
+        assert!(!output.contains("instance show"));
+        assert!(!output.contains("diagnose"));
+        let (busy, exit) = management_failure("cli update", BxdlError::new("CLI_BUSY", "사용 중"));
+        assert_eq!(exit, 6);
+        assert_eq!(busy.outcome, "FAILED");
+        let (unsupported, exit) = management_failure(
+            "cli install",
+            BxdlError::new("CLI_PLATFORM_UNSUPPORTED", "지원 대상 아님"),
+        );
+        assert_eq!(exit, 4);
+        assert_eq!(unsupported.outcome, "UNSUPPORTED");
     }
 }
