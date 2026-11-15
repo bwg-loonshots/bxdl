@@ -1,0 +1,123 @@
+{
+  "cases": [
+    {
+      "id": "RDB_RESTART",
+      "passed": 1,
+      "portsReleased": true,
+      "process": {
+        "cleanup": {
+          "complete": true,
+          "forced": false,
+          "remainingPids": 0,
+          "unsafePids": 0
+        },
+        "elapsedMs": 30970,
+        "exitCode": 0,
+        "outputDrainComplete": true,
+        "status": "PASS"
+      },
+      "retries": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "RDB_OBSERVER",
+      "passed": 1,
+      "portsReleased": true,
+      "process": {
+        "cleanup": {
+          "complete": true,
+          "forced": false,
+          "remainingPids": 0,
+          "unsafePids": 0
+        },
+        "elapsedMs": 27101,
+        "exitCode": 0,
+        "outputDrainComplete": true,
+        "status": "PASS"
+      },
+      "retries": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "RDB_IMPORT",
+      "passed": 1,
+      "portsReleased": true,
+      "process": {
+        "cleanup": {
+          "complete": true,
+          "forced": false,
+          "remainingPids": 0,
+          "unsafePids": 0
+        },
+        "elapsedMs": 70521,
+        "exitCode": 0,
+        "outputDrainComplete": true,
+        "status": "PASS"
+      },
+      "retries": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "ROCKSDB_RESTART",
+      "passed": 1,
+      "portsReleased": true,
+      "process": {
+        "cleanup": {
+          "complete": true,
+          "forced": false,
+          "remainingPids": 0,
+          "unsafePids": 0
+        },
+        "elapsedMs": 37595,
+        "exitCode": 0,
+        "outputDrainComplete": true,
+        "status": "PASS"
+      },
+      "retries": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "ROCKSDB_OBSERVER",
+      "passed": 1,
+      "portsReleased": true,
+      "process": {
+        "cleanup": {
+          "complete": true,
+          "forced": false,
+          "remainingPids": 0,
+          "unsafePids": 0
+        },
+        "elapsedMs": 27719,
+        "exitCode": 0,
+        "outputDrainComplete": true,
+        "status": "PASS"
+      },
+      "retries": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "ROCKSDB_IMPORT",
+      "passed": 1,
+      "portsReleased": true,
+      "process": {
+        "cleanup": {
+          "complete": true,
+          "forced": false,
+          "remainingPids": 0,
+          "unsafePids": 0
+        },
+        "elapsedMs": 117521,
+        "exitCode": 0,
+        "outputDrainComplete": true,
+        "status": "PASS"
+      },
+      "retries": 0,
+      "status": "PASS"
+    }
+  ],
+  "harnessCommit": "9614e517a4d5522bf0740c88aa9af756044f5d0e",
+  "mixedBinaryMigrationAndLongSoakClaim": false,
+  "scope": "FINITE_FRESH_H2_ROCKSDB_RESTART_OBSERVER_IMPORT",
+  "sourceProofSha256": "33e6ab0653ff536c6e6291e336d4b9b9a5045eee390c36c6892671eb6b0cd118",
+  "status": "PASS"
+}

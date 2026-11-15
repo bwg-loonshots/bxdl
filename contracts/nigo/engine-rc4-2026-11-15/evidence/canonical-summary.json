@@ -1,0 +1,124 @@
+{
+  "auditProofSha256": "0d2d1c2d5aff5f41f3aa57f6f6359f662a5f983d524dbf4b4ab870f621e8d967",
+  "harnessCommit": "9614e517a4d5522bf0740c88aa9af756044f5d0e",
+  "junit": {
+    "executed": 1634,
+    "passed": 1634,
+    "skipped": 13,
+    "tests": 1647
+  },
+  "optIns": [
+    {
+      "className": "org.nigo.node.config.ArchiveCaptureCostDiagnosticTests",
+      "name": "attributeExactFinalizedCaptureCost()",
+      "reason": "NOT_RECORDED",
+      "status": "NOT_RUN"
+    },
+    {
+      "className": "org.nigo.node.config.StandardProductPersistentNodeTests",
+      "name": "publicSupplyAndDefaultProductSurviveColdNodeRestartsAcrossBothBackendsAndFees()",
+      "reason": "NOT_RECORDED",
+      "status": "NOT_RUN"
+    },
+    {
+      "className": "org.nigo.node.consensus.sync.QbftHistoricalProofCostDiagnosticTests",
+      "name": "compareBoundedHistoricalQueryCostWithoutPerformanceAcceptance()",
+      "reason": "NOT_RECORDED",
+      "status": "NOT_RUN"
+    },
+    {
+      "className": "org.nigo.node.consensus.sync.QbftRootRetentionCostComparisonTests",
+      "name": "observeFixedSourceCaptureWithoutPerformanceAcceptance()",
+      "reason": "NOT_RECORDED",
+      "status": "NOT_RUN"
+    },
+    {
+      "className": "org.nigo.node.consensus.sync.QbftSnapshotCpuControlledDiagnosticTests",
+      "name": "observeFixedControlledCaptureOrKernelWithoutPerformanceAcceptance()",
+      "reason": "NOT_RECORDED",
+      "status": "NOT_RUN"
+    },
+    {
+      "className": "org.nigo.node.consensus.sync.QbftSnapshotHashProfileDiagnosticTests",
+      "name": "profileBoundedRootHashAllocationAndExecutionWithoutPerformanceAcceptance()",
+      "reason": "NOT_RECORDED",
+      "status": "NOT_RUN"
+    },
+    {
+      "className": "org.nigo.node.consensus.sync.QbftSnapshotRootCostDiagnosticTests",
+      "name": "profileCaptureCompilationAndExecutionWithoutPerformanceAcceptance()",
+      "reason": "NOT_RECORDED",
+      "status": "NOT_RUN"
+    },
+    {
+      "className": "org.nigo.node.consensus.sync.QbftSnapshotRootCostDiagnosticTests",
+      "name": "isolateRootCpuWithFixedWarmupWithoutPerformanceAcceptance()",
+      "reason": "NOT_RECORDED",
+      "status": "NOT_RUN"
+    },
+    {
+      "className": "org.nigo.node.consensus.sync.QbftSnapshotRootCostDiagnosticTests",
+      "name": "compareRootCalculationAndCompleteCaptureWithoutPerformanceAcceptance()",
+      "reason": "NOT_RECORDED",
+      "status": "NOT_RUN"
+    },
+    {
+      "className": "org.nigo.node.consensus.sync.QbftSnapshotRootCostDiagnosticTests",
+      "name": "attributeBoundedRocksCaptureWithoutPerformanceAcceptance()",
+      "reason": "NOT_RECORDED",
+      "status": "NOT_RUN"
+    },
+    {
+      "className": "org.nigo.node.consensus.sync.QbftSnapshotRootCostDiagnosticTests",
+      "name": "compareInvocationScratchAndFrozenRootWithoutPerformanceAcceptance()",
+      "reason": "NOT_RECORDED",
+      "status": "NOT_RUN"
+    },
+    {
+      "className": "org.nigo.node.consensus.sync.SnapshotCpuMethodProfileReplayTests",
+      "name": "reanalyzesPreservedP1WithoutRecordingOrReplacingTheInitialFailure()",
+      "reason": "NOT_RECORDED",
+      "status": "NOT_RUN"
+    },
+    {
+      "className": "org.nigo.protocol.blockchain.pool.PendingStateStoreViewAttributionTests",
+      "name": "attributePinnedConstructionWithoutWeakeningItsSnapshot(String)",
+      "reason": "NOT_RECORDED",
+      "status": "NOT_RUN"
+    }
+  ],
+  "processes": {
+    "canonical": {
+      "cleanup": {
+        "complete": true,
+        "forced": false,
+        "remainingPids": 0,
+        "unsafePids": 0
+      },
+      "elapsedMs": 1473353,
+      "exitCode": 0,
+      "outputDrainComplete": true,
+      "status": "PASS"
+    },
+    "discovery": {
+      "cleanup": {
+        "complete": true,
+        "forced": false,
+        "remainingPids": 0,
+        "unsafePids": 0
+      },
+      "elapsedMs": 21503,
+      "exitCode": 0,
+      "outputDrainComplete": true,
+      "status": "PASS"
+    }
+  },
+  "rawXmlLogsIncluded": false,
+  "scope": "SUPERVISED_CANONICAL_GRAPH_WITH_SEPARATE_OFFLINE_XML_AUDIT",
+  "source": {
+    "commit": "037c98c315d5322fa7da266ca0254d61f3863622",
+    "dirty": false
+  },
+  "sourceProofSha256": "087e6d4321017870b212dc66b30016a82d737b5e8eb9a4464096cd346c52e0bc",
+  "status": "PASS"
+}
