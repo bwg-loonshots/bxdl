@@ -1,0 +1,77 @@
+{
+  "cases": [
+    {
+      "caseName": "misplacedOrMissingManagedCommandCannotFallBackToSpring",
+      "children": 4,
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "caseName": "engineInfoUsesOnlyMachineJsonAndNamesUnavailableSourceExecution",
+      "children": 2,
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "caseName": "fourValidatorMtlsFinalityObserverAndSameIdentityRestart",
+      "children": 19,
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "caseName": "fourValidatorMtlsFinalityObserverAndSameIdentityRestart",
+      "children": 19,
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "caseName": "explicitInitAndSameInstanceRunStopAndRestart",
+      "children": 6,
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "caseName": "explicitInitAndSameInstanceRunStopAndRestart",
+      "children": 6,
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "caseName": "interruptedInitCanOnlyResumeAnAlreadyCommittedGenesis",
+      "children": 4,
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "caseName": "unknownCommandCannotFallBackToSpring",
+      "children": 2,
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    },
+    {
+      "caseName": "interruptedInitCanOnlyResumeAnAlreadyCommittedGenesis",
+      "children": 4,
+      "postRunArtifactVerified": true,
+      "status": "PASS"
+    }
+  ],
+  "engineRebuilt": false,
+  "harnessCommit": "9614e517a4d5522bf0740c88aa9af756044f5d0e",
+  "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+  "passed": 9,
+  "process": {
+    "cleanup": {
+      "complete": true,
+      "forced": false,
+      "remainingPids": 0,
+      "unsafePids": 0
+    },
+    "elapsedMs": 211479,
+    "exitCode": 0,
+    "outputDrainComplete": true,
+    "status": "PASS"
+  },
+  "runtimeInventoryDocumentSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+  "sourceProofSha256": "72e7ef0a17438b8c467bd6828bf8ff08afe7def7271e6c84076737af21500579",
+  "status": "PASS"
+}

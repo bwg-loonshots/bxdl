@@ -1,0 +1,26 @@
+{
+  "rawEvidenceIncluded": false,
+  "records": [
+    {
+      "id": "G3_PRELAUNCH_WINDOW",
+      "proofSha256": "087fc33deea7490728cc1618189834a0c5138311efc54b11b57cac1300250295",
+      "status": "FAIL"
+    },
+    {
+      "id": "G4_TYPE4_MISSING_FROM_EXPECTATION",
+      "proofSha256": "14c47760c8c35fcbd82e63f92fcbc583128819ebbf5ff812fc2a0f003cb67d3b",
+      "status": "FAILED"
+    },
+    {
+      "id": "G4_PUBLIC_HOST_INVALID_SIGNED_GAS",
+      "proofSha256": "0bdaf68bf08eb86f6a7044a5b2825f5c242bd9ae8859145c75ff679a986f186c",
+      "status": "FAILED"
+    },
+    {
+      "id": "G5_ENTRY_IMPORT_CYCLE",
+      "proofSha256": "4fb369a40ea52f46ab12fb1e5b45e6bfdea023550d5fb376bf86681df2677aba",
+      "status": "FAILED"
+    }
+  ],
+  "scope": "PRIOR_ATTEMPTS_NOT_ERASED_BY_FINAL_PASS"
+}

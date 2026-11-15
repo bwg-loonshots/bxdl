@@ -1,0 +1,161 @@
+{
+  "runners": [
+    {
+      "harness": {
+        "commit": "dd49faf881790a40c65b261942df073bcfa6d8a7",
+        "loadedClosureSha256": "b11f3de9964f0a3fab5dccca56f119052b57a663d93160af3d1329b003f031b7",
+        "sourceSha256": "9be8f17fa00ef225afd0e1ebc04ee289ec70399cb07bacfade8b6873c545388c"
+      },
+      "inputAfter": "UNCHANGED",
+      "planSha256": "7405dfbe458da234e52ef16efb517f0040572f2d35d807fbf9fec6946e37875e",
+      "process": {
+        "cleanup": {
+          "complete": true,
+          "forced": false,
+          "remainingPids": 0,
+          "unsafePids": 0
+        },
+        "elapsedMs": 5717,
+        "exitCode": 0,
+        "outputDrainComplete": true,
+        "status": "PASS"
+      },
+      "recordedPortsRebound": true,
+      "runner": "kzg-baseline",
+      "selectedRunnerProof": "SELECTED_RUNNER_PROOF_VERIFIED",
+      "sourceProofSha256": "91a830439018546754f99ca16361c32b1bf8809752ba5ad93d9458f5cfcb19d2",
+      "status": "PASS"
+    },
+    {
+      "harness": {
+        "commit": "dd49faf881790a40c65b261942df073bcfa6d8a7",
+        "loadedClosureSha256": "b11f3de9964f0a3fab5dccca56f119052b57a663d93160af3d1329b003f031b7",
+        "sourceSha256": "9be8f17fa00ef225afd0e1ebc04ee289ec70399cb07bacfade8b6873c545388c"
+      },
+      "inputAfter": "UNCHANGED",
+      "planSha256": "50c9b03978d75c62c30f18cdefb7734873dc5c0419854640c61ed0543caf89d0",
+      "process": {
+        "cleanup": {
+          "complete": true,
+          "forced": false,
+          "remainingPids": 0,
+          "unsafePids": 0
+        },
+        "elapsedMs": 5687,
+        "exitCode": 0,
+        "outputDrainComplete": true,
+        "status": "PASS"
+      },
+      "recordedPortsRebound": true,
+      "runner": "kzg-fault",
+      "selectedRunnerProof": "SELECTED_RUNNER_PROOF_VERIFIED",
+      "sourceProofSha256": "c0d07579d50d296636cd1d4d772f39152e81516b14c7f8e7566e1b6818048319",
+      "status": "PASS"
+    },
+    {
+      "harness": {
+        "commit": "dd49faf881790a40c65b261942df073bcfa6d8a7",
+        "loadedClosureSha256": "b11f3de9964f0a3fab5dccca56f119052b57a663d93160af3d1329b003f031b7",
+        "sourceSha256": "9be8f17fa00ef225afd0e1ebc04ee289ec70399cb07bacfade8b6873c545388c"
+      },
+      "inputAfter": "UNCHANGED",
+      "planSha256": "0b06a3d3595701defe9ce3a984d2e2ca9797227843ce007cf2c7bba5572c634c",
+      "process": {
+        "cleanup": {
+          "complete": true,
+          "forced": false,
+          "remainingPids": 0,
+          "unsafePids": 0
+        },
+        "elapsedMs": 81866,
+        "exitCode": 0,
+        "outputDrainComplete": true,
+        "status": "PASS"
+      },
+      "recordedPortsRebound": true,
+      "runner": "kzg-signed",
+      "selectedRunnerProof": "SELECTED_RUNNER_PROOF_VERIFIED",
+      "sourceProofSha256": "c00c3e1d4729e186cb5cec4b735f51650af3fbb0554cbe5c5bde079ae9f930a9",
+      "status": "PASS"
+    },
+    {
+      "harness": {
+        "commit": "4e0cefcb195e7e66fac08ae47edadd03b845ec08",
+        "loadedClosureSha256": "b11f3de9964f0a3fab5dccca56f119052b57a663d93160af3d1329b003f031b7",
+        "sourceSha256": "25603a1398acd98400869dcffd13bc433a8bd93ccf0013f523185e8db2c3d013"
+      },
+      "inputAfter": "UNCHANGED",
+      "planSha256": "8042eac4113986c0b8e7c920d4bc69946343e246c6ead3207ae798ab5c9bbce5",
+      "process": {
+        "cleanup": {
+          "complete": true,
+          "forced": false,
+          "remainingPids": 0,
+          "unsafePids": 0
+        },
+        "elapsedMs": 76868,
+        "exitCode": 0,
+        "outputDrainComplete": true,
+        "status": "PASS"
+      },
+      "recordedPortsRebound": true,
+      "runner": "type4-rpc",
+      "selectedRunnerProof": "SELECTED_RUNNER_PROOF_VERIFIED",
+      "sourceProofSha256": "872a6af751ef26a3253c27c2d2620ccdf7b3327e1ba149b126222298c8a0b098",
+      "status": "PASS"
+    },
+    {
+      "harness": {
+        "commit": "60fc696b4dd39c54713b7f7f1929b613bde2da3c",
+        "loadedClosureSha256": "b11f3de9964f0a3fab5dccca56f119052b57a663d93160af3d1329b003f031b7",
+        "sourceSha256": "5bfe30d5da0f0a249c53c5c9ec39aee816ea11f93563cd2ed1b07a56e5a9e80f"
+      },
+      "inputAfter": "UNCHANGED",
+      "planSha256": "0a3efe04e18ae9d64f9b92a9d846f4b61b81d53b2987e61e1487fd74f028ac75",
+      "process": {
+        "cleanup": {
+          "complete": true,
+          "forced": false,
+          "remainingPids": 0,
+          "unsafePids": 0
+        },
+        "elapsedMs": 100611,
+        "exitCode": 0,
+        "outputDrainComplete": true,
+        "status": "PASS"
+      },
+      "recordedPortsRebound": true,
+      "runner": "public-host",
+      "selectedRunnerProof": "SELECTED_RUNNER_PROOF_VERIFIED",
+      "sourceProofSha256": "9b29644e4e5f808947036ca30ba1ac74e7e87d65ee50967a5c54edc97eed4829",
+      "status": "PASS"
+    },
+    {
+      "harness": {
+        "commit": "60fc696b4dd39c54713b7f7f1929b613bde2da3c",
+        "loadedClosureSha256": "b11f3de9964f0a3fab5dccca56f119052b57a663d93160af3d1329b003f031b7",
+        "sourceSha256": "5bfe30d5da0f0a249c53c5c9ec39aee816ea11f93563cd2ed1b07a56e5a9e80f"
+      },
+      "inputAfter": "UNCHANGED",
+      "planSha256": "658bb752e8619d6e0c886a6ff2062c79c45ec4618504922dd93aa2e9cfb32b3a",
+      "process": {
+        "cleanup": {
+          "complete": true,
+          "forced": false,
+          "remainingPids": 0,
+          "unsafePids": 0
+        },
+        "elapsedMs": 10230,
+        "exitCode": 0,
+        "outputDrainComplete": true,
+        "status": "PASS"
+      },
+      "recordedPortsRebound": true,
+      "runner": "stock-catalog",
+      "selectedRunnerProof": "SELECTED_RUNNER_PROOF_VERIFIED",
+      "sourceProofSha256": "fd406b394754a17acc33b1daab758456eba8f071dfde22eecde3673fff2ad3f0",
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS"
+}

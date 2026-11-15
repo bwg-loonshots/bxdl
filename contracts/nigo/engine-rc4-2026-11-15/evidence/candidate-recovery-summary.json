@@ -1,0 +1,46 @@
+{
+  "harness": {
+    "commit": "7ccafc69883b43993ad1c89cae6219e5ab6444f6",
+    "loadedClosureSha256": "c98cb81b8d913959ee31aec971a6d51ba958a3030b00e04bfcbcf6d4ce2b9d8f"
+  },
+  "holds": [
+    {
+      "phase": "hold-2-of-4-live-recovery",
+      "rawSpanMillis": 45020,
+      "samples": 60
+    },
+    {
+      "phase": "hold-2-of-4-skew-restart",
+      "rawSpanMillis": 45004,
+      "samples": 60
+    }
+  ],
+  "observationCount": 177,
+  "process": {
+    "cleanup": {
+      "complete": true,
+      "forced": false,
+      "remainingPids": 0,
+      "unsafePids": 0
+    },
+    "elapsedMs": 172942,
+    "exitCode": 0,
+    "outputDrainComplete": true,
+    "status": "PASS"
+  },
+  "rc1ForwardEvidenceIncluded": false,
+  "recordedPortsRebound": true,
+  "recoveryTimings": [
+    {
+      "launchToFinalMillis": 10688,
+      "phase": "restored-3-no-resubmit"
+    },
+    {
+      "launchToFinalMillis": 29365,
+      "phase": "skew-restart-4-explicit-resubmit"
+    }
+  ],
+  "scope": "FRESH_HOMOGENEOUS_CANDIDATE_ONLY_TWO_RECOVERY_PATHS",
+  "sourceProofSha256": "72c912dff89c9e51230ebd53a3c0643be658dd7b43c622b6ff268e9b51f66570",
+  "status": "PASS"
+}

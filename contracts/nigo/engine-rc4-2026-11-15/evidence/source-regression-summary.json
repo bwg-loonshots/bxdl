@@ -1,0 +1,48 @@
+{
+  "classes": 34,
+  "passed": 438,
+  "processes": {
+    "catalog": {
+      "cleanup": {
+        "complete": true,
+        "forced": false,
+        "remainingPids": 0,
+        "unsafePids": 0
+      },
+      "elapsedMs": 4812,
+      "exitCode": 0,
+      "outputDrainComplete": true,
+      "status": "PASS"
+    },
+    "java": {
+      "cleanup": {
+        "complete": true,
+        "forced": false,
+        "remainingPids": 0,
+        "unsafePids": 0
+      },
+      "elapsedMs": 105098,
+      "exitCode": 0,
+      "outputDrainComplete": true,
+      "status": "PASS"
+    },
+    "readiness": {
+      "cleanup": {
+        "complete": true,
+        "forced": false,
+        "remainingPids": 0,
+        "unsafePids": 0
+      },
+      "elapsedMs": 33232,
+      "exitCode": 0,
+      "outputDrainComplete": true,
+      "status": "PASS"
+    }
+  },
+  "source": {
+    "commit": "037c98c315d5322fa7da266ca0254d61f3863622",
+    "dirty": false
+  },
+  "sourceProofSha256": "9fa83e14cee30d6b38cbcec105bf87bbc1cb7d6971cd14733cbfd2d06a8cf099",
+  "status": "PASS"
+}

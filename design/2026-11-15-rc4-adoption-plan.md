@@ -1,22 +1,22 @@
 # RC.4 수신·패키징·관리 CLI 조합 인수 계획
 
 - 작성: 2026-11-15. BXDL 기준 `241038cf5f594dfc603318be5a3aba4883990237`.
-- 상태: **인계·원격 게시 메타데이터 검토 완료. BXDL archive NOT_RECEIVED, RC.4 lock NOT_SELECTED, 제품 인수 NOT_RUN.**
+- 상태: **RC4-01 실제 수신·정적 identity·선정 JRE의 engine-info PASS. RC.4 lock NOT_SELECTED, 제품 인수 NOT_RUN. 다음은 RC4-02다.** [수신 결과](../contracts/nigo/engine-rc4-2026-11-15/README.md).
 - 결정: 새 사용자 검증의 후보를 RC.4로 준비한다. 기본 순서는 RC.4 수신 → 새 runtime/관리 CLI 조합 인수 → CLI05-04 사람 과업이다. RC.3 기반 안내서 준비·기존 기능 검증은 병행할 수 있다.
-- 현재 운용 지원은 기존 RC.3 그대로다. 이번 변경은 계획 문서이며 lock/spec·지원 profile·실행 파일·서비스·DB를 변경하지 않았다.
+- 현재 운용 지원은 기존 RC.3 그대로다. RC4-01은 별도 수신 기록을 추가했으며 lock/spec·지원 profile·설치된 실행 파일·서비스·DB를 변경하지 않았다.
 - 여기의 RC.4는 NIGO 엔진 후보 `nigo-engine-v0.1.0-rc.4`이며, 이전 BXDL 로드맵의 R4 단계와 구분한다.
 
 ## 1. 확인한 공급 상태와 근거
 
 기준은 [최종 인계 문서](https://github.com/bwg-loonshots/nigo-protocol/blob/7d15cd394ca9f75a8ab7eee35c0f8a7bae3b0977/requirements/REQ-0003-engine-rc4-handoff.md) revision `7d15cd394ca9f75a8ab7eee35c0f8a7bae3b0977`이다. 읽은 NIGO checkout HEAD는 `57539206`이며 미추적 리뷰 초안은 공급 근거에 포함하지 않았다. [누적 변경 검토](https://github.com/bwg-loonshots/nigo-protocol/blob/7d15cd394ca9f75a8ab7eee35c0f8a7bae3b0977/requirements/REQ-0003-rc3-cumulative-supply-review.md)의 11/12 미공급 상태와 추정 Console fingerprint는 당시 이력이다. 현재 공급 여부와 최종 pin은 11/15 인계를 따른다.
 
-NIGO는 동일 고정 JAR의 G1~G6, 게시·새 다운로드 대조를 완료해 `DELIVERED`로 판정했다. BXDL은 11/15 GitHub API로 [prerelease](https://github.com/bwg-loonshots/nigo-protocol/releases/tag/nigo-engine-v0.1.0-rc.4)의 draft=false/prerelease=true, release/asset ID·크기·서버 digest와 annotated tag의 peeled source/tree를 대조했다. **이는 원격 메타데이터 확인이며 archive 다운로드·로컬 checksum·실제 engine-info 검증이 아니다.**
+NIGO는 동일 고정 JAR의 G1~G6, 게시·새 다운로드 대조를 완료해 `DELIVERED`로 판정했다. BXDL은 11/15 계획 검토 때 GitHub API로 [prerelease](https://github.com/bwg-loonshots/nigo-protocol/releases/tag/nigo-engine-v0.1.0-rc.4)의 draft=false/prerelease=true, release/asset ID·크기·서버 digest와 annotated tag의 peeled source/tree를 대조했다. 이 원격 메타데이터 확인과 별도로, PR #21 머지 뒤 RC4-01에서 새 다운로드·로컬 checksum·전체 identity·실제 engine-info까지 검증했다. [소비자 수신 기록](../contracts/nigo/engine-rc4-2026-11-15/consumer-receipt.json)에 실제 수행 범위를 구분했다.
 
 | 구분 | 상태 |
 | --- | --- |
 | NIGO 공급자 G1~G6 및 재다운로드 | 인계상 PASS / DELIVERED |
 | BXDL의 인계·원격 release/tag 메타데이터 검토 | 완료 |
-| BXDL archive 수신·전체 파일·실제 engine-info 대조 | NOT_RECEIVED / NOT_RUN |
+| BXDL archive 수신·전체 파일·실제 engine-info 대조 | RC4-01 PASS — 공급24파일·선정 JRE259파일 전후 불변, engine-info1회 exit0·stderr0 |
 | RC.4 lock/spec 및 runtime package 선택 | NOT_SELECTED |
 | RC.4 외부 관리 CLI 지원·Mac 제품 조합 인수 | NOT_IMPLEMENTED / NOT_RUN |
 | CLI05-04 작성자가 아닌 사용자 과업 | NOT_RUN |
@@ -25,7 +25,7 @@ NIGO는 동일 고정 JAR의 G1~G6, 게시·새 다운로드 대조를 완료해
 
 ## 2. 수신 시 대조할 고정 값
 
-아래는 인계가 지정한 값과 재사용할 BXDL runtime lock의 Java launcher 값이다. 실제 수신 파일 검증 결과를 미리 기입한 것이 아니다.
+아래는 인계가 지정한 값과 재사용할 BXDL runtime lock의 Java launcher 값이다. RC4-01에서 실물과 대조했으며 실제 수신·실행 근거는 별도 소비자 기록에 남겼다.
 
 | 항목 | 고정 값 |
 | --- | --- |
@@ -94,11 +94,11 @@ RC.3 표준 catalog DB가 새 JAR에서 거절될 것이라는 NIGO 설명은 �
 
 ## 5. 단계별 실행 계획과 완료 기준
 
-모든 단계는 현재 PLAN이다. PR 단위는 아래 단계의 의존 관계를 유지하면서 묶을 수 있으며, archive 수신 PASS·제품 PASS·사람 과업 PASS는 따로 기록한다.
+RC4-01은 DONE이며 RC4-02~08은 PLAN이다. PR 단위는 아래 단계의 의존 관계를 유지하면서 묶을 수 있으며, archive 수신 PASS·제품 PASS·사람 과업 PASS는 따로 기록한다.
 
 | 순서 | 산출물·작업 | 선행·완료 기준 |
 | --- | --- | --- |
-| RC4-01 수신 검증 | 새 수신 경로, `contracts/nigo/engine-rc4-<실제 수신일>/` 정제 기록 | 신뢰한 archive hash/크기 → 해제 전 24개 일반 파일·상대경로/중복/link/용량 검사 → 전체 checksum/JAR/원본 manifest/계약 → 선정 Java의 실제 engine-info·실행 전후 불변. lock 선택과 서비스 실행은 별도 |
+| RC4-01 수신 검증 · DONE | 새 수신 경로, [2026-11-15 정제 수신 기록](../contracts/nigo/engine-rc4-2026-11-15/README.md) | 신뢰한 archive hash/크기 → 해제 전 24개 일반 파일·상대경로/중복/link/용량 검사 → 전체 checksum/JAR/원본 manifest/계약 → 선정 Java의 실제 engine-info·실행 전후 불변. lock 선택과 서비스 실행은 별도 |
 | RC4-02 계약·fixture 영향 확정 | RC.3/RC.4 DTO·Console·Native catalog 차이, fixture 준비 경로와 유한 시험 목록 | RC4-01. `candidates.py`의 RC.4 pin·`prepare_fixture.py`/`fixture_guard.py`의 최소 지원과 해당 회귀를 먼저 구현. 새 후보로 만든 fresh genesis·제품/native 입력·거래·시험 자격증명, helper 가능 여부 확인. 공급자 evidence를 digest별로 연결하고 통합 검사 범위 확정 |
 | RC4-03 runtime 조립·명시 선택 | RC.4 전용 engine lock/spec, 내부 실행기 A, signed development runtime R, inventory | RC4-01/02. 받은 JAR bytes 유지, JRE 전수 대조, clean 실행기/source 고정, 새 archive 전체 검증. RC.3 lock/설치본 무변경; 새 package/JRE/실행기 identity 기록 |
 | RC4-04 외부 CLI·인수 도구 | exact RC.4 profile·reply 검증·runtime pin이 필요한 실행/관리 인수 하네스 완성, 별도 관리 CLI B | RC4-03의 고정 R. `make check`·Linux 타입 검사·profile 교차/변조/UNKNOWN 회귀와 기존 RC.3 호환 검사. 무조건 허용·임의 fallback 없음 |
@@ -113,12 +113,12 @@ RC4-06의 공급자 G4/G5 성공은 시험 선정 근거로 재사용하지만 B
 
 ## 6. 실행 환경·증거와 NIGO 의존성
 
-이번 작업은 문서·메타데이터·소스 검토까지다. 다운로드·JVM·노드·다중 노드 시험은 실행하지 않았다. 후속 실물 시험은 전용 장비 또는 업무와 분리한 Mac 시간에 새 경로·포트·최대 동시 노드 수·감독 시간·횟수·정리 기준을 정해 수행한다. 기본은 각 시나리오 1회, 자동 재시도 0이며 실패 원자료와 미실행 항목을 보존한다. 종료가 불명이면 상태를 확인한 뒤 정상 stop 절차로 정리하고 기존 데이터 삭제나 성공까지 재실행하지 않는다. 장기 soak/성능 MAIN을 자동으로 포함하지 않는다.
+RC4-01에서 다운로드·정적 대조와 선정 JRE의 실제 engine-info를 완료했다. 엔진 호출 전 검증기 정렬·빈 속성 파싱 오류2건은 이력을 보존하고 수정했다. JVM 호출은 총4회(속성2·module1·engine-info1), 자동 재시도0회다. 노드·서비스·DB·다중 노드·generator는 실행하지 않았다. 후속 실물 시험은 전용 장비 또는 업무와 분리한 Mac 시간에 새 경로·포트·최대 동시 노드 수·감독 시간·횟수·정리 기준을 정해 수행한다. 기본은 각 시나리오 1회, 자동 재시도 0이며 실패 원자료와 미실행 항목을 보존한다. 종료가 불명이면 상태를 확인한 뒤 정상 stop 절차로 정리하고 기존 데이터 삭제나 성공까지 재실행하지 않는다. 장기 soak/성능 MAIN을 자동으로 포함하지 않는다.
 
 | 의존 사항 | 현재 판단 |
 | --- | --- |
-| 새 NIGO 엔진 기능·새 RC 공급 | 선행 대기 없음. RC.4 DELIVERED를 실제 수신하는 BXDL 작업이 다음 |
-| 실제 archive 접근/무결성·engine-info 불일치 | RC4-01에서 확인. 불일치 시 후보 선택을 중지하고 고정 identity/근거로 공급자에게 문의 |
+| 새 NIGO 엔진 기능·새 RC 공급 | 선행 대기 없음. RC.4 수신 PASS 뒤 RC4-02의 계약·fixture 영향 확인이 다음 |
+| 실제 archive 접근/무결성·engine-info 불일치 | RC4-01에서 일치 확인. 향후 불일치 시 후보 선택을 중지하고 고정 identity/근거로 공급자에게 문의 |
 | 새 fixture/helper | source 존재는 확인, 공급 JAR에서 미실행. 수신 후 확인해 필요한 경우에만 NIGO 지원 요청 |
 | 계약이 같은 fingerprint인 경우 | source/Console/Native·wire·DB 차이 검토와 실제 제품 인수는 계속 필요 |
 | 기존 DB 이전·rolling upgrade | RC.4 공급 범위 밖. 요구가 생기면 별도 NIGO 계약·지원 버전 쌍부터 정의 |

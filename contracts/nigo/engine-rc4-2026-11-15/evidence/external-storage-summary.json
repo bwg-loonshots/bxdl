@@ -1,0 +1,113 @@
+{
+  "cases": [
+    {
+      "caseName": "offlineCliInspectsRepairsAndAllowsNormalNodeRestart",
+      "children": 11,
+      "operations": 10,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "caseName": "managedOfflineRepairPreservesInstanceAndLedger",
+      "children": 23,
+      "operations": 18,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "caseName": "officialEntryBlocksIncompleteIdentityInsteadOfInitializingOrRepairing",
+      "children": 5,
+      "operations": 4,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "caseName": "offlineBalanceCliRebuildsOnlyDerivedIndexAndAllowsNormalNodeRestart",
+      "children": 11,
+      "operations": 10,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "caseName": "officialEntryRejectsAbsentForeignAndUntrustedArgumentsWithoutInitialization",
+      "children": 9,
+      "operations": 8,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "caseName": "managedOfflineRepairPreservesInstanceAndLedger",
+      "children": 23,
+      "operations": 18,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "caseName": "offlineCliInspectsRepairsAndAllowsNormalNodeRestart",
+      "children": 11,
+      "operations": 10,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "caseName": "officialEntryBlocksIncompleteIdentityInsteadOfInitializingOrRepairing",
+      "children": 5,
+      "operations": 4,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "caseName": "officialEntryRejectsAbsentForeignAndUntrustedArgumentsWithoutInitialization",
+      "children": 9,
+      "operations": 8,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    },
+    {
+      "caseName": "offlineBalanceCliRebuildsOnlyDerivedIndexAndAllowsNormalNodeRestart",
+      "children": 11,
+      "operations": 10,
+      "postRunArtifactVerified": true,
+      "status": "PASS",
+      "storageExecutionScope": "TARGET_EXACT_JAR_SELECTED_JAVA",
+      "strictSingleJson": true
+    }
+  ],
+  "engineRebuilt": false,
+  "harnessCommit": "9614e517a4d5522bf0740c88aa9af756044f5d0e",
+  "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+  "passed": 10,
+  "process": {
+    "cleanup": {
+      "complete": true,
+      "forced": false,
+      "remainingPids": 0,
+      "unsafePids": 0
+    },
+    "elapsedMs": 150954,
+    "exitCode": 0,
+    "outputDrainComplete": true,
+    "status": "PASS"
+  },
+  "runtimeInventoryDocumentSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+  "sourceProofSha256": "bbf157a1a145e54dbf34d16210e828076b40508627bd5fb518b50f294d67d3a4",
+  "status": "PASS"
+}

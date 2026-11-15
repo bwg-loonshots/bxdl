@@ -1,0 +1,72 @@
+{
+  "artifact": {
+    "fileName": "nigo-node-0.0.1-SNAPSHOT.jar",
+    "sha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+    "sizeBytes": 164133636
+  },
+  "authorization": {
+    "customerDeliveryGrant": "NOT_GRANTED",
+    "nigoOwnLicenseTerms": "UNDECIDED"
+  },
+  "backendRecoveryCases": 6,
+  "candidateId": "nigo-engine-v0.1.0-rc.4",
+  "canonicalJunit": {
+    "executed": 1634,
+    "passed": 1634,
+    "skipped": 13,
+    "tests": 1647
+  },
+  "console": {
+    "node": "v24.21.0",
+    "npm": "11.19.0",
+    "sourceFingerprint": "a7c768df5d1ad8a09060cbab33b6fd3f0e3475d4ee0f90d7c76c445433ab33b6"
+  },
+  "consoleMockPassed": 69,
+  "consumerAcceptance": "NOT_RUN",
+  "contract": {
+    "definitionSha256": "988648d06b95d372cfc36a88fbf4a88ae7deb4a3477ad8629163daa03f902e49",
+    "documentationSha256": "a284e1502b298dd755704378e168811373b860665dfba14ed3069d0f6c8431d6",
+    "fingerprint": "c604b1d24097015b2839d97f2bc9d45e3fff91ed6984665d1aa827a155c7b6e8",
+    "revision": "037c98c315d5322fa7da266ca0254d61f3863622",
+    "runtimeDocumentationSha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+    "runtimeFixtureSha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e",
+    "status": "PROPOSED"
+  },
+  "exactJarRunners": [
+    "kzg-baseline",
+    "kzg-fault",
+    "kzg-signed",
+    "type4-rpc",
+    "public-host",
+    "stock-catalog"
+  ],
+  "externalSelectedJre": {
+    "engine": 9,
+    "storage": 10
+  },
+  "gateStatus": {
+    "G1": "PASS",
+    "G2": "PASS",
+    "G3": "PASS",
+    "G3-UI": "PASS",
+    "G4": "PASS",
+    "G5": "PASS"
+  },
+  "javaRequiredMajor": 21,
+  "limitations": [
+    "Development candidate, not an official production release or customer-delivery permission.",
+    "BXDL receipt, explicit lock choice and package/JRE/service acceptance remain separate.",
+    "No RC.1 forward, old-DB migration, mixed-version rolling upgrade or historical receipt availability claim.",
+    "No Linux, multi-host, power-cut, long-soak, production SLA, performance or signed-build claim.",
+    "No JRE, installer, customer PKI, source-free QBFT generator, source archive, config, transaction or DB is included."
+  ],
+  "manifestPolicy": "Original NOT_RECORDED/NOT_CHECKED/PROPOSED values are unchanged.",
+  "platform": "macOS-arm64",
+  "remotePublication": "NOT_PERFORMED_BY_PACKAGING_SCRIPT",
+  "selectedRuntimeJavaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+  "source": {
+    "commit": "037c98c315d5322fa7da266ca0254d61f3863622",
+    "dirty": false
+  },
+  "status": "SUPPLIER_VALIDATED_LOCAL_BUNDLE"
+}

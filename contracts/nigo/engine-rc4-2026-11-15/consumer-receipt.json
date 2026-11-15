@@ -1,0 +1,279 @@
+{
+  "status": "REMOTE_RECEIPT_AND_ENGINE_INFO_VERIFIED",
+  "candidate": "nigo-engine-v0.1.0-rc.4",
+  "verifiedAtDate": "2026-11-15",
+  "handoffDocumentRevision": "7d15cd394ca9f75a8ab7eee35c0f8a7bae3b0977",
+  "bxdlReceiptBaseCommit": "edaea0fdbeb1f8fd719b2ba55007a3c22cf1e44e",
+  "source": {
+    "dirty": false,
+    "commit": "037c98c315d5322fa7da266ca0254d61f3863622"
+  },
+  "sourceTree": "335859ac6ddbf4cb05cfa47c0b53a164bb36fabb",
+  "archiveSha256": "2c41581ff531e04a0302bab9cec268628929430858e1e8eba324ae1b75edd24e",
+  "archiveSize": 157700874,
+  "checksumAssetSha256": "51d282cf1509b2595551a91363148045fa13a482236623ed21e6c2503ab3c591",
+  "manifestSha256": "a3af07fcf1a933123ede138a6e5d27150469bce8040d0fc77340a38b86bb28c6",
+  "artifact": {
+    "fileName": "nigo-node-0.0.1-SNAPSHOT.jar",
+    "sha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+    "sizeBytes": 164133636
+  },
+  "contract": {
+    "status": "PROPOSED",
+    "revision": "037c98c315d5322fa7da266ca0254d61f3863622",
+    "documentationSha256": "a284e1502b298dd755704378e168811373b860665dfba14ed3069d0f6c8431d6",
+    "definitionSha256": "988648d06b95d372cfc36a88fbf4a88ae7deb4a3477ad8629163daa03f902e49",
+    "runtimeDocumentationSha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+    "runtimeFixtureSha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e",
+    "fingerprint": "c604b1d24097015b2839d97f2bc9d45e3fff91ed6984665d1aa827a155c7b6e8"
+  },
+  "console": {
+    "node": "v24.21.0",
+    "npm": "11.19.0",
+    "sourceFingerprint": "a7c768df5d1ad8a09060cbab33b6fd3f0e3475d4ee0f90d7c76c445433ab33b6"
+  },
+  "payloadFiles": 24,
+  "inventoryEntries": 23,
+  "archiveStructure": "REGULAR_FILES_ONLY_NO_DUPLICATES_OR_ALIASES",
+  "gzipChecksum": "PASS",
+  "trustedArchiveIdentity": "MATCHED",
+  "suppliedArchiveChecksum": "MATCHED",
+  "remoteAssetIdentity": "MATCHED",
+  "fullPayloadInventoryAndChecksums": "MATCHED",
+  "embeddedBuildSuppliedEngineInfoAndManifest": "MATCHED",
+  "embeddedConsole": "MATCHED",
+  "contractSourceArchiveJarAndFingerprint": "MATCHED",
+  "operatingDocumentsVsSource": "MATCHED",
+  "operatingDocumentsCount": 3,
+  "consoleSourceFingerprintRecomputed": "MATCHED",
+  "consoleSourceFiles": 156,
+  "consoleAssetsMatched": 20,
+  "supplierSummaryConsistency": "MATCHED",
+  "supplierCounts": {
+    "sourceRegressionClassesReported": 34,
+    "sourceRegressionPassedReported": 438,
+    "canonicalJunit": {
+      "executed": 1634,
+      "passed": 1634,
+      "skipped": 13,
+      "tests": 1647
+    },
+    "canonicalNotRun": 13,
+    "consoleMockPassed": 69,
+    "externalSelectedJre": {
+      "engine": {
+        "passed": 9,
+        "children": 66
+      },
+      "storage": {
+        "passed": 10,
+        "children": 118,
+        "operations": 100
+      }
+    },
+    "exactJarRunners": [
+      "kzg-baseline",
+      "kzg-fault",
+      "kzg-signed",
+      "type4-rpc",
+      "public-host",
+      "stock-catalog"
+    ],
+    "backendRecoveryCases": 6
+  },
+  "supplierTestCountPolicy": "Sanitized summary consistency/arithmetic only; source class/pass totals are reported aggregates. No supplier tests or raw-proof audit performed by BXDL. Source, mock UI, exact JAR and selected JRE scopes remain separate.",
+  "jvmExecution": "ENGINE_INFO_ONLY_PASS",
+  "actualEngineInfoExitCode": 0,
+  "actualEngineInfoStdoutSha256": "fa23988b2bc4f1d453897b53c53af569f049ac410e1c27f7d70fa013b33b36d3",
+  "actualEngineInfoFullIdentity": "MATCHED",
+  "actualEngineInfoStderrBytes": 0,
+  "engineInfoInvocationCount": 1,
+  "automaticRetries": 0,
+  "runtimeProbeInvocationCount": 3,
+  "invokedProcessGroupsGone": true,
+  "successfulAttemptRuntimeProbeInvocationCount": 2,
+  "priorVerifierPreflightRuntimeProbeInvocations": 1,
+  "verifierPreflightErrors": 2,
+  "totalJvmInvocationCount": 4,
+  "runtime": {
+    "vendor": "Eclipse Adoptium Temurin",
+    "version": "21.0.12.1+1-LTS",
+    "platform": "macOS-arm64",
+    "kind": "full JRE",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "inventoryDocumentSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+    "filesVerifiedBeforeAndAfter": 259,
+    "modules": 49,
+    "properties": {
+      "java.runtime.version": "21.0.12.1+1-LTS",
+      "java.specification.version": "21",
+      "java.vendor": "Eclipse Adoptium",
+      "java.version": "21.0.12.1",
+      "os.arch": "aarch64",
+      "os.name": "Mac OS X"
+    }
+  },
+  "payloadAfterEngineInfo": "ALL_24_FILES_MEMBERSHIP_HASH_SIZE_MODE_UNCHANGED",
+  "engineRebuilt": false,
+  "remoteReleaseId": 445809685,
+  "remoteArchiveAssetId": 749821483,
+  "remoteChecksumAssetId": 749821484,
+  "remoteTagObject": "2f0a0ca513e565ad59ecb660cc53961df5d11a32",
+  "remoteTagPeeledCommit": "037c98c315d5322fa7da266ca0254d61f3863622",
+  "remotePublishedAt": "2026-11-15T04:30:19Z",
+  "remoteMetadataBasis": "DIRECT_GITHUB_READ_API_AND_DIRECT_RELEASE_DOWNLOAD_2026_11_15",
+  "serverEnforcedReleaseImmutability": false,
+  "serverBranchProtected": false,
+  "tagCryptographicVerification": {
+    "githubVerified": false,
+    "githubReason": "unsigned",
+    "localSignatureVerification": "NOT_PERFORMED"
+  },
+  "explicitCandidateAdoption": "NOT_PERFORMED",
+  "selectedLock": null,
+  "consumerPackageAcceptance": "NOT_RUN",
+  "consumerA7Acceptance": "NOT_RUN",
+  "nodeInitRunOrStorageCommandsExecuted": false,
+  "serviceActionsExecuted": false,
+  "existingCandidateRecords": "RC.1/RC.2/RC.3 locks, snapshots, package specs, results and installed runtime unchanged by RC4-01.",
+  "originalSupplierFiles": [
+    {
+      "source": "README.md",
+      "snapshotPath": "supplier-README.md",
+      "sha256": "756e70bbe1b29b301d9930d0f6e661039e7c9989d73ca853901f92adbdd5fabf"
+    },
+    {
+      "source": "SHA256SUMS",
+      "snapshotPath": "supplier-SHA256SUMS",
+      "sha256": "ab7d08b1d482ea19833c43b663f620d187e004eb218a2637c22818e3ad070ef8"
+    },
+    {
+      "source": "engine-manifest.json",
+      "snapshotPath": "engine-manifest.json",
+      "sha256": "a3af07fcf1a933123ede138a6e5d27150469bce8040d0fc77340a38b86bb28c6"
+    },
+    {
+      "source": "evidence/backend-recovery-summary.json",
+      "snapshotPath": "evidence/backend-recovery-summary.json",
+      "sha256": "280b8401a83c9209e1cea1c491cdd6c90e0e2d8038b3165f1855002afa85478f"
+    },
+    {
+      "source": "evidence/candidate-recovery-summary.json",
+      "snapshotPath": "evidence/candidate-recovery-summary.json",
+      "sha256": "92a2e781c950c83a353e922ab3ccdc7f032f394af6143ed178dc4ba58080f95d"
+    },
+    {
+      "source": "evidence/canonical-summary.json",
+      "snapshotPath": "evidence/canonical-summary.json",
+      "sha256": "cd165753a7dc70cdc0a01c2b84c651a6cf128dc55425c508093d91f5e32f585c"
+    },
+    {
+      "source": "evidence/console-summary.json",
+      "snapshotPath": "evidence/console-summary.json",
+      "sha256": "cde2318cf0eb8722a6f094bb31884b494802c31246648a470328e0a10771a3c4"
+    },
+    {
+      "source": "evidence/engine-info.json",
+      "snapshotPath": "evidence/engine-info.json",
+      "sha256": "23aed5ed41ea17e13af70b244a0f0846790a2915ba0a36018116f1d6149e9ad1"
+    },
+    {
+      "source": "evidence/exact-jar-summary.json",
+      "snapshotPath": "evidence/exact-jar-summary.json",
+      "sha256": "6bff2cff6e80c040e0441d8785043909cb3166092ec8119ad9b68416fadee52e"
+    },
+    {
+      "source": "evidence/external-engine-summary.json",
+      "snapshotPath": "evidence/external-engine-summary.json",
+      "sha256": "f9d3a24298d754257a2c0d99a39e22b0b2ba98589a2808849c0f1ef19d1a596c"
+    },
+    {
+      "source": "evidence/external-storage-summary.json",
+      "snapshotPath": "evidence/external-storage-summary.json",
+      "sha256": "c0c9b0dae1911fea81b76628bf6bb7c8c0fe385b86429b281a165c1d0a326b0e"
+    },
+    {
+      "source": "evidence/input-provenance.json",
+      "snapshotPath": "evidence/input-provenance.json",
+      "sha256": "10ed68ee730c1457c74c39ed09268c52a07ff30663a61f7558eb044bcbf5c0db"
+    },
+    {
+      "source": "evidence/source-regression-summary.json",
+      "snapshotPath": "evidence/source-regression-summary.json",
+      "sha256": "bb0da6d9d92a28c423a62c47238596bfce3819aeafe6a2c8fc1f3f8a48156a21"
+    },
+    {
+      "source": "evidence/supplier-attempt-history.json",
+      "snapshotPath": "evidence/supplier-attempt-history.json",
+      "sha256": "f2e9934f413e41b8cef2b3084a8771b6c6479ccfd2b9fbb8ce96e657e5e58bf9"
+    },
+    {
+      "source": "evidence/supplier-evidence.json",
+      "snapshotPath": "evidence/supplier-evidence.json",
+      "sha256": "219b6245f350abf165b5d70616f046e8dc95716c719ec956cfc294edf7182339"
+    },
+    {
+      "source": "nigo-java/nigo-crypto/PROVIDERS.md",
+      "snapshotPath": "PROVIDERS.md",
+      "sha256": "b22675857989d681dc1bbb325445e56f92476732f545e2eb610dbe0acc9f28c9"
+    },
+    {
+      "source": "nigo-java/nigo-node/ENGINE_CONTRACT.md",
+      "snapshotPath": "ENGINE_CONTRACT.md",
+      "sha256": "a284e1502b298dd755704378e168811373b860665dfba14ed3069d0f6c8431d6"
+    },
+    {
+      "source": "nigo-java/nigo-node/ENGINE_RUNTIME_CONTRACT.md",
+      "snapshotPath": "ENGINE_RUNTIME_CONTRACT.md",
+      "sha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e"
+    },
+    {
+      "source": "nigo-java/nigo-node/ROCKSDB_OPERATIONS.md",
+      "snapshotPath": "ROCKSDB_OPERATIONS.md",
+      "sha256": "e82ae404321e69dcb6d8606b5397a38457f81d7420a83d28c5b074382bbd6286"
+    },
+    {
+      "source": "nigo-java/nigo-node/STORAGE_INTEGRITY.md",
+      "snapshotPath": "STORAGE_INTEGRITY.md",
+      "sha256": "5c79ffdf2598a28b1328283b3961e2862c1d5f84221949dabe6b08226dad4555"
+    },
+    {
+      "source": "nigo-java/nigo-node/src/main/resources/engine/contract.json",
+      "snapshotPath": "contract.json",
+      "sha256": "988648d06b95d372cfc36a88fbf4a88ae7deb4a3477ad8629163daa03f902e49"
+    },
+    {
+      "source": "nigo-java/nigo-node/src/test/resources/engine-contract/health-cases.json",
+      "snapshotPath": "health-cases.json",
+      "sha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e"
+    }
+  ],
+  "verificationEvidence": {
+    "archive-verification.json": "436295d477ccaa489484aa6ec9b0f4e52ab9d119259b5dd63c45813d6f87f442",
+    "remote-verification.json": "1276850fab3fe71d3d9b72b02eb8440641f6e190837929740e20a6973610ac83",
+    "static-verification.json": "55ec5dfe5d3aa0dc8e6989c8aa4d2f55d8ba49df3d142fbed91532e7a97608d0",
+    "runtime-before.json": "08df9e7b86a4c9a31f710c5b947c4ddf58ac776a8eaa7d30e6b8416b2cb1b9f5",
+    "runtime-after.json": "08df9e7b86a4c9a31f710c5b947c4ddf58ac776a8eaa7d30e6b8416b2cb1b9f5",
+    "payload-before.json": "045ad3216b52c12e8bcccc3b3fabd8c6b8f84fa2abe408f14f5e568d0460f3b7",
+    "payload-after.json": "045ad3216b52c12e8bcccc3b3fabd8c6b8f84fa2abe408f14f5e568d0460f3b7",
+    "engine-info-verification.json": "e16bdb7d5bce988f0b46e5c415502d5a85b5f0f21274eca567bc1f1d7286a436",
+    "engine-info-attempt.json": "88440a00414a5e1bcd4de8861ef80ddb4ce2551fee3a5e3e404950d0f70c6287",
+    "verifier-attempt-history.json": "83e3318ba86d2f2985e78b087f53868447065f8d8ae38514b1f91d4c6491c57c"
+  },
+  "verifiers": {
+    "bxdl-rc4-download.py": "77ea58bdb593e72a0311efc932c896c6437b5852bd4bcbfcd647a3688c0c5f73",
+    "bxdl-rc4-receive-archive.py": "20e9061360530b8a3763ba6f9bf390d4be879c6603aeb377affd126f50ed7b00",
+    "bxdl-rc4-static-verify.py": "716c2184bb96677d38c67d737c58dd7ff4bf0f5a059da2ea45c8b3be0a72e3f1",
+    "bxdl-rc4-engine-info-verify.py": "f71263844557d8fa20cc55bc897713f1f33aeaaae1b678af57645cd5361a8841"
+  },
+  "limitations": [
+    "RC4-01 receipt and actual engine-info only; no RC.4 lock selection, runtime assembly, service/network/package or human UX acceptance.",
+    "Original supplier manifest, publication-time states, summaries and prior attempts are byte-preserved; supplier PASS is not BXDL product PASS.",
+    "Same engine contract fingerprint does not establish DB, Native catalog or wire compatibility. Fresh RC.4 DB/genesis is the next acceptance scope; RC.3 migration/mixed rolling is excluded.",
+    "No init/run/storage-integrity/generator, engine rebuild, customer DB/key, existing install or service action.",
+    "Development/officialRelease=false/PROPOSED remain; NIGO terms UNDECIDED, customer delivery NOT_GRANTED; REQ-0002/0003 remain OPEN.",
+    "J5, A7, G1-M remaining lifecycle/removal, Linux/Docker, upgrades and long-running/production acceptance are separate.",
+    "Checksum and GitHub digest match do not constitute supplier signature verification or server-enforced immutability.",
+    "Two local verifier preflight errors (inventory ordering, empty-property parsing) were corrected before the first engine-info call. One Java properties probe ran in a failed verifier attempt; total Java invocations=4 (properties2, modules1, engine-info1). No automatic engine retries."
+  ]
+}
