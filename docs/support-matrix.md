@@ -7,18 +7,20 @@
 | Rust 1.86.0 / macOS arm64 | CLI 개발·로컬 테스트·native 빌드 대상. setup·설치·cold·등록/초기화·수동 LaunchAgent·오프라인 진단 구현 |
 | macOS arm64 + Java 21 + RocksDB + 사용자 LaunchAgent | macOS 26.6.2의 지정 RC.2·Temurin에서 4-validator 거래/catch-up·두 복구 경로·pin 거부 PASS. 새 V2 보관본·시작 진단은 별도 RC.2 package의 로컬13사례 PASS. OS 최소 버전·전체 G1-M 미확정 |
 | RC.3 + 선정 Temurin / macOS arm64 | 전용 lock/spec 명시 선택 후 동일 서명 archive의 4-validator·두 정족수 복구·wrong-pin과 원본 공급 경로 부재 setup13사례·독립 정리 PASS. A7 NOT_RUN·전체 G1-M 미완료 |
-| RC.4 + 선정 Temurin / macOS arm64 | RC4-01~03 완료: 수신·시험 자료 준비·서명 개발 runtime 조립 PASS, 전용 lock/spec SELECTED. 외부 관리 CLI profile·runtime 인수 하네스 NOT_IMPLEMENTED. Mac 설치·DB·서비스·네트워크 NOT_RUN |
+| RC.4 + 선정 Temurin / macOS arm64 | RC4-01~04 완료: 수신·준비·서명 runtime 조립, exact CLI profile·인수 도구 구현 및 CLI-only 배포·전환 PASS. 전용 lock/spec SELECTED. 노드 설치·DB·서비스·네트워크·RPC 실물 인수 NOT_RUN |
 | Linux amd64/glibc + Java 21 + RocksDB + systemd | 기존 development manifest 유지, 후속 서버 인수. Ubuntu 24.04 후보 |
 | Docker/Compose | 후속 이미지·volume·network·종료/재생성 인수 필요 |
 | Intel Mac·Linux ARM64·Windows·Alpine/musl·H2 제품 지원 | 별도 구현·인수 전 미지원 |
 
 ## RC.4 인수 전 지원 경계 — 2026-11-15
 
-[RC4-01 수신](../contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 새 시험 자료 준비](../results/2026-11-15-rc4-fixture-preparation.md), [RC4-03 개발 runtime 조립](../results/2026-11-15-rc4-runtime-assembly.md)을 PASS했다. RC.4 전용 lock/spec은 SELECTED이며 clean source `d38027a474f1e8d4fb7b1d38ea17972ba88d93af`의 내부 실행기 A로 서명 개발 runtime R을 만들었다. payload269파일·326,373,420bytes와 선정 JRE259파일·서명·inventory, stage의 engine inspect1회를 검증했다. Mac 설치·노드/DB·서비스·네트워크는 미실행이며 현재 운용 인수 지원은 기존 RC.3 조합이다.
+[RC4-01 수신](../contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 시험 자료 준비](../results/2026-11-15-rc4-fixture-preparation.md), [RC4-03 runtime 조립](../results/2026-11-15-rc4-runtime-assembly.md), [RC4-04 외부 CLI·인수 도구 구현과 CLI-only 검증](../results/2026-11-15-rc4-cli-harness.md)을 완료했다. RC.4 전용 lock/spec은 SELECTED이며 고정 R/A/JAR/JRE를 유지한다. 독립 관리 CLI B는 clean source `65fe83f0d569fcf2231474342fa0d60ca72555d5`로 빌드했다. 실제 CLI-only 설치·구형 bootstrap에서 B로 업데이트와 B의 RC.3 전용 CLI update/rollback 거절·선택 보존을 확인했다.
 
-외부 관리 CLI의 RC.4 profile과 runtime 인수 하네스는 NOT_IMPLEMENTED이며 기존 실행 runner/guard는 RC.4를 거절한다. 제품·시험 코드는 RC4-02와 같아 당시 Rust592 PASS·Python112 PASS/2 SKIP·fmt/Clippy PASS를 참조하고 이번에 전체 검사를 반복하지 않았다. RC4-03의 실제 빌드·조립·서명과 독립 inventory 검증은 별도 새 근거다.
+코드가 지원하는 exact runtime profile은 RC.3과 RC.4이며, 현재 실제 노드 운용 인수가 완료된 조합은 기존 RC.3다. 새 관리 CLI B의 설치/업데이트/복귀 probe는 두 profile의 capability를 요구한다. 구형 bootstrap 정책이 소급 변경된 것은 아니며 RC.4 실행 중 CLI 전환은 양쪽 모두 RC.4를 지원하는 두 배포본으로 RC4-06에서 별도 인수한다. CLI-only 전환 결과를 실행 중 노드·DB 불변의 실물 증거로 대체하지 않는다.
 
-[계약·fixture 영향 설계](../design/2026-11-15-rc4-contract-fixture-impact.md)에 따라 Rust parser 허용 범위와 기존 RC.3 lock/spec/runtime·독립 관리 CLI 지원을 유지한다. [도입 계획](../design/2026-11-15-rc4-adoption-plan.md)의 다음 단계는 **RC4-04 외부 관리 CLI의 정확한 RC.4 profile·인수 하네스 구현**이다. Mac 설치/서비스·네트워크 인수는 후속이며 수신·준비·조립 PASS를 제품 운용 인수로 승계하지 않는다. 추가 NIGO 선행 구현 요청은 없다.
+[CLI·하네스 설계](../design/2026-11-15-rc4-cli-harness-implementation.md)의 runtime guard·유한 RPC 도구·수동 단일노드 입력 변환을 구현했다. 실제 RC4-02 원자료에서 입력9개·공급3개를 준비하고 자격증명6개·4-validator chain bytes를 보존했다. 변환 child 호출은0회다. 전체 `make check`는 Rust596 PASS, Python153개 중151 PASS·2 SKIP, fmt·Clippy PASS이고 Linux 타입 검사도 PASS다. **RC.4 노드 설치·DB 초기화·서비스·네트워크·RPC 실물 인수는 NOT_RUN**이다.
+
+[도입 계획](../design/2026-11-15-rc4-adoption-plan.md)의 다음 단계는 **RC4-05 고정 R+B의 Mac 노드 설치·수동 서비스·같은 RC.4 DB 재시작 인수**다. 기존 RC.3 lock/spec/runtime·인수 이력과 엄격한 관리 endpoint parser를 유지한다. 수신·준비·조립·CLI-only PASS를 RC.4 제품 운용 인수로 승계하지 않으며 추가 NIGO 선행 구현 요청은 없다.
 
 새 RC.4 시험은 **새 DB·새 genesis·동일 RC.4 노드**로 구성한다. 같은 RC.4가 만든 DB의 재시작을 기존 RC.3 DB migration이나 혼합 버전 rolling upgrade 지원으로 해석하지 않는다. 엔진 계약 fingerprint가 RC.3와 동일해도 Native catalog·wire·DB 호환성의 증거가 아니며 RC.3의 PASS를 새 후보로 승계하지 않는다. 기존 사용자 노드·DB·키를 시험 자료로 사용하지 않는다.
 
@@ -56,7 +58,7 @@ workspace·checkpoint·출력은 symlink 조상, 의도하지 않은 hard link·
 
 이번 서비스 profile은 로그인된 현재 사용자의 GUI 세션에 명시 start로 bootstrap하는 LaunchAgent다. plist는 private control 아래 시도별로 생성하고 `~/Library/LaunchAgents`에는 등록하지 않는다. 로그인 자동 시작·자동 재시작·장기 운영 LaunchDaemon은 제공하지 않는다. Application Support 아래에서 package/control/data/config를 분리해 두는 위치를 권장하며 선택한 OS의 파일 접근·GUI 세션·실행 조건을 실제 인수해야 한다.
 
-지원하는 RC.3는 [독립 관리 CLI](./management-cli.md)가 설치본의 인증된 고정 실행기에 start를 위임한다. 미지원 package의 native 경로는 동일 bytes 조건을 유지한다. 관리 CLI는 package 밖에서 교체하며, 내부 CLI 덮어쓰기와 기존 control/data의 migration은 제공하지 않는다. 시도별 JAR·CLI snapshot/private 로그의 자동 정리도 후속이다. 로그아웃·OS 종료에서는 launchd가 자체 강제 종료할 수 있으므로 수동 stop의 SIGKILL 미사용을 OS 전체 보장으로 확대하지 않는다.
+RC.3·RC.4 exact profile은 [독립 관리 CLI](./management-cli.md)가 설치본의 인증된 고정 실행기에 start를 위임하도록 구현됐다. 실제 RC.4 서비스 인수는 후속이며 미지원 package의 native 경로는 동일 bytes 조건을 유지한다. 관리 CLI는 package 밖에서 교체하며, 내부 CLI 덮어쓰기와 기존 control/data의 migration은 제공하지 않는다. 시도별 JAR·CLI snapshot/private 로그의 자동 정리도 후속이다. 로그아웃·OS 종료에서는 launchd가 자체 강제 종료할 수 있으므로 수동 stop의 SIGKILL 미사용을 OS 전체 보장으로 확대하지 않는다.
 
 logs/diagnose는 저장된 최신 시도의 제한된 이벤트를 정제해 수집하는 오프라인 기능이다. 실제 health·전체 파일 무결성·DB 안전성을 검사하지 않으며 보고서 생성 성공은 서비스 인수가 아니다. 수집 시간은 파일 작업 사이에서 확인하는 예산이며 막힌 파일시스템 호출의 강제 중단을 보장하지 않는다. [진단 사용 조건](./cli.md#오프라인-기록과-지원-보고서)을 따른다.
 

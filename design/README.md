@@ -9,13 +9,13 @@
 
 2026-10-22 [RC.3 수신 검증](../contracts/nigo/engine-rc3-2026-10-22/README.md) 이후 [명시 선택과 Mac 재인수 설계](./2026-10-22-rc3-package-reacceptance.md)를 추가했다. 새 lock/spec으로 후보를 선택했고 같은 archive의 [4-validator 재인수](../results/2026-10-22-macos-rc3-package.md)와 [원본 부재 setup 13사례](../results/2026-10-22-macos-rc3-setup.md), 각 독립 사후 검사가 PASS했다. [NIGO PR #230](https://github.com/bwg-loonshots/nigo-protocol/pull/230) 정식 회신을 머지한 뒤 [같은 archive의 전체14문답·수정·취소/EOF·대기 중 HUP·재개21사례](../results/2026-10-22-macos-rc3-full-setup.md)와 독립 검사8항목도 PASS했다. 앞선 결과/회신의 당시 NOT_RUN은 보존한다. HUP은 대기 중 PTY 범위이며 mutation crash·Mac 로그아웃 인수가 아니다. offline Storage A7·기존 설치 upgrade·안전 제거·전체 G1-M/J5는 남아 있다.
 
-## RC.4 수신·시험 자료 준비·runtime 조립 PASS — 2026-11-15
+## RC.4 CLI·인수 도구 구현과 CLI-only 검증 완료 — 2026-11-15
 
-NIGO RC.4는 **DELIVERED**이며 BXDL의 [RC4-01 수신 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 계약 영향·새 시험 자료 준비](../results/2026-11-15-rc4-fixture-preparation.md), **[RC4-03 내부 실행기 고정·lock/spec 선택·개발 runtime 조립](../results/2026-11-15-rc4-runtime-assembly.md)이 PASS**다. [영향 설계](./2026-11-15-rc4-contract-fixture-impact.md)의 준비/실행 경계를 유지한다. RC4-03은 clean source `d38027a474f1e8d4fb7b1d38ea17972ba88d93af`의 내부 실행기 A, 수신 JAR·선정 JRE로 서명 개발 runtime R을 만들고 payload269파일·326,373,420bytes, JRE259파일과 stage의 실제 engine inspect1회를 검증했다.
+NIGO RC.4는 **DELIVERED**이며 BXDL의 [RC4-01 수신](../contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 시험 자료 준비](../results/2026-11-15-rc4-fixture-preparation.md), [RC4-03 runtime 조립](../results/2026-11-15-rc4-runtime-assembly.md), **[RC4-04 외부 관리 CLI·인수 도구 구현과 CLI-only 실물 검증](../results/2026-11-15-rc4-cli-harness.md)이 완료**됐다. [CLI·하네스 설계](./2026-11-15-rc4-cli-harness-implementation.md)에 따라 clean source `65fe83f0d569fcf2231474342fa0d60ca72555d5`의 관리 CLI B가 기존 R/A를 그대로 인증한다. 서명 CLI 배포본 설치·구형 bootstrap에서 B로 업데이트·B의 RC.3 전용 update/rollback 거절·선택 보존을 확인했다.
 
-RC.4 전용 lock/spec은 **SELECTED**, runtime 조립은 **PASS**다. 외부 관리 CLI의 RC.4 profile·runtime 인수 하네스는 **NOT_IMPLEMENTED**, Mac 설치·노드/DB·서비스·네트워크 인수는 **NOT_RUN**이다. RC.3 lock/spec/runtime·인수 지원·기존 PASS/partial 이력과 Rust parser는 그대로다. 제품·시험 코드가 같은 RC4-02의 `make check` 결과(Rust592 PASS, Python112 PASS·2 SKIP, fmt·Clippy PASS)를 참조하며 이번 단계에서 재실행하지 않았다. 새 실물 빌드·조립 검증과 구분한다. 추가 NIGO 선행 구현 요청은 없다.
+정확한 RC.3/RC.4 profile과 capability, runtime 인수 하네스, 수동 단일노드 입력 준비도구, 유한 RPC 검사를 구현했다. RC4-02 원자료에서 입력9개·공급3개를 준비해 자격증명6개와 4-validator chain bytes를 보존했으며 child 호출은0회다. 전체 `make check`는 Rust596 PASS, Python153개 중151 PASS·2 SKIP, fmt·Clippy PASS이고 Linux 타입 검사도 PASS다. **RC.4 노드 설치·DB·서비스·네트워크·RPC 실물 인수는 NOT_RUN**이다. CLI-only 검증과 입력 준비를 노드 제품 인수로 승계하지 않는다. 기존 RC.3 lock/spec/runtime·인수 이력은 유지하며 추가 NIGO 선행 구현 요청은 없다.
 
-[RC.4 도입 계획](./2026-11-15-rc4-adoption-plan.md)의 다음은 **RC4-04 외부 관리 CLI의 정확한 RC.4 profile·인수 하네스** → RC4-05 Mac 설치·서비스 → RC4-06 새 DB·새 genesis의 동종 네트워크·변경 영향 → RC4-07 정식 인수 회신 → RC4-08 CLI05-04 사용자 과업이다. 안내서 준비와 RC.3 UX 시험은 병행할 수 있지만 RC.4 제품 인수로 승계하지 않는다. 기존 DB migration·혼합 버전 rolling upgrade는 지원 범위 밖이며 선정 JRE는 유지한다.
+[RC.4 도입 계획](./2026-11-15-rc4-adoption-plan.md)의 다음은 **RC4-05 고정 R+B의 Mac 설치·수동 서비스·같은 RC.4 DB 재시작** → RC4-06 새 DB·새 genesis의 동종 네트워크·변경 영향 → RC4-07 정식 인수 회신 → RC4-08 CLI05-04 사용자 과업이다. 안내서 준비와 RC.3 UX 시험은 병행할 수 있지만 RC.4 제품 인수로 승계하지 않는다. 기존 DB migration·혼합 버전 rolling upgrade는 지원 범위 밖이며 선정 JRE는 유지한다.
 
 ## 현재 우선순위 — 직접 CLI
 
@@ -44,8 +44,10 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 | [RC.4 수신 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md) | RC4-01 원격 공급24파일·전체 identity·선정 JRE engine-info PASS, 원문22개와 검증기 수정 이력 보존 |
 | [RC.4 계약·fixture 영향 설계](./2026-11-15-rc4-contract-fixture-impact.md) | RC4-02 준비 후보·runtime 경계, helper/catalog 영향과 후속 통합 범위 |
 | [RC4-02 구현·실물 준비 결과](../results/2026-11-15-rc4-fixture-preparation.md) | 전체 검사와 새 validator4·거래12·자격증명24개 준비 PASS, 노드/DB/서비스 미실행 |
-| [RC4-03 개발 runtime 조립 결과](../results/2026-11-15-rc4-runtime-assembly.md) | clean 내부 실행기·RC.4 lock/spec 선택·서명 runtime 조립 PASS, 외부 CLI profile·제품 인수 후속 |
-| [RC.4 도입·Mac 재인수 계획](./2026-11-15-rc4-adoption-plan.md) | RC4-01~03 완료와 제품 미인수 구분, 다음 RC4-04~08과 기존 RC.3 보존 |
+| [RC4-03 개발 runtime 조립 결과](../results/2026-11-15-rc4-runtime-assembly.md) | clean 내부 실행기·RC.4 lock/spec 선택·서명 runtime 조립 PASS, 당시 외부 CLI profile·제품 인수 미실행 |
+| [RC4-04 CLI·하네스 구현 설계](./2026-11-15-rc4-cli-harness-implementation.md) | exact runtime profile·관리 CLI 전환 기준·수동 입력 준비·유한 RPC 범위 |
+| [RC4-04 구현·CLI-only 검증 결과](../results/2026-11-15-rc4-cli-harness.md) | 전체 검사·독립 B 배포·전환 정책·실물 입력 준비 PASS, 노드/DB/서비스/RPC 미실행 |
+| [RC.4 도입·Mac 재인수 계획](./2026-11-15-rc4-adoption-plan.md) | RC4-01~04 완료와 노드 제품 미인수 구분, 다음 RC4-05~08과 기존 RC.3 보존 |
 | [직접 CLI 간소화 설계](./2026-10-22-cli-simplification.md) | 순차 준비·재개·조회·제품 항목 수정, 설치 실행·이름 연결, 노드 별칭과 기존 CLI 호환 |
 | [관리 CLI/노드 실행기 분리](./2026-10-23-independent-management-cli.md) | 기존 RC.3 유지, 관리 CLI 독립 업데이트와 실행기 검증·위임 |
 | [독립 Mac 관리 CLI 배포·업데이트](./2026-10-23-management-cli-distribution.md) | CLI05-02 완료: CLI-only bundle·사용자 설치·버전 전환/복귀·셸 연결과 개발 배포본 실제 Mac 인수 |
