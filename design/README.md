@@ -1,6 +1,6 @@
 # BXDL 제품 구현 설계
 
-- 작성일: 2026-09-16 / 갱신: 2026-10-23
+- 작성일: 2026-09-16 / 갱신: 2026-11-15
 - 상태: Rust 기반의 package·제품 설정·setup, Mac 새 폴더 installer·NIGO cold, instance 등록·명시 init/resume-init과 수동 LaunchAgent start/status/stop과 오프라인 logs/diagnose를 구현했다. 단일 validator의 실제 서비스 수명주기를 확인했으며 setup 설치 연결도 구현했다. RC.1/RC.2의 고정 package 결과와 V2 자료 보관·시작 진단의 실제 인수를 보존하고, RC.3를 명시 선택해 같은 archive의 Mac 4-validator·원본 공급 경로 부재 setup13사례와 후속 전체 설치 UX21사례·독립 검사8항목을 통과했다. 전체 G1-M/G1-L 인수는 미완료다.
 - 사용자 확정: **Rust 구현 + macOS Apple Silicon 우선 설치·운용 UX**. Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
 - 현재 구현 범위와 근거: [구현 상태](../docs/implementation-status.md). NIGO가 `REQ-0002`의 방향·범위를 수용했고 BXDL은 피드백의 안전·인수 의미와 교환 절차에 동의했다. [소비자 회신](./2026-09-17-nigo-feedback-response.md)에 기록하며 PROPOSED API·fixture·dirty 개발 JAR는 수신해 제한된 cold 소비를 진행했다. 이후 #119의 clean 후보를 별도 수신·검증했고 전체 제품 인수는 남아 있다. REQ-0003 정책을 수용하고 RC1을 별도로 수신했다. 요청 전체는 `OPEN`이며 소비자 회신은 전용 NIGO worktree에서 준비한다.
@@ -9,9 +9,15 @@
 
 2026-10-22 [RC.3 수신 검증](../contracts/nigo/engine-rc3-2026-10-22/README.md) 이후 [명시 선택과 Mac 재인수 설계](./2026-10-22-rc3-package-reacceptance.md)를 추가했다. 새 lock/spec으로 후보를 선택했고 같은 archive의 [4-validator 재인수](../results/2026-10-22-macos-rc3-package.md)와 [원본 부재 setup 13사례](../results/2026-10-22-macos-rc3-setup.md), 각 독립 사후 검사가 PASS했다. [NIGO PR #230](https://github.com/bwg-loonshots/nigo-protocol/pull/230) 정식 회신을 머지한 뒤 [같은 archive의 전체14문답·수정·취소/EOF·대기 중 HUP·재개21사례](../results/2026-10-22-macos-rc3-full-setup.md)와 독립 검사8항목도 PASS했다. 앞선 결과/회신의 당시 NOT_RUN은 보존한다. HUP은 대기 중 PTY 범위이며 mutation crash·Mac 로그아웃 인수가 아니다. offline Storage A7·기존 설치 upgrade·안전 제거·전체 G1-M/J5는 남아 있다.
 
+## RC.4 공급 확인과 도입 계획 — 2026-11-15
+
+NIGO RC.4는 **DELIVERED**이며 인계 문서와 원격 release/tag metadata를 대조했다. BXDL의 실제 archive 수신 **NOT_RECEIVED**, 제품 선택 **NOT_SELECTED**, 패키지·서비스 인수 **NOT_RUN**을 구분한다. RC.3의 현재 lock/spec/runtime과 기존 PASS·partial 이력은 유지한다. [RC.4 도입 계획](./2026-11-15-rc4-adoption-plan.md)이 다음 실행 순서의 기준이다.
+
+RC4-01 수신 검증 → RC4-02 계약·fixture 영향 → RC4-03 내부 실행기 고정·새 runtime 조립 → RC4-04 외부 관리 CLI의 정확한 RC.4 profile/harness → RC4-05 Mac 설치·서비스 → RC4-06 새 DB·새 genesis의 동종 네트워크·변경 영향 → RC4-07 정식 인수 회신 → RC4-08 CLI05-04 사용자 과업 순서로 진행한다. 안내서 준비와 RC.3 UX 시험은 병행할 수 있지만 RC.4 PASS로 승계하지 않는다. 기존 DB migration·혼합 버전 rolling upgrade는 지원 범위 밖이며 선정 JRE는 유지한다.
+
 ## 현재 우선순위 — 직접 CLI
 
-사용자가 console을 직접 확인한 뒤 개발 중단을 요청했다. **console 확장을 중단하고 CLI-01 → CLI-05를 진행한다.** [CLI 우선 설계](./2026-10-22-cli-simplification.md)와 [구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md)이 현재 기준이다. 이름 연결/목록 → 한 줄 운용 → 순차 설치 준비 → 실제 설치 실행 → 자동완성 → 독립 관리 CLI 배포/기존 runtime 조합·사용자 과업 인수 순서다. 기존 번호 메뉴를 유지한 채 진입 명령만 짧게 만드는 것을 완료로 삼지 않는다.
+사용자가 console을 직접 확인한 뒤 개발 중단을 요청했다. **console 확장을 중단하고 CLI-01 → CLI-05를 진행한다.** [CLI 우선 설계](./2026-10-22-cli-simplification.md)와 [구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md)은 유지하되, CLI05-04의 새 후보 사용자 과업 전에 위 RC.4 도입·재인수를 진행한다. 이름 연결/목록 → 한 줄 운용 → 순차 설치 준비 → 실제 설치 실행 → 자동완성 → 독립 관리 CLI 배포/기존 runtime 조합·사용자 과업 인수 순서다. 기존 번호 메뉴를 유지한 채 진입 명령만 짧게 만드는 것을 완료로 삼지 않는다.
 
 기존 console·HTML·터미널 시안과 아래 검증 기록은 보존하되 추가 개발하지 않는다. 공통 저장·검증 API는 CLI에서 재사용하며, 2026-10-23 CLI-01의 `nodes`/`nodes add`를 구현했다. CLI-02의 [관리 CLI/기존 RC.3 실행기 분리](./2026-10-23-independent-management-cli.md)와 이름 기반 운용도 구현했다. [CLI-01 결과](../results/2026-10-23-cli01-node-names.md)와 [CLI-02 실제 조합 인수](../results/2026-10-23-independent-management-cli.md)를 따른다. CLI-03의 직접 `setup new/resume` 순차 문답, 읽기 전용 `setup list/show`, 제품 한 항목 수정 `setup edit`도 구현·검증했다. [준비 가이드](../docs/preparation.md)에 명령·저장·재검증 계약을, [CLI-03 결과](../results/2026-10-23-cli03-sequential-preparation.md)에 자동 검사와 실제 Mac 문답·조회 범위를 기록했다. CLI-04의 `setup apply`로 TTY 승인 뒤 설치·cold 검사·등록·이름 연결을 연결하고, 이름 기반 init/resume-init을 제공한다. 준비 `sessions/<이름>`과 실행 `operations/<이름>`을 구분하며 완료 재호출은 완료 근거 검증과 이름 복구만 수행한다. CLI-04 자동 검사와 최종 RC.3 Mac 12개 사례를 통과했다. [CLI-04 검증 기록](../results/2026-10-23-cli04-apply-and-lifecycle.md)을 따르며 CLI-05 중 zsh 자동완성(CLI05-01)의 구현·검증도 완료했다. [CLI05-01 검증 기록](../results/2026-10-23-cli05-zsh-completion.md)에 전체 검사·후속 보강·최종 release 실제 zsh 결과를 구분했다. [자동완성 가이드](../docs/completion.md)를 제공한다. CLI05-02 독립 Mac 배포·업데이트도 구현하고 [최종 검증](../results/2026-10-23-cli05-management-distribution.md)의 자동 검사·개발 인수 배포본 실제 signed13/unsigned13사례를 통과했다. 후속 [CLI05-03 조합 인수](../results/2026-10-23-cli05-runtime-acceptance.md)는 지정 Mac 서비스16사례와 기존 RC.3의4-validator·두 복구·wrong-pin·실행 중 CLI 전환3회·정상 정리를 PASS했다. 같은 source tree의 실제 PR head와 merge commit을 각각 빌드해 설치 진입점으로 운용했다. 당시 진단 partial의 정확한 표현을 확인한 범위는 보존한다. 후속 [초기화 보고서 생성 권한 개선](./2026-10-23-private-initialization-report.md)과 [신규 보고서 수집 재검증](../results/2026-10-23-private-initialization-report.md)을 완료했다. 새 standalone CLI의 `umask 077`이 고정 실행기/JVM에 상속되며 기존 RC.3 bytes는 그대로다. 기존 `0644` 보고서는 미복구 partial로 남고, CLI05-04 작성자가 아닌 사용자 과업은 NOT_RUN이다.
 
@@ -21,7 +27,7 @@
 
 UX-03 당시에는 `setup new/resume`과 console이 같은 번호 메뉴를 사용했다. CLI-03은 기존 저장 형식을 유지하며 직접 명령만 순차 문답으로 바꾸고 console 메뉴는 보존한다. 종전 UX-04~07의 후속 항목은 위 CLI-01~05로 재배치했다. 표시명·불변 ID·별칭을 구분하고 기존 명령/JSON을 유지한다. UX-03은 이름 기반 준비·재개·설정 출력을 구현했고 [로컬 검증](../results/2026-10-22-ux03-preparation.md)을 통과했다. [현재 가이드](../docs/preparation.md)는 CLI-03 흐름을 설명한다. 이름 기반 서비스 호출은 CLI-02에서 구현했고, 준비 세션에서 실제 설치로 연결하는 기능은 CLI-04로 별도 구현·검증한다. CLI-04 최종 인수는 완료했으며 CLI-05 사용자 과업을 후속으로 추적한다.
 
-기존 [화면 명세](./2026-10-22-integrated-operations-ux-screens.md)와 [클릭 가능한 시안](./prototypes/integrated-operations-ux.html)은 당시 설계 이력이다. 다음 구현은 [현재 CLI-01~05 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md)을 기준으로 한다. 안전 제거 REM-01과 나머지 Mac lifecycle은 G1-M의 별도 필수 항목이며 A7·업데이트는 G2로 구분한다. 이 계획 작성만으로 기존 요구 상태나 release gate를 완료 처리하지 않는다.
+기존 [화면 명세](./2026-10-22-integrated-operations-ux-screens.md)와 [클릭 가능한 시안](./prototypes/integrated-operations-ux.html)은 당시 설계 이력이다. CLI 기능 범위는 [현재 CLI-01~05 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md)을, 다음 실행 순서는 [RC.4 도입 계획](./2026-11-15-rc4-adoption-plan.md)을 기준으로 한다. 안전 제거 REM-01과 나머지 Mac lifecycle은 G1-M의 별도 필수 항목이며 A7·업데이트는 G2로 구분한다. 이 계획 작성만으로 기존 요구 상태나 release gate를 완료 처리하지 않는다.
 
 ## 목표
 
@@ -33,6 +39,7 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 
 | 문서 | 내용 |
 | --- | --- |
+| [RC.4 도입·Mac 재인수 계획](./2026-11-15-rc4-adoption-plan.md) | 공급 완료와 BXDL 미수신·미선택·미실행 구분, RC4-01~08 순서와 기존 RC.3 보존 |
 | [직접 CLI 간소화 설계](./2026-10-22-cli-simplification.md) | 순차 준비·재개·조회·제품 항목 수정, 설치 실행·이름 연결, 노드 별칭과 기존 CLI 호환 |
 | [관리 CLI/노드 실행기 분리](./2026-10-23-independent-management-cli.md) | 기존 RC.3 유지, 관리 CLI 독립 업데이트와 실행기 검증·위임 |
 | [독립 Mac 관리 CLI 배포·업데이트](./2026-10-23-management-cli-distribution.md) | CLI05-02 완료: CLI-only bundle·사용자 설치·버전 전환/복귀·셸 연결과 개발 배포본 실제 Mac 인수 |
