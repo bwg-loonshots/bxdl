@@ -1,4 +1,4 @@
-"""Immutable engine identities for the explicitly supported test candidates.
+"""Immutable engine identities, with preparation separate from runtime support.
 
 RC1 constants remain available in the legacy diagnostic modules. A moving
 release branch, a rebuilt JAR, or another Java launcher is never an alias.
@@ -26,8 +26,52 @@ CANDIDATES = {
     },
 }
 
+# Runtime runners keep using CANDIDATES. Adding a received JAR for offline
+# preparation must not silently enable package/service/recovery acceptance.
+PREPARATION_CANDIDATES = {
+    **CANDIDATES,
+    "rc4": {
+        "source": "037c98c315d5322fa7da266ca0254d61f3863622",
+        "jarSha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+        "jarSizeBytes": 164133636,
+        "transactionCount": 12,
+    },
+}
+
+RC4_PREPARATION_RESOURCES = {
+    "generator": {
+        "class": "BOOT-INF/classes/org/nigo/node/devnet/qbft/QbftDevnetGenerator.class",
+        "sha256": "c02940619cc4d51eb611fd912dbdcf619511177337905476c1a39330351a3de6",
+    },
+    "launcher": {
+        "class": "org/springframework/boot/loader/launch/PropertiesLauncher.class",
+        "sha256": "4116ec36a9dc21b8d360d6fad6d10eb176cb50e62825fe9d944865392e0270ac",
+    },
+    "nativeCatalog": {
+        "container": "BOOT-INF/lib/nigo-vm-0.0.1-SNAPSHOT.jar",
+        "lockPath": "native/standard-product-candidate/lock.json",
+        "lockSha256": "8aa6912d714cc829f6a6421ff3ee032e2de544c53a349801dcaae6812cb9d25b",
+        "lockSizeBytes": 1000681,
+        "schema": "nigo-standard-product-candidate-v1",
+        "chainId": 11578,
+        "acceptance": "LOCAL_DEFAULT_SUPPLY",
+        "defaultActivated": True,
+        "resources": {
+            "fileCount": 378, "fileBytes": 9017808,
+            "stockRootCount": 21, "stockDependencyCount": 26,
+            "nigoRootCount": 1, "nigoDependencyCount": 1,
+            "totalArtifactCount": 49,
+        },
+        "verification": "LOCK_BYTES_AND_SUMMARY_ONLY",
+    },
+}
+
 
 def candidate_for(args):
     # The old, fixed RC1 probe entrypoints predate --candidate. Their allowlists
     # remain RC1-only. New preparation/acceptance CLIs require an explicit choice.
     return CANDIDATES[getattr(args, "candidate", "rc1")]
+
+
+def preparation_candidate_for(args):
+    return PREPARATION_CANDIDATES[getattr(args, "candidate", "rc1")]

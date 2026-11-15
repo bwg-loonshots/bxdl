@@ -9,6 +9,7 @@ All output stays in a new private directory, including child diagnostics.
 
 import argparse
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -17,8 +18,9 @@ import stat
 import subprocess
 import sys
 from urllib.parse import unquote, urlparse
+import zipfile
 
-from candidates import CANDIDATES, candidate_for
+from candidates import PREPARATION_CANDIDATES, RC4_PREPARATION_RESOURCES, preparation_candidate_for
 
 
 ENGINE_SOURCE = "540a89f0814c01d2a4ec67da1087af35195882ca"
@@ -112,6 +114,46 @@ def pinned_file(path, digest):
     if sha256(resolved) != digest:
         raise ValueError("pinned artifact mismatch")
     return resolved
+
+
+def checked_jar_resources(jar, candidate_name):
+    """Check RC4 helper availability and pinned catalog lock before any child.
+
+    The complete outer JAR is already pinned by prepare(). This reads only the
+    helper classes and Native catalog lock; it does not load/init that catalog.
+    """
+    if candidate_name != "rc4":
+        return None
+
+    def entry(archive, name, limit):
+        matches = [item for item in archive.infolist() if item.filename == name]
+        if len(matches) != 1 or matches[0].is_dir() or not 0 < matches[0].file_size <= limit:
+            raise ValueError("candidate preparation resource missing, duplicated or oversized")
+        return archive.read(matches[0])
+
+    expected = RC4_PREPARATION_RESOURCES
+    with zipfile.ZipFile(jar) as archive:
+        for kind in ("generator", "launcher"):
+            raw = entry(archive, expected[kind]["class"], 1024 * 1024)
+            if hashlib.sha256(raw).hexdigest() != expected[kind]["sha256"]:
+                raise ValueError("candidate helper resource mismatch")
+        catalog = expected["nativeCatalog"]
+        nested = entry(archive, catalog["container"], 16 * 1024 * 1024)
+        with zipfile.ZipFile(io.BytesIO(nested)) as vm:
+            raw = entry(vm, catalog["lockPath"], 2 * 1024 * 1024)
+            if len(raw) != catalog["lockSizeBytes"] or hashlib.sha256(raw).hexdigest() != catalog["lockSha256"]:
+                raise ValueError("candidate Native catalog lock mismatch")
+            sidecar = entry(vm, catalog["lockPath"].replace(".json", ".sha256"), 65)
+            if sidecar != (catalog["lockSha256"] + "\n").encode():
+                raise ValueError("candidate Native catalog checksum mismatch")
+            document = json.loads(raw)
+            if any(document.get(key) != catalog[key]
+                   for key in ("schema", "chainId", "acceptance", "defaultActivated")):
+                raise ValueError("candidate Native catalog identity mismatch")
+            resources = document.get("resources", {})
+            if any(resources.get(key) != value for key, value in catalog["resources"].items()):
+                raise ValueError("candidate Native catalog summary mismatch")
+    return json.loads(json.dumps(expected))
 
 
 def write_new(path, content):
@@ -214,7 +256,7 @@ def checked_manifest(path, generated, http_base, p2p_base):
 
 
 def chain_properties(nodes, funded_address):
-    # Explicit canonical RC1/RC2 whitelist. QbftDevnetGenerator's generated YAML
+    # Explicit canonical candidate whitelist. QbftDevnetGenerator's generated YAML
     # remains evidence; it is not an ambient configuration source.
     chain = {
         "nigo.protocol.chain-id": str(CHAIN_ID),
@@ -242,11 +284,18 @@ def chain_properties(nodes, funded_address):
 
 
 def prepare(args):
-    candidate = candidate_for(args)
+    candidate = preparation_candidate_for(args)
     java = pinned_file(args.java, JAVA_SHA256)
     jar = pinned_file(args.jar, candidate["jarSha256"])
     if jar.stat().st_size != candidate["jarSizeBytes"]:
         raise ValueError("pinned artifact size mismatch")
+    resources = checked_jar_resources(jar, args.candidate)
+    if args.candidate == "rc4":
+        # RC4-02 requires all four exported certificate pins, rather than a
+        # partial fixture produced by an isolated Java launcher without keytool.
+        keytool = pinned_file(java.parent / "keytool", KEYTOOL_SHA256)
+        if not os.access(keytool, os.X_OK):
+            raise ValueError("executable keytool required")
     node_executable = regular(args.node)
     ethers = module_path(args.ethers_module)
     if not os.access(java, os.X_OK) or not os.access(node_executable, os.X_OK):
@@ -400,13 +449,19 @@ def prepare(args):
         "networkTraffic": "NOT_PERFORMED",
         "runtimeAcceptance": "NOT_CHECKED",
     }
+    if args.candidate == "rc4":
+        summary.update(
+            artifactPreparation=resources,
+            genesisStatus="FRESH_INPUTS_ONLY_NOT_INITIALIZED",
+            runtimeCandidateSupport="NOT_IMPLEMENTED",
+        )
     write_json(root / "fixture-summary.json", summary)
     return {"status": "PREPARED_NOT_EXECUTED", "validators": 4, "candidate": args.candidate, "transactions": candidate["transactionCount"], "certificateExport": certificate_export}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--candidate", choices=tuple(CANDIDATES), required=True)
+    parser.add_argument("--candidate", choices=tuple(PREPARATION_CANDIDATES), required=True)
     parser.add_argument("--java", required=True)
     parser.add_argument("--jar", required=True)
     parser.add_argument("--ethers-module", required=True)

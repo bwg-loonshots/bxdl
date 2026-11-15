@@ -6,16 +6,18 @@
 
 첫 대상은 로그인된 GUI 세션이 있는 macOS arm64, RocksDB, 사용자 LaunchAgent다. HTTP와 P2P를 모두 `127.0.0.1`에 두고 노드별 포트를 분리한다. 같은 사용자 UID의 네 인스턴스이며, 서로 다른 호스트나 강한 보안 격리를 검증하는 구성이 아니다.
 
+2026-11-15 RC4-02에서 [RC.4 준비·검증](../../results/2026-11-15-rc4-fixture-preparation.md)을 추가했다. **RC.4는 준비 전용**이며 `run_acceptance.py`와 관리 CLI/runtime 인수에는 아직 지원하지 않는다. RC.3 기존 실행 경로는 유지한다.
+
 ## 도구와 실행 경계
 
 | 파일 | 역할 | 실행하지 않는 것 |
 | --- | --- | --- |
-| `prepare_fixture.py` | 명시 선택한 고정 RC1/RC2/RC3 JAR의 `QbftDevnetGenerator`로 새 시험용 NGVK·개별 mTLS·신뢰 자료 생성, 공개 목록과 제품 설정 작성, 새 거래 지갑과 미리 서명한 Type-2 거래 준비 | BXDL 설치·등록·초기화·노드 기동·거래 제출 |
+| `prepare_fixture.py` | 명시 선택한 고정 RC1/RC2/RC3/RC4 JAR의 `QbftDevnetGenerator`로 새 시험용 NGVK·개별 mTLS·신뢰 자료 생성, 공개 목록과 제품 설정 작성, 새 거래 지갑과 미리 서명한 Type-2 거래 준비 | BXDL 설치·등록·초기화·노드 기동·거래 제출 |
 | `run_acceptance.py` | 새 시험 서명키로 실제 archive 조립·검증, 같은 archive의 네 설치본 준비, 네트워크 설정 도우미·등록·초기화·LaunchAgent·거래/합의 관측 | 고객 인스턴스 인수, 기존 설치본 덮어쓰기, 운영 키 발급 |
-| `candidates.py` | RC1/RC2/RC3의 source·JAR hash/크기·거래 개수 고정 | 움직이는 branch HEAD나 재빌드 JAR 채택 |
+| `candidates.py` | 실행 후보 RC1/RC2/RC3와 준비 후보 RC1~RC4를 분리하고 source·JAR hash/크기·거래 개수 고정 | 움직이는 branch HEAD나 재빌드 JAR 채택 |
 | `test_candidates.py` | 후보/lock 혼합, 거래 입력 변경, 자동 재시도, 동일 DB 복구의 거짓 성공 방지 회귀 | 실제 엔진·서비스 실행 |
 | `test_oracles.py` | 잘못된 receipt/block의 거짓 성공, historical receipt 제한, init 불명 cleanup의 오프라인 회귀 | 실제 엔진·서비스 실행 |
-| `fixture_guard.py` | 선택 후보 시험 fixture의 identity·loopback·파일 범위·입력 hash와 legacy B 재개 allowlist 검사 | credential 내용 읽기·암호학적 거래 재검증 |
+| `fixture_guard.py` | 준비 전용 identity·fresh 입력 검사와 별도 제품 lock을 요구하는 실행 입력 검사, legacy B 재개 allowlist | credential 내용 읽기·암호학적 거래 재검증 |
 | `support.py` | 새 파일 저장·복사, 실제 PTY 문답, CLI JSON 수집, 제한된 상태 검증과 비공개 근거 기록 | 독자적인 복구·서비스 제어 정책, import 시 실행 |
 | `run_pin_only.py` | 보존한 서명 archive와 새 fixture에서 잘못된 pin 거부·정상 3-node 합의를 독립 확인 | 앞선 catch-up·정족수 복구 실패의 성공 전환 |
 | `run_recovery_probe.py` | 보존한 B/C 실행의 정지 근거를 확인하고, 같은 DB에서 거래 명시 재제출과 합의 라운드 관측 | 범용 복구·DB 초기화·자동 재전송 |
@@ -26,7 +28,7 @@ Node와 ethers는 준비 단계의 오프라인 거래 서명에만 필요하다
 
 ## 고정 공급물과 사전 조건
 
-`prepare_fixture.py`와 `run_acceptance.py`는 `--candidate rc1|rc2|rc3`를 필수로 받는다. 후보를 파일명·움직이는 branch HEAD에서 추정하지 않는다. RC1의 기존 이력·lock·legacy 진단 allowlist는 보존하며, 서로 다른 후보의 fixture/lock과 섞어 실행할 수 없다. hash가 다른 JAR/Java를 최신 버전이라는 이유로 대신 넣지 않는다.
+`prepare_fixture.py`는 `--candidate rc1|rc2|rc3|rc4`, `run_acceptance.py`는 `--candidate rc1|rc2|rc3`를 필수로 받는다. RC.4 준비 지원을 전체 패키지 실행 지원으로 승계하지 않는다. 후보를 파일명·움직이는 branch HEAD에서 추정하지 않는다. RC1의 기존 이력·lock·legacy 진단 allowlist는 보존하며, 서로 다른 후보의 fixture/lock과 섞어 실행할 수 없다. hash가 다른 JAR/Java를 최신 버전이라는 이유로 대신 넣지 않는다.
 
 | 대상 | 고정 값 |
 | --- | --- |
@@ -39,6 +41,9 @@ Node와 ethers는 준비 단계의 오프라인 거래 서명에만 필요하다
 | RC3 NIGO source | `7ec5abd8c98e1cf070763a16f815e9281b74a5c1` |
 | RC3 JAR SHA-256 | `05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f` |
 | RC3 JAR 크기 | `164088530` bytes |
+| RC4 NIGO source | `037c98c315d5322fa7da266ca0254d61f3863622` |
+| RC4 JAR SHA-256 | `56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a` |
+| RC4 JAR 크기 | `164133636` bytes |
 | Temurin Java launcher SHA-256 | `9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c` |
 | 선택 runtime | Temurin `21.0.12.1+1-LTS`, macOS arm64 full JRE |
 | 준비용 ethers | `6.17.0` |
@@ -66,11 +71,33 @@ python3 ./prepare_fixture.py \
   --p2p-base-port 29090
 ```
 
-준비기는 새 validator 네 개의 시험 자료, `chain.json`, `network.json`, `products/n1.json`부터 `n4.json`, 새 지갑, RC2/RC3에서는 nonce 0~11, RC1에서는 기존대로 nonce 0~7의 미리 서명한 거래를 만든다. 자료는 새 private 폴더에 보관한다. 생성된 `application.yml`은 공급자 생성기 근거로 남기며, 실행 설정으로 자동 채택하지 않는다.
+준비기는 새 validator 네 개의 시험 자료, `chain.json`, `network.json`, `products/n1.json`부터 `n4.json`, 새 지갑, RC2/RC3/RC4에서는 nonce 0~11, RC1에서는 기존대로 nonce 0~7의 미리 서명한 거래를 만든다. 자료는 새 private 폴더에 보관한다. 생성된 `application.yml`은 공급자 생성기 근거로 남기며, 실행 설정으로 자동 채택하지 않는다.
 
-고정 keytool이 있으면 공개 leaf 인증서를 내보내 NIGO domain hash와 manifest pin을 대조한다. 없으면 `certificateExport=NOT_AVAILABLE`로 기록한다. 실패한 준비 폴더는 덮어쓰거나 재사용하지 않고 보존한다. 성공 여부와 생성 범위는 `fixture-summary.json`으로 확인한다.
+RC1~3은 고정 keytool이 있으면 공개 leaf 인증서를 내보내 NIGO domain hash와 manifest pin을 대조하며 없으면 `certificateExport=NOT_AVAILABLE`로 기록한다. RC4는 고정 keytool을 필수로 요구하고 출력 생성 전에 확인한다. 네 leaf의 `EXPORTED_PIN_MATCHED`가 준비 완료 조건이다. 실패한 준비 폴더는 덮어쓰거나 재사용하지 않고 보존한다. 성공 여부와 생성 범위는 `fixture-summary.json`으로 확인한다.
 
 시험 원장에는 새 거래 지갑만을 명시적으로 funding한다. 공개 devnet 고정 지갑이나 고객 자산을 사용하지 않는다. `ALLOWLISTED` 등록 정책의 빈 허용목록을 유지하며 이 시험에서 Native 모듈 게시를 수행하지 않는다.
+
+### RC.4 준비 전용 검증
+
+위 준비 명령에서 `--candidate rc4`와 별도 새 출력 경로를 사용한다. JAR 전체 hash/크기, helper·PropertiesLauncher class와 Native catalog lock의 고정 bytes·요약을 출력 생성/child 실행 전에 검사한다. `artifactPreparation.nativeCatalog.verification=LOCK_BYTES_AND_SUMMARY_ONLY`이며 실제 Native 초기화 검증이 아니다.
+
+준비 summary는 `genesisStatus=FRESH_INPUTS_ONLY_NOT_INITIALIZED`, `runtimeCandidateSupport=NOT_IMPLEMENTED`를 기록한다. 새 RocksDB data 경로의 존재·dangling symlink를 거절하며 genesis DB를 만들지 않는다. 준비용 API는 제품 lock 없이 다음처럼 호출할 수 있다(`tests/acceptance`에서 실행, 경로·revision은 실제 값으로 대체).
+
+```python
+from pathlib import Path
+from types import SimpleNamespace
+import fixture_guard
+
+args = SimpleNamespace(
+    candidate="rc4",
+    fixture=Path("/path/to/new-rc4-fixture"),
+    revision="FULL_40_HEX_BXDL_COMMIT",
+)
+pins = fixture_guard.validate_preparation(args)
+fixture_guard.assert_preparation_unchanged(args, pins)
+```
+
+RC4는 명시적인 40자리 작업 기준 revision을 요구한다. 미커밋 변경으로 시험한다면 실제 소스 파일 hash·diff와 dirty 상태도 실행 기록에 구분한다. 준비 pins의 `engineLockSha256`은 null이며 제품 선택을 뜻하지 않는다. 실행용 `validate_inputs`와 다음 절의 runner는 RC4를 거절한다. 거래 guard는 metadata/hex·현재 hash를 대조하고 암호학적 decode는 오프라인 준비기의 별도 근거다.
 
 ## 2. 실제 패키지 설치·실행
 

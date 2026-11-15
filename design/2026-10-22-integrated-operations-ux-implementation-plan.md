@@ -1,7 +1,7 @@
 # CLI 우선 설치·운용 UX 구현 계획
 
 - 작성일/방향 변경: 2026-10-22 / 상태: **console 개발 중단. 기존 UX-01~03 이력 보존. CLI-01~04는 2026-10-23 구현·검증 완료. CLI-05 중 CLI05-01/02 구현·검증과 CLI05-03 지정 Mac 조합 인수를 완료했다. 후속 신규 초기화 보고서 권한 개선·수집 재검증 완료. 기존 `0644` 보고서는 미복구 partial이며 CLI05-04 사람 과업은 NOT_RUN이다.**
-- 현재 우선순위 갱신: 2026-11-15. **RC.4 공급 완료 → 수신·새 runtime/외부 관리 CLI 조합 재인수 → RC.4 기준 CLI05-04 사람 과업**을 따른다. [RC.4 상세 계획](./2026-11-15-rc4-adoption-plan.md). RC4-01의 [실물 수신·engine-info 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md)을 완료했고 다음은 RC4-02다. RC.3 지원과 아래 완료 이력은 그대로다.
+- 현재 우선순위 갱신: 2026-11-15. **RC.4 공급 완료 → 수신·새 runtime/외부 관리 CLI 조합 재인수 → RC.4 기준 CLI05-04 사람 과업**을 따른다. [RC.4 상세 계획](./2026-11-15-rc4-adoption-plan.md). RC4-01의 [실물 수신·engine-info 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md)과 [RC4-02 준비·회귀](../results/2026-11-15-rc4-fixture-preparation.md)를 완료했고 다음은 RC4-03이다. RC.3 지원과 아래 완료 이력은 그대로다.
 - 기준: [직접 CLI 간소화](./2026-10-22-cli-simplification.md), [통합 설계](./2026-10-22-integrated-operations-ux.md), [화면 명세 S01~S11](./2026-10-22-integrated-operations-ux-screens.md), [화면 시안](./prototypes/integrated-operations-ux.html).
 - 기존 M/BX 작업 ID와 G1/G2를 대체하지 않는다. UX ID는 이번 개선을 나눠 구현·검토하기 위한 하위 추적이다.
 - 최초 설계 코드 기준은 PR #15의 `870ca72`, 설계 merge는 PR #16의 `a8fd55a`다. UX-01의 `operator/{prompt,help,view}.rs`와 UX-02의 `operator/{console,catalog,home,target}.rs`를 구현했다. UX-03의 `operator/install_flow.rs`와 `setup/preparation.rs`도 구현했다. node/support 모듈은 후속 제안이다.
@@ -28,7 +28,7 @@ CLI-03에서 직접 `setup new/resume`의 7개 번호 메뉴를 순차 문답으
 
 RC.4는 NIGO 공급 후 BXDL RC4-01의 실제 수신·전체 identity·선정 JRE engine-info 대조까지 PASS했다. lock은 NOT_SELECTED, 새 조합 인수는 NOT_RUN이다. 현재 실행 가능한 지원 조합은 기존 RC.3다.
 
-1. **RC4-01 DONE / RC4-02 다음:** archive·실제 engine-info·전체 inventory 수신 대조를 완료했다. 다음은 계약/Console/Native catalog 영향 확인과 RC.4 candidate pin·최소 fixture 준비 코드·회귀 연결이다.
+1. **RC4-01/02 DONE:** archive·engine-info·전체 inventory 수신 대조, 계약/Console/Native catalog 영향 확인과 RC.4 준비 candidate·fixture 코드·회귀 및 실제 준비를 완료했다. 새 genesis 입력만 준비했고 DB·runtime 지원은 미실행이다.
 2. **RC4-03/04:** 내부 실행기를 먼저 고정해 RC.4 runtime을 조립하고, 확정한 package를 지원하는 외부 관리 CLI와 후보별 인수 도구를 별도로 구현한다. RC.3 profile을 보존한다.
 3. **RC4-05/06:** 새 DB·새 genesis에서 Mac 전체 설치/서비스와 동종 4-validator·복구·관리 CLI 업데이트/복귀를 재인수한다. RC.3 DB 교체·migration·혼합 버전 rolling은 포함하지 않는다.
 4. **RC4-07:** NIGO 별도 worktree에서 수신 사실과 실제 제품 결과를 구분해 정식 회신한다. 수신 사실은 RC4-01 뒤 먼저 전달할 수 있다.
@@ -302,14 +302,14 @@ src/setup/preparation.rs      # UX-03 별도 준비 기록·자료 검증·immut
 | 항목 | 판단 |
 | --- | --- |
 | 직접 CLI 설치/운용 UX | RC.3 구현·지정 조합 인수 완료. RC.4 새 조합과 사람 과업은 위 순서로 진행; console 개발 중단 유지 |
-| RC.4 공급·시험 입력 | NIGO DELIVERED·BXDL RC4-01 수신 PASS. 새 엔진 기능 선행 대기는 없으며 계약·fixture 영향 확인이 다음. 실제 JAR의 시험용 helper/fixture 사용 가능 여부를 확인하고 필요한 경우에만 공급자 지원 요청 |
+| RC.4 공급·시험 입력 | NIGO DELIVERED·BXDL RC4-01 수신과 RC4-02 실제 helper 준비 PASS. 새 엔진 기능 선행 대기 없이 RC4-03 조립·명시 선택으로 진행 |
 | engine/JRE 후보 변경 | 별도 명시 선택과 package 재인수 필요. UX 편의를 이유로 자동 갱신하지 않음 |
 | CLI 호환/카탈로그/관리 경로 | BXDL 책임. NIGO가 UI나 새 registry를 구현할 필요 없음 |
 | UNKNOWN 수동 조정 | 이번 범위 밖. 실제 엔진 증거/계약 변경이 필요하면 재현 후 별도 요구·설계 |
 | J5·고객 배포 조건 | UX와 별도 공급망/허가 조건. 출처·SBOM·NOTICE·대응 소스·최소 OS 확정 필요 |
 | A7 Storage | 공식 도구는 수신했으나 BXDL wrapper/인수는 별도 G2 작업. 이번 UX 선행 아님 |
 
-현재 우선순위는 RC4-01 수신 완료 뒤 RC4-02~07의 영향 확인·조합 인수·회신, 이후 RC4-08/CLI05-04다. 기존 CLI-01~04와 CLI05-01/02/03 완료를 새 후보의 완료로 복사하지 않는다. 실패·중단과 Mac lifecycle 인수는 해당 UX 단계와 연결하고, **안전 제거 BX-034/REM-01은 별도 구현이어도 G1-M 전 필수**로 유지한다. A7·업데이트는 G2, Linux/systemd·Docker·장기 운영 LaunchDaemon은 후속이다. 이 설계만으로 REQ-0002/0003 OPEN·development·PROPOSED를 승격하지 않는다.
+현재 우선순위는 RC4-01/02 수신·준비 완료 뒤 RC4-03~07의 조립·조합 인수·회신, 이후 RC4-08/CLI05-04다. 기존 CLI-01~04와 CLI05-01/02/03 완료를 새 후보의 완료로 복사하지 않는다. 실패·중단과 Mac lifecycle 인수는 해당 UX 단계와 연결하고, **안전 제거 BX-034/REM-01은 별도 구현이어도 G1-M 전 필수**로 유지한다. A7·업데이트는 G2, Linux/systemd·Docker·장기 운영 LaunchDaemon은 후속이다. 이 설계만으로 REQ-0002/0003 OPEN·development·PROPOSED를 승격하지 않는다.
 
 ## 5. 각 PR에 남길 근거
 

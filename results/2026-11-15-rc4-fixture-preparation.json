@@ -1,0 +1,405 @@
+{
+  "schemaVersion": 1,
+  "stage": "RC4-02",
+  "outcome": "PASS",
+  "date": "2026-11-15",
+  "scope": "CONTRACT_IMPACT_AND_FRESH_TEST_FIXTURE_PREPARATION",
+  "source": {
+    "baseCommit": "66c928936b54acd74bf3bab9acb033b44e0e7729",
+    "workingTreeDirty": true,
+    "trackedDiffSha256AtExecution": "8dd38d1d4877a193d7a19a97082e19b5f1b71629fa46cc4152f836b1182e5826",
+    "harnessFiles": {
+      "packaging/runtime-lock.temurin-21-macos-arm64.json": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+      "tests/acceptance/candidates.py": "f857a5933dc9d1c57ff5147a4e063b573062eae8518304ad4b01ee02e8edf998",
+      "tests/acceptance/fixture_guard.py": "72697d86acc644b8c26a56e39c9b89e9126e499571b00b41134958d1d15658eb",
+      "tests/acceptance/prepare_fixture.py": "6a4763db8f7ff84debc9c0df532428174f690829882cd83c54e1718088869f38",
+      "tests/acceptance/support.py": "f7625dd79cf9827f3f14c4d8f9acea0278a089933fba80f553c70ea7e513f0b8",
+      "tests/acceptance/test_candidates.py": "ed72d58b065ad270f53dffd8cc518ec4ab312273d48cb96733972c0d75f5b0db"
+    }
+  },
+  "engine": {
+    "candidate": "rc4",
+    "source": "037c98c315d5322fa7da266ca0254d61f3863622",
+    "jarSha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+    "jarSizeBytes": 164133636
+  },
+  "runtime": {
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "fullJreFilesVerifiedBeforeAndAfter": 259,
+    "version": "21.0.12.1+1-LTS",
+    "platform": "macOS-arm64"
+  },
+  "preparation": {
+    "automaticRetries": 0,
+    "candidate": "rc4",
+    "controllerSha256": "2623b6dcab961243a5e1f621d3560b2dc9472a32977cf500bf473ac3e8dd3ce1",
+    "driverInvocations": 1,
+    "driverSha256": "99dd27639949799be3a4fcc2c535c524a1b00eb991c792dbe1c54233eafa0378",
+    "engineJarRebuilt": false,
+    "explicitLockSelection": "NOT_PERFORMED",
+    "fixtureChildInvocations": 6,
+    "fixtureSummarySha256": "be85f4b2bb4c74263edbc145f9a7f0bae8eca963dc0bf4e3f0615910e36f8674",
+    "generatorJava": 1,
+    "keytoolExports": 4,
+    "modulePackagesUnchanged": 9,
+    "nodeDataCreated": false,
+    "nodeStarted": false,
+    "offlineNodeSigner": 1,
+    "ownedProcessGroupGone": true,
+    "portsRebindable": [
+      31740,
+      31741,
+      31742,
+      31743,
+      32740,
+      32741,
+      32742,
+      32743
+    ],
+    "runtimeAcceptance": "NOT_RUN",
+    "runtimeFilesUnchanged": 259,
+    "scope": "FRESH_GENESIS_INPUTS_AND_TEST_FIXTURE_ONLY",
+    "status": "PASS",
+    "transactions": 12,
+    "validators": 4
+  },
+  "fixture": {
+    "validators": 4,
+    "testCredentials": 24,
+    "credentialMode": "0600",
+    "exportedLeafPinsMatched": 4,
+    "transactions": 12,
+    "transactionType": 2,
+    "chainId": 11578,
+    "nodeDataCreated": false,
+    "nodeStarted": false,
+    "genesisStatus": "FRESH_INPUTS_ONLY_NOT_INITIALIZED",
+    "runtimeCandidateSupport": "NOT_IMPLEMENTED",
+    "artifactPreparation": {
+      "generator": {
+        "class": "BOOT-INF/classes/org/nigo/node/devnet/qbft/QbftDevnetGenerator.class",
+        "sha256": "c02940619cc4d51eb611fd912dbdcf619511177337905476c1a39330351a3de6"
+      },
+      "launcher": {
+        "class": "org/springframework/boot/loader/launch/PropertiesLauncher.class",
+        "sha256": "4116ec36a9dc21b8d360d6fad6d10eb176cb50e62825fe9d944865392e0270ac"
+      },
+      "nativeCatalog": {
+        "acceptance": "LOCAL_DEFAULT_SUPPLY",
+        "chainId": 11578,
+        "container": "BOOT-INF/lib/nigo-vm-0.0.1-SNAPSHOT.jar",
+        "defaultActivated": true,
+        "lockPath": "native/standard-product-candidate/lock.json",
+        "lockSha256": "8aa6912d714cc829f6a6421ff3ee032e2de544c53a349801dcaae6812cb9d25b",
+        "lockSizeBytes": 1000681,
+        "resources": {
+          "fileBytes": 9017808,
+          "fileCount": 378,
+          "nigoDependencyCount": 1,
+          "nigoRootCount": 1,
+          "stockDependencyCount": 26,
+          "stockRootCount": 21,
+          "totalArtifactCount": 49
+        },
+        "schema": "nigo-standard-product-candidate-v1",
+        "verification": "LOCK_BYTES_AND_SUMMARY_ONLY"
+      }
+    }
+  },
+  "tools": {
+    "nodeBinarySha256": "6a1137a572bc6648411bfe51032173a535e010576cad6da87547f414daa11fdb",
+    "nodeVersion": "NOT_QUERIED_BINARY_PIN_RECORDED",
+    "ethersVersion": "6.17.0",
+    "ethersEntrySha256": "586bc08ce4c6bdb64f2972f9284f9eca568b7211f33c387d5b83f63887ffc468",
+    "declaredDependencyPackages": [
+      {
+        "name": "@adraffy/ens-normalize",
+        "version": "1.11.1",
+        "fileCount": 16
+      },
+      {
+        "name": "@noble/curves",
+        "version": "1.2.0",
+        "fileCount": 151
+      },
+      {
+        "name": "@noble/hashes",
+        "version": "1.3.2",
+        "fileCount": 142
+      },
+      {
+        "name": "aes-js",
+        "version": "4.0.0-beta.5",
+        "fileCount": 108
+      },
+      {
+        "name": "ethers",
+        "version": "6.17.0",
+        "fileCount": 1406
+      },
+      {
+        "name": "@types/node",
+        "version": "22.7.5",
+        "fileCount": 64
+      },
+      {
+        "name": "undici-types",
+        "version": "6.19.8",
+        "fileCount": 41
+      },
+      {
+        "name": "tslib",
+        "version": "2.7.0",
+        "fileCount": 14
+      },
+      {
+        "name": "ws",
+        "version": "8.21.0",
+        "fileCount": 19
+      }
+    ],
+    "declaredDependencyPackageCount": 9,
+    "declaredDependencyFileCount": 1961,
+    "dependencyVerificationScope": "Recursive declared dependencies, not all optional peers or actual loaded closure"
+  },
+  "readOnlyGuard": {
+    "outcome": "PASS",
+    "scope": "PINNED_TEST_CANDIDATE_PREPARATION_ONLY",
+    "publicInputFiles": 8,
+    "transactionFiles": 12,
+    "engineLockSha256": null,
+    "explicitRevision": "66c928936b54acd74bf3bab9acb033b44e0e7729",
+    "runtimeRejected": "FIXTURE_GUARD_RUNTIME_CANDIDATE_NOT_SUPPORTED",
+    "fixtureUnchanged": true,
+    "credentialContentsReadByGuard": false,
+    "transactionValidation": "METADATA_AND_HEX_ONLY_CRYPTOGRAPHIC_DECODE_BY_OFFLINE_PREPARATION"
+  },
+  "nativeCatalog": {
+    "schemaVersion": 1,
+    "scope": "STATIC_ONLY",
+    "outcome": "PASS",
+    "startedAt": "2026-11-15T07:12:38.643015+00:00",
+    "completedAt": "2026-11-15T07:12:38.799996+00:00",
+    "engineSourceCommit": "037c98c315d5322fa7da266ca0254d61f3863622",
+    "jarSha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+    "jarSizeBytes": 164133636,
+    "nestedVmJarEntry": "BOOT-INF/lib/nigo-vm-0.0.1-SNAPSHOT.jar",
+    "nestedVmJarSha256": "daf2d7532195a9d19c3ae449708ec5d86d5897c56f41e5e336a22a860f562fba",
+    "nestedVmJarSizeBytes": 3726303,
+    "nativeCatalogLockSha256": "8aa6912d714cc829f6a6421ff3ee032e2de544c53a349801dcaae6812cb9d25b",
+    "nativeCatalogLockSizeBytes": 1000681,
+    "prefixRegularFileCount": 380,
+    "payloadFileCount": 378,
+    "payloadSizeBytes": 9017808,
+    "lockAndSidecarFileCount": 2,
+    "catalogArtifactCount": 49,
+    "stockRootCount": 21,
+    "stockDependencyCount": 26,
+    "nigoRootCount": 1,
+    "nigoDependencyCount": 1,
+    "payloadMembership": "EXACT_MATCH",
+    "payloadHashesAndSizes": "ALL_MATCHED",
+    "duplicateSelectedEntries": 0,
+    "lockSidecar": "MATCHED",
+    "receivedJarUnchanged": true,
+    "verifiedPayloadIndexSha256": "a2c09cdf5616021bbc1085371f9c44a3393ed598d59784fa8670d2b853f226d1",
+    "verifiedPayloadIndexEncoding": "UTF-8 JSON sorted by path; object keys sorted; compact separators; final LF; fields path/sha256/bytes",
+    "verifierSha256": "32feb1acd54df46762c2c88d00bc7f8a8601dc16e2e38b088955b3ed116545d4",
+    "jvmInvocations": 0,
+    "nodeInvocations": 0,
+    "serviceActions": 0,
+    "filesExtracted": 0,
+    "runtimeCatalogLoader": "NOT_RUN",
+    "genesisInitialization": "NOT_RUN",
+    "limitations": [
+      "Inventory integrity and fixed header/count checks only; no Java catalog semantic validation or Native execution.",
+      "The engine source value is the pinned received candidate identity, not source reproducibility established by this script."
+    ]
+  },
+  "execution": {
+    "startedAt": "2026-11-15T07:09:10.985200+00:00",
+    "completedAt": "2026-11-15T07:09:13.642436+00:00",
+    "elapsedSeconds": 2.6569924580000004,
+    "timeoutSeconds": 240,
+    "timedOut": false,
+    "exitCode": 0,
+    "cleanupSignals": [],
+    "ownedProcessGroupGone": true
+  },
+  "automaticChecks": {
+    "command": "make check",
+    "exitCode": 0,
+    "fmt": "PASS",
+    "clippy": "PASS",
+    "python": {
+      "run": 114,
+      "passed": 112,
+      "skipped": 2,
+      "seconds": 47.853,
+      "skipScopes": [
+        "actual CLI management distribution (requires supplied bundles/binary)",
+        "actual binary ZLE completion (requires BXDL_COMPLETION_BINARY)"
+      ]
+    },
+    "rust": {
+      "passed": 592,
+      "failed": 0,
+      "ignored": 0,
+      "suites": [
+        {
+          "status": "ok",
+          "passed": 428,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 82.43
+        },
+        {
+          "status": "ok",
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 0
+        },
+        {
+          "status": "ok",
+          "passed": 16,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 0.5
+        },
+        {
+          "status": "ok",
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 0.13
+        },
+        {
+          "status": "ok",
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 0.43
+        },
+        {
+          "status": "ok",
+          "passed": 17,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 0.68
+        },
+        {
+          "status": "ok",
+          "passed": 16,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 0.95
+        },
+        {
+          "status": "ok",
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 0.02
+        },
+        {
+          "status": "ok",
+          "passed": 13,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 0.34
+        },
+        {
+          "status": "ok",
+          "passed": 34,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 57.46
+        },
+        {
+          "status": "ok",
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 0.27
+        },
+        {
+          "status": "ok",
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 0.48
+        },
+        {
+          "status": "ok",
+          "passed": 16,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 245.89
+        },
+        {
+          "status": "ok",
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 0.33
+        },
+        {
+          "status": "ok",
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 0.07
+        },
+        {
+          "status": "ok",
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "seconds": 0
+        }
+      ]
+    },
+    "targetedCandidateTests": {
+      "run": 46,
+      "passed": 46,
+      "includedInPythonSuite": true
+    }
+  },
+  "evidenceSha256": {
+    "source-before.json": "49f98d8422a210f35a813d769a2dbc5595252b4f8bb6ff3219744998f0289aea",
+    "preparation-verification.json": "f401007b50a2bb206bd009c57f1e59eb891c5969c55ced1333b1ee17a0a84d46",
+    "controller-result.json": "2032f5d3edcea42fbbc3616ac6eb4d058cc77caca56768a6a85ee4d4136a1589",
+    "child-events.jsonl": "ae9ad95018f8cc92a765335bc3497e1bbf85da3490411bb6011ca51a7611cbb1",
+    "cleanup.json": "f39b60db797dbae42a31112d2f20e3514eee722e56077b65477638fe937a5f9a",
+    "guard-verification.json": "f1f9ef0c0e0f26b6ed8d3737ba8cd5ed090e8efa15befbc8651e39f985b5b8e8",
+    "input-invariance.json": "68f08cf9356896462d4b2f0b824a6fa3c1daf2063a7326b732d7a61fb70da0ed",
+    "runtime-before.json": "23a150d9038a256c6cb62201b5f219661402fdc662f393947856ebd4f2bbf82e",
+    "runtime-after.json": "23a150d9038a256c6cb62201b5f219661402fdc662f393947856ebd4f2bbf82e",
+    "modules-before.json": "e6c1a0cf59213bef5a382b99fdd52f45003a0a997fc2aaf7349200e5e5f3a3dd",
+    "modules-after.json": "e6c1a0cf59213bef5a382b99fdd52f45003a0a997fc2aaf7349200e5e5f3a3dd",
+    "files-before.json": "4220e943e7f8df76ce750ba557488927d4c56f605e0bdca67d6ac592724b259b",
+    "files-after.json": "4220e943e7f8df76ce750ba557488927d4c56f605e0bdca67d6ac592724b259b",
+    "native-catalog-verification.json": "e8ea155f492e4d7fddf3070f75c16e94e0c94aea242f075f674d60d90dfc0bbe",
+    "make-check-summary.json": "bb04c3539a2a41e828218c44c089ac0f6ebc99a73699db2aa865967673c2f904"
+  },
+  "remaining": {
+    "explicitEngineLockSelection": "NOT_PERFORMED",
+    "runtimeAssembly": "NOT_RUN",
+    "externalRc4ExecutorProfile": "NOT_IMPLEMENTED",
+    "genesisDbInitialization": "NOT_RUN",
+    "nativeRuntimeCatalog": "NOT_RUN",
+    "macServiceAcceptance": "NOT_RUN",
+    "qbftNetworkAcceptance": "NOT_RUN",
+    "humanUxAcceptance": "NOT_RUN"
+  },
+  "limitations": [
+    "Preparation is test-only and does not provide a customer PKI or official source-free generator product.",
+    "Clean environment HOME/TMPDIR and private cwd were supplied; JVM user.home/java.io.tmpdir were not explicitly pinned. No OS network isolation or syscall audit was performed.",
+    "The tool checks fixed catalog lock bytes/summary; the separate STATIC_ONLY check verifies all 378 payload files. Neither executes catalog semantics or genesis initialization.",
+    "Type-2 signed transactions were prepared offline and never submitted; Type-4/KZG/Native service behavior remains for later exact-package acceptance.",
+    "Parent observation used the unchanged prepare CLI/main path while instrumenting subprocess.Popen events; one driver and six direct fixture child calls were observed, not all operating-system processes.",
+    "The 240-second bound covers waiting for the preparation driver; input inventory and termination grace are additional.",
+    "RC.1/RC.2/RC.3 execution support, locks/specs, runtime and historical results are preserved; RC.4 runtime is rejected until RC4-03/04."
+  ]
+}

@@ -9,11 +9,13 @@
 
 2026-10-22 [RC.3 수신 검증](../contracts/nigo/engine-rc3-2026-10-22/README.md) 이후 [명시 선택과 Mac 재인수 설계](./2026-10-22-rc3-package-reacceptance.md)를 추가했다. 새 lock/spec으로 후보를 선택했고 같은 archive의 [4-validator 재인수](../results/2026-10-22-macos-rc3-package.md)와 [원본 부재 setup 13사례](../results/2026-10-22-macos-rc3-setup.md), 각 독립 사후 검사가 PASS했다. [NIGO PR #230](https://github.com/bwg-loonshots/nigo-protocol/pull/230) 정식 회신을 머지한 뒤 [같은 archive의 전체14문답·수정·취소/EOF·대기 중 HUP·재개21사례](../results/2026-10-22-macos-rc3-full-setup.md)와 독립 검사8항목도 PASS했다. 앞선 결과/회신의 당시 NOT_RUN은 보존한다. HUP은 대기 중 PTY 범위이며 mutation crash·Mac 로그아웃 인수가 아니다. offline Storage A7·기존 설치 upgrade·안전 제거·전체 G1-M/J5는 남아 있다.
 
-## RC.4 수신 PASS와 도입 계획 — 2026-11-15
+## RC.4 수신·시험 자료 준비 PASS와 도입 계획 — 2026-11-15
 
-NIGO RC.4는 **DELIVERED**이며 BXDL도 **RC4-01 실제 원격 수신·전체 identity·선정 JRE의 engine-info 검증을 PASS**했다. [수신 기록](../contracts/nigo/engine-rc4-2026-11-15/README.md)에 공급24파일·계약/Console 대조, 최초 engine-info1회와 검증기 수정 이력, JRE259파일·공급24파일 불변을 기록했다. 제품 lock 선택 **NOT_SELECTED**, runtime 조립·패키지·서비스 인수 **NOT_RUN**은 별도다. RC.3의 현재 lock/spec/runtime과 기존 PASS·partial 이력은 유지한다. [RC.4 도입 계획](./2026-11-15-rc4-adoption-plan.md)이 다음 실행 순서의 기준이다.
+NIGO RC.4는 **DELIVERED**이며 BXDL의 [RC4-01 수신 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md)과 **RC4-02 계약 영향·준비 경로 구현·새 시험 자료 준비가 PASS**다. [영향 설계](./2026-11-15-rc4-contract-fixture-impact.md)와 [검증 결과](../results/2026-11-15-rc4-fixture-preparation.md)에 준비/실행 후보 분리, helper·Native catalog 대조, 새 validator4개·거래12개·자격증명24개와 준비 child6회의 정상 종료를 기록했다. `make check`는 Rust592 PASS, Python114개 중112 PASS·2 SKIP, fmt·Clippy PASS다.
 
-RC4-01 수신 검증은 완료했다. 다음은 **RC4-02 계약·fixture 영향** → RC4-03 내부 실행기 고정·새 runtime 조립 → RC4-04 외부 관리 CLI의 정확한 RC.4 profile/harness → RC4-05 Mac 설치·서비스 → RC4-06 새 DB·새 genesis의 동종 네트워크·변경 영향 → RC4-07 정식 인수 회신 → RC4-08 CLI05-04 사용자 과업 순서로 진행한다. 안내서 준비와 RC.3 UX 시험은 병행할 수 있지만 RC.4 PASS로 승계하지 않는다. 기존 DB migration·혼합 버전 rolling upgrade는 지원 범위 밖이며 선정 JRE는 유지한다.
+RC.4는 준비용 후보에만 지원하며 runtime 지원은 **NOT_IMPLEMENTED**, 제품 lock 선택 **NOT_SELECTED**, runtime 조립·노드/DB/서비스/네트워크 인수 **NOT_RUN**을 유지한다. RC.3의 lock/spec/runtime·기존 PASS/partial 이력과 Rust parser 허용 범위는 그대로다. helper 실물 사용을 확인해 현재 추가 NIGO 선행 구현 요청은 없다.
+
+[RC.4 도입 계획](./2026-11-15-rc4-adoption-plan.md)의 다음은 **RC4-03 내부 실행기 고정·RC.4 lock/spec 명시 선택·runtime 조립** → RC4-04 외부 관리 CLI의 정확한 RC.4 profile/harness → RC4-05 Mac 설치·서비스 → RC4-06 새 DB·새 genesis의 동종 네트워크·변경 영향 → RC4-07 정식 인수 회신 → RC4-08 CLI05-04 사용자 과업이다. 안내서 준비와 RC.3 UX 시험은 병행할 수 있지만 RC.4 제품 인수로 승계하지 않는다. 기존 DB migration·혼합 버전 rolling upgrade는 지원 범위 밖이며 선정 JRE는 유지한다.
 
 ## 현재 우선순위 — 직접 CLI
 
@@ -40,7 +42,9 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 | 문서 | 내용 |
 | --- | --- |
 | [RC.4 수신 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md) | RC4-01 원격 공급24파일·전체 identity·선정 JRE engine-info PASS, 원문22개와 검증기 수정 이력 보존 |
-| [RC.4 도입·Mac 재인수 계획](./2026-11-15-rc4-adoption-plan.md) | 수신 PASS와 제품 미선택·미인수 구분, RC4-02~08 순서와 기존 RC.3 보존 |
+| [RC.4 계약·fixture 영향 설계](./2026-11-15-rc4-contract-fixture-impact.md) | RC4-02 준비 후보·runtime 경계, helper/catalog 영향과 후속 통합 범위 |
+| [RC4-02 구현·실물 준비 결과](../results/2026-11-15-rc4-fixture-preparation.md) | 전체 검사와 새 validator4·거래12·자격증명24개 준비 PASS, 노드/DB/서비스 미실행 |
+| [RC.4 도입·Mac 재인수 계획](./2026-11-15-rc4-adoption-plan.md) | 수신·자료 준비 PASS와 제품 미선택·미인수 구분, 다음 RC4-03~08과 기존 RC.3 보존 |
 | [직접 CLI 간소화 설계](./2026-10-22-cli-simplification.md) | 순차 준비·재개·조회·제품 항목 수정, 설치 실행·이름 연결, 노드 별칭과 기존 CLI 호환 |
 | [관리 CLI/노드 실행기 분리](./2026-10-23-independent-management-cli.md) | 기존 RC.3 유지, 관리 CLI 독립 업데이트와 실행기 검증·위임 |
 | [독립 Mac 관리 CLI 배포·업데이트](./2026-10-23-management-cli-distribution.md) | CLI05-02 완료: CLI-only bundle·사용자 설치·버전 전환/복귀·셸 연결과 개발 배포본 실제 Mac 인수 |

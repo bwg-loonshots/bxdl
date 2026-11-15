@@ -1,14 +1,19 @@
 """Offline boundary and one-shot recovery regressions; no Java, node, or RPC I/O."""
 import copy
+import hashlib
+import io
 import json
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
+import warnings
 from unittest.mock import Mock, patch
+import zipfile
 
-from candidates import CANDIDATES, JAVA_SHA256
+from candidates import CANDIDATES, JAVA_SHA256, PREPARATION_CANDIDATES, RC4_PREPARATION_RESOURCES, candidate_for
 import fixture_guard as fg
+import prepare_fixture as pf
 import run_acceptance as runner
 import support as h
 
@@ -27,7 +32,9 @@ class CandidateBoundary(unittest.TestCase):
         return path
 
     def fixture(self, candidate, legacy=False):
-        identity = CANDIDATES[candidate]
+        identity = PREPARATION_CANDIDATES[candidate]
+        if candidate == "rc4":
+            (self.root / "data").mkdir(mode=0o700)
         nodes, generated, peers = [], [], []
         for index in range(1, 5):
             node = {"index": index, "nodeId": "0x" + str(index) * 64,
@@ -56,6 +63,7 @@ class CandidateBoundary(unittest.TestCase):
                 "http": {"address": "127.0.0.1", "port": node["httpPort"]},
                 "p2p": {"address": "127.0.0.1", "port": node["p2pPort"]},
                 "chainDescription": str(self.root / "chain.json"), "secrets": secrets,
+                "storage": {"backend": "rocksdb", "dataDirectory": str(self.root / "data" / f"n{index}")},
             })
         chain = {"nigo.protocol.chain-id": "11578",
                  "nigo.protocol.consensus.profile-id": "DEV_QBFT",
@@ -81,6 +89,13 @@ class CandidateBoundary(unittest.TestCase):
                    "networkSha256": h.sha(self.root / "network.json")}
         if not legacy:
             summary.update(candidate=candidate, engineJarSizeBytes=identity["jarSizeBytes"])
+        if candidate == "rc4":
+            summary.update(
+                artifactPreparation=copy.deepcopy(RC4_PREPARATION_RESOURCES),
+                genesisStatus="FRESH_INPUTS_ONLY_NOT_INITIALIZED", runtimeCandidateSupport="NOT_IMPLEMENTED",
+                nodeDataCreated=False, nodeStarted=False, networkTraffic="NOT_PERFORMED",
+                runtimeAcceptance="NOT_CHECKED", certificateExport="EXPORTED_PIN_MATCHED",
+            )
         self.write("fixture-summary.json", summary)
         self.write("lock.json", {"jarSha256": identity["jarSha256"],
                                  "jarSizeBytes": identity["jarSizeBytes"], "javaSha256": JAVA_SHA256,
@@ -192,6 +207,186 @@ class CandidateBoundary(unittest.TestCase):
     def test_rc3_never_enters_legacy_continuation(self):
         with self.assertRaisesRegex(h.Failure, "LEGACY_RC1_ONLY"):
             fg.validate_legacy_continuation(SimpleNamespace(candidate="rc3"), {}, {})
+
+    def test_rc4_preparation_validates_without_reading_a_product_lock(self):
+        args = self.fixture("rc4")
+        del args.lock
+        pins = fg.validate_preparation(args)
+        self.assertEqual(pins["candidate"], "rc4")
+        self.assertEqual(pins["scope"], "PINNED_TEST_CANDIDATE_PREPARATION_ONLY")
+        self.assertIsNone(pins["engineLockSha256"])
+        self.assertEqual(len(pins["transactionFiles"]), 12)
+        fg.assert_preparation_unchanged(args, pins)
+
+    def test_rc4_is_not_exposed_as_runtime_acceptance_candidate(self):
+        args = self.fixture("rc4")
+        self.assertNotIn("rc4", CANDIDATES)
+        with self.assertRaises(KeyError):
+            candidate_for(args)
+        with self.assertRaisesRegex(h.Failure, "RUNTIME_CANDIDATE_NOT_SUPPORTED"):
+            fg.validate_inputs(args)
+        output = self.root / "runtime-not-authorized"
+        with patch.object(runner.fg, "validate_inputs") as validate:
+            with self.assertRaises(KeyError):
+                runner.Acceptance(SimpleNamespace(candidate="rc4", output=output))
+        validate.assert_not_called()
+        self.assertFalse(output.exists())
+
+    def test_rc4_preparation_requires_exact_size_and_candidate_identity(self):
+        args = self.fixture("rc4")
+        summary = h.document(self.root / "fixture-summary.json")
+        summary["engineJarSizeBytes"] += 1
+        self.write("fixture-summary.json", summary)
+        with self.assertRaisesRegex(h.Failure, "JAR_SIZE"):
+            fg.validate_preparation(args)
+        summary["engineJarSizeBytes"] -= 1
+        self.write("fixture-summary.json", summary)
+        del args.candidate
+        with self.assertRaisesRegex(h.Failure, "PREPARATION_IDENTITY"):
+            fg.validate_preparation(args)
+
+    def test_rc3_fixture_cannot_be_relabelled_for_rc4_preparation(self):
+        args = self.fixture("rc3")
+        args.candidate = "rc4"
+        with self.assertRaisesRegex(h.Failure, "PREPARATION_IDENTITY"):
+            fg.validate_preparation(args)
+
+    def test_rc4_preparation_rejects_catalog_or_scope_claim_changes(self):
+        args = self.fixture("rc4")
+        original = h.document(self.root / "fixture-summary.json")
+        summary = copy.deepcopy(original)
+        summary["artifactPreparation"]["nativeCatalog"]["lockSha256"] = "0" * 64
+        self.write("fixture-summary.json", summary)
+        with self.assertRaisesRegex(h.Failure, "ARTIFACT_PREPARATION"):
+            fg.validate_preparation(args)
+        for field, value in (("nodeDataCreated", True), ("nodeStarted", True),
+                             ("genesisStatus", "INITIALIZED"), ("certificateExport", "NOT_AVAILABLE"),
+                             ("runtimeAcceptance", "PASS")):
+            with self.subTest(field=field):
+                summary = copy.deepcopy(original)
+                summary[field] = value
+                self.write("fixture-summary.json", summary)
+                with self.assertRaisesRegex(h.Failure, "PREPARATION_SCOPE"):
+                    fg.validate_preparation(args)
+
+    def test_rc4_preparation_rejects_external_storage_and_existing_data(self):
+        args = self.fixture("rc4")
+        product = h.document(self.root / "products/n1.json")
+        product["storage"]["dataDirectory"] = str(self.root / "other-data")
+        self.write("products/n1.json", product)
+        with self.assertRaisesRegex(h.Failure, "FRESH_STORAGE_PATH"):
+            fg.validate_preparation(args)
+        product["storage"]["dataDirectory"] = str(self.root / "data/n1")
+        self.write("products/n1.json", product)
+        (self.root / "data/n1").symlink_to(self.root / "missing")
+        with self.assertRaisesRegex(h.Failure, "NODE_DATA_ALREADY_EXISTS"):
+            fg.validate_preparation(args)
+
+    def test_rc4_preparation_checks_reserved_transaction_and_later_input_changes(self):
+        args = self.fixture("rc4")
+        pins = fg.validate_preparation(args)
+        changed = h.document(self.root / "transactions/tx-11.json")
+        changed["rawTransaction"] = "0x02ef12"
+        self.write("transactions/tx-11.json", changed)
+        with self.assertRaisesRegex(h.Failure, "INPUT_SET_CHANGED"):
+            fg.assert_preparation_unchanged(args, pins)
+        (self.root / "transactions/tx-11.json").unlink()
+        with self.assertRaisesRegex(h.Failure, "INVALID_INPUT"):
+            fg.validate_preparation(args)
+
+    def test_rc4_preparation_rejects_redirected_data_parent(self):
+        args = self.fixture("rc4")
+        (self.root / "data").rmdir()
+        outside = self.root / "other-data"
+        outside.mkdir()
+        (self.root / "data").symlink_to(outside, target_is_directory=True)
+        with self.assertRaisesRegex(h.Failure, "FRESH_STORAGE_PATH"):
+            fg.validate_preparation(args)
+
+    def test_rc4_preparation_does_not_inherit_the_legacy_diagnostic_revision(self):
+        args = self.fixture("rc4")
+        del args.revision
+        with self.assertRaisesRegex(h.Failure, "REVISION"):
+            fg.validate_preparation(args)
+
+    def test_rc4_never_enters_legacy_continuation(self):
+        with self.assertRaisesRegex(h.Failure, "LEGACY_RC1_ONLY"):
+            fg.validate_legacy_continuation(SimpleNamespace(candidate="rc4"), {}, {})
+
+
+class PreparationResources(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name).resolve()
+
+    def jar(self, *, omit=None, duplicate=None, corrupt_catalog=False, bad_checksum=False):
+        expected = copy.deepcopy(RC4_PREPARATION_RESOURCES)
+        catalog = expected["nativeCatalog"]
+        lock = {key: catalog[key] for key in ("schema", "chainId", "acceptance", "defaultActivated", "resources")}
+        raw = json.dumps(lock).encode()
+        catalog.update(lockSha256=hashlib.sha256(raw).hexdigest(), lockSizeBytes=len(raw))
+        nested = io.BytesIO()
+        with zipfile.ZipFile(nested, "w") as vm:
+            vm.writestr(catalog["lockPath"], raw + (b" " if corrupt_catalog else b""))
+            vm.writestr(catalog["lockPath"].replace(".json", ".sha256"),
+                        (("0" * 64 if bad_checksum else catalog["lockSha256"]) + "\n").encode())
+        entries = []
+        for kind in ("generator", "launcher"):
+            raw_class = (kind + "-offline-class-fixture").encode()
+            expected[kind]["sha256"] = hashlib.sha256(raw_class).hexdigest()
+            entries.append((expected[kind]["class"], raw_class))
+        entries.append((catalog["container"], nested.getvalue()))
+        path = self.root / "candidate.jar"
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            with zipfile.ZipFile(path, "w") as archive:
+                for name, raw_entry in entries:
+                    if name != omit:
+                        archive.writestr(name, raw_entry)
+                        if name == duplicate:
+                            archive.writestr(name, raw_entry)
+        return path, expected
+
+    def test_rc4_helper_and_catalog_lock_are_checked_without_loading_a_jvm(self):
+        path, expected = self.jar()
+        with patch.object(pf, "RC4_PREPARATION_RESOURCES", expected), patch.object(pf, "run_private") as child:
+            observed = pf.checked_jar_resources(path, "rc4")
+        self.assertEqual(observed, expected)
+        self.assertEqual(observed["nativeCatalog"]["verification"], "LOCK_BYTES_AND_SUMMARY_ONLY")
+        child.assert_not_called()
+
+    def test_missing_or_duplicate_helper_is_rejected(self):
+        helper = RC4_PREPARATION_RESOURCES["generator"]["class"]
+        for option in ("omit", "duplicate"):
+            with self.subTest(option=option):
+                path, expected = self.jar(**{option: helper})
+                with patch.object(pf, "RC4_PREPARATION_RESOURCES", expected):
+                    with self.assertRaisesRegex(ValueError, "missing, duplicated or oversized"):
+                        pf.checked_jar_resources(path, "rc4")
+
+    def test_catalog_bytes_and_checksum_sidecar_are_both_checked(self):
+        for option in ("corrupt_catalog", "bad_checksum"):
+            with self.subTest(option=option):
+                path, expected = self.jar(**{option: True})
+                with patch.object(pf, "RC4_PREPARATION_RESOURCES", expected):
+                    with self.assertRaisesRegex(ValueError, "catalog .*mismatch"):
+                        pf.checked_jar_resources(path, "rc4")
+
+    def test_resource_failure_prevents_output_creation_or_any_child(self):
+        jar = self.root / "invalid.jar"
+        jar.write_bytes(b"not-a-jar")
+        args = SimpleNamespace(candidate="rc4", java="java", jar=str(jar), output=self.root / "output")
+        with patch.object(pf, "preparation_candidate_for", return_value={"jarSha256": "unused", "jarSizeBytes": jar.stat().st_size}), \
+             patch.object(pf, "pinned_file", side_effect=[self.root / "java", jar]), \
+             patch.object(pf, "run_private") as child:
+            with self.assertRaises(zipfile.BadZipFile):
+                pf.prepare(args)
+        child.assert_not_called()
+        self.assertFalse(args.output.exists())
+
+    def test_legacy_candidate_does_not_require_the_rc4_catalog(self):
+        self.assertIsNone(pf.checked_jar_resources(self.root / "not-opened", "rc3"))
 
 
 class SubmissionBoundary(unittest.TestCase):

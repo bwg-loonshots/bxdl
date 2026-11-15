@@ -1,7 +1,7 @@
 # RC.4 수신·패키징·관리 CLI 조합 인수 계획
 
 - 작성: 2026-11-15. BXDL 기준 `241038cf5f594dfc603318be5a3aba4883990237`.
-- 상태: **RC4-01 실제 수신·정적 identity·선정 JRE의 engine-info PASS. RC.4 lock NOT_SELECTED, 제품 인수 NOT_RUN. 다음은 RC4-02다.** [수신 결과](../contracts/nigo/engine-rc4-2026-11-15/README.md).
+- 상태: **RC4-01 실제 수신·정적 identity·선정 JRE의 engine-info PASS. RC4-02 계약 영향·fresh 시험 자료 준비·회귀도 PASS. RC.4 lock NOT_SELECTED, 제품 인수 NOT_RUN. 다음은 RC4-03이다.** [수신 결과](../contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 결과](../results/2026-11-15-rc4-fixture-preparation.md), [계약·fixture 영향](./2026-11-15-rc4-contract-fixture-impact.md).
 - 결정: 새 사용자 검증의 후보를 RC.4로 준비한다. 기본 순서는 RC.4 수신 → 새 runtime/관리 CLI 조합 인수 → CLI05-04 사람 과업이다. RC.3 기반 안내서 준비·기존 기능 검증은 병행할 수 있다.
 - 현재 운용 지원은 기존 RC.3 그대로다. RC4-01은 별도 수신 기록을 추가했으며 lock/spec·지원 profile·설치된 실행 파일·서비스·DB를 변경하지 않았다.
 - 여기의 RC.4는 NIGO 엔진 후보 `nigo-engine-v0.1.0-rc.4`이며, 이전 BXDL 로드맵의 R4 단계와 구분한다.
@@ -90,16 +90,16 @@ RC.3 표준 catalog DB가 새 JAR에서 거절될 것이라는 NIGO 설명은 �
 
 ### 새 시험 자료 준비
 
-현재 `prepare_fixture.py`는 고정 JAR 내 `QbftDevnetGenerator`를 호출한다. RC.4 고정 source에는 해당 helper가 있지만 공식 source-free 생성기 공급 계약과는 구분한다. RC4-02에서 `candidates.py`에 검증한 RC.4 pin을 추가하고 `prepare_fixture.py`/`fixture_guard.py`의 최소 준비 경로와 회귀를 먼저 구현한다. 실제 수신 JAR의 helper 포함·호출 결과와 새 stock catalog/genesis를 대조해 시험 전용 준비 경로를 확정한다. 이 단계는 확정 runtime을 요구하는 RC4-04 실행·관리 인수 하네스와 구분한다. 사용할 수 없으면 그때 NIGO에 같은 후보용 fixture/도구 지원을 요청한다. 후보 JAR를 main에서 재빌드하거나 RC.3 genesis·서명 거래를 새 망에 복사해 우회하지 않는다. 이 준비기는 고객 PKI 발급 기능으로 배포하지 않는다.
+현재 `prepare_fixture.py`는 고정 JAR 내 `QbftDevnetGenerator`를 호출한다. RC.4 고정 source에는 해당 helper가 있지만 공식 source-free 생성기 공급 계약과는 구분한다. RC4-02에서 준비 전용 후보에 RC.4 pin을 추가하고 `prepare_fixture.py`/`fixture_guard.py`의 준비 경로와 회귀를 구현했다. 실제 수신 JAR의 helper로 새 자격증명·chain/network/product·서명 거래를 준비하고 catalog lock을 정적으로 대조했다. 실행 후보 목록은 RC1~3를 유지하며 준비 성공을 runtime 지원으로 승계하지 않는다. genesis DB 생성은 RC4-05/06의 명시 init이다. 이 단계는 확정 runtime을 요구하는 RC4-04 실행·관리 인수 하네스와 구분한다. 이번 helper 사용은 PASS했으며 별도 NIGO 선행 구현 요청은 없다. 이후 사용할 수 없으면 같은 후보용 fixture/도구 지원을 요청한다. 후보 JAR를 main에서 재빌드하거나 RC.3 genesis·서명 거래를 새 망에 복사해 우회하지 않는다. 이 준비기는 고객 PKI 발급 기능으로 배포하지 않는다.
 
 ## 5. 단계별 실행 계획과 완료 기준
 
-RC4-01은 DONE이며 RC4-02~08은 PLAN이다. PR 단위는 아래 단계의 의존 관계를 유지하면서 묶을 수 있으며, archive 수신 PASS·제품 PASS·사람 과업 PASS는 따로 기록한다.
+RC4-01/02는 DONE이며 RC4-03~08은 PLAN이다. PR 단위는 아래 단계의 의존 관계를 유지하면서 묶을 수 있으며, archive 수신 PASS·제품 PASS·사람 과업 PASS는 따로 기록한다.
 
 | 순서 | 산출물·작업 | 선행·완료 기준 |
 | --- | --- | --- |
 | RC4-01 수신 검증 · DONE | 새 수신 경로, [2026-11-15 정제 수신 기록](../contracts/nigo/engine-rc4-2026-11-15/README.md) | 신뢰한 archive hash/크기 → 해제 전 24개 일반 파일·상대경로/중복/link/용량 검사 → 전체 checksum/JAR/원본 manifest/계약 → 선정 Java의 실제 engine-info·실행 전후 불변. lock 선택과 서비스 실행은 별도 |
-| RC4-02 계약·fixture 영향 확정 | RC.3/RC.4 DTO·Console·Native catalog 차이, fixture 준비 경로와 유한 시험 목록 | RC4-01. `candidates.py`의 RC.4 pin·`prepare_fixture.py`/`fixture_guard.py`의 최소 지원과 해당 회귀를 먼저 구현. 새 후보로 만든 fresh genesis·제품/native 입력·거래·시험 자격증명, helper 가능 여부 확인. 공급자 evidence를 digest별로 연결하고 통합 검사 범위 확정 |
+| RC4-02 계약·fixture 영향 확정 · DONE | [영향 설계](./2026-11-15-rc4-contract-fixture-impact.md), [실제 fresh 준비·회귀 결과](../results/2026-11-15-rc4-fixture-preparation.md)와 유한 시험 목록 | RC4-01. `candidates.py`의 RC.4 pin·`prepare_fixture.py`/`fixture_guard.py`의 최소 지원과 해당 회귀를 먼저 구현. 새 후보로 만든 fresh genesis 입력·제품/native 입력·거래·시험 자격증명과 실제 helper 호출 PASS. genesis DB 생성·native 실행은 미수행. 공급자 evidence를 digest별로 연결하고 통합 검사 범위 확정 |
 | RC4-03 runtime 조립·명시 선택 | RC.4 전용 engine lock/spec, 내부 실행기 A, signed development runtime R, inventory | RC4-01/02. 받은 JAR bytes 유지, JRE 전수 대조, clean 실행기/source 고정, 새 archive 전체 검증. RC.3 lock/설치본 무변경; 새 package/JRE/실행기 identity 기록 |
 | RC4-04 외부 CLI·인수 도구 | exact RC.4 profile·reply 검증·runtime pin이 필요한 실행/관리 인수 하네스 완성, 별도 관리 CLI B | RC4-03의 고정 R. `make check`·Linux 타입 검사·profile 교차/변조/UNKNOWN 회귀와 기존 RC.3 호환 검사. 무조건 허용·임의 fallback 없음 |
 | RC4-05 Mac 설치·서비스 | 같은 R+B의 순차 setup·apply·이름 기반 운용 결과 | RC4-04. 새 control/data에서 init/start/status/logs/diagnose/stop·같은 RC.4 DB 재시작, 취소/재개/원본 공급 경로 부재/조회 무쓰기, report0600·완전수집, worker/JRE/payload 불변·정상 정리 |
@@ -113,13 +113,13 @@ RC4-06의 공급자 G4/G5 성공은 시험 선정 근거로 재사용하지만 B
 
 ## 6. 실행 환경·증거와 NIGO 의존성
 
-RC4-01에서 다운로드·정적 대조와 선정 JRE의 실제 engine-info를 완료했다. 엔진 호출 전 검증기 정렬·빈 속성 파싱 오류2건은 이력을 보존하고 수정했다. JVM 호출은 총4회(속성2·module1·engine-info1), 자동 재시도0회다. 노드·서비스·DB·다중 노드·generator는 실행하지 않았다. 후속 실물 시험은 전용 장비 또는 업무와 분리한 Mac 시간에 새 경로·포트·최대 동시 노드 수·감독 시간·횟수·정리 기준을 정해 수행한다. 기본은 각 시나리오 1회, 자동 재시도 0이며 실패 원자료와 미실행 항목을 보존한다. 종료가 불명이면 상태를 확인한 뒤 정상 stop 절차로 정리하고 기존 데이터 삭제나 성공까지 재실행하지 않는다. 장기 soak/성능 MAIN을 자동으로 포함하지 않는다.
+RC4-01에서 다운로드·정적 대조와 선정 JRE의 실제 engine-info를 완료했다. 엔진 호출 전 검증기 정렬·빈 속성 파싱 오류2건은 이력을 보존하고 수정했다. JVM 호출은 총4회(속성2·module1·engine-info1), 자동 재시도0회다. 이 수신 단계에서는 노드·서비스·DB·다중 노드·generator를 실행하지 않았다. 후속 RC4-02는 준비 helper1·오프라인 Node 서명1·keytool4를 별도 새 경로에서 실행했고 노드·DB·서비스는 계속 미실행이다. 후속 실물 시험은 전용 장비 또는 업무와 분리한 Mac 시간에 새 경로·포트·최대 동시 노드 수·감독 시간·횟수·정리 기준을 정해 수행한다. 기본은 각 시나리오 1회, 자동 재시도 0이며 실패 원자료와 미실행 항목을 보존한다. 종료가 불명이면 상태를 확인한 뒤 정상 stop 절차로 정리하고 기존 데이터 삭제나 성공까지 재실행하지 않는다. 장기 soak/성능 MAIN을 자동으로 포함하지 않는다.
 
 | 의존 사항 | 현재 판단 |
 | --- | --- |
-| 새 NIGO 엔진 기능·새 RC 공급 | 선행 대기 없음. RC.4 수신 PASS 뒤 RC4-02의 계약·fixture 영향 확인이 다음 |
+| 새 NIGO 엔진 기능·새 RC 공급 | 선행 대기 없음. RC4-01 수신·RC4-02 준비 PASS 뒤 RC4-03 runtime 조립·명시 선택이 다음 |
 | 실제 archive 접근/무결성·engine-info 불일치 | RC4-01에서 일치 확인. 향후 불일치 시 후보 선택을 중지하고 고정 identity/근거로 공급자에게 문의 |
-| 새 fixture/helper | source 존재는 확인, 공급 JAR에서 미실행. 수신 후 확인해 필요한 경우에만 NIGO 지원 요청 |
+| 새 fixture/helper | 공급 JAR의 실제 helper 준비 PASS. 고객 PKI/공식 생성기 공급·제품 인수와 구분하며 추가 선행 요청 없음 |
 | 계약이 같은 fingerprint인 경우 | source/Console/Native·wire·DB 차이 검토와 실제 제품 인수는 계속 필요 |
 | 기존 DB 이전·rolling upgrade | RC.4 공급 범위 밖. 요구가 생기면 별도 NIGO 계약·지원 버전 쌍부터 정의 |
 | A7 | 엔진 기능 공급 대기는 아님. 제품 stop/독점/백업/repair 승인/UNKNOWN/재시작은 별도 구현·인수 |

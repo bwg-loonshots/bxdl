@@ -7,14 +7,16 @@
 | Rust 1.86.0 / macOS arm64 | CLI 개발·로컬 테스트·native 빌드 대상. setup·설치·cold·등록/초기화·수동 LaunchAgent·오프라인 진단 구현 |
 | macOS arm64 + Java 21 + RocksDB + 사용자 LaunchAgent | macOS 26.6.2의 지정 RC.2·Temurin에서 4-validator 거래/catch-up·두 복구 경로·pin 거부 PASS. 새 V2 보관본·시작 진단은 별도 RC.2 package의 로컬13사례 PASS. OS 최소 버전·전체 G1-M 미확정 |
 | RC.3 + 선정 Temurin / macOS arm64 | 전용 lock/spec 명시 선택 후 동일 서명 archive의 4-validator·두 정족수 복구·wrong-pin과 원본 공급 경로 부재 setup13사례·독립 정리 PASS. A7 NOT_RUN·전체 G1-M 미완료 |
-| RC.4 + 선정 Temurin / macOS arm64 | 2026-11-15 RC4-01 원격 수신·전체 identity·선정 JRE engine-info PASS. 제품 lock NOT_SELECTED·runtime 조립/패키지/서비스/네트워크 NOT_RUN. 현재 지원 조합으로 추가하지 않음 |
+| RC.4 + 선정 Temurin / macOS arm64 | RC4-01 수신과 RC4-02 계약 영향·새 시험 자료 준비 PASS. 준비용 후보에만 지원, runtime NOT_IMPLEMENTED. 제품 lock NOT_SELECTED·runtime 조립/DB/패키지/서비스/네트워크 NOT_RUN |
 | Linux amd64/glibc + Java 21 + RocksDB + systemd | 기존 development manifest 유지, 후속 서버 인수. Ubuntu 24.04 후보 |
 | Docker/Compose | 후속 이미지·volume·network·종료/재생성 인수 필요 |
 | Intel Mac·Linux ARM64·Windows·Alpine/musl·H2 제품 지원 | 별도 구현·인수 전 미지원 |
 
 ## RC.4 인수 전 지원 경계 — 2026-11-15
 
-[RC.4 수신 기록](../contracts/nigo/engine-rc4-2026-11-15/README.md)의 RC4-01 원격 공급24파일·전체 identity·선정 JRE engine-info 검증은 PASS다. JRE259파일·공급24파일 불변과 검증기 수정 이력을 구분했다. [RC.4 도입 계획](../design/2026-11-15-rc4-adoption-plan.md)의 다음 단계는 RC4-02 계약·fixture 영향 확인이며, 내부 실행기 고정과 새 runtime 조립, 외부 관리 CLI의 정확한 RC.4 profile/harness, Mac 설치·서비스·네트워크 재인수로 이어진다. 수신 PASS는 제품 선택·인수가 아니다. 현재 RC.3 lock/spec/runtime 및 독립 관리 CLI의 RC.3 지원은 그대로 유지한다.
+[RC.4 수신 기록](../contracts/nigo/engine-rc4-2026-11-15/README.md)의 RC4-01과 [RC4-02 구현·실물 준비 결과](../results/2026-11-15-rc4-fixture-preparation.md)는 PASS다. RC.4는 준비용 후보에만 추가했으며 기존 runtime runner/guard는 RC.4를 거절한다. 새 validator4개·거래12개·자격증명24개와 입력 불변을 확인했고 노드·genesis DB·서비스는 실행하지 않았다. 전체 검사는 Rust592 PASS, Python114개 중112 PASS·2 SKIP, fmt·Clippy PASS이며 제품 실행 인수와 구분한다.
+
+[계약·fixture 영향 설계](../design/2026-11-15-rc4-contract-fixture-impact.md)에 따라 Rust parser 허용 범위와 기존 RC.3 lock/spec/runtime·독립 관리 CLI 지원을 유지한다. [도입 계획](../design/2026-11-15-rc4-adoption-plan.md)의 다음 단계는 RC4-03 내부 실행기 고정·RC.4 lock/spec 명시 선택·runtime 조립이다. 외부 CLI profile·Mac 설치/서비스·네트워크 인수는 후속이며 수신·준비 PASS를 제품 인수로 승계하지 않는다. helper 실물 사용을 확인해 현재 추가 NIGO 선행 구현 요청은 없다.
 
 새 RC.4 시험은 **새 DB·새 genesis·동일 RC.4 노드**로 구성한다. 같은 RC.4가 만든 DB의 재시작을 기존 RC.3 DB migration이나 혼합 버전 rolling upgrade 지원으로 해석하지 않는다. 엔진 계약 fingerprint가 RC.3와 동일해도 Native catalog·wire·DB 호환성의 증거가 아니며 RC.3의 PASS를 새 후보로 승계하지 않는다. 기존 사용자 노드·DB·키를 시험 자료로 사용하지 않는다.
 
