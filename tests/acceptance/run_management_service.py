@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Opt-in installed-management-CLI / unchanged RC.3 Mac service acceptance.
+"""Opt-in installed-management-CLI / explicitly pinned Mac runtime acceptance.
 
 Only new output roots are used. The prior fixture supplies read-only inputs, never
 its control or database. All operations run through the installed stable entry;
@@ -21,15 +21,9 @@ import subprocess
 
 import support as h
 
-PINS = {
-    "archive": "8a45cb8bf3482333ad43e8c29ad24c2adde8d6fe778eaf27fe2f5c2c842eb017",
-    "publicKey": "0f03b13417dbb9c362a8762afc7e45bedbf20a983024105b2dcbf55b4dc40f17",
-    "engineLock": "2d6ebff73f8f9c741922b3324fc1d5fc162be64e53ce830cb546ee6fb5d8c344",
-    "manifest": "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
-    "executor": "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef",
-    "jar": "05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f",
-    "java": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
-}
+import runtime_profiles as rp
+import prepare_management_fixture as mf
+
 SUPPLY = {"package.tar.gz": "archive", "public-key.pem": "publicKey", "engine-lock.json": "engineLock"}
 INPUT_NAMES = {
     "instance.json", "node.json", "chain.json", "validator.keystore", "validator.password",
@@ -78,18 +72,30 @@ def remap_inputs(value, original, copied):
 
 
 def prepare(args, root):
+    profile = rp.runtime_profile(getattr(args, "candidate", "rc3"))
+    pins = profile["pins"]
     supply_source = (args.fixture / "supply" if args.fixture else args.supply).resolve()
     input_source = (args.fixture / "operational inputs" if args.fixture else args.inputs).resolve()
     h.require(supply_source.is_dir() and input_source.is_dir(), "FIXTURE_DIRECTORIES_REQUIRED")
     for source in (supply_source, input_source):
         h.require(not root.is_relative_to(source) and not source.is_relative_to(root), "OUTPUT_OVERLAPS_FIXTURE")
+    provenance = None
+    if profile["candidate"] == "rc4":
+        h.require(supply_source.parent == input_source.parent and
+                  supply_source.name == "supply" and input_source.name == "operational inputs",
+                  "RC4_PREPARED_SERVICE_FIXTURE_REQUIRED")
+        provenance = mf.validate_service_fixture(input_source.parent)
     h.require({p.name for p in input_source.iterdir()} == INPUT_NAMES, "FIXTURE_INPUT_MEMBERSHIP")
     source_hashes = {}
     for name, pin in SUPPLY.items():
         p = supply_source / name
         h.regular(p)
         source_hashes[str(p)] = h.sha(p)
-        h.require(source_hashes[str(p)] == PINS[pin], "RC3_SUPPLY_PIN_" + pin.upper())
+        h.require(source_hashes[str(p)] == pins[pin], profile["candidate"].upper() + "_SUPPLY_PIN_" + pin.upper())
+    rp.verify_runtime_supply(supply_source / "package.tar.gz", supply_source / "public-key.pem",
+                             supply_source / "engine-lock.json", profile["candidate"])
+    if provenance is not None:
+        source_hashes[str(input_source.parent / mf.RECORD)] = provenance["recordSha256"]
     for name in INPUT_NAMES:
         p = input_source / name
         h.regular(p)
@@ -100,7 +106,7 @@ def prepare(args, root):
     h.require(product["role"] == "validator" and product["storage"]["backend"] == "rocksdb", "FIXTURE_ROLE_BACKEND")
     h.require(product["http"]["address"] == product["p2p"]["address"] == "127.0.0.1", "FIXTURE_NOT_LOOPBACK")
     h.require(node["nigo.protocol.consensus.auto-start"] is False and
-              node["nigo.protocol.consensus.qbft.sync.enabled"] is False, "MANUAL_SINGLE_VALIDATOR_FIXTURE_REQUIRED")
+              node["nigo.protocol.consensus.qbft.sync.enabled"] is False, "MANUAL_SINGLE_NODE_FIXTURE_REQUIRED")
     h.require(not any(".peers[" in k for k in node), "PEERLESS_FIXTURE_REQUIRED")
     h.require(args.instance_id != product["instanceId"], "FRESH_INSTANCE_ID_REQUIRED")
     for value in [product["chainDescription"], *product["secrets"].values(), native["chainFile"]]:
@@ -128,27 +134,17 @@ def prepare(args, root):
         "supply": {p.name: h.sha(p) for p in supply.iterdir()},
         "inputs": {p.name: h.sha(p) for p in inputs.iterdir()},
         "ports": [args.http_port, args.p2p_port], "newCredentialsIssued": False,
+        "candidate": profile["candidate"], "runtimeProfile": profile["profile"], "freshFixtureProvenance": provenance,
     }
     h.write_json(root / "preparation.json", record)
     return record
 
 
-def inventory(package):
-    manifest = h.document(package / "manifest.json")
-    h.require(h.sha(package / "manifest.json") == PINS["manifest"], "RC3_MANIFEST_PIN")
-    expected = {item["path"] for item in manifest["files"]} | {"manifest.json", "manifest.sig", ".bxdl-install.json"}
-    h.require(expected == {str(p.relative_to(package)) for p in package.rglob("*") if p.is_file()}, "PACKAGE_MEMBERSHIP")
-    for item in manifest["files"]:
-        p = package / item["path"]
-        s = h.regular(p)
-        h.require(stat.S_IMODE(s.st_mode) == item["mode"] and s.st_size == item["size"] and
-                  h.sha(p) == item["sha256"], "PACKAGE_FILE_IDENTITY")
-    for path, key in [("bin/bxdl", "executor"), ("engine/nigo-node.jar", "jar"), ("runtime/bin/java", "java")]:
-        h.require(h.sha(package / path) == PINS[key], "RC3_PIN_" + key.upper())
-    count, runtime_count = len(manifest["files"]), sum(x["path"].startswith("runtime/") for x in manifest["files"])
-    h.require(count == 270 and runtime_count == 259, "RC3_PAYLOAD_COUNT")
-    return {"fileCount": count, "jreFileCount": runtime_count, "pins": PINS, "hashSizeModeMembership": "PASS"}
-
+def inventory(package, candidate="rc3"):
+    verified = rp.verify_installed_payload(package, candidate)
+    return {"fileCount": verified["files"], "jreFileCount": verified["runtimeFiles"],
+            "bytes": verified["bytes"], "pins": rp.runtime_profile(candidate)["pins"],
+            "hashSizeModeMembership": "PASS"}
 
 
 def diagnostic_summary(logs, diagnose, report_sha256):
@@ -234,6 +230,8 @@ def cleanup_observation(root, control, evidence, pids, ports):
 
 def execute(args):
     h.require(args.run, "EXPLICIT_RUN_REQUIRED")
+    profile = rp.runtime_profile(getattr(args, "candidate", "rc3"))
+    pins = profile["pins"]
     h.require(platform.system() == "Darwin" and platform.machine() == "arm64", "MAC_ARM64_REQUIRED")
     h.require(bool(args.fixture) != bool(args.supply or args.inputs), "SELECT_FIXTURE_OR_EXPLICIT_INPUTS")
     h.require(args.fixture or args.supply and args.inputs, "SUPPLY_AND_INPUTS_REQUIRED")
@@ -257,13 +255,19 @@ def execute(args):
     evidence = h.Evidence(root)
     own_source = Path(__file__).resolve()
     helper_source = Path(h.__file__).resolve()
-    harness_hashes = {"run_management_service.py": h.sha(own_source), "support.py": h.sha(helper_source)}
+    harness_sources = {"run_management_service.py": own_source, "support.py": helper_source,
+                       "runtime_profiles.py": Path(rp.__file__).resolve(),
+                       "prepare_management_fixture.py": Path(mf.__file__).resolve()}
+    for name in ("fixture_guard.py", "candidates.py"):
+        harness_sources[name] = own_source.parent / name
+    harness_hashes = {name: h.sha(path) for name, path in harness_sources.items()}
     source_copy = evidence.logs / "harness-source"
     source_copy.mkdir(mode=0o700)
-    h.copy_file(own_source, source_copy / "run_management_service.py", 0o600)
-    h.copy_file(helper_source, source_copy / "support.py", 0o600)
+    for name, path in harness_sources.items():
+        h.copy_file(path, source_copy / name, 0o600)
     result = {
-        "schemaVersion": 1, "outcome": "INCOMPLETE", "scope": "INSTALLED_MANAGEMENT_CLI_RC3_SINGLE_VALIDATOR_LOCAL_READINESS",
+        "schemaVersion": 1, "outcome": "INCOMPLETE", "scope": "INSTALLED_MANAGEMENT_CLI_" + profile["candidate"].upper() + "_MANUAL_SINGLE_NODE_LOCAL_READINESS",
+        "candidate": profile["candidate"], "runtimeProfile": profile["profile"],
         "timestampUtc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "host": {"system": platform.system(), "machine": platform.machine(), "macVersion": platform.mac_ver()[0]},
         "managerEntry": str(entry), "entryTargetSha256": h.sha(entry), "cliRoot": str(cli_root), "harnessSha256": harness_hashes,
@@ -322,6 +326,7 @@ def execute(args):
             if "Password" in field:
                 evidence.redactions.append(Path(value).read_bytes().rstrip(b"\r\n"))
         result["managerVersion"] = command(["version"], "manager-version")["data"]
+        rp.require_manager_capability(result["managerVersion"], profile)
         cli_info = command(["cli", "info", "--root", cli_root], "cli-info")["data"]
         h.require(cli_info["status"] == "READY" and cli_info["current"] and
                   absolute_entry(cli_info["executable"]) == entry and
@@ -336,7 +341,7 @@ def execute(args):
                   Path(cli_info["invokedExecutable"]).resolve() == manager_payload.resolve(), "MANAGER_ENTRY_TARGET_MISMATCH")
         result["managerPayload"] = str(manager_payload)
         manager_sha = h.sha(manager_payload)
-        h.require(manager_sha != PINS["executor"], "INDEPENDENT_MANAGER_REQUIRED")
+        h.require(manager_sha != pins["executor"], "INDEPENDENT_MANAGER_REQUIRED")
         h.require(manager_sha == args.manager_sha256, "MANAGER_BINARY_PIN")
         h.require(cli_info["current"]["revision"] == result["managerVersion"]["revision"] and
                   cli_info["current"]["version"] == result["managerVersion"]["version"], "MANAGER_RELEASE_VERSION_MISMATCH")
@@ -361,7 +366,7 @@ def execute(args):
         note("APPLY_DECLINE_PRESERVES_PREPARATION_AND_CREATES_NO_NODE")
         apply("apply-approved", "y")
         h.require(package.is_dir() and control.is_dir() and not data.exists(), "APPLY_INITIALIZED_DATA")
-        result["initialPackage"] = inventory(package)
+        result["initialPackage"] = inventory(package, profile["candidate"])
         show = command(["instance", "show", "--instance", control], "registered-show")["data"]
         h.require(show["initialization"] == "NOT_STARTED", "INITIALIZED_DURING_APPLY")
         h.require(h.document(control / "binding.json")["schemaVersion"] == 2, "V2_BINDING_REQUIRED")
@@ -428,7 +433,7 @@ def execute(args):
         result["initializationReport"]["final"] = report_observation(init_report)
         h.require(result["initializationReport"]["final"] == result["initializationReport"]["created"],
                   "INITIALIZATION_REPORT_CHANGED_AFTER_LIFECYCLE")
-        result["finalPackage"] = inventory(package)
+        result["finalPackage"] = inventory(package, profile["candidate"])
         h.require(result["initialPackage"] == result["finalPackage"], "PACKAGE_CHANGED")
         for group, folder in [("supply", supply), ("inputs", inputs)]:
             for name, digest in prep[group].items():
@@ -436,15 +441,15 @@ def execute(args):
         for path, digest in prep["sources"].items():
             h.require(h.sha(Path(path)) == digest, "ORIGINAL_FIXTURE_CHANGED")
         workers = list(control.glob("operations/*/bxdl-worker"))
-        h.require(len(workers) == 2 and all(h.sha(p) == PINS["executor"] for p in workers), "ORIGINAL_WORKER_REQUIRED")
-        result["workerSnapshots"] = {"count": len(workers), "sha256": PINS["executor"], "allMatchOriginalExecutor": True}
+        h.require(len(workers) == 2 and all(h.sha(p) == pins["executor"] for p in workers), "ORIGINAL_WORKER_REQUIRED")
+        result["workerSnapshots"] = {"count": len(workers), "sha256": pins["executor"], "allMatchOriginalExecutor": True}
         note("ORIGINAL_SUPPLY_PAYLOAD_JRE_EXECUTOR_AND_FIXTURE_UNCHANGED")
         final_info = command(["cli", "info", "--root", cli_root], "final-cli-info")["data"]
         h.require(final_info == cli_info and h.sha(manager_payload) == manager_sha and
                   h.sha(entry) == result["entryTargetSha256"], "MANAGER_CHANGED_DURING_RUN")
         result["cleanup"] = cleanup_observation(root, control, evidence, pids, ports)
         note("NO_RECORDED_PID_LAUNCHD_JOB_OR_TCP_LISTENER_REMAINS")
-        result["harnessUnchanged"] = harness_hashes == {"run_management_service.py": h.sha(own_source), "support.py": h.sha(helper_source)}
+        result["harnessUnchanged"] = harness_hashes == {name: h.sha(path) for name, path in harness_sources.items()}
         h.require(result["harnessUnchanged"], "HARNESS_CHANGED_DURING_RUN")
         for tty in terminals:
             h.require(not any(secret in tty.total for secret in evidence.redactions if secret), "CREDENTIAL_PRINTED")
@@ -465,6 +470,8 @@ def execute(args):
 def parser():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--run", action="store_true", help="explicitly authorize the isolated service scenario")
+    p.add_argument("--candidate", choices=sorted(rp.RUNTIME_PROFILES), default="rc3",
+                   help="explicit fixed runtime; legacy RC.3 remains the default")
     p.add_argument("--manager-entry", type=Path, required=True)
     p.add_argument("--cli-root", type=Path, required=True)
     p.add_argument("--manager-sha256", required=True, help="expected installed payload binary digest, not the entry wrapper")

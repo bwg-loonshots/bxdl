@@ -1,4 +1,4 @@
-"""Immutable engine identities, with preparation separate from runtime support.
+"""Immutable engine identities for explicit preparation and acceptance.
 
 RC1 constants remain available in the legacy diagnostic modules. A moving
 release branch, a rebuilt JAR, or another Java launcher is never an alias.
@@ -24,12 +24,6 @@ CANDIDATES = {
         "jarSizeBytes": 164088530,
         "transactionCount": 12,
     },
-}
-
-# Runtime runners keep using CANDIDATES. Adding a received JAR for offline
-# preparation must not silently enable package/service/recovery acceptance.
-PREPARATION_CANDIDATES = {
-    **CANDIDATES,
     "rc4": {
         "source": "037c98c315d5322fa7da266ca0254d61f3863622",
         "jarSha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
@@ -37,6 +31,9 @@ PREPARATION_CANDIDATES = {
         "transactionCount": 12,
     },
 }
+
+# Keep the preparation API independent of runtime-specific supply checks.
+PREPARATION_CANDIDATES = dict(CANDIDATES)
 
 RC4_PREPARATION_RESOURCES = {
     "generator": {

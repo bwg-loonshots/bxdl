@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Explicit Mac acceptance of an installed manager and the unchanged RC.3 runtime.
+"""Explicit Mac acceptance of an installed manager and a pinned runtime.
 
 Only fresh test-owned output/catalog/data are accepted. The existing network
 oracles are reused, but the runtime archive is never rebuilt. Import is inert.
@@ -21,13 +21,8 @@ import run_acceptance as network
 import support as h
 from candidates import CANDIDATES
 
-ARCHIVE_SHA = "8a45cb8bf3482333ad43e8c29ad24c2adde8d6fe778eaf27fe2f5c2c842eb017"
-MANIFEST_SHA = "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123"
-EXECUTOR_SHA = "b7d677b44de30275315ef4a7ccf1e4230b66034d1964c27cbbd3bc586c622cef"
-EXECUTOR_SIZE = 3024064
-PUBLIC_SHA = "0f03b13417dbb9c362a8762afc7e45bedbf20a983024105b2dcbf55b4dc40f17"
-LOCK_SHA = "2d6ebff73f8f9c741922b3324fc1d5fc162be64e53ce830cb546ee6fb5d8c344"
-PROFILE = "BXDL_RC3_EXECUTOR_V1"
+import runtime_profiles as rp
+
 NAMED = {"init", "resume-init", "start", "status", "stop", "logs", "diagnose", "preflight"}
 
 
@@ -52,40 +47,8 @@ def named_arguments(node, arguments, home):
     return [values[0], node["label"], "--home", home, *values[1:]]
 
 
-def verify_payload(package):
-    h.require(h.sha(package / "manifest.json") == MANIFEST_SHA, "RUNTIME_MANIFEST_PIN")
-    manifest = h.document(package / "manifest.json")
-    files = manifest["files"]
-    h.require(len(files) == 270 and len({f["path"] for f in files}) == 270,
-              "RUNTIME_MEMBER_COUNT")
-    paths = set()
-    for path in package.rglob("*"):
-        h.require(not path.is_symlink(), "RUNTIME_SYMLINK")
-        if not path.is_dir():
-            paths.add(path.relative_to(package).as_posix())
-    h.require(paths == {f["path"] for f in files}
-              | {"manifest.json", "manifest.sig", ".bxdl-install.json"}, "RUNTIME_MEMBERSHIP")
-    for item in files:
-        relative = Path(item["path"])
-        h.require(not relative.is_absolute() and ".." not in relative.parts, "RUNTIME_PATH")
-        path = package / relative
-        metadata = h.regular(path)
-        h.require(metadata.st_size == item["size"]
-                  and stat.S_IMODE(metadata.st_mode) == item["mode"]
-                  and h.sha(path) == item["sha256"], "RUNTIME_FILE_CHANGED")
-    h.require(h.sha(package / "bin/bxdl") == EXECUTOR_SHA
-              and (package / "bin/bxdl").stat().st_size == EXECUTOR_SIZE, "EXECUTOR_PIN")
-    h.require(h.sha(package / "engine/nigo-node.jar") == CANDIDATES["rc3"]["jarSha256"]
-              and (package / "engine/nigo-node.jar").stat().st_size == CANDIDATES["rc3"]["jarSizeBytes"],
-              "ENGINE_PIN")
-    h.require(h.sha(package / "runtime/bin/java") == network.JAVA_SHA, "JAVA_PIN")
-    runtime = [f for f in files if f["path"].startswith("runtime/")]
-    h.require(len(runtime) == 259 and sum(f["size"] for f in files) == 325299323,
-              "RUNTIME_TOTALS")
-    return {"files": len(files), "bytes": sum(f["size"] for f in files),
-            "runtimeFiles": len(runtime), "manifestSha256": MANIFEST_SHA,
-            "executorSha256": EXECUTOR_SHA, "engineJarSha256": CANDIDATES["rc3"]["jarSha256"],
-            "javaSha256": network.JAVA_SHA}
+def verify_payload(package, candidate="rc3"):
+    return rp.verify_installed_payload(package, candidate)
 
 
 def initialization_journal(control):
@@ -102,7 +65,8 @@ def initialization_journal(control):
     return inventory
 
 
-def preserved_node_identity(node, attempt):
+def preserved_node_identity(node, attempt, candidate="rc3"):
+    profile = rp.runtime_profile(candidate)
     h.require(isinstance(attempt, str) and re.fullmatch(r"[A-Za-z0-9-]+", attempt) is not None,
               "LIVE_ATTEMPT_PATH")
     data = node["base"] / "data"
@@ -116,8 +80,8 @@ def preserved_node_identity(node, attempt):
     for key, path in paths.items():
         h.regular(path)
         hashes[key] = h.sha(path)
-    h.require(hashes["workerSha256"] == EXECUTOR_SHA
-              and paths["workerSha256"].stat().st_size == EXECUTOR_SIZE, "LIVE_WORKER_EXECUTOR_PIN")
+    h.require(hashes["workerSha256"] == profile["pins"]["executor"]
+              and paths["workerSha256"].stat().st_size == profile["executorSizeBytes"], "LIVE_WORKER_EXECUTOR_PIN")
     return {"dataDirectory": {"device": metadata.st_dev, "inode": metadata.st_ino},
             "initializationJournal": initialization_journal(node["control"]), **hashes}
 
@@ -166,6 +130,8 @@ def root_processes(stdout, root, excluded):
 
 class ManagementAcceptance(network.Acceptance):
     def __init__(self, args):
+        self.profile = rp.runtime_profile(getattr(args, "candidate", "rc3"))
+        args.candidate = self.profile["candidate"]
         entry = stable_entry(args.manager_entry)
         for name in ("archive", "public_key", "lock", "fixture", "cli_root", "bundle_next"):
             setattr(args, name, getattr(args, name).expanduser().resolve(strict=True))
@@ -179,14 +145,11 @@ class ManagementAcceptance(network.Acceptance):
                   and not args.manager_home.exists(), "NEW_TEST_MANAGEMENT_HOME_REQUIRED")
         h.require(entry.readlink() == args.cli_root / "current/bin/bxdl", "MANAGER_ENTRY_ROOT")
         h.require(re.fullmatch(r"[0-9a-f]{40}", args.revision) is not None, "FULL_REVISION_REQUIRED")
-        args.candidate = "rc3"
         self.a = args
-        self.candidate = CANDIDATES["rc3"]
-        self.candidate_name, self.scenario = "rc3", "full"
+        self.candidate = CANDIDATES[args.candidate]
+        self.candidate_name, self.scenario = args.candidate, "full"
         self.input_pins = fg.validate_inputs(args)
-        for path, digest in ((args.archive, ARCHIVE_SHA), (args.public_key, PUBLIC_SHA), (args.lock, LOCK_SHA)):
-            h.regular(path)
-            h.require(h.sha(path) == digest, "FIXED_RUNTIME_SUPPLY_PIN")
+        rp.verify_runtime_supply(args.archive, args.public_key, args.lock, self.candidate_name)
         h.regular(args.bundle_next)
         self.bundle_next_sha = h.sha(args.bundle_next)
         self.root = args.output
@@ -199,10 +162,10 @@ class ManagementAcceptance(network.Acceptance):
         self.nodes, self.running, self.unresolved_mutations = [], set(), {}
         self.round, self.submissions, self.recovery_resubmit_nonce = 0, {}, None
         self.observed_pids, self.started_attempts = set(), set()
-        self.results = {"fixtureInputPins": self.input_pins, "candidate": "rc3", "scenario": "full",
+        self.results = {"fixtureInputPins": self.input_pins, "candidate": self.candidate_name, "scenario": "full",
                         "submissionAttempts": [], "managerTransitions": [],
                         "managerCommands": [], "nextBundleSha256": self.bundle_next_sha,
-                        "runtimeProfile": PROFILE}
+                        "runtimeProfile": self.profile["profile"]}
         self.freeze_harness()
         self.fixture = h.document(args.fixture / "fixture-summary.json")
         self.manifest = h.document(args.fixture / "generated/devnet.json")
@@ -216,7 +179,9 @@ class ManagementAcceptance(network.Acceptance):
     def freeze_harness(self):
         source = Path(__file__).resolve().parent
         names = ("run_acceptance.py", "support.py", "fixture_guard.py", "prepare_fixture.py", "candidates.py",
-                 "run_management_acceptance.py", "test_management_acceptance.py")
+                 "run_management_acceptance.py", "test_management_acceptance.py", "runtime_profiles.py")
+        if self.candidate_name == "rc4":
+            names += ("rc4_rpc_probe.py",)
         self.harness_pins = {name: h.sha(source / name) for name in names}
         snapshot = self.e.logs / "harness-source"
         snapshot.mkdir(mode=0o700)
@@ -245,6 +210,7 @@ class ManagementAcceptance(network.Acceptance):
     def manager_identity(self, label):
         info = self.command(None, ["cli", "info", "--root", self.a.cli_root], label + "-info")["data"]
         version = self.command(None, ["version"], label + "-version")["data"]
+        rp.require_manager_capability(version, self.profile)
         current = info.get("current") or {}
         h.require(info.get("status") == "READY" and Path(info["executable"]) == self.cli
                   and Path(info["root"]).resolve(strict=True) == self.a.cli_root, "MANAGER_INFO_ENTRY")
@@ -261,7 +227,7 @@ class ManagementAcceptance(network.Acceptance):
                   "MANAGER_ENTRY_TARGET_MISMATCH")
         return {"version": version["version"], "revision": version["revision"],
                 "manifestSha256": current["manifestSha256"], "binarySha256": h.sha(self.cli),
-                "releaseId": current["releaseId"]}
+                "releaseId": current["releaseId"], "capabilities": version["capabilities"]}
 
     def package(self):
         self.initial_manager = self.manager_identity("initial-manager")
@@ -272,13 +238,17 @@ class ManagementAcceptance(network.Acceptance):
         verified = self.command(None, ["package", "verify", self.archive, "--public-key", self.public],
                                 "fixed-runtime-verify")
         h.require(verified["data"]["authenticity"] == "verified-external-ed25519"
-                  and verified["data"]["manifestSha256"] == MANIFEST_SHA
-                  and h.sha(self.archive) == ARCHIVE_SHA, "FIXED_RUNTIME_AUTHENTICATION")
-        self.results["package"] = {"archiveSha256": ARCHIVE_SHA, "manifestSha256": MANIFEST_SHA,
-                                   "cliSha256": EXECUTOR_SHA, "engineSource": self.candidate["source"],
-                                   "engineJarSha256": self.candidate["jarSha256"], "javaSha256": network.JAVA_SHA,
-                                   "runtimeRebuilt": False, "publicKeySha256": PUBLIC_SHA, "lockSha256": LOCK_SHA}
-        self.e.note("EXISTING_RC3_PACKAGE_AUTHENTICATED")
+                  and verified["data"]["manifestSha256"] == self.profile["pins"]["manifest"]
+                  and h.sha(self.archive) == self.profile["pins"]["archive"]
+                  and verified["data"]["filesVerified"] == self.profile["payloadFiles"]
+                  and verified["data"]["bytesVerified"] == self.profile["payloadBytes"], "FIXED_RUNTIME_AUTHENTICATION")
+        self.results["package"] = {"archiveSha256": self.profile["pins"]["archive"],
+                                   "manifestSha256": self.profile["pins"]["manifest"],
+                                   "cliSha256": self.profile["pins"]["executor"], "engineSource": self.candidate["source"],
+                                   "engineJarSha256": self.candidate["jarSha256"], "javaSha256": self.profile["pins"]["java"],
+                                   "runtimeRebuilt": False, "publicKeySha256": self.profile["pins"]["publicKey"],
+                                   "lockSha256": self.profile["pins"]["engineLock"]}
+        self.e.note("EXISTING_" + self.candidate_name.upper() + "_PACKAGE_AUTHENTICATED")
 
     def prepare_node(self, index, bad=False):
         fg.assert_inputs_unchanged(self.a, self.input_pins)
@@ -319,7 +289,7 @@ class ManagementAcceptance(network.Acceptance):
         installed = self.command(None, ["install", self.archive, "--destination", package,
                                        "--public-key", self.public], label + "-install")
         h.require(installed["outcome"] == "SUCCEEDED", "INSTALL_" + label)
-        initial_payload = verify_payload(package)
+        initial_payload = verify_payload(package, self.candidate_name)
         node = {"label": label, "index": index, "base": base, "cli": self.cli, "package": package,
                 "control": base / "control", "port": product["http"]["port"],
                 "p2pPort": product["p2p"]["port"], "product": productpath, "native": native,
@@ -353,11 +323,15 @@ class ManagementAcceptance(network.Acceptance):
             identity = {k: data[k] for k in ("attemptId", "nodeInstanceId", "pid")}
             h.require(identity["attemptId"] == node["lastAttempt"]
                       and identity["nodeInstanceId"] == node["nodeInstanceId"], "LIVE_ATTEMPT_CHANGED")
-            identity.update(preserved_node_identity(node, identity["attemptId"]))
+            identity.update(preserved_node_identity(node, identity["attemptId"], self.candidate_name))
             values[node["label"]] = identity
         return values
 
     def transition(self, action, nodes, label):
+        h.require(action in ("update", "rollback"), "MANAGER_TRANSITION_ACTION")
+        # The previous CLI is the rollback target. Reject an incompatible target
+        # before invoking the switch; the CLI also probes its retained payload.
+        rp.require_manager_capability(self.initial_manager, self.profile)
         before = self.live_identity(nodes, label + "-before")
         if action == "update":
             h.require(h.sha(self.a.bundle_next) == self.bundle_next_sha, "NEXT_BUNDLE_CHANGED")
@@ -372,6 +346,7 @@ class ManagementAcceptance(network.Acceptance):
         h.require(result["data"]["status"] == expected and result["data"]["changed"] is True,
                   "MANAGER_NOT_SWITCHED")
         selected = self.manager_identity(label + "-selected")
+        rp.require_manager_capability(selected, self.profile)
         if action == "update":
             h.require(selected["revision"] == self.a.revision
                       and selected["binarySha256"] != self.initial_manager["binarySha256"], "NEXT_MANAGER_IDENTITY")
@@ -406,12 +381,13 @@ class ManagementAcceptance(network.Acceptance):
         payloads, workers, jobs = {}, [], []
         report_pids, run_reports, init_reports = set(), set(), set()
         for node in self.nodes:
-            payloads[node["label"]] = verify_payload(node["package"])
+            payloads[node["label"]] = verify_payload(node["package"], self.candidate_name)
             h.require(payloads[node["label"]] == node["initialPayload"], "PAYLOAD_CHANGED_AFTER_RUN")
             h.require(initialization_journal(node["control"]) == node["initialJournal"],
                       "INITIALIZATION_JOURNAL_CHANGED_AFTER_RUN")
             for path in node["control"].glob("operations/*/bxdl-worker"):
-                h.require(h.regular(path).st_size == EXECUTOR_SIZE and h.sha(path) == EXECUTOR_SHA,
+                h.require(h.regular(path).st_size == self.profile["executorSizeBytes"]
+                          and h.sha(path) == self.profile["pins"]["executor"],
                           "WORKER_EXECUTOR_CHANGED")
                 workers.append((node["label"], path.parent.name))
             for path in node["control"].glob("operations/*/*.plist"):
@@ -446,9 +422,12 @@ class ManagementAcceptance(network.Acceptance):
         h.require(processes.returncode == 0 and not processes.stderr, "PROCESS_OBSERVATION_UNKNOWN")
         remaining = root_processes(processes.stdout, self.root, {os.getpid(), os.getppid()})
         h.require(not remaining, "RUN_ROOT_PROCESS_PRESENT")
-        for path, digest in ((self.archive, ARCHIVE_SHA), (self.a.archive, ARCHIVE_SHA),
-                             (self.public, PUBLIC_SHA), (self.a.public_key, PUBLIC_SHA),
-                             (self.lock, LOCK_SHA), (self.a.lock, LOCK_SHA),
+        for path, digest in ((self.archive, self.profile["pins"]["archive"]),
+                             (self.a.archive, self.profile["pins"]["archive"]),
+                             (self.public, self.profile["pins"]["publicKey"]),
+                             (self.a.public_key, self.profile["pins"]["publicKey"]),
+                             (self.lock, self.profile["pins"]["engineLock"]),
+                             (self.a.lock, self.profile["pins"]["engineLock"]),
                              (self.a.bundle_next, self.bundle_next_sha)):
             h.require(h.sha(path) == digest, "RUNTIME_SUPPLY_CHANGED")
         return {"outcome": "PASS", "payloads": payloads, "workersChecked": len(workers),
@@ -459,14 +438,20 @@ class ManagementAcceptance(network.Acceptance):
                 "supplyUnchanged": True}
 
 
-def main():
+def parser():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--run", action="store_true")
+    p.add_argument("--candidate", choices=sorted(rp.RUNTIME_PROFILES), default="rc3",
+                   help="explicit fixed runtime; legacy RC.3 remains the default")
     for name in ("manager-entry", "manager-home", "cli-root", "bundle-next", "archive", "public-key", "lock", "fixture", "output"):
         p.add_argument("--" + name, type=Path, required=True)
     p.add_argument("--revision", required=True, help="full next management CLI source revision")
     p.add_argument("--allow-unsigned-development", action="store_true")
-    a = p.parse_args()
+    return p
+
+
+def main(argv=None):
+    a = parser().parse_args(argv)
     if not a.run:
         print("No execution. Add --run for fresh test-owned manager/runtime acceptance.")
         return 0
@@ -491,7 +476,7 @@ def main():
     if not preserved:
         error = error or "HARNESS_SOURCE_CHANGED_DURING_RUN"
     result = {"outcome": "PASS" if error is None and cleaned else "INCOMPLETE", "reason": error,
-              "scope": "CLI05-03_LOCAL_MAC_INSTALLED_MANAGER_FIXED_RC3_NETWORK",
+              "scope": "LOCAL_MAC_INSTALLED_MANAGER_FIXED_" + acceptance.candidate_name.upper() + "_NETWORK",
               "results": acceptance.results, "steps": acceptance.e.steps,
               "childProcesses": acceptance.e.children, "observedPids": sorted(acceptance.observed_pids)}
     h.write_json(a.output / "result.json", result)

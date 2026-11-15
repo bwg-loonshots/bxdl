@@ -495,62 +495,83 @@ fn explicit_logs_preserve_partial_salvage_when_registration_cannot_identify_an_e
 }
 
 #[test]
-fn identified_rc3_authentication_failures_never_fall_back_or_run_the_package_cli() {
-    for failure in ["unsigned", "manifest", "missing-source"] {
-        let fixture = Fixture::new();
-        let marker = fixture.fake_package_cli();
-        let binding_path = fixture.control.join("binding.json");
-        let mut binding: Value = serde_json::from_slice(&fs::read(&binding_path).unwrap()).unwrap();
-        binding["archiveSha256"] =
-            "8a45cb8bf3482333ad43e8c29ad24c2adde8d6fe778eaf27fe2f5c2c842eb017".into();
-        binding["manifestSha256"] =
-            "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123".into();
-        binding["allowUnsignedDevelopment"] = false.into();
-        binding["publicKey"] = fixture
-            .root
-            .join("missing-public-key.pem")
-            .to_str()
-            .unwrap()
-            .into();
-        match failure {
-            "unsigned" => binding["allowUnsignedDevelopment"] = true.into(),
-            "manifest" => binding["manifestSha256"] = "b".repeat(64).into(),
-            "missing-source" => (),
-            _ => unreachable!(),
-        }
-        let bytes = serde_json::to_vec(&binding).unwrap();
-        write(&binding_path, &bytes);
-        let journal_path = fixture.control.join("journal/revision00000001.json");
-        let mut journal: Value = serde_json::from_slice(&fs::read(&journal_path).unwrap()).unwrap();
-        journal["bindingSha256"] = hex::encode(Sha256::digest(bytes)).into();
-        write(&journal_path, serde_json::to_vec(&journal).unwrap());
-        fixture.add();
-        let before = snapshot(&fixture.root);
-        for command in ["logs", "status", "start", "stop"] {
-            let direct = fixture.explicit(command, &["--timeout-seconds", "1"]);
-            let named = fixture.named(command, &["--timeout-seconds", "1"]);
-            direct.assert_code(3);
-            named.assert_code(direct.code);
-            assert_eq!(direct.json()["reasonCode"], named.json()["reasonCode"]);
-            if failure != "missing-source" {
-                assert_eq!(direct.json()["reasonCode"], "EXECUTOR_PROFILE_UNSUPPORTED");
+fn identified_runtime_authentication_failures_never_fall_back_or_run_the_package_cli() {
+    for (archive, manifest, identity) in [
+        (
+            "8a45cb8bf3482333ad43e8c29ad24c2adde8d6fe778eaf27fe2f5c2c842eb017",
+            "2647e9bfb65be83a532a4f37523dcc9ab54492e609d10a646cd0bf535109d123",
+            include_str!(
+                "../contracts/nigo/engine-rc3-2026-10-22/consumer-evidence/engine-info.json"
+            ),
+        ),
+        (
+            "a9f67988e785260b35504bd79a19df4a4820e72eafbf537328ca2e31f7e16f60",
+            "fe21e898f5ace8be57ad838620f14da1c3e07b3ffcfbcb969fd63a67854a142e",
+            include_str!(
+                "../contracts/nigo/engine-rc4-2026-11-15/consumer-evidence/engine-info.json"
+            ),
+        ),
+    ] {
+        for failure in ["unsigned", "manifest", "identity", "missing-source"] {
+            let fixture = Fixture::new();
+            let marker = fixture.fake_package_cli();
+            let binding_path = fixture.control.join("binding.json");
+            let mut binding: Value =
+                serde_json::from_slice(&fs::read(&binding_path).unwrap()).unwrap();
+            binding["archiveSha256"] = archive.into();
+            binding["manifestSha256"] = manifest.into();
+            binding["identity"] = serde_json::from_str(identity).unwrap();
+            binding["allowUnsignedDevelopment"] = false.into();
+            binding["publicKey"] = fixture
+                .root
+                .join("missing-public-key.pem")
+                .to_str()
+                .unwrap()
+                .into();
+            match failure {
+                "unsigned" => binding["allowUnsignedDevelopment"] = true.into(),
+                "manifest" => binding["manifestSha256"] = "b".repeat(64).into(),
+                "identity" => {
+                    binding["identity"]["console"]["sourceFingerprint"] = "a".repeat(64).into()
+                }
+                "missing-source" => (),
+                _ => unreachable!(),
             }
-        }
-        for (command, confirmation) in [
-            ("init", "--confirm-initialize"),
-            ("resume-init", "--confirm-resume"),
-        ] {
-            let direct = fixture.explicit(command, &[confirmation]);
-            let named = fixture.named(command, &[confirmation]);
-            direct.assert_code(3);
-            named.assert_code(direct.code);
-            assert_eq!(direct.json()["reasonCode"], named.json()["reasonCode"]);
-            if failure != "missing-source" {
-                assert_eq!(direct.json()["reasonCode"], "EXECUTOR_PROFILE_UNSUPPORTED");
+            let bytes = serde_json::to_vec(&binding).unwrap();
+            write(&binding_path, &bytes);
+            let journal_path = fixture.control.join("journal/revision00000001.json");
+            let mut journal: Value =
+                serde_json::from_slice(&fs::read(&journal_path).unwrap()).unwrap();
+            journal["bindingSha256"] = hex::encode(Sha256::digest(bytes)).into();
+            write(&journal_path, serde_json::to_vec(&journal).unwrap());
+            fixture.add();
+            let before = snapshot(&fixture.root);
+            for command in ["logs", "status", "start", "stop"] {
+                let direct = fixture.explicit(command, &["--timeout-seconds", "1"]);
+                let named = fixture.named(command, &["--timeout-seconds", "1"]);
+                direct.assert_code(3);
+                named.assert_code(direct.code);
+                assert_eq!(direct.json()["reasonCode"], named.json()["reasonCode"]);
+                if failure != "missing-source" {
+                    assert_eq!(direct.json()["reasonCode"], "EXECUTOR_PROFILE_UNSUPPORTED");
+                }
             }
+            for (command, confirmation) in [
+                ("init", "--confirm-initialize"),
+                ("resume-init", "--confirm-resume"),
+            ] {
+                let direct = fixture.explicit(command, &[confirmation]);
+                let named = fixture.named(command, &[confirmation]);
+                direct.assert_code(3);
+                named.assert_code(direct.code);
+                assert_eq!(direct.json()["reasonCode"], named.json()["reasonCode"]);
+                if failure != "missing-source" {
+                    assert_eq!(direct.json()["reasonCode"], "EXECUTOR_PROFILE_UNSUPPORTED");
+                }
+            }
+            assert!(!marker.exists());
+            assert_eq!(snapshot(&fixture.root), before);
         }
-        assert!(!marker.exists());
-        assert_eq!(snapshot(&fixture.root), before);
     }
 }
 

@@ -182,5 +182,36 @@ class ServiceHarnessBoundary(unittest.TestCase):
         self.assertEqual((supply / "package.tar.gz").read_text(), "WRONG_PIN_OFFLINE_STUB")
 
 
+    def test_unknown_candidate_is_rejected_before_files_or_commands(self):
+        output = self.root / "not-created"
+        with patch.object(h, "command") as command, patch.object(h, "observe_listeners") as listeners, \
+                self.assertRaisesRegex(h.Failure, "RUNTIME_PROFILE_NOT_SUPPORTED"):
+            runner.execute(SimpleNamespace(run=True, candidate="unknown", output=output))
+        command.assert_not_called()
+        listeners.assert_not_called()
+        self.assertFalse(output.exists())
+
+    def test_rc4_cannot_reuse_legacy_inputs_without_preparation_provenance(self):
+        fixture = self.root / "fixture"
+        (fixture / "supply").mkdir(parents=True)
+        (fixture / "operational inputs").mkdir()
+        output = self.root / "output"
+        output.mkdir()
+        args = SimpleNamespace(candidate="rc4", fixture=fixture, supply=None, inputs=None)
+        with patch.object(h, "copy_file") as copy_file, patch.object(h, "command") as command, \
+                self.assertRaises((h.Failure, FileNotFoundError)):
+            runner.prepare(args, output)
+        copy_file.assert_not_called()
+        command.assert_not_called()
+        self.assertEqual(list(output.iterdir()), [])
+
+    def test_cli_candidate_default_and_explicit_rc4(self):
+        required = ["--manager-entry", "/offline/bxdl", "--cli-root", "/offline/root",
+                    "--manager-sha256", "a" * 64, "--output", "/offline/out", "--instance-id", "manual-node",
+                    "--http-port", "29680", "--p2p-port", "30680"]
+        self.assertEqual(runner.parser().parse_args(required).candidate, "rc3")
+        self.assertEqual(runner.parser().parse_args(required + ["--candidate", "rc4"]).candidate, "rc4")
+
+
 if __name__ == "__main__":
     unittest.main()

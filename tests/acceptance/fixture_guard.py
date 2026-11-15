@@ -13,6 +13,7 @@ import stat
 
 import support as h
 from candidates import CANDIDATES, RC4_PREPARATION_RESOURCES, candidate_for, preparation_candidate_for
+from runtime_profiles import runtime_profile
 
 ENGINE_SOURCE = "540a89f0814c01d2a4ec67da1087af35195882ca"
 JAR_SHA = "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45"
@@ -143,7 +144,13 @@ def _validate_inputs(args, preparation_only=False):
                  and summary.get("runtimeAcceptance") == "NOT_CHECKED"
                  and summary.get("certificateExport") == "EXPORTED_PIN_MATCHED",
                  "PREPARATION_SCOPE")
+    # runtimeCandidateSupport records the offline preparation stage, not the
+    # current harness feature set; retain that original, unexecuted evidence.
     chain = public_json("chain.json")
+    if candidate_name == "rc4":
+        _require(_hex(summary.get("fundedAddress"), 40)
+                 and chain.get("nigo.protocol.devnet.genesis-funding[0].address")
+                 == summary["fundedAddress"], "FUNDED_ADDRESS")
     network = public_json("network.json")
     manifest = public_json("generated/devnet.json")
     _require(public["chain.json"] == summary.get("chainSha256")
@@ -218,6 +225,8 @@ def _validate_inputs(args, preparation_only=False):
         _require(tx.get("schemaVersion") == 1 and type(tx.get("nonce")) is int
                  and tx["nonce"] == nonce and tx.get("chainId") == 11578
                  and tx.get("type") == 2 and _hex(tx.get("hash"), 64), "TRANSACTION_METADATA")
+        if candidate_name == "rc4":
+            _require(tx.get("from") == summary["fundedAddress"], "TRANSACTION_SENDER")
         raw = tx.get("rawTransaction")
         _require(isinstance(raw, str) and re.fullmatch(r"0x02(?:[0-9a-fA-F]{2})+", raw) is not None,
                  "TRANSACTION_HEX")
@@ -232,8 +241,10 @@ def _validate_inputs(args, preparation_only=False):
                  and lock.get("javaSha256") == JAVA_SHA
                  and lock.get("jarSizeBytes") == candidate["jarSizeBytes"]
                  and lock.get("expected", {}).get("source", {}).get("commit") == candidate["source"], "LOCK_ARTIFACT")
+        if candidate_name == "rc4":
+            _require(lock_digest == runtime_profile("rc4")["engineLockSha256"], "LOCK_IDENTITY")
     revision = getattr(args, "revision", TEST_REVISION)
-    if preparation_only and candidate_name == "rc4":
+    if candidate_name == "rc4":
         _require(hasattr(args, "revision"), "REVISION")
     _require(isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision) is not None,
              "REVISION")

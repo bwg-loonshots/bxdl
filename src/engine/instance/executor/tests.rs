@@ -23,46 +23,142 @@ fn start() -> Request {
     }
 }
 fn parse(request: &Request, exit: i32, bytes: &[u8]) -> Result<Response> {
-    reply::parse(request, "node-a", exit, bytes, b"")
+    reply::parse(&profiles::RC3, request, "node-a", exit, bytes, b"")
+}
+
+fn profile_report(profile: &profiles::Profile) -> artifact::Report {
+    let mut manifest: artifact::Manifest =
+        serde_json::from_str(if profile.archive == profiles::RC3.archive {
+            include_str!("../../../../packaging/package-spec.rc3-temurin.example.json")
+        } else {
+            include_str!("../../../../packaging/package-spec.rc4-temurin.example.json")
+        })
+        .unwrap();
+    manifest.product.revision = profile.product_revision.into();
+    // This fixture exercises profile selection after verification, not the
+    // archive parser. Full archive/inventory authentication is tested separately.
+    manifest.files = vec![
+        artifact::FileEntry {
+            path: "bin/bxdl".into(),
+            size: profile.cli_size,
+            sha256: profile.cli.into(),
+            mode: 0o755,
+        },
+        artifact::FileEntry {
+            path: "engine/nigo-node.jar".into(),
+            size: profile.jar_size,
+            sha256: profile.jar.into(),
+            mode: 0o644,
+        },
+    ];
+    artifact::Report {
+        manifest,
+        archive_sha256: profile.archive.into(),
+        manifest_sha256: profile.manifest.into(),
+        authenticity: "verified-external-ed25519".into(),
+        files_verified: profile.files,
+        bytes_verified: profile.bytes,
+    }
 }
 
 #[test]
-fn profile_checks_exact_artifact_and_executor_identity() {
-    let mut manifest: artifact::Manifest = serde_json::from_str(include_str!(
-        "../../../../packaging/package-spec.rc3-temurin.example.json"
-    ))
-    .unwrap();
-    manifest.files.push(artifact::FileEntry {
-        path: "bin/bxdl".into(),
-        size: CLI_SIZE,
-        sha256: CLI.into(),
-        mode: 0o755,
-    });
-    let report = artifact::Report {
-        manifest,
-        archive_sha256: ARCHIVE.into(),
-        manifest_sha256: MANIFEST.into(),
-        authenticity: "verified-external-ed25519".into(),
-        files_verified: 270,
-        bytes_verified: 325_299_323,
-    };
-    assert!(supports_package(&report));
-    for change in 0..6 {
-        let mut altered = report.clone();
-        match change {
-            0 => altered.archive_sha256 = "a".repeat(64),
-            1 => altered.manifest_sha256 = "a".repeat(64),
-            2 => altered.manifest.files[0].size += 1,
-            3 => altered.manifest.files[0].sha256 = "a".repeat(64),
-            4 => altered.authenticity = "unsigned-development".into(),
-            _ => altered
-                .manifest
-                .files
-                .push(altered.manifest.files[0].clone()),
+fn profiles_select_only_exact_authenticated_runtime_combinations() {
+    for profile in [&profiles::RC3, &profiles::RC4] {
+        let report = profile_report(profile);
+        assert!(supports_package(&report));
+        assert!(std::ptr::eq(
+            profiles::for_archive(&report.archive_sha256).unwrap(),
+            profile
+        ));
+        for change in 0..17 {
+            let mut altered = report.clone();
+            match change {
+                0 => altered.archive_sha256 = "a".repeat(64),
+                1 => altered.manifest_sha256 = "a".repeat(64),
+                2 => altered.manifest.files[0].size += 1,
+                3 => altered.manifest.files[0].sha256 = "a".repeat(64),
+                4 => altered.authenticity = "unsigned-development".into(),
+                5 => altered
+                    .manifest
+                    .files
+                    .push(altered.manifest.files[0].clone()),
+                6 => altered.manifest.files[0].mode = 0o644,
+                7 => altered.manifest.engine.jar_sha256 = "a".repeat(64),
+                8 => altered.manifest.runtime.java_sha256 = "a".repeat(64),
+                9 => altered.manifest.engine.revision = "a".repeat(40),
+                10 => altered.manifest.product.revision = "a".repeat(40),
+                11 => altered.manifest.engine.contract_revision = "a".repeat(64),
+                12 => altered.manifest.files[1].sha256 = "a".repeat(64),
+                13 => altered.manifest.files[1].size += 1,
+                14 => altered.files_verified += 1,
+                15 => altered.bytes_verified += 1,
+                _ => altered
+                    .manifest
+                    .files
+                    .push(altered.manifest.files[1].clone()),
+            }
+            assert!(
+                !supports_package(&altered),
+                "{} change {change}",
+                profile.archive
+            );
         }
-        assert!(!supports_package(&altered));
+    }
+    // A known archive cannot borrow another profile's manifest/executor/JAR.
+    for (profile, other) in [
+        (&profiles::RC3, &profiles::RC4),
+        (&profiles::RC4, &profiles::RC3),
+    ] {
+        let mut mixed = profile_report(other);
+        mixed.archive_sha256 = profile.archive.into();
+        assert!(!supports_package(&mixed));
+        assert!(!profile.matches_package(&profile_report(other)));
+    }
+    for unknown in ["", "a", &"0".repeat(64), "nigo-engine-v0.1.0-rc.4"] {
+        assert!(profiles::for_archive(unknown).is_none());
     }
 }
+
+#[test]
+fn rc4_profile_matches_frozen_assembly_evidence_and_rc3_remains_unchanged() {
+    let evidence: Value = serde_json::from_str(include_str!(
+        "../../../../results/2026-11-15-rc4-runtime-assembly.json"
+    ))
+    .unwrap();
+    let package = &evidence["package"];
+    let profile = &profiles::RC4;
+    assert_eq!(package["archiveSha256"], profile.archive);
+    assert_eq!(package["manifestSha256"], profile.manifest);
+    assert_eq!(package["executorSha256"], profile.cli);
+    assert_eq!(package["executorSizeBytes"], profile.cli_size);
+    assert_eq!(package["engineJarSha256"], profile.jar);
+    assert_eq!(package["engineJarSizeBytes"], profile.jar_size);
+    assert_eq!(package["javaSha256"], profile.java);
+    assert_eq!(package["filesVerified"], profile.files);
+    assert_eq!(package["bytesVerified"], profile.bytes);
+    assert_eq!(
+        evidence["selection"]["productRevision"],
+        profile.product_revision
+    );
+    let previous: Value = serde_json::from_str(include_str!(
+        "../../../../results/2026-10-22-macos-rc3-package.json"
+    ))
+    .unwrap();
+    let package = &previous["package"];
+    assert_eq!(package["archiveSha256"], profiles::RC3.archive);
+    assert_eq!(package["manifestSha256"], profiles::RC3.manifest);
+    assert_eq!(package["cliSha256"], profiles::RC3.cli);
+    assert_eq!(previous["product"]["cliSizeBytes"], profiles::RC3.cli_size);
+    assert_eq!(package["engineJarSha256"], profiles::RC3.jar);
+    assert_eq!(package["engineJarSizeBytes"], profiles::RC3.jar_size);
+    assert_eq!(package["javaSha256"], profiles::RC3.java);
+    assert_eq!(package["filesVerified"], profiles::RC3.files);
+    assert_eq!(package["bytesVerified"], profiles::RC3.bytes);
+    assert_eq!(package["revision"], profiles::RC3.product_revision);
+    assert_eq!(PROFILE, "BXDL_RC3_EXECUTOR_V1");
+    assert_eq!(RC4_PROFILE, "BXDL_RC4_EXECUTOR_V1");
+}
+
 #[test]
 fn arguments_are_fixed_and_paths_are_single_literal_arguments() {
     let request = Request::Diagnose {
@@ -224,6 +320,7 @@ fn reply_rejects_multiple_documents_duplicate_keys_stderr_and_deep_payloads() {
     assert!(parse(&Request::Show, 0, text.as_bytes()).is_err());
     assert!(
         reply::parse(
+            &profiles::RC3,
             &Request::Show,
             "node-a",
             0,
@@ -243,7 +340,7 @@ fn preflight_accepts_the_real_cold_exit_three_contract() {
     ))
     .unwrap();
     let cold = json!({"command":"preflight","status":"INCOMPLETE","reason":"RUNTIME_CHECKS_REQUIRED","contractStatus":"PROPOSED","backend":"rocksdb","chainFingerprint":"a".repeat(64),"nodeIdentity":format!("0x{}:0x{}","a".repeat(64),"b".repeat(40)),"checks":[]});
-    let data = json!({"outcome":"INCOMPLETE","product":{"schemaVersion":1,"instanceId":"node-a","outcome":"INCOMPLETE","checks":[],"configSha256":"a".repeat(64)},"configurationBinding":"MATCHED","engine":{"outcome":"INCOMPLETE","engineExitCode":3,"developmentOnly":true,"identity":identity,"jarSha256":JAR,"javaSha256":JAVA,"configSha256":"a".repeat(64),"chainFileSha256":"a".repeat(64),"preflight":cold}});
+    let data = json!({"outcome":"INCOMPLETE","product":{"schemaVersion":1,"instanceId":"node-a","outcome":"INCOMPLETE","checks":[],"configSha256":"a".repeat(64)},"configurationBinding":"MATCHED","engine":{"outcome":"INCOMPLETE","engineExitCode":3,"developmentOnly":true,"identity":identity,"jarSha256":profiles::RC3.jar,"javaSha256":profiles::RC3.java,"configSha256":"a".repeat(64),"chainFileSha256":"a".repeat(64),"preflight":cold}});
     let request = Request::Preflight {
         timeout: Duration::from_secs(1),
     };
@@ -574,4 +671,144 @@ fn diagnostic_nullable_options_remain_typed_and_sanitized() {
     )
     .unwrap();
     assert_eq!(result.data, Some(data));
+}
+
+fn preflight_data(profile: &profiles::Profile) -> Value {
+    let identity: Value = serde_json::from_str(profile.expected_json).unwrap();
+    let cold = json!({"command":"preflight","status":"INCOMPLETE","reason":"RUNTIME_CHECKS_REQUIRED","contractStatus":"PROPOSED","backend":"rocksdb","chainFingerprint":"a".repeat(64),"nodeIdentity":format!("0x{}:0x{}","a".repeat(64),"b".repeat(40)),"checks":[]});
+    json!({"outcome":"INCOMPLETE","product":{"schemaVersion":1,"instanceId":"node-a","outcome":"INCOMPLETE","checks":[],"configSha256":"a".repeat(64)},"configurationBinding":"MATCHED","engine":{"outcome":"INCOMPLETE","engineExitCode":3,"developmentOnly":true,"identity":identity,"jarSha256":profile.jar,"javaSha256":profile.java,"configSha256":"a".repeat(64),"chainFileSha256":"a".repeat(64),"preflight":cold}})
+}
+
+fn parse_preflight(profile: &profiles::Profile, data: Value) -> Result<Response> {
+    reply::parse(
+        profile,
+        &Request::Preflight {
+            timeout: Duration::from_secs(1),
+        },
+        "node-a",
+        5,
+        &envelope(
+            "preflight",
+            "INCOMPLETE",
+            "ENGINE_RUNTIME_CHECKS_REQUIRED",
+            Some(data),
+        ),
+        b"",
+    )
+}
+
+#[test]
+fn preflight_binds_the_complete_engine_identity_to_the_selected_profile() {
+    for (profile, other) in [
+        (&profiles::RC3, &profiles::RC4),
+        (&profiles::RC4, &profiles::RC3),
+    ] {
+        let data = preflight_data(profile);
+        assert!(parse_preflight(profile, data.clone()).is_ok());
+        assert!(parse_preflight(other, data.clone()).is_err());
+        // Even retaining the correct JAR/source does not admit a modified
+        // Console, contract, dirty source, Java requirement, or release channel.
+        for path in [
+            "/engine/identity/buildInfoStatus",
+            "/engine/identity/engine",
+            "/engine/identity/version",
+            "/engine/identity/source/commit",
+            "/engine/identity/source/dirty",
+            "/engine/identity/java/requiredMajor",
+            "/engine/identity/console/node",
+            "/engine/identity/console/npm",
+            "/engine/identity/console/sourceFingerprint",
+            "/engine/identity/contract/status",
+            "/engine/identity/contract/revision",
+            "/engine/identity/contract/documentationSha256",
+            "/engine/identity/contract/definitionSha256",
+            "/engine/identity/contract/runtimeDocumentationSha256",
+            "/engine/identity/contract/runtimeFixtureSha256",
+            "/engine/identity/contract/fingerprint",
+            "/engine/identity/distribution/channel",
+            "/engine/identity/distribution/officialRelease",
+            "/engine/jarSha256",
+            "/engine/javaSha256",
+        ] {
+            let mut altered = data.clone();
+            let item = altered.pointer_mut(path).unwrap();
+            *item = match item {
+                Value::Bool(value) => json!(!*value),
+                Value::Number(_) => json!(22),
+                _ => json!("altered"),
+            };
+            let error = parse_preflight(profile, altered).unwrap_err();
+            assert_eq!(error.code, "EXECUTOR_RESPONSE_INVALID", "{path}");
+        }
+        let mut mixed = data.clone();
+        mixed["engine"]["identity"] = preflight_data(other)["engine"]["identity"].clone();
+        assert!(parse_preflight(profile, mixed).is_err());
+        let mut unknown = data;
+        unknown["engine"]["identity"]["console"]["privateUnknown"] = json!("PRIVATE-CANARY");
+        let error = parse_preflight(profile, unknown).unwrap_err();
+        assert!(!error.message.contains("CANARY"));
+    }
+}
+
+#[test]
+fn both_profiles_preserve_unknown_and_reject_mutating_reply_ambiguity() {
+    for profile in [&profiles::RC3, &profiles::RC4] {
+        for request in [
+            start(),
+            Request::Service {
+                action: ServiceAction::Stop,
+                wait: false,
+                timeout: Duration::from_secs(1),
+            },
+            Request::Initialize {
+                resume: false,
+                timeout: Duration::from_secs(1),
+            },
+            Request::Initialize {
+                resume: true,
+                timeout: Duration::from_secs(1),
+            },
+            Request::Diagnose {
+                output: "/private/tmp/diagnostic.json".into(),
+                tail: 1,
+                max_bytes: 4096,
+                timeout: Duration::from_secs(1),
+            },
+        ] {
+            let unknown = envelope(
+                request.command(),
+                "UNKNOWN",
+                "EXECUTOR_OPERATION_UNKNOWN",
+                None,
+            );
+            let response = reply::parse(profile, &request, "node-a", 6, &unknown, b"").unwrap();
+            assert_eq!(response.exit, 6);
+            assert_eq!(response.outcome, "UNKNOWN");
+            for raw in [b"{".as_slice(), unknown.as_slice()] {
+                let error = reply::parse(profile, &request, "node-a", 0, raw, b"")
+                    .map_err(|error| dispatched_error(&request, error))
+                    .unwrap_err();
+                assert_eq!(error.code, "EXECUTOR_OPERATION_UNKNOWN");
+            }
+            assert_eq!(
+                dispatched_error(&request, BxdlError::new("EXECUTOR_SPAWN_FAILED", "public")).code,
+                "EXECUTOR_SPAWN_FAILED"
+            );
+        }
+        let raw = envelope(
+            "start",
+            "INCOMPLETE",
+            "SERVICE_START_WAIT_EXPIRED",
+            Some(service_data()),
+        );
+        let response = reply::parse(profile, &start(), "node-a", 5, &raw, b"").unwrap();
+        assert_eq!(
+            response.into_service().unwrap().runtime_readiness,
+            "NOT_READY"
+        );
+        let error = reply::parse(profile, &Request::Show, "node-a", 0, b"{", b"")
+            .map_err(|error| dispatched_error(&Request::Show, error))
+            .unwrap_err();
+        assert_eq!(error.code, "EXECUTOR_RESPONSE_INVALID");
+    }
 }

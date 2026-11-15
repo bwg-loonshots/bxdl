@@ -142,7 +142,11 @@ fn validate(stdout: &[u8], manifest: &Manifest) -> Result<()> {
         "management.info",
         "management.rollback.macos",
         "completion.zsh",
+        // This manager's admission baseline preserves both supported runtime
+        // profiles for install, update and rollback. It does not infer which
+        // nodes exist from a particular user's optional catalog.
         "executor.rc3-legacy-v1",
+        "executor.rc4-v1",
     ] {
         if !caps.iter().any(|c| c.as_str() == Some(required)) {
             return Err(failed());
@@ -192,6 +196,32 @@ mod tests {
         assert!(validate(&serde_json::to_vec(&v).unwrap(), &manifest()).is_err());
         assert!(validate(b"{\"schemaVersion\":1,\"schemaVersion\":1}", &manifest()).is_err());
     }
+    #[test]
+    fn rejects_loss_of_either_runtime_profile_in_candidate() {
+        let original: serde_json::Value = serde_json::from_slice(&version_bytes()).unwrap();
+        for missing in ["executor.rc3-legacy-v1", "executor.rc4-v1"] {
+            let mut candidate = original.clone();
+            candidate["data"]["capabilities"]
+                .as_array_mut()
+                .unwrap()
+                .retain(|value| value.as_str() != Some(missing));
+            assert_eq!(
+                validate(&serde_json::to_vec(&candidate).unwrap(), &manifest())
+                    .unwrap_err()
+                    .code,
+                "CLI_CANDIDATE_FAILED"
+            );
+        }
+        // Future capabilities may be advertised; the two known profiles are
+        // still mandatory and are never replaced by an unknown identifier.
+        let mut candidate = original;
+        candidate["data"]["capabilities"]
+            .as_array_mut()
+            .unwrap()
+            .push(serde_json::json!("executor.future-v1"));
+        validate(&serde_json::to_vec(&candidate).unwrap(), &manifest()).unwrap();
+    }
+
     #[test]
     fn captures_version_without_stdin_and_rejects_stderr() {
         let bytes = String::from_utf8(version_bytes()).unwrap();

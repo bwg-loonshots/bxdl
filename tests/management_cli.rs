@@ -420,6 +420,8 @@ fn management_capabilities_are_separate_from_runtime_installation() {
         "management.bundle.verify",
         "install.macos",
         "completion.zsh",
+        "executor.rc3-legacy-v1",
+        "executor.rc4-v1",
     ] {
         assert!(capabilities.iter().any(|value| value == capability));
     }

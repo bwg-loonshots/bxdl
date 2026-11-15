@@ -173,3 +173,26 @@ bxdl cli bundle verify /downloads/bxdl-cli.tar.gz --public-key /trusted/bxdl-cli
 - 기존 노드 DB·control 이동·upgrade/migration은 별도 작업이다. 관리 CLI 교체가 이를 수행하지 않는다.
 
 현재의 사용자 LaunchAgent 운영 범위는 그대로다. 별도 상주 관리 서버나 자동 재시작 기능을 추가하지 않는다.
+
+
+## RC.4 고정 런타임 지원과 CLI 전환 기준
+
+RC4-04 관리 CLI는 기존 `executor.rc3-legacy-v1`과 신규 `executor.rc4-v1` capability를 함께 제공한다.
+RC.3과 RC.4는 각 수신 기록의 전체 engine identity 및 별도의 archive·manifest·내부 실행기·JAR·Java pin으로 인증한다.
+RC.4는 [RC4-03에서 고정한 runtime](../results/2026-11-15-rc4-runtime-assembly.md)을 그대로 사용한다.
+관리 CLI를 빌드하면서 runtime을 다시 조립하거나 내부 실행기를 덮어쓰지 않는다.
+
+새 관리 CLI가 실행하는 `cli install`, `cli update`, `cli rollback`은 후보의 두 capability를 모두 요구한다.
+한쪽 지원이 없으면 `CLI_CANDIDATE_FAILED`로 거절하고 기존 CLI 선택을 유지한다.
+노드 목록은 선택적인 사용자별 저장소이므로, 해당 목록만 보고 다른 곳의 RC.4 노드가 없다고 추정하지 않는다.
+이 보수적인 관리 CLI 기준선은 기존 RC.3 노드 운용 지원을 유지하면서 RC.4 지원이 사라지는 전환을 막는다.
+RC.3 전용 구형 CLI는 RC.4 운용 중 정상 복귀 대상으로 사용하지 않는다.
+이미 배포된 구형 bootstrap 실행기의 검사 정책까지 소급 변경하는 기능은 아니다.
+
+패키지 인증 이후에만 해당 패키지의 고정 실행기에 작업을 위임하고, 선택한 profile과 다른 engine 응답은 거절한다.
+변경 작업이 실행된 뒤 결과를 확정하지 못한 경우에는 `UNKNOWN`을 유지하며 자동 재시도하지 않는다.
+알려지지 않은 패키지는 기존 same-CLI·worker 검사 경로를 따르며, 임의 패키지 실행기를 외부 CLI가 대신 실행하지 않는다.
+
+CLI capability는 구현 지원 식별자다. RC.4의 실제 설치·초기화·LaunchAgent·네트워크 인수 완료는
+[RC4-05/06 계획](../design/2026-11-15-rc4-adoption-plan.md)과 별도 결과로 확인한다.
+CLI update/rollback은 노드 엔진·JRE·DB를 업그레이드하거나 되돌리는 명령이 아니다.
