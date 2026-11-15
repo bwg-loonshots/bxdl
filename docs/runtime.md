@@ -31,7 +31,7 @@ JRE의 공급 서명, 엔진 호환성, source archive 수신 또는 완성 제�
 ## 3. 패키지 조립
 
 같은 stage에 Rust CLI `bin/bxdl`, 선택한 고정 엔진 `engine/nigo-node.jar`를 준비한다.
-현재 RC.3 개발 후보에는 [package spec](../packaging/package-spec.rc3-temurin.example.json)과
+이미 운용 인수한 RC.3 개발 후보에는 [package spec](../packaging/package-spec.rc3-temurin.example.json)과
 [engine lock](../packaging/engine-lock.rc3-temurin-development.json)을 사용한다.
 [RC.3 수신 기록](../contracts/nigo/engine-rc3-2026-10-22/README.md)의 정확한 source/JAR를 대조하고,
 수신 이후의 [명시 선택과 Mac 재인수 설계](../design/2026-10-22-rc3-package-reacceptance.md)를 따른다.
@@ -49,6 +49,31 @@ source-supply.json의 고정 입력과 함께 별도 배포 kit에 포함하거�
 
 이후 기존 `package build/verify`로 외부 Ed25519 key 서명과 전체 파일 검증을 수행한다.
 서명 key는 stage 밖에 둔다. `setup --install`의 패키지·lock 입력과 일반 설치·초기화·기동 흐름은 그대로다.
+
+
+## RC.4 개발용 런타임 조립
+
+RC.4는 별도의 [engine lock](../packaging/engine-lock.rc4-temurin-development.json)과
+[package spec](../packaging/package-spec.rc4-temurin.example.json)을 명시 선택한다.
+선정 JRE는 동일하며 [수신 기록](../contracts/nigo/engine-rc4-2026-11-15/README.md)의 JAR를 재빌드하지 않는다.
+[RC4-03 결과](../results/2026-11-15-rc4-runtime-assembly.md)는 새 서명 런타임 조립과 engine-info까지 PASS다.
+RC.4 외부 관리 CLI profile·설치·서비스·네트워크 인수는 후속이므로 RC.3의 운용 인수 상태와 구분한다.
+
+내부 실행기 A는 clean commit `d38027a474f1e8d4fb7b1d38ea17972ba88d93af`에서
+`BXDL_REVISION`을 같은 full commit으로 지정해 `cargo build --offline --locked --release --target aarch64-apple-darwin`으로 빌드했다.
+빌드 전후 source 청결도와 실제 `version --json`을 확인한다. `package build` 자체가 이 source 검사를 수행하지는 않는다.
+이번 A는 `umask 077` 정책을 포함하며 실제 초기화 보고서 권한은 RC4-05에서 인수한다.
+
+1. 위 `runtime stage` 절차로 선정 lock의 전체 259파일을 새 stage에 준비한다.
+2. `bin/bxdl`에는 고정 A, `engine/nigo-node.jar`에는 RC.4 수신 JAR를 복사한다.
+3. 위 NOTICE·runtime SBOM·공급 SBOM과 runtime snapshot의 `README.md`, `supplier-metadata.json`, `observed-runtime.json`, `source-supply.json`을 명시적으로 복사한다. 실행기는0755, 일반 문서는0644로 지정한다.
+4. RC.4 spec의 조립용 사본에서 `product.revision`을 A의 full commit으로 채운다. `engine.contractRevision`은 source commit이 아닌 계약 fingerprint다.
+5. stage의 A·JAR·Java로 RC.4 lock에 대한 `engine inspect --allow-development`를 수행하고 전체 identity를 대조한다. 이는 DB 초기화나 native 실행 검사가 아니다.
+6. stage 밖의 개발용 Ed25519 key로 `package build`를 수행하고 외부 공개키로 `package verify`한다. 실제 manifest 기준 전체 파일·크기·mode·hash와 archive/manifest/A identity를 고정한다.
+
+이번 R은 **269 payload / 326,373,420 bytes**다. 결과 JSON에 전체 runtime lock과 나머지 10파일 inventory를 연결했다.
+RC.3의 archive hash나 270파일 수를 재사용하지 않는다. 이후 외부 관리 CLI B에 R의 정확한 pin을 등록하며 A를 B로 덮어쓰거나 그 이유로 R을 재조립하지 않는다.
+서명 key가 다른 재조립물은 새로운 archive다. 기존 승인 profile의 pin을 새로 계산한 hash로 임의 교체하는 절차가 아니다.
 
 ## 검증 경계
 

@@ -2,20 +2,25 @@
 
 Rust·macOS Apple Silicon 우선 방향을 유지한다. R1 설정 초안 이후 **R2의 Mac 새 폴더 패키지 설치**와 **R3의 NIGO 개발 후보 정보·cold 사전검사**를 추가했다. clean NIGO 후보를 별도로 수신하고 제품 설정과 명시 native QBFT 설정을 연결하는 preflight를 추가했다. 이후 설치본·설정을 등록해 `--instance`로 preflight와 명시 init/resume-init을 호출하고, Mac 사용자 LaunchAgent의 start/status/stop을 연결했다. 이번에는 `setup --install`에서 이 단계를 선택하고 재개하는 A~C 흐름을 구현했다. 기존 package의 단일 validator 서비스 근거와 새 setup의 exact package·TTY 인수, 전체 G1-M을 구분한다.
 
-## RC.4 도입 준비 — RC4-01/02 PASS, 제품 인수 대기
+## RC.4 도입 준비 — RC4-01~03 완료, 제품 인수 대기
 
-2026-11-15 NIGO의 최종 인계·원격 release/tag metadata와 실제 다운로드를 대조하고 **RC4-01 수신 검증을 PASS**했다. [수신 기록](../contracts/nigo/engine-rc4-2026-11-15/README.md)에 공급24파일·전체 identity·계약/Console·선정 JRE의 실제 engine-info1회와 입력 불변을 기록했다. 임시 검증기 오류2건과 앞선 속성 조회1회도 보존했으며 총 JVM 호출은4회다. 이후 [RC4-02 구현·검증](../results/2026-11-15-rc4-fixture-preparation.md)도 PASS했다. 준비용 후보만 RC.4를 지원하고 실행 후보는 RC.1~3를 유지한다. 새 validator4개·거래12개·자격증명24개를 준비했으며 준비 child6회의 정상 종료·입력 불변·노드 data 미생성을 확인했다. 전체 `make check`는 Rust592 PASS, Python114개 중112 PASS·2 SKIP, fmt·Clippy PASS다. [계약·fixture 영향 설계](../design/2026-11-15-rc4-contract-fixture-impact.md)에 따라 Rust parser는 바꾸지 않았다. 현재 추가 NIGO 선행 구현 요청은 없으며 다음은 [도입 계획](../design/2026-11-15-rc4-adoption-plan.md)의 RC4-03이다.
+2026-11-15 [RC4-01 수신 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 계약 영향·새 시험 자료 준비](../results/2026-11-15-rc4-fixture-preparation.md), [RC4-03 내부 실행기 고정·runtime 조립](../results/2026-11-15-rc4-runtime-assembly.md)을 PASS했다. 수신 단계의 JVM4회(engine-info1회 포함), 준비 단계의 helper1·offline Node1·keytool4와 조립 단계의 stage engine inspect1회는 별도 실행 기록이다. 노드·genesis DB·서비스·네트워크는 계속 미실행이다.
+
+RC4-03은 clean source `d38027a474f1e8d4fb7b1d38ea17972ba88d93af`에서 내부 실행기 A를 빌드하고 RC.4 전용 [engine lock](../packaging/engine-lock.rc4-temurin-development.json)·[package spec](../packaging/package-spec.rc4-temurin.example.json)을 명시 선택했다. 서명 개발 runtime R의 SHA-256은 `a9f67988e785260b35504bd79a19df4a4820e72eafbf537328ca2e31f7e16f60`이며 payload269파일·326,373,420bytes, JRE259파일과 서명·inventory를 검증했다. exact identity·수행 범위는 [구조화 결과](../results/2026-11-15-rc4-runtime-assembly.json)에 기록한다.
+
+제품·시험 코드는 RC4-02와 같으므로 당시 `make check`의 Rust592 PASS, Python114개 중112 PASS·2 SKIP, fmt·Clippy PASS를 참조하며 이번에 다시 실행하지 않았다. 이번 실제 build/verify·독립 inventory/서명 검사는 새로 수행했다. [계약·fixture 영향 설계](../design/2026-11-15-rc4-contract-fixture-impact.md)에 따라 Rust parser는 바꾸지 않았다. 추가 NIGO 선행 구현 요청은 없으며 다음은 [도입 계획](../design/2026-11-15-rc4-adoption-plan.md)의 RC4-04다.
 
 | 단계 | 현재 상태 |
 | --- | --- |
 | NIGO RC.4 공급 | DELIVERED — 공급자의 게시·재다운로드 검증 완료 회신 |
-| BXDL 실제 archive 수신 | PASS — 원격 수신·공급24파일·전체 identity·선정 JRE engine-info, JRE259파일·공급24파일 전후 불변 |
+| BXDL RC4-01 archive 수신 | PASS — 원격 수신·공급24파일·전체 identity·선정 JRE engine-info·입력 불변 |
 | BXDL RC4-02 계약 영향·시험 자료 준비 | PASS — 준비용 후보·guard 구현, helper/catalog 대조·새 fixture·전체 검사. genesis DB 미생성 |
-| BXDL RC.4 runtime 지원 | NOT_IMPLEMENTED — 기존 실행 runner/guard는 RC.4 거절, 외부 CLI profile 후속 |
-| BXDL 제품 선택 | NOT_SELECTED — RC.3 lock/spec/runtime 유지, RC.4 명시 선택 후속 |
-| BXDL runtime 조립·패키지·서비스·네트워크 인수 | NOT_RUN — 수신 PASS·공급자 PASS·기존 RC.3 PASS를 제품 인수로 승계하지 않음 |
+| BXDL RC4-03 제품 선택 | SELECTED — RC.4 전용 lock/spec 추가, RC.3 lock/spec/runtime·설치본 보존 |
+| BXDL RC4-03 runtime 조립 | PASS — clean 내부 실행기 A·서명 개발 runtime R·전체 payload/JRE 대조·stage engine inspect |
+| BXDL RC.4 외부 관리 CLI profile·runtime 인수 하네스 | NOT_IMPLEMENTED — RC4-04 후속, 기존 실행 runner/guard는 RC.4 거절 |
+| BXDL RC.4 Mac 설치·노드/DB·서비스·네트워크 인수 | NOT_RUN — 수신·준비·조립 및 기존 RC.3 PASS를 제품 인수로 승계하지 않음 |
 
-새 후보는 선정 Temurin JRE를 유지하고 새 DB·새 genesis·동일 RC.4 조합으로 재인수한다. 기존 DB migration·혼합 버전 rolling upgrade는 지원하지 않는다. 내부 실행기 고정과 새 runtime 조립, 외부 관리 CLI의 정확한 RC.4 profile 추가·검증을 구분한다. 기존 RC.3 지원과 아래 결과 이력은 바꾸지 않았다.
+새 후보는 선정 Temurin JRE를 유지하고 새 DB·새 genesis·동일 RC.4 조합으로 재인수한다. 기존 DB migration·혼합 버전 rolling upgrade는 지원하지 않는다. 내부 실행기 A와 runtime R의 고정은 완료했고 외부 관리 CLI의 정확한 RC.4 profile 추가·검증은 후속이다. 기존 RC.3 인수 지원과 아래 결과 이력은 바꾸지 않았다.
 
 ## 현재 방향 — console 개발 중단, 직접 CLI 우선
 
@@ -309,9 +314,9 @@ TLS 저장소 형식과 새 네트워크/참가·합의·archive 정책 선택, 
 
 ## 다음 순서
 
-CLI-01~04 구현·검증을 완료했다. [CLI-05](../design/2026-10-22-integrated-operations-ux-implementation-plan.md) 중 CLI05-01 zsh 자동완성, CLI05-02 독립 Mac 배포·업데이트, CLI05-03 지정 조합 인수와 후속 신규 초기화 보고서 권한 개선·수집 검증을 완료했다. RC4-01 수신 검증과 RC4-02 계약 영향·새 시험 자료 준비를 완료했다. 다음은 RC4-03 내부 실행기 고정·RC.4 lock/spec 명시 선택·runtime 조립이며 Mac 재인수는 후속이다. 작성자가 아닌 사용자의 CLI05-04 실제 과업은 NOT_RUN이며 RC.4 정식 인수 회신 뒤 진행한다. 기존 `0644` 보고서의 명시 복구 정책은 별도 미해결 과제로 남긴다. console의 후속 화면·서비스 연결은 중단했다. 아래는 그와 별도로 유지하는 전체 제품의 후속 과제다.
+CLI-01~04 구현·검증을 완료했다. [CLI-05](../design/2026-10-22-integrated-operations-ux-implementation-plan.md) 중 CLI05-01 zsh 자동완성, CLI05-02 독립 Mac 배포·업데이트, CLI05-03 지정 조합 인수와 후속 신규 초기화 보고서 권한 개선·수집 검증을 완료했다. RC4-01 수신 검증·RC4-02 계약 영향과 새 시험 자료 준비·RC4-03 내부 실행기 고정과 서명 runtime 조립을 완료했다. 다음은 RC4-04 외부 관리 CLI의 정확한 RC.4 profile·인수 하네스 구현이며 Mac 재인수는 후속이다. 작성자가 아닌 사용자의 CLI05-04 실제 과업은 NOT_RUN이며 RC.4 정식 인수 회신 뒤 진행한다. 기존 `0644` 보고서의 명시 복구 정책은 별도 미해결 과제로 남긴다. console의 후속 화면·서비스 연결은 중단했다. 아래는 그와 별도로 유지하는 전체 제품의 후속 과제다.
 
-[RC.4 수신 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md)과 [RC4-02 구현·준비 검증](../results/2026-11-15-rc4-fixture-preparation.md)은 PASS다. 다음은 [RC.4 도입 계획](../design/2026-11-15-rc4-adoption-plan.md)의 RC4-03 내부 실행기 고정·RC.4 lock/spec 명시 선택·runtime 조립 → RC4-04 외부 CLI의 정확한 RC.4 profile/harness → RC4-05 Mac 설치·서비스 → RC4-06 새 동종 네트워크·변경 영향 → RC4-07 정식 회신 → RC4-08 CLI05-04 순서다. 사용자 과업 안내서·기록 양식 준비와 RC.3 UX 시험은 병행 가능하나 RC.4 PASS로 전용하지 않는다.
+[RC.4 수신 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 구현·준비 검증](../results/2026-11-15-rc4-fixture-preparation.md), [RC4-03 개발 runtime 조립](../results/2026-11-15-rc4-runtime-assembly.md)은 PASS다. 다음은 [RC.4 도입 계획](../design/2026-11-15-rc4-adoption-plan.md)의 RC4-04 외부 CLI의 정확한 RC.4 profile/harness → RC4-05 Mac 설치·서비스 → RC4-06 새 동종 네트워크·변경 영향 → RC4-07 정식 회신 → RC4-08 CLI05-04 순서다. 사용자 과업 안내서·기록 양식 준비와 RC.3 UX 시험은 병행 가능하나 RC.4 PASS로 전용하지 않는다.
 
 NIGO PR #230 정식 회신 뒤 완료한 RC.3 전체 설치 UX21사례·독립 검사8항목의 근거는 [전체 UX 결과](../results/2026-10-22-macos-rc3-full-setup.md)에 기록했다. 기존 회신과 앞선 결과의 당시 NOT_RUN, RC.2 원본 INCOMPLETE·경로 원인 미확정은 보존한다.
 

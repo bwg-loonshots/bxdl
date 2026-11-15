@@ -6,6 +6,8 @@
 
 첫 대상은 로그인된 GUI 세션이 있는 macOS arm64, RocksDB, 사용자 LaunchAgent다. HTTP와 P2P를 모두 `127.0.0.1`에 두고 노드별 포트를 분리한다. 같은 사용자 UID의 네 인스턴스이며, 서로 다른 호스트나 강한 보안 격리를 검증하는 구성이 아니다.
 
+2026-11-15 [RC4-03](../../results/2026-11-15-rc4-runtime-assembly.md)에서 RC.4 전용 lock/spec과 새 서명 runtime을 고정했다. 기존 실행 하네스의 RC.4 지원은 RC4-04이며 이번 조립에 `run_acceptance.py`를 실행하지 않았다. 준비용 후보와 외부 관리 CLI profile·제품 실행 인수의 경계를 유지한다.
+
 2026-11-15 RC4-02에서 [RC.4 준비·검증](../../results/2026-11-15-rc4-fixture-preparation.md)을 추가했다. **RC.4는 준비 전용**이며 `run_acceptance.py`와 관리 CLI/runtime 인수에는 아직 지원하지 않는다. RC.3 기존 실행 경로는 유지한다.
 
 ## 도구와 실행 경계

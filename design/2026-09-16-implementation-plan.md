@@ -3,7 +3,7 @@
 - 작성일: 2026-09-16
 - 상태: 기반 구현 IN_PROGRESS. 현재 구현·부분 완료·공급 대기는 [작업 상태](../docs/implementation-status.md)에 기록하며, 아래 표는 전체 완료 기준을 유지한다.
 - 플랫폼 방향 확정: 2026-09-17. 사용자 확정: **Rust 전환 + macOS Apple Silicon 로컬 운영 우선**, Linux 서버/systemd와 Docker/Compose는 후속이다.
-- 실행 순서 갱신: 2026-11-15. [RC.4 수신·패키징·관리 CLI 조합 인수](./2026-11-15-rc4-adoption-plan.md)를 다음 작업으로 둔다. RC4-01 [실물 수신·engine-info 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md)은 PASS했으며 RC.4 선택·제품 인수는 미실행이다. RC4-02 [영향 확인·실제 fixture 준비](../results/2026-11-15-rc4-fixture-preparation.md)도 PASS했으며 다음은 RC4-03 runtime 조립·명시 선택이다. 기존 RC.3 지원과 과거 PASS/partial은 보존한다.
+- 실행 순서 갱신: 2026-11-15. [RC.4 수신·패키징·관리 CLI 조합 인수](./2026-11-15-rc4-adoption-plan.md)를 진행한다. RC4-01 [실물 수신·engine-info 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md), RC4-02 [영향 확인·실제 fixture 준비](../results/2026-11-15-rc4-fixture-preparation.md), RC4-03 [서명 runtime 조립·lock/spec 명시 선택](../results/2026-11-15-rc4-runtime-assembly.md)·[JSON](../results/2026-11-15-rc4-runtime-assembly.json)을 완료했다. 다음은 RC4-04의 고정 runtime 지원 profile·외부 관리 CLI·실행 인수 하네스 구현이며, 제품 서비스·네트워크 인수는 NOT_RUN이다. 기존 RC.3 지원과 과거 PASS/partial은 보존한다.
 - 플랫폼 기준: [Rust 전환·macOS 우선 UX](./2026-09-17-rust-macos-first.md). 기존 M/BX 식별자는 작업 추적을 위해 유지하며 과거 Go 실행 근거를 Rust 결과로 바꾸지 않는다.
 - 연결: [아키텍처](./2026-09-16-product-architecture.md), [엔진 계약](./2026-09-16-engine-integration.md), [인수 계획](./2026-09-16-acceptance-and-release.md).
 
@@ -83,7 +83,7 @@ Mac 첫 profile은 sudo 없이 같은 사용자 UID의 CLI·engine로 운영한�
 
 ## 6. M4 — 패키지 인수와 첫 RC
 
-현재의 다음 후보는 RC.4다. [RC4-01~08](./2026-11-15-rc4-adoption-plan.md)에 따라 실물 수신·fresh fixture 확인 → 내부 실행기 고정/새 runtime 조립 → 외부 관리 CLI profile/하네스 → Mac 설치·서비스/동종망 재인수 → 정식 회신·사람 과업을 진행한다. 기존 JRE를 유지하며 RC.3 지원은 회귀한다. 이 작업의 PASS만으로 로그인·sleep·REM-01·공급망 등 모든 G1-M 잔여가 완료되지는 않는다.
+현재 RC.4는 [RC4-01~03](./2026-11-15-rc4-adoption-plan.md)의 실물 수신·fresh fixture 준비·내부 실행기 고정/서명 runtime 조립과 lock/spec 명시 선택을 완료했다. native adapter 변경 없이 clean A와 수신 JAR·기존 선정 JRE259파일로 새 R을 고정했으며 제품 서비스 인수는 아직 수행하지 않았다. 다음 순서는 RC4-04 외부 관리 CLI profile/실행 하네스 → Mac 설치·서비스/동종망 재인수 → 정식 회신·사람 과업이다. NIGO 선행 대기는 없으며 RC.3 지원은 보존·회귀한다. 이 작업의 PASS만으로 로그인·sleep·REM-01·공급망 등 모든 G1-M 잔여가 완료되지는 않는다.
 
 | 작업 ID | 산출물 | 구현·검증 | 완료 기준 |
 | --- | --- | --- | --- |
@@ -145,4 +145,4 @@ RC.4 개발 후보는 공급 완료됐으나 BXDL 실물 재인수·전체 지�
 | 범위 확대 | G1에서 신규 웹·fleet·전 backend 지원 제외; 필요한 기능은 M5/M6에 독립 조건 추가 |
 | 오래된 운영 문구 재사용 | 최신 source·해당 task evidence 교차 확인. 수동 GC/자동 GC·inspect/backup 차이를 유지 |
 
-최초 구현 착수 지점은 BX-001~005와 BX-010~014였으며 완료된 부분은 현재 상태 문서에 보존한다. RC4-01 수신 검증과 RC4-02 영향 확정·실제 준비는 완료했고 지금의 다음 착수 지점은 RC4-03 runtime 조립·명시 선택이다. M/BX ID는 전체 제품 완료 기준을 추적하는 데 계속 사용한다.
+최초 구현 착수 지점은 BX-001~005와 BX-010~014였으며 완료된 부분은 현재 상태 문서에 보존한다. RC4-01~03 수신·준비·runtime 조립과 명시 선택은 완료했고 지금의 다음 착수 지점은 RC4-04의 고정 R 지원 profile·외부 관리 CLI B·실행 인수 하네스 구현이다. M/BX ID는 전체 제품 완료 기준을 추적하는 데 계속 사용한다.
