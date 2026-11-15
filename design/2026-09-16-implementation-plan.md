@@ -2,8 +2,9 @@
 
 - 작성일: 2026-09-16
 - 상태: 기반 구현 IN_PROGRESS. 현재 구현·부분 완료·공급 대기는 [작업 상태](../docs/implementation-status.md)에 기록하며, 아래 표는 전체 완료 기준을 유지한다.
-- 갱신일: 2026-09-17. 사용자 확정: **Rust 전환 + macOS Apple Silicon 로컬 운영 우선**, Linux 서버/systemd와 Docker/Compose는 후속이다.
-- 최신 결정: [Rust 전환·macOS 우선 UX](./2026-09-17-rust-macos-first.md). 기존 M/BX 식별자는 작업 추적을 위해 유지하며 과거 Go 실행 근거를 Rust 결과로 바꾸지 않는다.
+- 플랫폼 방향 확정: 2026-09-17. 사용자 확정: **Rust 전환 + macOS Apple Silicon 로컬 운영 우선**, Linux 서버/systemd와 Docker/Compose는 후속이다.
+- 실행 순서 갱신: 2026-11-15. [RC.4 수신·패키징·관리 CLI 조합 인수](./2026-11-15-rc4-adoption-plan.md)를 다음 작업으로 둔다. 인계·원격 메타데이터 검토만 완료했으며 실물 수신·RC.4 선택·제품 인수는 미실행이다. 기존 RC.3 지원과 과거 PASS/partial은 보존한다.
+- 플랫폼 기준: [Rust 전환·macOS 우선 UX](./2026-09-17-rust-macos-first.md). 기존 M/BX 식별자는 작업 추적을 위해 유지하며 과거 Go 실행 근거를 Rust 결과로 바꾸지 않는다.
 - 연결: [아키텍처](./2026-09-16-product-architecture.md), [엔진 계약](./2026-09-16-engine-integration.md), [인수 계획](./2026-09-16-acceptance-and-release.md).
 
 ## 1. 첫 구현 범위와 단계
@@ -82,6 +83,8 @@ Mac 첫 profile은 sudo 없이 같은 사용자 UID의 CLI·engine로 운영한�
 
 ## 6. M4 — 패키지 인수와 첫 RC
 
+현재의 다음 후보는 RC.4다. [RC4-01~08](./2026-11-15-rc4-adoption-plan.md)에 따라 실물 수신·fresh fixture 확인 → 내부 실행기 고정/새 runtime 조립 → 외부 관리 CLI profile/하네스 → Mac 설치·서비스/동종망 재인수 → 정식 회신·사람 과업을 진행한다. 기존 JRE를 유지하며 RC.3 지원은 회귀한다. 이 작업의 PASS만으로 로그인·sleep·REM-01·공급망 등 모든 G1-M 잔여가 완료되지는 않는다.
+
 | 작업 ID | 산출물 | 구현·검증 | 완료 기준 |
 | --- | --- | --- | --- |
 | BX-040 | `tests/acceptance`, Mac runner; 후속 Linux/Docker runner | 완성 package의 설치·setup·lifecycle·실패 suite | 먼저 [G1-M 인수](./2026-09-16-acceptance-and-release.md), G1-L/D는 별도 profile evidence |
@@ -100,6 +103,8 @@ Mac 첫 profile은 sudo 없이 같은 사용자 UID의 CLI·engine로 운영한�
 | BX-051 | 공식 tool adapter·문서 | NIGO inspect를 별도 JVM으로 실행, offline 독점·JSON/exit code | NIGO-05 실제 artifact 필요. Node와 동시 실행 거부, inspect의 쓰기 가능성 고지 |
 | BX-052 | 제한 repair workflow | 대상·영향·명시 확인·postCommitAudit·결과 불명 처리 | 엔진 repair 범위만 제공; 전체 DB/백업 복구로 표현하지 않음 |
 | BX-053 | G2 인수 report | 업데이트·도구 추가 후 해당 G1-M/L/D profile 회귀 | 선택 backend/플랫폼과 검증된 버전 쌍만 지원표에 추가 |
+
+RC.4 공급은 두 번째 호환 엔진 release의 확보를 뜻하지 않는다. RC.3→RC.4는 새 DB·새 genesis의 별도 개발망 인수이며 기존 DB migration·혼합 버전 rolling을 지원하지 않는다. 관리 CLI 독립 업데이트/복귀와 engine/DB upgrade도 구분한다.
 
 첫 RC에 두 번째 호환 엔진 release가 없으면 upgrade는 plan/실패 fixture까지만 제공하거나 명령을 미지원으로 둔다. 성공 경로를 시험하지 않은 apply를 공식 기능으로 내보내지 않는다. 유지보수 tool 제공 지연은 G1을 막지 않지만 해당 기능 출시는 막는다.
 
@@ -129,7 +134,7 @@ PR은 위 묶음 안에서 리뷰 가능한 크기로 나누되 public DTO 변�
 
 ## 10. 일정 산정과 주요 위험
 
-현재 NIGO 공급 일정·지원 Mac 조합·후속 Linux/Docker 환경·구현 인력이 정해지지 않아 완료 날짜를 약속하지 않는다. M0 후 각 작업을 구현/실제 인수/공급 대기 시간으로 나눠 산정한다. CPU·JRE·backend를 늘릴 때 지원 matrix와 테스트 비용을 함께 늘린다.
+RC.4 개발 후보는 공급 완료됐으나 BXDL 실물 재인수·전체 지원 Mac 조합·후속 Linux/Docker 환경·정식 출시 조건은 별도로 남아 있어 전체 완료 날짜를 약속하지 않는다. M0 후 각 작업을 구현/실제 인수/공급 대기 시간으로 나눠 산정한다. CPU·JRE·backend를 늘릴 때 지원 matrix와 테스트 비용을 함께 늘린다.
 
 | 위험 | 대응·판정 |
 | --- | --- |
@@ -140,4 +145,4 @@ PR은 위 묶음 안에서 리뷰 가능한 크기로 나누되 public DTO 변�
 | 범위 확대 | G1에서 신규 웹·fleet·전 backend 지원 제외; 필요한 기능은 M5/M6에 독립 조건 추가 |
 | 오래된 운영 문구 재사용 | 최신 source·해당 task evidence 교차 확인. 수동 GC/자동 GC·inspect/backup 차이를 유지 |
 
-첫 구현 착수 지점은 BX-001~005와 BX-010~014다. 그 결과가 준비되면 파일·CLI·fixture가 실제로 연결된 상태에서 다음 묶음을 진행한다.
+최초 구현 착수 지점은 BX-001~005와 BX-010~014였으며 완료된 부분은 현재 상태 문서에 보존한다. 지금의 다음 착수 지점은 RC4-01 수신 검증과 RC4-02 영향 확정이다. M/BX ID는 전체 제품 완료 기준을 추적하는 데 계속 사용한다.
