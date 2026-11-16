@@ -1,5 +1,7 @@
 # BXDL
 
+**LNX-02 수신·도구 준비 — 2026-11-16:** Linux Temurin21.0.13+9 full JRE와 RC.4 JAR의 별도 조합을 고정하고257파일의 오프라인 준비·Rust staging을 검증했다. 실제 Linux Java/native/RocksDB·서비스 인수는 NOT_RUN이다. [결과](./results/2026-11-16-linux-rc4-supply.md)와 [테스터 실행 안내](./docs/linux-validation.md)를 따른다. SSH 정보 공유 없이 테스터가 직접 실행한 정제 JSON을 회수할 수 있다.
+
 NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구다. **Rust로 구현하며 다음 개발·검증의 우선 대상은 실제 Linux 머신이다.** Mac 기능과 인수 이력은 유지하고, WSL2는 Linux 실물 검증 뒤에 확인한다. Docker/Compose는 별도 후속이다.
 
 2026-11-16 사용자 결정에 따라 [Linux 우선 구현 계획](./design/2026-11-16-linux-first-implementation-plan.md)을 시작했다. 사용자가 Ubuntu 24.04 LTS·x86_64·glibc·systemd와 sudo/SSH 가능을 기준으로 진행하도록 허용했다. 실제 호스트의 배포판·버전과 접속은 아직 관측하지 않았다. **LNX-01 플랫폼·배포·읽기 전용 host 검사 기반 구현과 자동 검사를 완료했다. Linux 노드 설치·systemd start/stop·실제 머신 인수는 아직 지원 완료가 아니다.** [LNX-01 결과](./results/2026-11-16-linux-foundation.md)에 Mac 회귀·Linux 타입 검사와 실제 Linux NOT_RUN을 구분했다. Linux 단일노드 기술 인수 후 작성자가 아닌 테스터의 사용자 과업을 진행한다.

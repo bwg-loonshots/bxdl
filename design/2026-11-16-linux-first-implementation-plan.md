@@ -25,14 +25,14 @@ Rust, 직접 CLI, 순차 설치 문답, 노드 이름 기반 운용, 관리 CLI�
 | WSL2 | LNX-07 후속. Linux 실제 머신의 systemd·서버 인수를 대체하지 않음 |
 | 이번 범위 밖 | Windows native, Linux ARM64, Alpine/musl, Docker, 기존 DB migration·혼합 버전 rolling upgrade |
 
-사용자가 위 기준으로 진행을 허용했지만 실제 SSH 대상/접속이나 Linux 실행을 완료한 것은 아니다. 접속이 아직 확보되지 않았다면 구현·순수 회귀·Linux target 타입 검사와 실제 실행 대기를 구분한다. Mac에서의 Linux cross-check나 합성 fixture PASS를 Linux linking·배포본 실행·systemd PASS로 보고하지 않는다. 대상 Linux 정보가 달라지면 코드의 임의 허용 범위를 넓히기 전에 지원 후보와 인수 항목을 갱신한다.
+사용자가 위 기준으로 진행을 허용했지만 실제 SSH 대상/접속이나 Linux 실행을 완료한 것은 아니다. 2026-11-16 후속 결정으로 이번에는 공급물 수신·도구 준비부터 수행하며 실제 접속 대상은 나중에 정한다. SSH 정보 공유는 필수가 아니다. 테스터가 [실행 안내](../docs/linux-validation.md)대로 도구를 직접 실행하고 정제 결과 JSON만 전달해도 된다. 구현·순수 회귀·Linux target 타입 검사와 실제 실행 대기를 구분한다. Mac에서의 Linux cross-check나 합성 fixture PASS를 Linux linking·배포본 실행·systemd PASS로 보고하지 않는다. 대상 Linux 정보가 달라지면 코드의 임의 허용 범위를 넓히기 전에 지원 후보와 인수 항목을 갱신한다.
 
 ## 3. 단계와 완료 기준
 
 | 단계 | 구현·산출물 | 완료 기준 | 현재 상태 |
 | --- | --- | --- | --- |
 | LNX-01 환경·플랫폼 기반 | Linux runtime inventory staging, Linux 관리 CLI bundle 제작/검증/설치·업데이트 경계, 읽기 전용 host/systemd 준비 상태 검사, 플랫폼별 실패 안내 | Linux와 Mac의 OS/CPU·신뢰·경로 계약 회귀, Linux target 타입 검사, host 검사 무변경·부분 결과 검증. 실제 Linux 실행은 별도 표기 | IMPLEMENTED / AUTO_CHECKED — 실제 Linux 실행 NOT_RUN·노드/서비스 미지원 |
-| LNX-02 Linux 고정 공급물 | 선정 Linux JRE 전체 inventory·provenance, 고정 RC.4 JAR의 engine-info/native/RocksDB 사전 실행, Linux runtime R-L·내부 실행기 A-L·관리 CLI C-L의 분리 identity | 실제 Linux에서 JRE/JAR·전체 engine identity·inventory 대조, 고정 package 검증. clean source·archive/manifest/JAR/Java/CLI hash를 기록 | PLAN / 실제 조합 NOT_RUN |
+| LNX-02 Linux 고정 공급물 | 선정 Linux JRE 전체 inventory·provenance, 고정 RC.4 JAR의 engine-info/native/RocksDB 사전 실행, Linux runtime R-L·내부 실행기 A-L·관리 CLI C-L의 분리 identity | 실제 Linux에서 JRE/JAR·전체 engine identity·inventory 대조, 고정 package 검증. clean source·archive/manifest/JAR/Java/CLI hash를 기록 | SUPPLY_PINNED / OFFLINE_VERIFIED — 실제 Java/native·Linux CLI build·runtime package NOT_RUN |
 | LNX-03 systemd 서비스·권한 | system service adapter, instance별 전용 UID, root 제어 기록, 서비스 시작 gate·시도별 identity, 정상 종료 판정과 정제 로그 | OS 증거와 engine 보고서 결속, 서비스 직접 실행도 gate 적용, 미완료/불명 init 거부, 다른 instance/UID 무영향 및 엔진의 제어 기록 변조 거부 | PLAN / start·stop 미지원 |
 | LNX-04 실제 단일 노드 인수 | 설치→명시 init→start/status/logs/diagnose/stop, 같은 DB 재시작, SSH 연결 종료 뒤 관측, 실행 중 관리 CLI 전환 | 같은 고정 Linux 조합의 원자료·정제 결과, 정상 정리·payload/worker 불변·DB identity 유지. 단일 노드 로컬 readiness와 전역 합의 구분 | PLAN / NOT_RUN |
 | LNX-05 Linux 사용자 과업 | 전달용 package·신뢰 공개키/lock·전용 시험 입력·짧은 안내서·기록 양식. 작성자가 아닌 테스터의 직접 실행 | 처음 설치·준비 수정·중단 후 재개·새 터미널 운용·실패 진단을 관찰. 완료/도움/막힘·시간·문구·실제 명령 기록 | PLAN / NOT_RUN |
@@ -103,6 +103,12 @@ BXDL은 Linux JRE 선정·패키지 구성·권한·systemd·실제 조합 인�
 Linux runtime R-L/내부 실행기 A-L과 외부 관리 CLI C-L을 별도 고정한다. C-L만 변경하면 같은 R-L을 재사용하되 지원 profile과 영향받는 실제 조합을 검증한다. 초기 Linux 패키지가 아직 고정되지 않은 동안 임의 Linux package의 내부 실행기 위임 capability를 선언하지 않는다. 배포본 검증·CLI 실행 성공과 엔진 지원은 별도다.
 
 NIGO 문서를 수정할 필요가 생기면 전용 worktree와 브랜치를 사용하고 한국어 PR로 공유한다. 현재 Linux 계획 수립만으로 NIGO requirements 수신·동의, 새 engine 후보 또는 JRE 공급자 검증 완료를 기록하지 않는다.
+
+### LNX-02 공급물 선정 결과와 남은 실행
+
+2026-11-16에 Linux용 **Temurin21.0.13+9-LTS full JRE**를 별도로 선정했다. 공식 archive·source·build 자료 수신과 정규화257파일 inventory를 고정하고 Python 준비 도구와 LNX-01 clean CLI의 Rust staging으로 교차 검증했다. 고정 RC.4 JAR/expected identity는 유지하고 Linux Java hash를 새 engine lock에 결합했다. [후보 identity](../packaging/linux-rc4-candidate.json)와 [공급 결과](../results/2026-11-16-linux-rc4-supply.md)를 따른다.
+
+LNX-02 전체 완료를 뜻하지 않는다. 실제 Linux CLI build·Java properties/modules·engine-info는 새 probe로 수행하고, native/RocksDB는 NIGO의 명시 exact-JAR/selected-JRE 시험 경로와 별도 입력·결과로 확인해야 한다. cold probe PASS를 native 실행으로 계산하지 않는다. Linux R-L/A-L/C-L byte identity와 실행기 profile은 실제 Linux build/조립 후 고정하며, 현재 Mac runtime의 pin을 재사용하거나 Linux 서비스 미구현 CLI를 운용 인수된 실행기로 등록하지 않는다.
 
 ## 7. 실제 Linux·사용자 검증
 

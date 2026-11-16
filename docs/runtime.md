@@ -98,3 +98,11 @@ staging은 실행 호스트와 다른 대상의 inventory도 오프라인으로 
 기존 Mac runtime lock·RC.4 archive와 과거 PASS를 Linux용으로 수정하거나 승계하지 않는다.
 현재 저장소의 Linux package spec은 예시이며 Linux JRE/실행기/관리 CLI 조합의 실물 인수는 NOT_RUN이다.
 세부 순서는 [Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따른다.
+
+## LNX-02 Linux 선정 공급물
+
+Linux는 Temurin21.0.13+9-LTS full JRE를 [별도 공급 기록](../contracts/runtime/temurin-21.0.13-linux-amd64/README.md)과 [runtime lock](../packaging/runtime-lock.temurin-21-linux-amd64.json)으로 고정했다. RC.4 JAR는 그대로이며 Linux Java hash만 [별도 engine lock](../packaging/engine-lock.rc4-temurin-linux-development.json)에 결합한다.
+
+`tools/prepare-linux-runtime.py`는 명시 archive·신뢰한 runtime lock/hash와 새 output을 받아 전체 tar 검증 뒤145개 내부 legal symlink를 정규파일로 준비한다. 이후 `bxdl runtime stage`에 output/runtime을 입력하면257파일 inventory를 독립 검사한다. 두 명령 모두 JVM을 실행하지 않는다. 실제 공급 archive로 이 교차 검증을 통과했다.
+
+[실행 안내](./linux-validation.md)는 별도 Linux 호스트에서 CLI를 native build하고 Java·engine-info의 cold identity를 확인한다. 원격 SSH는 선택 사항이며 테스터의 직접 실행과 정제 결과 회수로 대체할 수 있다. Linux runtime package 조립·native/RocksDB·systemd 인수는 아직 완료하지 않았다.

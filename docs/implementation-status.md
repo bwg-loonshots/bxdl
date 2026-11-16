@@ -1,5 +1,9 @@
 # 구현 상태 — 2026-11-16
 
+LNX-02 자동 검사: `make check` Rust623 PASS, Python205 PASS·2 SKIP, fmt·Clippy PASS. 실제 Linux 실행은 NOT_RUN이다. 개발용 전달 archive는 생성·전체 checksum 검증했으며 Git에는 포함하지 않는다.
+
+**LNX-02 수신·도구 준비 — 2026-11-16:** Linux Temurin21.0.13+9 full JRE와 RC.4 JAR의 별도 조합을 고정하고257파일의 오프라인 준비·Rust staging을 검증했다. 실제 Linux Java/native/RocksDB·서비스 인수는 NOT_RUN이다. [결과](../results/2026-11-16-linux-rc4-supply.md)와 [테스터 실행 안내](../docs/linux-validation.md)를 따른다. SSH 정보 공유 없이 테스터가 직접 실행한 정제 JSON을 회수할 수 있다.
+
 2026-11-16 사용자 결정으로 **실제 Linux 머신 우선 개발·검증**으로 전환했다. [Linux 구현 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 현재 실행 기준으로 삼고 Mac 기능·인수 이력은 보존한다. WSL2는 Linux 실물 인수 후속이다. 아래 R1~R3는 Mac 구현 이력이다. R1 설정 초안 이후 **R2의 Mac 새 폴더 패키지 설치**와 **R3의 NIGO 개발 후보 정보·cold 사전검사**를 추가했다. clean NIGO 후보를 별도로 수신하고 제품 설정과 명시 native QBFT 설정을 연결하는 preflight를 추가했다. 이후 설치본·설정을 등록해 `--instance`로 preflight와 명시 init/resume-init을 호출하고, Mac 사용자 LaunchAgent의 start/status/stop을 연결했다. 이번에는 `setup --install`에서 이 단계를 선택하고 재개하는 A~C 흐름을 구현했다. 기존 package의 단일 validator 서비스 근거와 새 setup의 exact package·TTY 인수, 전체 G1-M을 구분한다.
 
 ## 현재 Linux 단계 — LNX-01 기반 코드·자동 검사 완료

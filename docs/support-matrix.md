@@ -1,5 +1,7 @@
 # 지원 후보·검증 범위
 
+**LNX-02 수신·도구 준비 — 2026-11-16:** Linux Temurin21.0.13+9 full JRE와 RC.4 JAR의 별도 조합을 고정하고257파일의 오프라인 준비·Rust staging을 검증했다. 실제 Linux Java/native/RocksDB·서비스 인수는 NOT_RUN이다. [결과](../results/2026-11-16-linux-rc4-supply.md)와 [테스터 실행 안내](../docs/linux-validation.md)를 따른다. SSH 정보 공유 없이 테스터가 직접 실행한 정제 JSON을 회수할 수 있다.
+
 사용자 결정(2026-11-16): **실제 Linux 머신 우선 개발·검증**, WSL2는 Linux 실제 조합 이후의 별도 검증이다. [Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따르며 Rust와 기존 Mac 구현·인수 결과를 유지한다. 아래 구현·후보·실물 PASS를 구분한다.
 
 | 조합 | 현재 상태 |
@@ -27,7 +29,7 @@ Linux 기본 사용자 저장소는 관리 CLI 배포본의 `$HOME/.local/share/
 
 [RC4-06 네트워크 결과](../results/2026-11-16-rc4-macos-network.md)는 fresh 동종4-validator와 두 복구·wrong-pin·8거래/9제출, 실행 중 CLI 전환3회, 선정 RPC21사례/52read와 독립 RPC 감사가 PASS다. live 복구는 원 거래 무재제출, 같은 DB round-skew 재시작은 명시 재제출1회로 구분한다. 종료 독립 감사도 PASS해 정상 stop 12회 뒤 기록된 PID 107개(하네스 포함)·job 12개·8개 포트의 잔존 부재와 기존 서비스 baseline 불변을 확인했다. 원 fixture67파일·하네스9파일을 보존했으며 RC4-06 당시 제품/하네스 변경·`make check` 재실행은 없었다. RC4-05 검사 source136파일과 동일함을 확인했다. 정상 signed Type-4·성공 authorization simulation·KZG provider fault·중첩 host·Native 전체 recipe·Console 기능은 선정 RPC 범위 밖이며 NOT_RUN이다.
 
-RC4-07 정식 회신은 [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257)로 머지 완료했다. NIGO 작업자의 수신·동의 확인은 별도이며 BXDL 근거 공유 PR은 아직 미게시다. RC4-06 결과·계획 변경은 현재 로컬 미커밋 기록이다. [도입 계획](../design/2026-11-15-rc4-adoption-plan.md)의 Mac **RC4-08 CLI05-04는 NOT_RUN·이연**이다. 다음은 Linux 기반·고정 조합·systemd·실제 단일노드 인수와 Linux 사람 과업이다. 고정 runtime/JRE·기존 RC.3 지원·엄격한 parser를 유지하며 새 NIGO 선행 구현 요청은 없다. 위 결과는 지정 Mac 개발 조합의 인수로서 전체 제품·정식 출시 인수를 대신하지 않는다.
+RC4-07 정식 회신은 [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257)로 머지 완료했다. NIGO 작업자의 수신·동의 확인은 별도이며 BXDL 근거 공유 PR은 아직 미게시다. RC4-06 결과는 로컬 commit `9f460e6`에 보존했으며 원격 근거 PR은 아직 미게시다. [도입 계획](../design/2026-11-15-rc4-adoption-plan.md)의 Mac **RC4-08 CLI05-04는 NOT_RUN·이연**이다. 다음은 Linux 기반·고정 조합·systemd·실제 단일노드 인수와 Linux 사람 과업이다. 고정 runtime/JRE·기존 RC.3 지원·엄격한 parser를 유지하며 새 NIGO 선행 구현 요청은 없다. 위 결과는 지정 Mac 개발 조합의 인수로서 전체 제품·정식 출시 인수를 대신하지 않는다.
 
 새 RC.4 시험은 **새 DB·새 genesis·동일 RC.4 노드**로 구성한다. 같은 RC.4가 만든 DB의 재시작을 기존 RC.3 DB migration이나 혼합 버전 rolling upgrade 지원으로 해석하지 않는다. 엔진 계약 fingerprint가 RC.3와 동일해도 Native catalog·wire·DB 호환성의 증거가 아니며 RC.3의 PASS를 새 후보로 승계하지 않는다. 기존 사용자 노드·DB·키를 시험 자료로 사용하지 않는다.
 

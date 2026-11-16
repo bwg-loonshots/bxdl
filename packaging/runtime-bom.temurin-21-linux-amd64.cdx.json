@@ -1,0 +1,5456 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "platform",
+      "bom-ref": "temurin-linux-jre",
+      "name": "Eclipse Temurin JRE",
+      "version": "21.0.13+9-LTS",
+      "supplier": {
+        "name": "Eclipse Adoptium"
+      },
+      "licenses": [
+        {
+          "expression": "GPL-2.0-only WITH Classpath-exception-2.0"
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jre_x64_linux_hotspot_21.0.13_9.tar.gz",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "a535a1df9c6284d9618872984e026ae0352d1f7e9e0605425c0e6114f47351dd"
+            }
+          ]
+        },
+        {
+          "type": "distribution",
+          "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jdk-sources_21.0.13_9.tar.gz",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "b5232c9980d8a0f0459676c084c41c6e2c771ed9e785890b03c6a438406ad1ca"
+            }
+          ]
+        }
+      ]
+    },
+    "properties": [
+      {
+        "name": "bxdl:scope",
+        "value": "Runtime-only component and exact materialized-file inventory; not the complete BXDL/NIGO/native dependency SBOM."
+      },
+      {
+        "name": "bxdl:licenseScope",
+        "value": "Primary runtime license only; full upstream legal tree retained including third-party terms."
+      },
+      {
+        "name": "bxdl:execution",
+        "value": "NOT_RUN on Linux; source/archive verification only."
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "file",
+      "bom-ref": "runtime/NOTICE",
+      "name": "runtime/NOTICE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c02756bcd9fa8191bf0fda4451bc018414dd44ee35bf09922c24377a475e4b5a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2400"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/bin/java",
+      "name": "runtime/bin/java",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7afc28801f744050aeba646b20e7314265279f76f9d0273b21a2b66411e1bf6d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "13024"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0755"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/bin/jfr",
+      "name": "runtime/bin/jfr",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9a4bf5a9c4ceb16c645873469ae898bd28813f169f1e74a243e7a1e237c3876d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "13088"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0755"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/bin/jrunscript",
+      "name": "runtime/bin/jrunscript",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b9412e896212843033913504447ece2cb10cea4eea187297c8560d9862bc5d1b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "13128"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0755"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/bin/jwebserver",
+      "name": "runtime/bin/jwebserver",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "259411204f001553add7f27334f1a1c6fa5c7a1337e8a3acb3144732c03e8dbf"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "13096"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0755"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/bin/keytool",
+      "name": "runtime/bin/keytool",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1369a92d650326df311e9814c8fb8db85a58b83ca50bad8e5715530ac582d765"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "13088"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0755"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/bin/rmiregistry",
+      "name": "runtime/bin/rmiregistry",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "abe41f7c46bd10056d500dc7255c945a6c141351bfda7ca410fbe12016664644"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "13120"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0755"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/jaxp.properties",
+      "name": "runtime/conf/jaxp.properties",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7d95c49465d0c836d608d02856d3b097934dfb5dc4bd2279affaf337d045b708"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "7302"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/logging.properties",
+      "name": "runtime/conf/logging.properties",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b62d2733ab99556b108a1951d894c5a8d76b1ac7a00c02c388f9eb9be046c56f"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2732"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/management/jmxremote.access",
+      "name": "runtime/conf/management/jmxremote.access",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0c25d26ee212ca1e8c33f67c3c460d43fe849c3a1d23dbe341148517602b280c"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "3997"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/management/jmxremote.password.template",
+      "name": "runtime/conf/management/jmxremote.password.template",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0273b6a6b9e20e6ce54c5aee70164028e0395063b2b7d39060a40b6495543dbf"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "5690"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/management/management.properties",
+      "name": "runtime/conf/management/management.properties",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "07dffdd85b01c19bf46ca320a699aba48dd6b01043eb0bd6a9528c7993312bad"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "14988"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/net.properties",
+      "name": "runtime/conf/net.properties",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2e070ed1d97052f0ce8771ed2ef74a38d7c260a45fde7a3682c8844e5fdf58a4"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "7441"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/sdp/sdp.conf.template",
+      "name": "runtime/conf/sdp/sdp.conf.template",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e9441e51f0d29e25313d33a9005640f11ad93c27f01bc46a34bf02f2a98ffd6b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1455"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/security/java.policy",
+      "name": "runtime/conf/security/java.policy",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d51bcab7ed301caeff3779a5e777e6019864cecee5e2abc102ef991b0de77af2"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2294"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/security/java.security",
+      "name": "runtime/conf/security/java.security",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "819f635801f1e89bc4c6d319e7649e516a9eac18f7b821c9ffb5e5e7764f8083"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "72023"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/security/policy/README.txt",
+      "name": "runtime/conf/security/policy/README.txt",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6da0747334b0fea7592fd92614b2bbc8b126535e129b1fee483774d914e98eb5"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2390"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/security/policy/limited/default_US_export.policy",
+      "name": "runtime/conf/security/policy/limited/default_US_export.policy",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "758b930a526fc670ab7537f8c26321527050a31f5f42149a2dda623c56a0a1a9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "146"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/security/policy/limited/default_local.policy",
+      "name": "runtime/conf/security/policy/limited/default_local.policy",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2b2627548e61316150d47ffc3e6cad465ca05b3cccd4785eb7d21aa7baa0f441"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "647"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/security/policy/limited/exempt_local.policy",
+      "name": "runtime/conf/security/policy/limited/exempt_local.policy",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8c3d7648abcd95a272ce12db870082937f4d7f6878d730d83cb7fbb31eb8b2c9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "566"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/security/policy/unlimited/default_US_export.policy",
+      "name": "runtime/conf/security/policy/unlimited/default_US_export.policy",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "758b930a526fc670ab7537f8c26321527050a31f5f42149a2dda623c56a0a1a9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "146"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/security/policy/unlimited/default_local.policy",
+      "name": "runtime/conf/security/policy/unlimited/default_local.policy",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8d8a318e6d90dfd7e26612d2b6385aa704f686ca6134c551f8928418d92b851a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "193"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/conf/sound.properties",
+      "name": "runtime/conf/sound.properties",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "299c2360b6155eb28990ec49cd21753f97e43442fe8fab03e04f3e213df43a66"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1210"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.base/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.base/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.base/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.base/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.base/LICENSE",
+      "name": "runtime/legal/java.base/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.base/aes.md",
+      "name": "runtime/legal/java.base/aes.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "45c6d4da48325edfbff3dcf71c704e504c057904435ed23c6d57046d551eb69d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1444"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.base/asm.md",
+      "name": "runtime/legal/java.base/asm.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "683be15695bd248272d60f5b7fbe5e126a935ea6bf231a624a9aa164733e1d1d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1582"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.base/c-libutl.md",
+      "name": "runtime/legal/java.base/c-libutl.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bef40679922d6fdfb7e4ddb223ad6722300f6054ba737bbf6188d60fcec517f9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1556"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.base/cldr.md",
+      "name": "runtime/legal/java.base/cldr.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "19515e14a240e022640e95b61b5095127fa9690755950b4a2b0a02e783e08163"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "9601"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.base/gcc.md",
+      "name": "runtime/legal/java.base/gcc.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "589e34f142cdf7d1430daa573e61c2e3dd0330c9eb5a2c00d4a98b3a4450810b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "128099"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.base/icu.md",
+      "name": "runtime/legal/java.base/icu.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1bf28459c6e0af9f3429f4f8becd1668d6544055f8df240277456bc4b3d8a752"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "30197"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.base/public_suffix.md",
+      "name": "runtime/legal/java.base/public_suffix.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "861de1e4992a7d28f1de25c73cd50d26a94779ebd749c0643fecfa56442c3429"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "17783"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.base/siphash.md",
+      "name": "runtime/legal/java.base/siphash.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5a792b5a74ad2a5f3d6a7ad8b7a841116e58a772c18bc6e392320a365b222c76"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "8256"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.base/unicode.md",
+      "name": "runtime/legal/java.base/unicode.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6f72f10d166b2c2e8a395e03e734c5afc852b59aeca73ced124f6b9c96268d53"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "9078"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.base/zlib.md",
+      "name": "runtime/legal/java.base/zlib.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c9c70c36a1f0325e8788771906202d42ba6ab4205caca44ec0f665707e83226b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1010"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.compiler/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.compiler/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.compiler/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.compiler/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.compiler/LICENSE",
+      "name": "runtime/legal/java.compiler/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.datatransfer/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.datatransfer/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.datatransfer/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.datatransfer/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.datatransfer/LICENSE",
+      "name": "runtime/legal/java.datatransfer/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.desktop/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.desktop/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.desktop/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.desktop/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.desktop/LICENSE",
+      "name": "runtime/legal/java.desktop/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.desktop/colorimaging.md",
+      "name": "runtime/legal/java.desktop/colorimaging.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "04d61e3e8e71dd452ebe52008af5378d9f6640d14578aeb515dc5375973b0189"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "167"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.desktop/freetype.md",
+      "name": "runtime/legal/java.desktop/freetype.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "553e804baecb7de7129d77c7259a6b70037d1893f1c600b41b35201695fb7758"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "30465"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.desktop/giflib.md",
+      "name": "runtime/legal/java.desktop/giflib.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "206aab89ec75968e48a6a1ed6df7d8b9bfb7aea12cbe4c9345d93e5d97460a25"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1689"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.desktop/harfbuzz.md",
+      "name": "runtime/legal/java.desktop/harfbuzz.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5ec7cba7f8e7fc3a089213140aab6fa1b3bd5bf8a91bf8bddb3b8d315fc5f7d0"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "3629"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.desktop/jpeg.md",
+      "name": "runtime/legal/java.desktop/jpeg.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c1dfb9719a71ad9f861f8728550542d681e25c8ef40e6393606e6e2a0c1d653a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "3474"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.desktop/lcms.md",
+      "name": "runtime/legal/java.desktop/lcms.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "843f9f6fa9c3f8109fcf4d5fe74caf7f2ae8e9bcd92238e4aff2d428c932b24b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2654"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.desktop/libpng.md",
+      "name": "runtime/legal/java.desktop/libpng.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f73afb394792f3aeecd959e89487603677a430e56b44eba596d8b572accfd540"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "7519"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.desktop/mesa3d.md",
+      "name": "runtime/legal/java.desktop/mesa3d.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "63f4e6f75caebbccb95d903fb43e46ac7111b3624d0a34f146b276d7d9e7b152"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "5732"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.desktop/pipewire.md",
+      "name": "runtime/legal/java.desktop/pipewire.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "56a8fb1652c70ac204d13bb52ca4d678162e7d21a97d10209c2a633de8082de0"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1479"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.desktop/xwd.md",
+      "name": "runtime/legal/java.desktop/xwd.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1d4ffa93c87f35084b02a7aa90a21084b4019db4fe1003c2e5ce775b4a384f59"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1348"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.instrument/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.instrument/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.instrument/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.instrument/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.instrument/LICENSE",
+      "name": "runtime/legal/java.instrument/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.logging/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.logging/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.logging/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.logging/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.logging/LICENSE",
+      "name": "runtime/legal/java.logging/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.management.rmi/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.management.rmi/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.management.rmi/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.management.rmi/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.management.rmi/LICENSE",
+      "name": "runtime/legal/java.management.rmi/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.management/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.management/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.management/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.management/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.management/LICENSE",
+      "name": "runtime/legal/java.management/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.naming/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.naming/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.naming/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.naming/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.naming/LICENSE",
+      "name": "runtime/legal/java.naming/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.net.http/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.net.http/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.net.http/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.net.http/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.net.http/LICENSE",
+      "name": "runtime/legal/java.net.http/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.prefs/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.prefs/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.prefs/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.prefs/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.prefs/LICENSE",
+      "name": "runtime/legal/java.prefs/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.rmi/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.rmi/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.rmi/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.rmi/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.rmi/LICENSE",
+      "name": "runtime/legal/java.rmi/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.scripting/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.scripting/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.scripting/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.scripting/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.scripting/LICENSE",
+      "name": "runtime/legal/java.scripting/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.se/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.se/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.se/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.se/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.se/LICENSE",
+      "name": "runtime/legal/java.se/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.security.jgss/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.security.jgss/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.security.jgss/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.security.jgss/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.security.jgss/LICENSE",
+      "name": "runtime/legal/java.security.jgss/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.security.sasl/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.security.sasl/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.security.sasl/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.security.sasl/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.security.sasl/LICENSE",
+      "name": "runtime/legal/java.security.sasl/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.smartcardio/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.smartcardio/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.smartcardio/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.smartcardio/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.smartcardio/LICENSE",
+      "name": "runtime/legal/java.smartcardio/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.smartcardio/pcsclite.md",
+      "name": "runtime/legal/java.smartcardio/pcsclite.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b39ce363c281ed36e937f9e6c03311d7dbf0b20d3614dde084130c2a10909692"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2155"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.sql.rowset/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.sql.rowset/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.sql.rowset/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.sql.rowset/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.sql.rowset/LICENSE",
+      "name": "runtime/legal/java.sql.rowset/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.sql/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.sql/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.sql/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.sql/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.sql/LICENSE",
+      "name": "runtime/legal/java.sql/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.transaction.xa/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.transaction.xa/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.transaction.xa/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.transaction.xa/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.transaction.xa/LICENSE",
+      "name": "runtime/legal/java.transaction.xa/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.xml.crypto/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.xml.crypto/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.xml.crypto/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.xml.crypto/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.xml.crypto/LICENSE",
+      "name": "runtime/legal/java.xml.crypto/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.xml.crypto/santuario.md",
+      "name": "runtime/legal/java.xml.crypto/santuario.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d08690d25f660f145c73365d260ed522cd0aace8a0e1396706551b7a1ae8c9a3"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "11505"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.xml/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/java.xml/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.xml/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/java.xml/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.xml/LICENSE",
+      "name": "runtime/legal/java.xml/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.xml/bcel.md",
+      "name": "runtime/legal/java.xml/bcel.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "cd578186ad93de46cca29ec8ace2b11f9da751987f3f140e6095c528596cc8c1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "11196"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.xml/dom.md",
+      "name": "runtime/legal/java.xml/dom.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6686e8877667584a3a7c07344baadca1a03e29f677162d87c3c0811e990d1148"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "3761"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.xml/jcup.md",
+      "name": "runtime/legal/java.xml/jcup.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8d5dcfdf50455a3c34c753a98f21e953248af200415a9084e3f102cb6c43b8bf"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1448"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.xml/xalan.md",
+      "name": "runtime/legal/java.xml/xalan.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c27eb875da4be683d4d7422be986e5e30f636ede31958ff1d39f9cd6109e7a00"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "13477"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/java.xml/xerces.md",
+      "name": "runtime/legal/java.xml/xerces.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4a6bf6b367193ee68681cb2d9fed30ffc5d62dd2d477bd62e0271707d71b3244"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "11848"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.accessibility/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.accessibility/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.accessibility/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.accessibility/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.accessibility/LICENSE",
+      "name": "runtime/legal/jdk.accessibility/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.charsets/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.charsets/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.charsets/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.charsets/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.charsets/LICENSE",
+      "name": "runtime/legal/jdk.charsets/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.crypto.cryptoki/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.crypto.cryptoki/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.crypto.cryptoki/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.crypto.cryptoki/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.crypto.cryptoki/LICENSE",
+      "name": "runtime/legal/jdk.crypto.cryptoki/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.crypto.cryptoki/pkcs11cryptotoken.md",
+      "name": "runtime/legal/jdk.crypto.cryptoki/pkcs11cryptotoken.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1f36ff1342a581142c858f90064e20633d43529ac82adb85345bd902a14e18b2"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "4095"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.crypto.cryptoki/pkcs11wrapper.md",
+      "name": "runtime/legal/jdk.crypto.cryptoki/pkcs11wrapper.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "371974b1fca3744a3892c7ee1fcc593b8b4281fc218f4cafd2f709e9df5fd81d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2131"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.crypto.ec/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.crypto.ec/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.crypto.ec/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.crypto.ec/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.crypto.ec/LICENSE",
+      "name": "runtime/legal/jdk.crypto.ec/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.dynalink/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.dynalink/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.dynalink/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.dynalink/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.dynalink/LICENSE",
+      "name": "runtime/legal/jdk.dynalink/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.dynalink/dynalink.md",
+      "name": "runtime/legal/jdk.dynalink/dynalink.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "17312591cabee3ef6c34ed8897d92e4e361ba9cea41ec00dcd61a322a8fc2cdb"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1502"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.httpserver/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.httpserver/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.httpserver/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.httpserver/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.httpserver/LICENSE",
+      "name": "runtime/legal/jdk.httpserver/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.incubator.vector/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.incubator.vector/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.incubator.vector/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.incubator.vector/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.incubator.vector/LICENSE",
+      "name": "runtime/legal/jdk.incubator.vector/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.internal.vm.ci/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.internal.vm.ci/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.internal.vm.ci/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.internal.vm.ci/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.internal.vm.ci/LICENSE",
+      "name": "runtime/legal/jdk.internal.vm.ci/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.internal.vm.compiler.management/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.internal.vm.compiler.management/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.internal.vm.compiler.management/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.internal.vm.compiler.management/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.internal.vm.compiler.management/LICENSE",
+      "name": "runtime/legal/jdk.internal.vm.compiler.management/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.internal.vm.compiler/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.internal.vm.compiler/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.internal.vm.compiler/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.internal.vm.compiler/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.internal.vm.compiler/LICENSE",
+      "name": "runtime/legal/jdk.internal.vm.compiler/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.jdwp.agent/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.jdwp.agent/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.jdwp.agent/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.jdwp.agent/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.jdwp.agent/LICENSE",
+      "name": "runtime/legal/jdk.jdwp.agent/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.jfr/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.jfr/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.jfr/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.jfr/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.jfr/LICENSE",
+      "name": "runtime/legal/jdk.jfr/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.jsobject/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.jsobject/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.jsobject/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.jsobject/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.jsobject/LICENSE",
+      "name": "runtime/legal/jdk.jsobject/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.localedata/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.localedata/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.localedata/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.localedata/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.localedata/LICENSE",
+      "name": "runtime/legal/jdk.localedata/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.localedata/cldr.md",
+      "name": "runtime/legal/jdk.localedata/cldr.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "19515e14a240e022640e95b61b5095127fa9690755950b4a2b0a02e783e08163"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "9601"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.localedata/thaidict.md",
+      "name": "runtime/legal/jdk.localedata/thaidict.md",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c326144a2351c9608fa708b5d7d3c5a3da03e82b66479b128e9db4969539824a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1346"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.management.agent/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.management.agent/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.management.agent/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.management.agent/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.management.agent/LICENSE",
+      "name": "runtime/legal/jdk.management.agent/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.management.jfr/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.management.jfr/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.management.jfr/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.management.jfr/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.management.jfr/LICENSE",
+      "name": "runtime/legal/jdk.management.jfr/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.management/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.management/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.management/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.management/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.management/LICENSE",
+      "name": "runtime/legal/jdk.management/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.naming.dns/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.naming.dns/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.naming.dns/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.naming.dns/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.naming.dns/LICENSE",
+      "name": "runtime/legal/jdk.naming.dns/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.naming.rmi/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.naming.rmi/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.naming.rmi/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.naming.rmi/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.naming.rmi/LICENSE",
+      "name": "runtime/legal/jdk.naming.rmi/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.net/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.net/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.net/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.net/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.net/LICENSE",
+      "name": "runtime/legal/jdk.net/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.nio.mapmode/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.nio.mapmode/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.nio.mapmode/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.nio.mapmode/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.nio.mapmode/LICENSE",
+      "name": "runtime/legal/jdk.nio.mapmode/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.sctp/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.sctp/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.sctp/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.sctp/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.sctp/LICENSE",
+      "name": "runtime/legal/jdk.sctp/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.security.auth/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.security.auth/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.security.auth/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.security.auth/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.security.auth/LICENSE",
+      "name": "runtime/legal/jdk.security.auth/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.security.jgss/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.security.jgss/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.security.jgss/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.security.jgss/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.security.jgss/LICENSE",
+      "name": "runtime/legal/jdk.security.jgss/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.unsupported/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.unsupported/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.unsupported/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.unsupported/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.unsupported/LICENSE",
+      "name": "runtime/legal/jdk.unsupported/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.xml.dom/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.xml.dom/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.xml.dom/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.xml.dom/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.xml.dom/LICENSE",
+      "name": "runtime/legal/jdk.xml.dom/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.zipfs/ADDITIONAL_LICENSE_INFO",
+      "name": "runtime/legal/jdk.zipfs/ADDITIONAL_LICENSE_INFO",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2114"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.zipfs/ASSEMBLY_EXCEPTION",
+      "name": "runtime/legal/jdk.zipfs/ASSEMBLY_EXCEPTION",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1514"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/legal/jdk.zipfs/LICENSE",
+      "name": "runtime/legal/jdk.zipfs/LICENSE",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "19274"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/classlist",
+      "name": "runtime/lib/classlist",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e5ef97a1545ec5d99da80d2216620b71e0d43022f2333b36242121d05f61b6b1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "77098"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/jexec",
+      "name": "runtime/lib/jexec",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "67690e6a5fd09cf1e3958df770cd11b0f63683480e101f2a1a52e444b9b573ce"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "12488"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0755"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/jfr/default.jfc",
+      "name": "runtime/lib/jfr/default.jfc",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4fed4b508c5f1b69578293df84f94a63752f86b4259d97e12884e3b2ec56ef50"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "37449"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/jfr/profile.jfc",
+      "name": "runtime/lib/jfr/profile.jfc",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "485fb90dbecee9a950c45247464351162b1eb0c35387fbb929f002c600807251"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "37401"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/jrt-fs.jar",
+      "name": "runtime/lib/jrt-fs.jar",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b3b49dbb3ce6e67eec8a5f9ca7a44667161af1dff0f31afc8c8143681d126ffa"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "110123"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/jspawnhelper",
+      "name": "runtime/lib/jspawnhelper",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a01ad6eeea570c32bdaa567f6e2609f0f1d274a9535be5d4fcd8f149bbf16e55"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "17888"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0755"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/jvm.cfg",
+      "name": "runtime/lib/jvm.cfg",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "aa9efb969444c1484e29adecab55a122458090616e766b2f1230ef05bc3867e0"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "29"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libawt.so",
+      "name": "runtime/lib/libawt.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "69d93576b956a575f602717e49d91787b0a638c115e76b5423a5a8493487d66b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "814360"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libawt_headless.so",
+      "name": "runtime/lib/libawt_headless.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9558d01efbb50877a0765c10680569430b0f0345da4a560c8535d98977976e16"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "39160"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libawt_xawt.so",
+      "name": "runtime/lib/libawt_xawt.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "50d6529cb92a4dc3491633b640c14014f1945fa9c52ebd895a7b0d87d1cd7d27"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "595888"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libdt_socket.so",
+      "name": "runtime/lib/libdt_socket.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4146c75cee6373ee5ccdf8dad554a71b73cbbf213f318ea15987ee266560e569"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "28248"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libextnet.so",
+      "name": "runtime/lib/libextnet.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "173a6d21ef4cff001d06023e07ff45ab6bd92dd5a1dcddc2b1888cca25b8c989"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "13648"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libfontmanager.so",
+      "name": "runtime/lib/libfontmanager.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1378582018dc5e826f05ec856b0c559cb14559c77ef4590532cb0d3a9e24ec8f"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1952112"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libfreetype.so",
+      "name": "runtime/lib/libfreetype.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1cbf1a0fdf243b7e9de11c03f5e1afd7aec7bdb80928cd4dece5a3b737eadd17"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "748264"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libinstrument.so",
+      "name": "runtime/lib/libinstrument.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fb6e080bb6faeb49dd26838d692359b980a1affc79e54c62e2c4d2f55d021b06"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "55272"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libj2gss.so",
+      "name": "runtime/lib/libj2gss.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "67af5e879f7a5101e5b9c39ce2f2790e2e9a53f704962a3cfabadb9e04069911"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "47752"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libj2pcsc.so",
+      "name": "runtime/lib/libj2pcsc.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1d1c26c8c06a09c6e65bc99df6456923ef747512038c94e1f37ed1a87e33b643"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "18152"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libj2pkcs11.so",
+      "name": "runtime/lib/libj2pkcs11.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1c3f0beed9db0a66726fef823e0e93ebe32409da0f52b93a88a8ef9f95c503d7"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "97400"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libjaas.so",
+      "name": "runtime/lib/libjaas.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "42ea65927af56d8b9c314cd44d6a72825aef6bdd189cd1dc69c044a4097f8f82"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "12504"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libjava.so",
+      "name": "runtime/lib/libjava.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "339fea213e02b6184f14c2ae94ec54bc9a0886caadea7af1174488fa70ecef26"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "178952"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libjavajpeg.so",
+      "name": "runtime/lib/libjavajpeg.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c887918a56f143950c87671180ff5472f6e8f4df226d9e84134ed1bd2e4c2a47"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "236520"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libjawt.so",
+      "name": "runtime/lib/libjawt.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9ba85f1d07213bee88c51ad904b4ebe95117027743490a54f1bc93f1eb1af23b"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "8384"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libjdwp.so",
+      "name": "runtime/lib/libjdwp.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "25b8f2fa34a96cbe4af0478bc64c562277adaa657f032a867c4314e2694946db"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "298752"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libjimage.so",
+      "name": "runtime/lib/libjimage.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d10da4a9df32a1d8b6337fc6906d8fee0a039ce2ff54afbacb14c67e2501d23e"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "146352"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libjli.so",
+      "name": "runtime/lib/libjli.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7f7bd8900b1bd644c30afc13be7db09311332f2bce77bba41f5ad03b575639d5"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "116440"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libjsig.so",
+      "name": "runtime/lib/libjsig.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2159c94dbc4c8985380cb85f87b205f3c2e4fc472eaddf205beb0183ff458c4d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "13400"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libjsound.so",
+      "name": "runtime/lib/libjsound.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9f6fd223d1fec6d5b350c7f8749f0d73474fa3004e58c4bbac7674863b98e065"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "81008"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libjsvml.so",
+      "name": "runtime/lib/libjsvml.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d92533111db85e088672741c1bf7571fae2dd2ec0534d054248bcd42fce9af86"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "867160"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/liblcms.so",
+      "name": "runtime/lib/liblcms.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fb46dca586aade087291c7987aaeeb2c38fb65b83a33bdd671ec3cf6476553a6"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "607744"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libmanagement.so",
+      "name": "runtime/lib/libmanagement.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "62230d38891049ed218ff873f35372ea17a02e473d27f983a20b06e40712a3f7"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "26104"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libmanagement_agent.so",
+      "name": "runtime/lib/libmanagement_agent.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d937419f43619ec20ed66b9ff6c77ea776c1a91a8e0739a7ac167fafade2f8bb"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "8432"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libmanagement_ext.so",
+      "name": "runtime/lib/libmanagement_ext.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f45518652499a2fe3beb980024c1105badfe3fc3311d44394a5d0095a3db4b62"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "33656"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libmlib_image.so",
+      "name": "runtime/lib/libmlib_image.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "14041dc02554aab767386621a06dcd07e0a6bd6bb42fe248e856057f76fcf379"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "607904"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libnet.so",
+      "name": "runtime/lib/libnet.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "335e9553c5b6dc0c93a08e30956307703f2ba548f1ed423162bb5f5f1dd4faa9"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "62016"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libnio.so",
+      "name": "runtime/lib/libnio.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3f1571d7d2e6541722cbca284c6f5566678ea9275b2c12d8e708b78f9e8afae1"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "105448"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libprefs.so",
+      "name": "runtime/lib/libprefs.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "65393d4e13098005e85c398458a6cafde57a7414f396b7024bb0688ac549b233"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "12616"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/librmi.so",
+      "name": "runtime/lib/librmi.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8748412e1fba436102dd9b9f8bc9fe28a0e5f2e431ee986541e742e66576a461"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "8128"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libsctp.so",
+      "name": "runtime/lib/libsctp.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0fab4a221d17b582bef1613484d06845a985d4bddcdfbca8efaaed9ac69662bf"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "28656"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libsplashscreen.so",
+      "name": "runtime/lib/libsplashscreen.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a996715270355ce8c56e6a3da3831ac151a49a56580ef3f6fe6909f6d316b358"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "367144"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libsyslookup.so",
+      "name": "runtime/lib/libsyslookup.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7c4319f69134d62021e255b3b4fc55713c53604eb958517031c4caec9152aa67"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "8144"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libverify.so",
+      "name": "runtime/lib/libverify.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fc37ae5af2ca6b7835049dc13fce6f963b9c8f9acdc9760dd57872635fbfc997"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "64704"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/libzip.so",
+      "name": "runtime/lib/libzip.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8ba3dfed7655a7c93f3f10ca28840991739f9f2ef0333235bfb61f8a5d54d000"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "125152"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/modules",
+      "name": "runtime/lib/modules",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "90ec5343b26043a661c14ecec41b7188efe8bebb8403d52d126262c85f898c60"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "101274197"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/psfont.properties.ja",
+      "name": "runtime/lib/psfont.properties.ja",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5a4bd51b969bf187ff86d94f4a71fdfbfa602762975fa3c73d264b4575f7c78f"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "3793"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/psfontj2d.properties",
+      "name": "runtime/lib/psfontj2d.properties",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "780c565d5af3ee6f68b887b75c041cdf46a0592f67012f12eeb691283e92630a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "11390"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/security/blocked.certs",
+      "name": "runtime/lib/security/blocked.certs",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "96572f243f31c2ef81a6e627542e596f6a9295cff3c7ae095c1b595cb1457ded"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "2488"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/security/cacerts",
+      "name": "runtime/lib/security/cacerts",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "628b436e6698c364c5498a32c5bff91806bea7a9b501f75e2289ddc60b4ca7ef"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "154503"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/security/default.policy",
+      "name": "runtime/lib/security/default.policy",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9b77a722ab832082b8f9312f72da1528989a3ca1b9fa4f9bf32767dfd5ebe099"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "10742"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/security/public_suffix_list.dat",
+      "name": "runtime/lib/security/public_suffix_list.dat",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "16b42002aa6f83a7763c4cdbd399ecf738460377d447e362884495545afd60a3"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "227396"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/server/classes.jsa",
+      "name": "runtime/lib/server/classes.jsa",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1fa9464c9661995d092bdde2af390ed9191ac842810d3fed17a6e199216309ed"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "13512704"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/server/classes_nocoops.jsa",
+      "name": "runtime/lib/server/classes_nocoops.jsa",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2cdb171a9eaebd241dc81a4bc2593c2d42fea281f5ffd26ef8a196ddcb7ed30a"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "13910016"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/server/libjsig.so",
+      "name": "runtime/lib/server/libjsig.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2159c94dbc4c8985380cb85f87b205f3c2e4fc472eaddf205beb0183ff458c4d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "13400"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/server/libjvm.so",
+      "name": "runtime/lib/server/libjvm.so",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "032ff9adc105a8a6f34c43ad4aab90746f8e1d55f6d7ebc9cc80007273b9992d"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "27057304"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/lib/tzdb.dat",
+      "name": "runtime/lib/tzdb.dat",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a02e3a23d67255782b11ab81070902235ab564080f0f65ffe2a989cdaa86fe89"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "103876"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    },
+    {
+      "type": "file",
+      "bom-ref": "runtime/release",
+      "name": "runtime/release",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d77b94a78beb6e50af5a16acf0497626b485d8e7b44b97612fabf917c93478cb"
+        }
+      ],
+      "properties": [
+        {
+          "name": "bxdl:sizeBytes",
+          "value": "1616"
+        },
+        {
+          "name": "bxdl:mode",
+          "value": "0644"
+        }
+      ]
+    }
+  ]
+}

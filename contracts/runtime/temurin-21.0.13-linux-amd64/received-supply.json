@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "kind": "bxdl-linux-jre-supply-review",
+  "observedAt": "2026-11-16T06:04:46Z",
+  "status": "SUPPLY_BYTES_VERIFIED_RUNTIME_NOT_RUN",
+  "candidate": {
+    "vendor": "Eclipse Adoptium Temurin",
+    "version": "21.0.13+9-LTS",
+    "target": "linux-amd64",
+    "imageType": "jre",
+    "jvm": "hotspot",
+    "libc": "glibc",
+    "javaMajor": 21
+  },
+  "release": {
+    "tag": "jdk-21.0.13+9",
+    "id": 420500038,
+    "url": "https://github.com/adoptium/temurin21-binaries/releases/tag/jdk-21.0.13%2B9",
+    "apiUrl": "https://api.github.com/repos/adoptium/temurin21-binaries/releases/tags/jdk-21.0.13%2B9",
+    "publishedAt": "2026-10-22T08:58:06Z",
+    "immutable": false,
+    "rawMetadataSha256": "22b6f80f4a367c810ce3b17da3e22f776434a53108fe705c42c06fc94756eed9"
+  },
+  "receivedFiles": [
+    {
+      "name": "OpenJDK21U-jdk-sources_21.0.13_9.tar.gz",
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jdk-sources_21.0.13_9.tar.gz",
+      "assetId": 665758064,
+      "sizeBytes": 115231532,
+      "sha256": "b5232c9980d8a0f0459676c084c41c6e2c771ed9e785890b03c6a438406ad1ca",
+      "supplierDigest": "sha256:b5232c9980d8a0f0459676c084c41c6e2c771ed9e785890b03c6a438406ad1ca",
+      "supplierSizeBytes": 115231532,
+      "digestMatched": true,
+      "sizeMatched": true
+    },
+    {
+      "name": "OpenJDK21U-jdk-sources_21.0.13_9.tar.gz.json",
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jdk-sources_21.0.13_9.tar.gz.json",
+      "assetId": 665759973,
+      "sizeBytes": 32193,
+      "sha256": "861168ce2bc2d2e1aff09823d749d6cd961380a5db524220ec963b2efd25739d",
+      "supplierDigest": "sha256:861168ce2bc2d2e1aff09823d749d6cd961380a5db524220ec963b2efd25739d",
+      "supplierSizeBytes": 32193,
+      "digestMatched": true,
+      "sizeMatched": true
+    },
+    {
+      "name": "OpenJDK21U-jdk-sources_21.0.13_9.tar.gz.sha256.txt",
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jdk-sources_21.0.13_9.tar.gz.sha256.txt",
+      "assetId": 665759075,
+      "sizeBytes": 106,
+      "sha256": "4a2d36385d30eed3d98bf420e2d45856e3d93c205ce3c56236bd64c0ced9f810",
+      "supplierDigest": "sha256:4a2d36385d30eed3d98bf420e2d45856e3d93c205ce3c56236bd64c0ced9f810",
+      "supplierSizeBytes": 106,
+      "digestMatched": true,
+      "sizeMatched": true
+    },
+    {
+      "name": "OpenJDK21U-jdk-sources_21.0.13_9.tar.gz.sig",
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jdk-sources_21.0.13_9.tar.gz.sig",
+      "assetId": 665758855,
+      "sizeBytes": 310,
+      "sha256": "14c80266ef5cfb49987abf17b690d0ebfabd9c29c70dea2396e170747d615cc6",
+      "supplierDigest": "sha256:14c80266ef5cfb49987abf17b690d0ebfabd9c29c70dea2396e170747d615cc6",
+      "supplierSizeBytes": 310,
+      "digestMatched": true,
+      "sizeMatched": true
+    },
+    {
+      "name": "OpenJDK21U-jre_x64_linux_hotspot_21.0.13_9.tar.gz",
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jre_x64_linux_hotspot_21.0.13_9.tar.gz",
+      "assetId": 665758876,
+      "sizeBytes": 52181297,
+      "sha256": "a535a1df9c6284d9618872984e026ae0352d1f7e9e0605425c0e6114f47351dd",
+      "supplierDigest": "sha256:a535a1df9c6284d9618872984e026ae0352d1f7e9e0605425c0e6114f47351dd",
+      "supplierSizeBytes": 52181297,
+      "digestMatched": true,
+      "sizeMatched": true
+    },
+    {
+      "name": "OpenJDK21U-jre_x64_linux_hotspot_21.0.13_9.tar.gz.json",
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jre_x64_linux_hotspot_21.0.13_9.tar.gz.json",
+      "assetId": 665759294,
+      "sizeBytes": 32189,
+      "sha256": "a138a42ec99f8f1f9f0c34ee2d12ed595bdbec0b33ef25641e55b838a664556e",
+      "supplierDigest": "sha256:a138a42ec99f8f1f9f0c34ee2d12ed595bdbec0b33ef25641e55b838a664556e",
+      "supplierSizeBytes": 32189,
+      "digestMatched": true,
+      "sizeMatched": true
+    },
+    {
+      "name": "OpenJDK21U-jre_x64_linux_hotspot_21.0.13_9.tar.gz.sha256.txt",
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jre_x64_linux_hotspot_21.0.13_9.tar.gz.sha256.txt",
+      "assetId": 665759022,
+      "sizeBytes": 116,
+      "sha256": "bebb65d139ddb0f26b5d9af2096252ec7db1818691160b09fdb6b55f7f604fb5",
+      "supplierDigest": "sha256:bebb65d139ddb0f26b5d9af2096252ec7db1818691160b09fdb6b55f7f604fb5",
+      "supplierSizeBytes": 116,
+      "digestMatched": true,
+      "sizeMatched": true
+    },
+    {
+      "name": "OpenJDK21U-jre_x64_linux_hotspot_21.0.13_9.tar.gz.sig",
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jre_x64_linux_hotspot_21.0.13_9.tar.gz.sig",
+      "assetId": 665758431,
+      "sizeBytes": 310,
+      "sha256": "1d20879968151b2467ad93770019b25dfc80131d31f63f4bf28864ffeb11cd4f",
+      "supplierDigest": "sha256:1d20879968151b2467ad93770019b25dfc80131d31f63f4bf28864ffeb11cd4f",
+      "supplierSizeBytes": 310,
+      "digestMatched": true,
+      "sizeMatched": true
+    },
+    {
+      "name": "OpenJDK21U-sbom_x64_linux_hotspot_21.0.13_9-metadata.json",
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-sbom_x64_linux_hotspot_21.0.13_9-metadata.json",
+      "assetId": 665759107,
+      "sizeBytes": 32190,
+      "sha256": "cff93241056427d175df294996dfe680186cb2c4af595e5561707a5af790259c",
+      "supplierDigest": "sha256:cff93241056427d175df294996dfe680186cb2c4af595e5561707a5af790259c",
+      "supplierSizeBytes": 32190,
+      "digestMatched": true,
+      "sizeMatched": true
+    },
+    {
+      "name": "OpenJDK21U-sbom_x64_linux_hotspot_21.0.13_9.json",
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-sbom_x64_linux_hotspot_21.0.13_9.json",
+      "assetId": 665758785,
+      "sizeBytes": 176869,
+      "sha256": "5431b6d3ad286a41d9e20b9b0d37355f430046e333b4954c0814a8c3014bd4f4",
+      "supplierDigest": "sha256:5431b6d3ad286a41d9e20b9b0d37355f430046e333b4954c0814a8c3014bd4f4",
+      "supplierSizeBytes": 176869,
+      "digestMatched": true,
+      "sizeMatched": true
+    },
+    {
+      "name": "OpenJDK21U-sbom_x64_linux_hotspot_21.0.13_9.json.sig",
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-sbom_x64_linux_hotspot_21.0.13_9.json.sig",
+      "assetId": 665759213,
+      "sizeBytes": 310,
+      "sha256": "e14515a5105911d8e53f12039329eb7615673aad9c06251264df66003e2be925",
+      "supplierDigest": "sha256:e14515a5105911d8e53f12039329eb7615673aad9c06251264df66003e2be925",
+      "supplierSizeBytes": 310,
+      "digestMatched": true,
+      "sizeMatched": true
+    }
+  ],
+  "checksumFilesMatched": [
+    "OpenJDK21U-jre_x64_linux_hotspot_21.0.13_9.tar.gz.sha256.txt",
+    "OpenJDK21U-jdk-sources_21.0.13_9.tar.gz.sha256.txt"
+  ],
+  "sourceBuildIdentity": {
+    "sourceCommit": "2ab10ca20c191701c3a9f3153bfc6e93d63714c1",
+    "sourceCommitUrl": "https://github.com/adoptium/jdk21u/commit/2ab10ca20c191701c3a9f3153bfc6e93d63714c1",
+    "buildCommit": "1cf43d7a3e77886bfea7d550a902e151a87d724d",
+    "buildCommitUrl": "https://github.com/adoptium/temurin-build/commit/1cf43d7a3e77886bfea7d550a902e151a87d724d",
+    "supplierBuildContainer": "adoptopenjdk/centos7_build_image@sha256:ddcc968062ad6bfa2d824b58cee56689e83d3aa23782e5ace670922d6df824d0",
+    "buildScriptsArchive": {
+      "name": "temurin-build-1cf43d7a3e77886bfea7d550a902e151a87d724d.tar.gz",
+      "url": "https://api.github.com/repos/adoptium/temurin-build/tarball/1cf43d7a3e77886bfea7d550a902e151a87d724d",
+      "sizeBytes": 625119,
+      "sha256": "0288f24487b5981c13c6e4807928f6850f245bd02b667e9d047ba9b2620aaf76",
+      "hashOrigin": "OBSERVED_OVER_HTTPS_COMMIT_ADDRESSED_ARCHIVE_NOT_VENDOR_PUBLISHED_CHECKSUM"
+    }
+  },
+  "sbomComparison": {
+    "file": "OpenJDK21U-sbom_x64_linux_hotspot_21.0.13_9.json",
+    "componentName": "JRE Component",
+    "declaredArchiveSha256": "a535a1df9c6284d9618872984e026ae0352d1f7e9e0605425c0e6114f47351dd",
+    "observedArchiveSha256": "a535a1df9c6284d9618872984e026ae0352d1f7e9e0605425c0e6114f47351dd",
+    "matched": true,
+    "scope": "ARCHIVE_HASH_MATCH_NOT_FULL_PRODUCT_SBOM_ACCEPTANCE"
+  },
+  "archiveStaticObservation": {
+    "topDirectory": "jdk-21.0.13+9-jre",
+    "entries": 320,
+    "regularFiles": 112,
+    "directories": 63,
+    "symlinks": 145,
+    "hardlinks": 0,
+    "allSymlinksWithinLegalTree": true,
+    "materializedFiles": 257,
+    "materializedBytes": 166678666,
+    "javaSha256": "7afc28801f744050aeba646b20e7314265279f76f9d0273b21a2b66411e1bf6d",
+    "javaSizeBytes": 13024,
+    "modePolicy": "Original 0444/0644 regular files become 0644, executables become 0755 according to existing runtime.stage policy.",
+    "execution": "NOT_RUN",
+    "modulesListExecution": "NOT_RUN"
+  },
+  "sourcePresenceObservations": [
+    {
+      "archive": "OpenJDK21U-jdk-sources_21.0.13_9.tar.gz",
+      "entryCount": 85533,
+      "readableFiles": [
+        {
+          "path": "jdk-21.0.13+9-src/LICENSE",
+          "sizeBytes": 19274,
+          "sha256": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726",
+          "utf8Readable": true
+        },
+        {
+          "path": "jdk-21.0.13+9-src/ASSEMBLY_EXCEPTION",
+          "sizeBytes": 1514,
+          "sha256": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33",
+          "utf8Readable": true
+        },
+        {
+          "path": "jdk-21.0.13+9-src/ADDITIONAL_LICENSE_INFO",
+          "sizeBytes": 2114,
+          "sha256": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916",
+          "utf8Readable": true
+        },
+        {
+          "path": "jdk-21.0.13+9-src/README.md",
+          "sizeBytes": 1077,
+          "sha256": "c3b064f757c7ba0fc71401e2e9cd409f3f723167c74cae8b1d45f9783851dfba",
+          "utf8Readable": true
+        }
+      ],
+      "pathPresenceChecks": [
+        {
+          "pathFragment": "libfreetype",
+          "present": true
+        },
+        {
+          "pathFragment": "libpng",
+          "present": true
+        },
+        {
+          "pathFragment": "libjavajpeg",
+          "present": true
+        },
+        {
+          "pathFragment": "giflib",
+          "present": true
+        },
+        {
+          "pathFragment": "liblcms",
+          "present": true
+        },
+        {
+          "pathFragment": "libharfbuzz",
+          "present": true
+        },
+        {
+          "pathFragment": "zlib",
+          "present": true
+        },
+        {
+          "pathFragment": "src/java.base/share/data/cacerts",
+          "present": true
+        }
+      ],
+      "scope": "FILE_PRESENCE_AND_READABILITY_ONLY_NOT_LEGAL_COMPLETENESS"
+    },
+    {
+      "archive": "temurin-build-1cf43d7a3e77886bfea7d550a902e151a87d724d.tar.gz",
+      "entryCount": 203,
+      "readableFiles": [
+        {
+          "path": "adoptium-temurin-build-1cf43d7/LICENSE",
+          "sizeBytes": 11360,
+          "sha256": "6b9522191b8cb7126b2d214edd7f782d2ccd83c467e9c03b8af9e0bf903b49b4",
+          "utf8Readable": true
+        },
+        {
+          "path": "adoptium-temurin-build-1cf43d7/NOTICE",
+          "sizeBytes": 65,
+          "sha256": "af830a6ca6ad0a57f357dc0435f9d8b5770704bbe0cf99a9fd82c97bfb0b3ca9",
+          "utf8Readable": true
+        },
+        {
+          "path": "adoptium-temurin-build-1cf43d7/README.md",
+          "sizeBytes": 20021,
+          "sha256": "d2f5e0d6a3988f31f898d3ec4995ef8971b1dffad8c1eeff0592b46b51b88602",
+          "utf8Readable": true
+        },
+        {
+          "path": "adoptium-temurin-build-1cf43d7/security/certdata.txt",
+          "sizeBytes": 1356175,
+          "sha256": "3ec2b4d240dc12c747eaf450061db84af757c483bbda302f9e29ceb5d70be510",
+          "utf8Readable": true
+        },
+        {
+          "path": "adoptium-temurin-build-1cf43d7/security/mk-cacerts.sh",
+          "sizeBytes": 6028,
+          "sha256": "c97326aab9d0ddd89016c529e7e119b9b69e3ecc4fbe8f99e74d2c8d8028d70d",
+          "utf8Readable": true
+        }
+      ],
+      "pathPresenceChecks": [],
+      "scope": "FILE_PRESENCE_AND_READABILITY_ONLY_NOT_LEGAL_COMPLETENESS"
+    }
+  ],
+  "signatureVerification": {
+    "status": "NOT_PERFORMED",
+    "signatureFilesRetained": [
+      "OpenJDK21U-jdk-sources_21.0.13_9.tar.gz.sig",
+      "OpenJDK21U-jre_x64_linux_hotspot_21.0.13_9.tar.gz.sig",
+      "OpenJDK21U-sbom_x64_linux_hotspot_21.0.13_9.json.sig"
+    ],
+    "officialInstructions": "https://adoptium.net/installation/gpg-verification",
+    "officialDocumentFingerprint": "3B04D753C9050D9A5D343F39843C48A565F8F04B",
+    "note": "HTTPS metadata/checksum/digest comparison is not detached-signature verification; no signing key was imported and no trust settings were changed."
+  },
+  "runtimeExecution": "NOT_RUN",
+  "nigoRc4CombinationAcceptance": "NOT_RUN",
+  "customerSourceDelivery": "NOT_PUBLISHED",
+  "legalCompleteness": "NOT_ASSESSED",
+  "linuxServiceAcceptance": "NOT_RUN",
+  "notes": [
+    "Candidate release is fixed by exact version URL and byte identities; no automatic latest selection is encoded.",
+    "Existing Mac21.0.12.1 supply and accepted runtime remain separate.",
+    "Supplier module/version metadata is not a locally observed Java execution.",
+    "Source/readability observations do not establish completeness of all distribution obligations.",
+    "No repository source or NIGO file was edited by this research task."
+  ]
+}
