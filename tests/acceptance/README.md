@@ -10,7 +10,7 @@
 
 RC4-04 시점의 RC.4 설치·genesis·서비스·네트워크·RPC 실물 인수는 **NOT_RUN**이며 RC4-05/06 후속 작업이다. 후보 지원이나 오프라인 회귀를 실물 PASS로 해석하지 않는다. RC1~3의 기존 재현 경로는 유지하며 RC.3 DB 이전·혼합 후보 네트워크는 지원하지 않는다.
 
-후속 [RC4-05 실제 Mac 인수](../../results/2026-11-15-rc4-macos-service.md)는 고정 R+B의 수동 단일노드21사례·독립 사후 감사 PASS다. 아래 서비스 명령에 `--exercise-setup-recovery --caller-umask 022 --expect-complete-diagnostics`를 적용했다. 네트워크·선정 RPC·실행 중 CLI 전환은 다음 RC4-06이며 아직 NOT_RUN이다.
+후속 [RC4-05 실제 Mac 인수](../../results/2026-11-15-rc4-macos-service.md)는 고정 R+B의 수동 단일노드21사례·독립 사후 감사 PASS다. 아래 서비스 명령에 `--exercise-setup-recovery --caller-umask 022 --expect-complete-diagnostics`를 적용했다. 후속 [RC4-06 실제 Mac 네트워크 인수](../../results/2026-11-16-rc4-macos-network.md)에서 고정 R에 외부 B/C를 조합한 동종4-validator·두 복구·wrong-pin·선정 RPC21사례/읽기52요청·live CLI 전환3회와 독립 종료 감사를 PASS했다. RPC probe의 제출0과 전체 합의 시험의 거래8개/제출9회를 구분한다.
 
 ## 도구와 실행 경계
 
@@ -129,7 +129,7 @@ python3 ./run_acceptance.py \
 
 ### RC.4 고정 runtime R과 내부 실행기 A
 
-다음은 RC4-05/06에서 실행할 명령 형태다. `/path/to`는 검증한 공급물과 새 시험 경로로 바꾸며, RC4-03에서 만든 R과 그 안의 A bytes를 그대로 사용한다.
+다음은 RC4-05/06에서 사용한 명령 형태다. `/path/to`는 검증한 공급물과 새 시험 경로로 바꾸며, RC4-03에서 만든 R과 그 안의 A bytes를 그대로 사용한다.
 
 ```sh
 python3 ./run_acceptance.py \
@@ -369,4 +369,4 @@ python3 -B tests/acceptance/run_management_service.py \
 
 종료 전 공급 사본을 복원하고 입력 hash를 다시 대조한다. 실패 시에도 자신이 이동한 공급 사본만 복원하며, 경로 충돌·파일 변경·복원 불명은 기존 실패를 보존한 `INCOMPLETE`다. 충돌 파일을 덮어쓰거나 서비스 자동 재시도·강제 종료하지 않는다. `result.json`의 `setupRecovery`, `retainedSupply`, `supplyAbsence`, `supplyRestoration`과 각 단계의 `cases`가 해당 범위를 기록한다. 모든 list/show 전후 및 정지 후 reapply 전후 snapshot은 private evidence JSON의 `before`/`after`/`equal`로 보관하고 `querySnapshots`/`stoppedReapplySnapshot`에서 파일명·SHA-256을 연결한다. 이 옵션의 구현·오프라인 회귀가 실제 RC4-05 성공을 뜻하지는 않는다.
 
-네트워크 시험은 변환한 서비스 입력 대신 원래의 새 네 validator fixture를 사용한다. 위 CLI05-03 `run_management_acceptance.py` 명령에 `--candidate rc4`를 추가하고 archive·공개키·lock·fixture를 모두 RC.4로 바꾼다. `--bundle-next`와 `--revision`은 RC4 profile을 지원하는 다음 관리 CLI B 배포본·실제 source commit이며, 처음 설치한 B와 다른 identity를 요구한다. 서비스·네트워크 실물 인수와 업데이트/복귀 결과는 RC4-05/06에서 별도 기록한다.
+네트워크 시험은 변환한 서비스 입력 대신 원래의 새 네 validator fixture를 사용한다. 위 CLI05-03 `run_management_acceptance.py` 명령에 `--candidate rc4`를 추가하고 archive·공개키·lock·fixture를 모두 RC.4로 바꾼다. `--bundle-next`와 `--revision`은 RC4 profile을 지원하는 다음 관리 CLI C 배포본·실제 source commit이며, 처음 설치한 B와 다른 identity를 요구한다. 서비스·네트워크 실물 인수와 업데이트/복귀 결과는 RC4-05/06에서 별도 기록했다. RC4-06의 B/C는 Rust 제품 구현이 같고 실제 source revision·배포 문서/identity가 다르다. 다른 코드 변경의 CLI까지 호환을 보증하지 않는다. 새 재실행은 기존 결과/DB를 덮어쓰지 않는 별도 시험이다.

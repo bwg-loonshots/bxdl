@@ -1,0 +1,686 @@
+{
+  "schemaVersion": 1,
+  "stage": "RC4-06",
+  "date": "2026-11-16",
+  "outcome": "PASS",
+  "scope": "LOCAL_MAC_INSTALLED_MANAGER_FIXED_RC4_NETWORK",
+  "host": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "macVersion": "26.6.2"
+  },
+  "serviceManager": "MACOS_USER_LAUNCH_AGENT",
+  "harnessSource": {
+    "revision": "62f138941f0650a085e88e08d7db057d228a34b7",
+    "tree": "80eee42e8160e83bed07b87ca726a91f6afd7ada",
+    "state": "CLEAN_SOURCE_CLONE",
+    "files": {
+      "run_acceptance.py": "807eeb092459baec72b0b548743aef17e97c79ceba20ebf05446e911034b37f7",
+      "support.py": "f7625dd79cf9827f3f14c4d8f9acea0278a089933fba80f553c70ea7e513f0b8",
+      "fixture_guard.py": "676edddc89cf2e1f54a2e7064f05b281227aa2a4b93135463bff0938e8f11625",
+      "prepare_fixture.py": "6a4763db8f7ff84debc9c0df532428174f690829882cd83c54e1718088869f38",
+      "candidates.py": "00e1af6449a89cab127c5306243134ef632f6bb7390fbf58c133d39dc5a96a42",
+      "run_management_acceptance.py": "88bff769892c65c9e37e100affbe537bcd47dc5ec72fa9908eb8afdea145bbdf",
+      "test_management_acceptance.py": "bf5f6d31608efa95094d489cf5636833d3d0dde760b6509640726dde4ee432de",
+      "runtime_profiles.py": "3b271c36cd620881936ab5e391dba3d53e50127fca12ed709307bc37c1545477",
+      "rc4_rpc_probe.py": "a733f8037ca9a92a80b6805f3d249e507c27f8c0743ba275992fe1403eaa774a"
+    },
+    "fileCount": 9,
+    "frozenSourceCopyExecuted": true,
+    "frozenAndRepositoryFilesUnchanged": true,
+    "rustProductCodeChanged": false,
+    "acceptanceHarnessCodeChanged": false,
+    "nigoProductCodeChanged": false
+  },
+  "execution": {
+    "startedUtc": "2026-11-16T01:08:49.323638+00:00",
+    "finishedUtc": "2026-11-16T01:17:35.044248+00:00",
+    "elapsedSeconds": 525.713895125,
+    "elapsedTimeIsPerformanceAcceptance": false,
+    "exitCode": 0,
+    "scenario": "full",
+    "scenarioRuns": 1,
+    "automaticRetries": 0,
+    "maximumConcurrentServiceNodes": 4,
+    "installations": 5,
+    "explicitInitializations": 5,
+    "serviceRunAttempts": 12,
+    "normalStops": 12,
+    "distinctTransactions": 8,
+    "transactionSubmissionAttempts": 9,
+    "recordedManagerCommands": 84,
+    "managerCommandCountScope": "DIRECT_RECORDED_MANAGEMENT_COMMANDS_NOT_ALL_CHILD_OR_JVM_CALLS",
+    "cliEntry": "INSTALLED_STABLE_SYMLINK",
+    "failurePolicy": "PRESERVE_ORIGINAL_OUTCOME_WITH_NORMAL_STOP_CLEANUP_NO_FORCED_KILL"
+  },
+  "fixture": {
+    "source": "RC4_02_ORIGINAL_FRESH_FOUR_VALIDATOR_FIXTURE",
+    "profile": "DEV_QBFT",
+    "transport": "MTLS",
+    "chainId": 11578,
+    "validators": 4,
+    "signedTransactionType": 2,
+    "preparedTransactions": 12,
+    "usedTransactionNonces": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "sourceFileCount": 67,
+    "sourceFileHashSizeModeInodeDeviceMtimeCtimeBeforeAfter": "UNCHANGED",
+    "sourceFixtureDataStillAbsent": true,
+    "summaryPreparationStatePreserved": true,
+    "freshControlAndData": true,
+    "rc3ControlOrDataUsed": false,
+    "newCredentialsIssued": false,
+    "wrongPinUsesSeparateInstance": true,
+    "credentialAndSignedTransactionContentsHashedPrivatelyWithoutPublishing": true
+  },
+  "runtime": {
+    "candidate": "rc4",
+    "archiveSha256": "a9f67988e785260b35504bd79a19df4a4820e72eafbf537328ca2e31f7e16f60",
+    "manifestSha256": "fe21e898f5ace8be57ad838620f14da1c3e07b3ffcfbcb969fd63a67854a142e",
+    "executorRevision": "d38027a474f1e8d4fb7b1d38ea17972ba88d93af",
+    "executorSha256": "d2d5c586bf2ab59ac3198cbcc0f89101fc18d31e6f4ec7812b428e481a63f647",
+    "jarSha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "archiveSizeBytes": 207705667,
+    "expectedEngineIdentity": {
+      "buildInfoStatus": "AVAILABLE",
+      "console": {
+        "node": "v24.21.0",
+        "npm": "11.19.0",
+        "sourceFingerprint": "a7c768df5d1ad8a09060cbab33b6fd3f0e3475d4ee0f90d7c76c445433ab33b6"
+      },
+      "contract": {
+        "definitionSha256": "988648d06b95d372cfc36a88fbf4a88ae7deb4a3477ad8629163daa03f902e49",
+        "documentationSha256": "a284e1502b298dd755704378e168811373b860665dfba14ed3069d0f6c8431d6",
+        "fingerprint": "c604b1d24097015b2839d97f2bc9d45e3fff91ed6984665d1aa827a155c7b6e8",
+        "revision": "037c98c315d5322fa7da266ca0254d61f3863622",
+        "runtimeDocumentationSha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+        "runtimeFixtureSha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e",
+        "status": "PROPOSED"
+      },
+      "distribution": {
+        "channel": "development",
+        "officialRelease": false
+      },
+      "engine": "NIGO",
+      "java": {
+        "requiredMajor": 21
+      },
+      "source": {
+        "commit": "037c98c315d5322fa7da266ca0254d61f3863622",
+        "dirty": false
+      },
+      "version": "0.0.1-SNAPSHOT"
+    },
+    "runtimeProfile": "BXDL_RC4_EXECUTOR_V1",
+    "rebuildPerformed": false,
+    "internalExecutorReplacementPerformed": false,
+    "originalRuntimeArchiveUnchanged": true,
+    "installations": 5,
+    "perInstallationPayload": {
+      "bytes": 326373420,
+      "files": 269,
+      "jreFiles": 259,
+      "membershipHashSizeMode": "MATCHED"
+    },
+    "allFivePayloadsMembershipHashSizeModeMatched": true,
+    "jre": "Temurin21.0.12.1+1-LTS",
+    "engineLockSha256": "d07b35ee5a630ef459bb26a492a1511547e47e483c40120b7474b67a90e1326d",
+    "publicKeySha256": "330c6c6e19d0e353b1001b9a4c84266765e8d4defcf04317771ab8977f72e1ee"
+  },
+  "managers": {
+    "initialB": {
+      "revision": "65fe83f0d569fcf2231474342fa0d60ca72555d5",
+      "binarySha256": "f08578809744d21313aad3c8cb39644107af67d5558661d2ecc9d81f2edb138c",
+      "binarySizeBytes": 4219952,
+      "bundleSha256": "0b03f7324c6b2b735aed9ab7793e65d151af1445f93e0506068289d19cb03a23",
+      "manifestSha256": "8f5fb8301f043396087bb09023c3b48ccecc8d650cec7616cd9f54b76b6c4d29"
+    },
+    "nextC": {
+      "revision": "62f138941f0650a085e88e08d7db057d228a34b7",
+      "tree": "80eee42e8160e83bed07b87ca726a91f6afd7ada",
+      "cleanBeforeAfter": true,
+      "binarySha256": "f12110d0644042c1cb97482cf68943e0dcf05b09bcc9514e25e2c26df0f8a153",
+      "binarySizeBytes": 4219952,
+      "bundleSha256": "847588c78c5bca01745a1113548a2e5113679d0bc41a9c2be2eb5430af4249d5",
+      "bundleSizeBytes": 1912041,
+      "manifestSha256": "8de9ff8b9bf00cd0a40c9b1b711fe85cf9bff575cccac82028701ccc304eeb89",
+      "bundleAuthenticity": "verified-external-ed25519",
+      "payloadFilesVerified": 4,
+      "payloadBytesVerified": 4248679
+    },
+    "sameRustProductImplementation": true,
+    "actualSourceRevisionAndManagementGuideDiffer": true,
+    "productBehaviorUpgradeClaimed": false,
+    "comparisonPaths": [
+      "src",
+      "Cargo.toml",
+      "Cargo.lock",
+      "build.rs",
+      "rust-toolchain.toml",
+      "completions/_bxdl",
+      "tools/build-management-cli.py"
+    ],
+    "signingTrust": "SAME_RC4_04_TEST_ED25519_KEY",
+    "publicKeySha256": "ba45e53545f414e5234f5bd2019338b9700c28d315f7d435c61851ce9f4f187a",
+    "newSigningKeyIssued": false,
+    "existingRAndBUnchangedDuringCBuild": true,
+    "retainedReleasesVerified": 2,
+    "finalSelection": "C",
+    "finalStableEntryActivationReleaseAdmissionManifestAndPayloadIdentity": "MATCHED"
+  },
+  "managerTransitions": {
+    "count": 3,
+    "directions": [
+      "B_TO_C",
+      "C_TO_B",
+      "B_TO_C"
+    ],
+    "liveNodeCounts": [
+      4,
+      4,
+      3
+    ],
+    "sameAttemptsNodeInstanceIdsAndPids": true,
+    "sameDataDirectoryIdentityAndBoundInputs": true,
+    "sameInitializationJournalsAndWorkerHashes": true,
+    "allWorkersMatchFixedExecutorA": true,
+    "nodeRestartCausedByCliTransition": false,
+    "beforeAfterSnapshotsAndCurrentBoundFiles": "MATCHED",
+    "observationBasis": "FROZEN_RUNNER_CAPTURED_SNAPSHOTS_RECHECKED_AFTER_RUN"
+  },
+  "lifecycle": {
+    "initializationReports": 5,
+    "runReports": 12,
+    "fullEngineIdentityAtValidation": "ALL_MATCH_LOCK_EXPECTED",
+    "initializationTerminal": "ALL_INITIALIZED",
+    "runTerminal": "ALL_STOPPED",
+    "reportsMode": "0600",
+    "sameGenesisAcrossFiveInitializations": true,
+    "newNodeInstancePerRun": true,
+    "runningGenesisNodeIdentityChainFingerprintMatched": true,
+    "storageClosedAndConsensusStopReturnedAtEveryStop": true,
+    "workersChecked": 12,
+    "allWorkersUseFixedExecutorA": true
+  },
+  "transactions": {
+    "distinctTransactions": 8,
+    "submissionAttempts": 9,
+    "acknowledgedSubmissions": 9,
+    "onlyExplicitResubmissionNonce": 5,
+    "proofs": [
+      {
+        "scenario": "four-validator",
+        "nonce": 0,
+        "height": 1,
+        "validatorsChecked": 4,
+        "receiptIdentityAndRpcBlockMembership": "PASS",
+        "monitorCanonicalHeaderAndState": "PASS",
+        "proofSha256": "1b4a9bc2078695ec3f1188c804e2da55010b911a77dae128c04ab8ac0a640ec3"
+      },
+      {
+        "scenario": "three-validator-while-n4-stopped",
+        "nonce": 1,
+        "height": 2,
+        "validatorsChecked": 3,
+        "receiptIdentityAndRpcBlockMembership": "PASS",
+        "monitorCanonicalHeaderAndState": "PASS",
+        "proofSha256": "010190f6a671b8de1da7bf775d8241f97773d4590ae5e7aeb8054ce40fd0f451"
+      },
+      {
+        "scenario": "after-rejoin",
+        "nonce": 2,
+        "height": 3,
+        "validatorsChecked": 4,
+        "receiptIdentityAndRpcBlockMembership": "PASS",
+        "monitorCanonicalHeaderAndState": "PASS",
+        "proofSha256": "8124a21be0a9fe5dddb564c5e4b2fdf36d6f09f5939ceced3898edf652ae273e"
+      },
+      {
+        "scenario": "restored-quorum",
+        "nonce": 3,
+        "height": 4,
+        "validatorsChecked": 3,
+        "receiptIdentityAndRpcBlockMembership": "PASS",
+        "monitorCanonicalHeaderAndState": "PASS",
+        "proofSha256": "42ac9f84b4d1280c19c553b40b34f82bbf0ea611eedc58c32d6064fd96c32d2d"
+      },
+      {
+        "scenario": "after-four-restored",
+        "nonce": 4,
+        "height": 5,
+        "validatorsChecked": 4,
+        "receiptIdentityAndRpcBlockMembership": "PASS",
+        "monitorCanonicalHeaderAndState": "PASS",
+        "proofSha256": "1926fc641793003311373833bc46ae4b1f9623a6db8b4a62db0620cc8656acf8"
+      },
+      {
+        "scenario": "same-db-restart-recovered",
+        "nonce": 5,
+        "height": 6,
+        "validatorsChecked": 4,
+        "receiptIdentityAndRpcBlockMembership": "PASS",
+        "monitorCanonicalHeaderAndState": "PASS",
+        "proofSha256": "da3732951e14e2c433f2e2a3f2b5b2ee4456c139b7ce1e31ad31bee85328c127"
+      },
+      {
+        "scenario": "same-db-restart-followup",
+        "nonce": 6,
+        "height": 7,
+        "validatorsChecked": 4,
+        "receiptIdentityAndRpcBlockMembership": "PASS",
+        "monitorCanonicalHeaderAndState": "PASS",
+        "proofSha256": "894f0786625d1d1bb467834a4f3f445cbaf44015420fb3862b3a2619a5020101"
+      },
+      {
+        "scenario": "healthy-quorum-during-wrong-pin",
+        "nonce": 7,
+        "height": 8,
+        "validatorsChecked": 3,
+        "receiptIdentityAndRpcBlockMembership": "PASS",
+        "monitorCanonicalHeaderAndState": "PASS",
+        "proofSha256": "5cca8ff445d8dc4ac2cfb05253d3d224e17e7fc1a9acaa051a0557f2f732cadd"
+      }
+    ],
+    "canonicalCatchup": [
+      {
+        "scenario": "same-db-catchup",
+        "height": 2,
+        "validatorsChecked": 4,
+        "canonicalHeaderAndState": "MATCHED_BY_RUNNER_FROZEN_ORACLE",
+        "historicalReceiptRequired": false,
+        "historicalReceiptPresenceByNode": {
+          "n1": true,
+          "n2": true,
+          "n3": true,
+          "n4": false
+        },
+        "contract": "SNAPSHOT_INSTALLS_HEADER_AND_STATE_WITHOUT_HISTORICAL_BODY",
+        "rawHistoricalHttpResponsesRetained": false,
+        "independentAuditBasis": "RETAINED_CANONICAL_SUMMARY_AND_FROZEN_RUNNER_SOURCE",
+        "historicalReceiptIdentityAndMembershipAcrossAllNodesClaimed": false
+      },
+      {
+        "scenario": "four-restored",
+        "height": 4,
+        "validatorsChecked": 4,
+        "canonicalHeaderAndState": "MATCHED_BY_RUNNER_FROZEN_ORACLE",
+        "historicalReceiptRequired": false,
+        "historicalReceiptPresenceByNode": {
+          "n1": true,
+          "n2": true,
+          "n3": false,
+          "n4": true
+        },
+        "contract": "SNAPSHOT_INSTALLS_HEADER_AND_STATE_WITHOUT_HISTORICAL_BODY",
+        "rawHistoricalHttpResponsesRetained": false,
+        "independentAuditBasis": "RETAINED_CANONICAL_SUMMARY_AND_FROZEN_RUNNER_SOURCE",
+        "historicalReceiptIdentityAndMembershipAcrossAllNodesClaimed": false
+      }
+    ]
+  },
+  "recovery": {
+    "noQuorumIntervals": [
+      {
+        "elapsedSeconds": 45.51870812500002,
+        "firstRounds": [
+          [
+            4,
+            1
+          ],
+          [
+            4,
+            1
+          ]
+        ],
+        "lastRounds": [
+          [
+            4,
+            3
+          ],
+          [
+            4,
+            3
+          ]
+        ],
+        "maxSampleGapSeconds": 0.545784,
+        "sampleSpanSeconds": 44.982165,
+        "samples": 85,
+        "scenario": "two-of-four",
+        "pendingNonce": 3,
+        "requiredObservationSeconds": 45,
+        "newFinalityObserved": false,
+        "pendingReceiptObserved": false,
+        "roundAdvancedAtBothLiveNodes": true,
+        "observationScope": "FINITE_POLLED_WINDOW_NOT_CONTINUOUS_TRACE_OR_UNBOUNDED_GUARANTEE"
+      },
+      {
+        "elapsedSeconds": 45.173557292,
+        "firstRounds": [
+          [
+            6,
+            0
+          ],
+          [
+            6,
+            0
+          ]
+        ],
+        "lastRounds": [
+          [
+            6,
+            3
+          ],
+          [
+            6,
+            3
+          ]
+        ],
+        "maxSampleGapSeconds": 0.54715,
+        "sampleSpanSeconds": 44.645175,
+        "samples": 85,
+        "scenario": "restart-two-of-four",
+        "pendingNonce": 5,
+        "requiredObservationSeconds": 45,
+        "newFinalityObserved": false,
+        "pendingReceiptObserved": false,
+        "roundAdvancedAtBothLiveNodes": true,
+        "observationScope": "FINITE_POLLED_WINDOW_NOT_CONTINUOUS_TRACE_OR_UNBOUNDED_GUARANTEE"
+      }
+    ],
+    "liveQuorumRecovery": {
+      "pendingNonce": 3,
+      "explicitResubmissionCount": 0,
+      "originalTransactionFinalizedAfterThreeValidatorsRestored": true
+    },
+    "sameDbFullRestart": {
+      "pendingNonce": 5,
+      "followupNonce": 6,
+      "explicitSameBytesResubmissionCount": 1,
+      "totalSubmissionsForPendingTransaction": 2,
+      "newLaunchAttempts": true,
+      "sameFourDataDirectoriesAndBoundInputs": "MATCHED",
+      "roundSkew": {
+        "activeViews": [
+          [
+            6,
+            3
+          ],
+          [
+            6,
+            3
+          ]
+        ],
+        "confirmed": true,
+        "stoppedViews": [
+          [
+            6,
+            0
+          ],
+          [
+            6,
+            0
+          ]
+        ]
+      },
+      "databaseOrRoundReset": false,
+      "engineBytesReplaced": false,
+      "pendingTransactionSurvivalWithoutResubmissionClaimed": false,
+      "engineUpgradeOrMigrationTested": false
+    },
+    "dataPreservationScope": "DIRECTORY_DEVICE_INODE_ENGINE_INSTANCE_AND_BOUND_CONFIGURATION_NOT_STATIC_DB_WAL_BYTES"
+  },
+  "wrongPin": {
+    "faultPeerCount": 0,
+    "healthyValidators": 3,
+    "originalSignerStoppedBeforeFaultStart": true,
+    "outboundWrongPinCount": 3,
+    "faultNodeSyncEnabled": false,
+    "duplicateSignerRunning": false,
+    "healthyQuorumFollowupNonce": 7
+  },
+  "rpc": {
+    "outcome": "PASS",
+    "caseCount": 21,
+    "casesByGroup": {
+      "kzg": 5,
+      "publicHost": 12,
+      "sha256": 2,
+      "type4EmptyAuthorizationNegative": 2
+    },
+    "readRequests": 52,
+    "identityReads": 1,
+    "stateReads": 30,
+    "requestOrder": "CHAIN_ID_THEN_15_BEFORE_THEN_21_CASES_THEN_15_AFTER",
+    "durationSeconds": 0.20206129199999623,
+    "maximumAllowedDurationSeconds": 120,
+    "automaticRetries": 0,
+    "submittedTransactions": 0,
+    "countScope": "THIS_52_READ_RPC_SUBSET_ONLY_NOT_NETWORK_TRANSACTION_SCENARIOS",
+    "stateAccountCount": 5,
+    "accountStateScope": "FIVE_ACCOUNTS_BALANCE_NONCE_CODE_AT_LATEST",
+    "observedAccountStateUnchanged": true,
+    "stateSha256": "e93daec690cc84bcff46338b78a6620bdc2f61fcd55c92e21b9c62b69a0ad8c6",
+    "allResponseEnvelopesAndErrorTypesMatched": true,
+    "networkCallOrdering": "FIRST_START_THEN_MANAGER_B_TO_C_UPDATE_THEN_RPC_PROBE_THEN_FIRST_TX_SUBMIT",
+    "orderingEvidence": "FROZEN_SOURCE_CALL_ORDER_AND_SAVED_ORDINAL_RECORDS_NO_PACKET_TRACE",
+    "expectedCaseSpecification": "FROZEN_PURE_CASES_REUSED_BY_NETWORK_AUDITOR",
+    "independentRpcAudit": "PASS",
+    "excluded": {
+      "consoleCatalogProjection": "NOT_RUN",
+      "kzgProviderFault": "NOT_RUN",
+      "nativeRecipeExecution": "NOT_RUN",
+      "signedType4Execution": "NOT_RUN",
+      "successfulAuthorizationSimulationIsolation": "NOT_RUN"
+    },
+    "otherExclusions": [
+      "SIGNED_TYPE4_EXECUTION",
+      "KZG_PROVIDER_FAULT",
+      "NESTED_HOST_EXECUTION",
+      "NATIVE_FULL_RECIPE",
+      "CONSOLE_FUNCTIONALITY"
+    ]
+  },
+  "cleanup": {
+    "normalStops": 12,
+    "runnerRecordedPidsAbsent": 106,
+    "independentRecordedPidsAbsent": 107,
+    "independentPidCountIncludesHarness": true,
+    "launchAgentJobsNotLoaded": 12,
+    "tcpListenPortsAbsent": 8,
+    "rootProductProcessesRemaining": 0,
+    "existingGuiUserSystemRelatedJobsAndInstalledPlists": "UNCHANGED",
+    "cleanupErrors": 0,
+    "additionalProductCliJvmServiceMutationsByIndependentAudit": 0,
+    "additionalRpcRequestsByIndependentAudit": 0
+  },
+  "independentAudit": {
+    "preflight": "PASS",
+    "postRun": "PASS",
+    "rpcRecordedEvidence": "PASS",
+    "scope": "READ_ONLY_RETAINED_EVIDENCE_AND_FINAL_OS_STATE",
+    "preflightAttemptHistory": [
+      {
+        "artifact": "preflight-audit.json",
+        "correctionSource": "tests/acceptance/prepare_fixture.py:409",
+        "outcome": "INCOMPLETE",
+        "reason": "AUDITOR_USED_RAW_DER_SHA_WITHOUT_REQUIRED_TRANSPORT_DOMAIN_SEPARATOR",
+        "sha256": "c501af7bb033f1795b8dfe832d3d2f21aa6ba301536869363c1864b8d5a0b317"
+      },
+      {
+        "artifact": "preflight-audit-2.json",
+        "serviceOrProductExecutionRepeated": false
+      }
+    ],
+    "postRunAttemptHistory": [
+      {
+        "artifact": "final-independent-audit.json",
+        "location": "manager_payloads:101/sha:47/regular:44",
+        "outcome": "INCOMPLETE",
+        "reason": "AUDITOR_REQUIRED_STABLE_ENTRY_SYMLINK_TO_BE_REGULAR_FILE",
+        "scriptSha256": "3a7fdf68177e6aa4379de20aa88ee5511114206307048125ee46f86abfddf380",
+        "sha256": "4970e1a902c8049c0f21d0f8a983009ed9d9fe8901d5374768aceda16a9a3993"
+      },
+      {
+        "artifact": "final-independent-audit-2.json",
+        "productCliJvmServiceOrRpcRepeated": false
+      }
+    ],
+    "postRunCorrection": {
+      "correctedRule": "VALIDATE_STABLE_ENTRY_CURRENT_ACTIVATION_RELEASE_ADMISSION_MANIFEST_SIGNATURE_IDENTITY_THEN_HASH_RESOLVED_REGULAR_PAYLOAD",
+      "diagnosticReadProbe": "TRACEBACK_LOCATION_AND_STABLE_ENTRY_METADATA_ONLY_NO_OUTPUT_ARTIFACT",
+      "diffArtifact": "audit-correction.diff",
+      "diffSha256": "f422b5ebd8bf3cda6af1addb29183c222bf2937e880f0de3c34c605c66f00118"
+    },
+    "preflightCorrectedSourceSha256": "93aac87641f77a469d0d552d40d11fc88d910a5d3ab486163ff466c0f49956c6",
+    "postRunCorrectedSourceSha256": "d4ef73e1f2e565e276034fcbe371f2e1c9a4f5ba26a33976b14769c7d8823c8e",
+    "firstIncompleteAuditsPreserved": true,
+    "productOrServiceRunsRepeatedForAuditCorrections": 0,
+    "limitations": [
+      "Evidence and OS audit only; no independent product/service/network run was performed.",
+      "Transition before/after capture timing and 45-second sample completeness depend on the frozen runner; the auditor rechecked retained snapshots and current identities.",
+      "Canonical catch-up raw HTTP responses were not retained; those cases are checked against recorded summaries and frozen oracle, while subsequent new transactions have complete receipt/block/monitor proofs.",
+      "Transaction fixture cryptographic preparation is inherited; the auditor checks exact input file hashes and transaction metadata, not a second signature decoder.",
+      "RPC expectations reuse the authenticated pure case specification and are checked against all 52 saved requests/responses without issuing RPC.",
+      "This local four-validator development acceptance does not certify multi-host/Linux/production readiness, crash/power loss, migration, successful signed Type4, KZG provider-fault or full Native/Console behavior.",
+      "Only saved request/response records were read; no new live RPC or engine execution was performed.",
+      "Request ordinal evidence and frozen source show the recorded calls and no application retry loop; no independent network packet trace was collected.",
+      "Balance/nonce/code equality covers five observed accounts only, not all chain storage or successful Type4 authorization simulation isolation.",
+      "The surrounding network submits transactions separately after this probe; submittedTransactions=0 applies only to this subset.",
+      "NIGO expected public test vectors were checked as response contracts; this auditor did not implement or execute a cryptographic KZG verifier."
+    ]
+  },
+  "validation": {
+    "makeCheckThisStage": "NOT_RERUN",
+    "reason": "NO_RUST_OR_ACCEPTANCE_HARNESS_SOURCE_CHANGES_PREVIOUSLY_TESTED_SOURCE_HASHES_MATCH",
+    "priorCheckSourceFileCount": 136,
+    "priorCheckSourceMatchesCleanCSource": true,
+    "priorCheckSourceSha256": "ccf3140c5ebb65ae69f90721a928d9e4cc336cd2440890bb843bc1f345743ff0",
+    "previousExecution": {
+      "stage": "RC4-05",
+      "result": "2026-11-15-rc4-macos-service.json",
+      "makeCheck": "PASS",
+      "rustPassed": 596,
+      "pythonRun": 165,
+      "pythonPassed": 163,
+      "pythonSkipped": 2,
+      "pythonSkippedScope": "EXISTING_OPT_IN_SIGNED_CLI_PAIR_DISTRIBUTION_AND_ZLE_ACTUAL_BINARY_TESTS",
+      "fmt": "PASS",
+      "clippy": "PASS"
+    },
+    "historicalTestCountsAreNotNewRuns": true,
+    "linuxTypeCheckThisStage": "NOT_RERUN",
+    "linuxRuntime": "NOT_RUN",
+    "thisStageProductAcceptance": "PASS",
+    "thisStageIndependentAudit": "PASS"
+  },
+  "evidence": {
+    "privateEvidenceRetained": true,
+    "rawCredentialsSignedTransactionsDatabasesArchivesPrivatePathsOrPidListsCommitted": false,
+    "inventoryFileCount": 306,
+    "inventorySha256": "d1be1de3bfcb05f7f5dd3890cc0b28d8a8643b6542d136dfb5451edac513d5b2",
+    "inventorySizeBytes": 56355,
+    "inventoryScope": "SELECTED_PRIVATE_RC406_EVIDENCE_HASH_INVENTORY_EXCLUDES_DATABASES_CREDENTIAL_FILES_AND_ARCHIVES",
+    "inventoryContentsRetainedPrivately": true,
+    "majorArtifactDigests": [
+      {
+        "artifact": "execution-plan.json",
+        "sha256": "98a8f3d86d348de140b58ee5a958b3d7909e9db29e678b900ae73c6002b715b5",
+        "sizeBytes": 2202
+      },
+      {
+        "artifact": "manager-build-result.json",
+        "sha256": "37ec451ce07c738355b29d0caee99d75516904c666040392b936dd1829b20ac2",
+        "sizeBytes": 9837
+      },
+      {
+        "artifact": "preflight-audit.json",
+        "sha256": "c501af7bb033f1795b8dfe832d3d2f21aa6ba301536869363c1864b8d5a0b317",
+        "sizeBytes": 232
+      },
+      {
+        "artifact": "preflight-audit-2.json",
+        "sha256": "dc960d47e3ec9f59bfea03da61b8680969fe1173224cdca94f245eab96f175b1",
+        "sizeBytes": 14435
+      },
+      {
+        "artifact": "execution-result.json",
+        "sha256": "90c511fd6a69adbf9ad6b9a7cd33298d789ddc4363ce05853c2a603557a72383",
+        "sizeBytes": 423
+      },
+      {
+        "artifact": "run/result.json",
+        "sha256": "72361b557c3f41c948c8a9aaa75d1590b0a42fe2e20a17c9c3890e5e625c3e8c",
+        "sizeBytes": 84345
+      },
+      {
+        "artifact": "final-independent-audit.json",
+        "sha256": "4970e1a902c8049c0f21d0f8a983009ed9d9fe8901d5374768aceda16a9a3993",
+        "sizeBytes": 237
+      },
+      {
+        "artifact": "final-independent-audit-2.json",
+        "sha256": "e3578365151ad9d0d42308b511dea9a350828a5292c2e9195d3d9b09ccd836bc",
+        "sizeBytes": 12024
+      },
+      {
+        "artifact": "rpc-independent-raw-audit.json",
+        "sha256": "c66b29b3fe0fe74da425d3d6a2e40648ea973e639de4911d6e26844c250b1bc0",
+        "sizeBytes": 16602
+      },
+      {
+        "artifact": "rpc-independent-final-audit.json",
+        "sha256": "340687acafbb92d5eceffac2419645686cb287df0462f0307e2c81727baf048b",
+        "sizeBytes": 16669
+      },
+      {
+        "artifact": "audit-correction.diff",
+        "sha256": "f422b5ebd8bf3cda6af1addb29183c222bf2937e880f0de3c34c605c66f00118",
+        "sizeBytes": 4201
+      }
+    ]
+  },
+  "notTested": [
+    "RC3_DATABASE_MIGRATION",
+    "MIXED_ENGINE_VERSION_ROLLING_UPGRADE",
+    "ENGINE_UPGRADE",
+    "MULTI_HOST_NETWORK",
+    "UNBOUNDED_NO_QUORUM_SAFETY_OR_LIVENESS",
+    "CRASH_POWER_LOSS",
+    "LOGOUT_SLEEP_WAKE",
+    "SIGNED_TYPE4_EXECUTION",
+    "SUCCESSFUL_AUTHORIZATION_SIMULATION_ISOLATION",
+    "KZG_PROVIDER_FAULT",
+    "NESTED_HOST_EXECUTION",
+    "NATIVE_FULL_RECIPE",
+    "CONSOLE_FUNCTIONALITY",
+    "EMPTY_SETUP_ALL_FIELDS_EOF_HUP",
+    "HUMAN_TASK_VALIDATION_CLI05_04",
+    "SAFE_REMOVE_REM_01",
+    "A7",
+    "LINUX_SYSTEMD_RUNTIME",
+    "DOCKER",
+    "LAUNCH_DAEMON",
+    "LONG_RUNNING_PERFORMANCE",
+    "FULL_G1_M",
+    "J5"
+  ],
+  "nextStage": "RC4-07_FORMAL_NIGO_ACCEPTANCE_REPLY_THEN_RC4-08_CLI05-04_HUMAN_TASKS",
+  "newNigoImplementationPrerequisite": "NONE_IDENTIFIED_FOR_NEXT_PLANNED_TASK",
+  "releaseStatus": {
+    "channel": "development",
+    "officialRelease": false,
+    "contract": "PROPOSED",
+    "REQ_0002": "OPEN",
+    "REQ_0003": "OPEN",
+    "customerDelivery": "NOT_GRANTED"
+  }
+}
