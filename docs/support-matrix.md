@@ -1,28 +1,33 @@
 # 지원 후보·검증 범위
 
-사용자 결정(2026-09-17): Rust 전환, macOS Apple Silicon에서 설치·운용 UX를 먼저 구현하고 Linux/systemd와 Docker/Compose를 후속으로 유지한다.
+사용자 결정(2026-11-16): **실제 Linux 머신 우선 개발·검증**, WSL2는 Linux 실제 조합 이후의 별도 검증이다. [Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따르며 Rust와 기존 Mac 구현·인수 결과를 유지한다. 아래 구현·후보·실물 PASS를 구분한다.
 
 | 조합 | 현재 상태 |
 | --- | --- |
 | Rust 1.86.0 / macOS arm64 | CLI 개발·로컬 테스트·native 빌드 대상. setup·설치·cold·등록/초기화·수동 LaunchAgent·오프라인 진단 구현 |
 | macOS arm64 + Java 21 + RocksDB + 사용자 LaunchAgent | macOS 26.6.2의 지정 RC.2·Temurin에서 4-validator 거래/catch-up·두 복구 경로·pin 거부 PASS. 새 V2 보관본·시작 진단은 별도 RC.2 package의 로컬13사례 PASS. OS 최소 버전·전체 G1-M 미확정 |
 | RC.3 + 선정 Temurin / macOS arm64 | 전용 lock/spec 명시 선택 후 동일 서명 archive의 4-validator·두 정족수 복구·wrong-pin과 원본 공급 경로 부재 setup13사례·독립 정리 PASS. A7 NOT_RUN·전체 G1-M 미완료 |
-| RC.4 + 선정 Temurin / macOS arm64 | RC4-01~05 완료, Mac 설치·수동 단일노드 서비스21사례·독립 종료 감사 PASS. 고정 R+B·같은 RC.4 DB 재시작·완전 진단 수집 확인. 네트워크·RPC·실행 중 CLI 전환 NOT_RUN |
-| Linux amd64/glibc + Java 21 + RocksDB + systemd | 기존 development manifest 유지, 후속 서버 인수. Ubuntu 24.04 후보 |
+| RC.4 + 선정 Temurin / macOS arm64 | RC4-01~07 완료. 기술 인수01~06의 Mac 단일노드21사례, fresh 동종4-validator·두 복구·wrong-pin·선정 RPC21/52read와 실행 중 B/C 전환3회 PASS. 전체 G1-M/J5·사람 과업은 별도 |
+| Linux amd64/glibc + Java 21 + RocksDB + systemd | 현재 개발 우선. Ubuntu 24.04 LTS·sudo/SSH 가능은 사용자 허용 기준이며 실제 host 관측 전. [LNX-01 기반 코드·자동 검사](../results/2026-11-16-linux-foundation.md) 완료. Mac 회귀·Linux 타입 검사 범위. Linux JRE/RC.4 고정 package·systemd 서비스·실제 머신 인수 NOT_RUN |
+| Windows의 WSL2 + 선정 Linux 배포판 | 후속 LNX-07, 현재 NOT_RUN. Windows native와 별도이며 Linux 서버 인수를 대체하지 않음 |
 | Docker/Compose | 후속 이미지·volume·network·종료/재생성 인수 필요 |
 | Intel Mac·Linux ARM64·Windows·Alpine/musl·H2 제품 지원 | 별도 구현·인수 전 미지원 |
 
-## RC.4 단계별 인수와 지원 경계 — 2026-11-15
+Linux 기본 사용자 저장소는 관리 CLI 배포본의 `$HOME/.local/share/BXDL-CLI`와 노드 목록·준비 기록의 `$HOME/.local/share/BXDL`로 분리한다. 실행 진입점은 `$HOME/.local/bin/bxdl`이고 `--root`/`--bin-dir`/`--home`으로 명시한다. XDG 환경변수 자동 채택은 이번 범위 밖이다. 이 사용자별 경로 구현은 향후 root 제어 기록·전용 UID의 시스템 서비스 지원을 대신하지 않는다.
+
+## RC.4 단계별 인수와 지원 경계 — 2026-11-16
 
 [RC4-01 수신](../contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 시험 자료 준비](../results/2026-11-15-rc4-fixture-preparation.md), [RC4-03 runtime 조립](../results/2026-11-15-rc4-runtime-assembly.md), [RC4-04 외부 CLI·인수 도구 구현과 CLI-only 검증](../results/2026-11-15-rc4-cli-harness.md)을 완료했다. RC.4 전용 lock/spec은 SELECTED이며 고정 R/A/JAR/JRE를 유지한다. 독립 관리 CLI B는 clean source `65fe83f0d569fcf2231474342fa0d60ca72555d5`로 빌드했다. 실제 CLI-only 설치·구형 bootstrap에서 B로 업데이트와 B의 RC.3 전용 CLI update/rollback 거절·선택 보존을 확인했다.
 
-코드가 지원하는 exact runtime profile은 RC.3과 RC.4이며, 기존 RC.3 서비스·네트워크 인수와 RC.4 수동 단일노드 서비스 관측을 각각 구분한다. 새 관리 CLI B의 설치/업데이트/복귀 probe는 두 profile의 capability를 요구한다. 구형 bootstrap 정책이 소급 변경된 것은 아니며 RC.4 실행 중 CLI 전환은 양쪽 모두 RC.4를 지원하는 두 배포본으로 RC4-06에서 별도 인수한다. CLI-only 전환 결과를 실행 중 노드·DB 불변의 실물 증거로 대체하지 않는다.
+코드가 지원하는 Mac exact runtime profile은 RC.3과 RC.4이며, 기존 RC.3 이력과 RC.4 단일노드·동종망의 지정 조합 인수를 각각 구분한다. 새 관리 CLI B의 설치/업데이트/복귀 probe는 두 profile의 capability를 요구한다. 구형 bootstrap 정책이 소급 변경된 것은 아니며 RC.4 실행 중 CLI 전환은 양쪽 모두 RC.4를 지원하는 B(`65fe83f…`)/C(`62f1389…`)로 RC4-06에서 별도 인수했다. 두 CLI는 같은 Rust 제품 구현의 실제 다른 source revision·배포 identity다. CLI-only 전환 결과를 실행 중 노드·DB 불변의 실물 증거로 대체하지 않는다.
 
 [CLI·하네스 설계](../design/2026-11-15-rc4-cli-harness-implementation.md)의 runtime guard·유한 RPC 도구·수동 단일노드 입력 변환을 구현했다. 실제 RC4-02 원자료에서 입력9개·공급3개를 준비하고 자격증명6개·4-validator chain bytes를 보존했다. 변환 child 호출은0회다. RC4-04 당시 전체 `make check`는 Rust596 PASS, Python153개 중151 PASS·2 SKIP, fmt·Clippy와 Linux 타입 검사 PASS였다. 당시 입력 변환·CLI-only 결과의 JVM·노드·서비스 호출0회 이력은 유지한다.
 
-[RC4-05 Mac 서비스](../results/2026-11-15-rc4-macos-service.md)는 실제21사례 PASS다. 준비 취소·재개·한 항목 수정·재승인, 설치·등록·init1회와 수동 start/stop 각2회·같은 RC.4 DB 재시작을 확인했다. 이번 시험의 공급 사본3개가 원래 경로에 없는 상태로 운용하고 복원했으며 초기화 보고서0600·logs/diagnose 완전수집·조회7쌍과 reapply 무변경·payload269/JRE259/worker2개 불변을 확인했다. 독립 종료 감사도 PASS했으며 이번 `make check`는 Rust596 PASS, Python165개 중163 PASS·2기존 opt-in SKIP, fmt·Clippy PASS다. Rust 변경이 없어 Linux 타입 검사는 이번에 재실행하지 않았으며 RC4-04의 PASS 이력을 유지한다. **수동 단일노드 로컬 준비 상태만 검증했으며 RC.4 네트워크·RPC·실행 중 CLI 전환·사람 과업은 NOT_RUN**이다.
+[RC4-05 Mac 서비스](../results/2026-11-15-rc4-macos-service.md)는 실제21사례 PASS다. 준비 취소·재개·한 항목 수정·재승인, 설치·등록·init1회와 수동 start/stop 각2회·같은 RC.4 DB 재시작을 확인했다. 이번 시험의 공급 사본3개가 원래 경로에 없는 상태로 운용하고 복원했으며 초기화 보고서0600·logs/diagnose 완전수집·조회7쌍과 reapply 무변경·payload269/JRE259/worker2개 불변을 확인했다. 독립 종료 감사도 PASS했으며 RC4-05 당시 `make check`는 Rust596 PASS, Python165개 중163 PASS·2기존 opt-in SKIP, fmt·Clippy PASS다. Rust 변경이 없어 Linux 타입 검사는 이번에 재실행하지 않았으며 RC4-04의 PASS 이력을 유지한다. **RC4-05는 수동 단일노드 로컬 준비 상태의 검증**이며 당시 네트워크·RPC·실행 중 CLI 전환 미실행은 후속 결과와 구분한다. 사람 과업은 계속 NOT_RUN이다.
 
-[도입 계획](../design/2026-11-15-rc4-adoption-plan.md)의 다음 구현·인수 단계는 **RC4-06 새 DB·새 genesis의 동종 네트워크·변경 영향·실행 중 CLI 전환**이다. 기존 RC.3 lock/spec/runtime·인수 이력과 엄격한 관리 endpoint parser를 유지한다. 수신·준비·조립·CLI-only PASS와 수동 단일노드 서비스 관측을 RC.4 전체 네트워크 인수로 승계하지 않으며 추가 NIGO 선행 구현 요청은 없다.
+[RC4-06 네트워크 결과](../results/2026-11-16-rc4-macos-network.md)는 fresh 동종4-validator와 두 복구·wrong-pin·8거래/9제출, 실행 중 CLI 전환3회, 선정 RPC21사례/52read와 독립 RPC 감사가 PASS다. live 복구는 원 거래 무재제출, 같은 DB round-skew 재시작은 명시 재제출1회로 구분한다. 종료 독립 감사도 PASS해 정상 stop 12회 뒤 기록된 PID 107개(하네스 포함)·job 12개·8개 포트의 잔존 부재와 기존 서비스 baseline 불변을 확인했다. 원 fixture67파일·하네스9파일을 보존했으며 RC4-06 당시 제품/하네스 변경·`make check` 재실행은 없었다. RC4-05 검사 source136파일과 동일함을 확인했다. 정상 signed Type-4·성공 authorization simulation·KZG provider fault·중첩 host·Native 전체 recipe·Console 기능은 선정 RPC 범위 밖이며 NOT_RUN이다.
+
+RC4-07 정식 회신은 [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257)로 머지 완료했다. NIGO 작업자의 수신·동의 확인은 별도이며 BXDL 근거 공유 PR은 아직 미게시다. RC4-06 결과·계획 변경은 현재 로컬 미커밋 기록이다. [도입 계획](../design/2026-11-15-rc4-adoption-plan.md)의 Mac **RC4-08 CLI05-04는 NOT_RUN·이연**이다. 다음은 Linux 기반·고정 조합·systemd·실제 단일노드 인수와 Linux 사람 과업이다. 고정 runtime/JRE·기존 RC.3 지원·엄격한 parser를 유지하며 새 NIGO 선행 구현 요청은 없다. 위 결과는 지정 Mac 개발 조합의 인수로서 전체 제품·정식 출시 인수를 대신하지 않는다.
 
 새 RC.4 시험은 **새 DB·새 genesis·동일 RC.4 노드**로 구성한다. 같은 RC.4가 만든 DB의 재시작을 기존 RC.3 DB migration이나 혼합 버전 rolling upgrade 지원으로 해석하지 않는다. 엔진 계약 fingerprint가 RC.3와 동일해도 Native catalog·wire·DB 호환성의 증거가 아니며 RC.3의 PASS를 새 후보로 승계하지 않는다. 기존 사용자 노드·DB·키를 시험 자료로 사용하지 않는다.
 
@@ -58,15 +63,15 @@ workspace·checkpoint·출력은 symlink 조상, 의도하지 않은 hard link·
 
 ## 인수 분리
 
-이번 서비스 profile은 로그인된 현재 사용자의 GUI 세션에 명시 start로 bootstrap하는 LaunchAgent다. plist는 private control 아래 시도별로 생성하고 `~/Library/LaunchAgents`에는 등록하지 않는다. 로그인 자동 시작·자동 재시작·장기 운영 LaunchDaemon은 제공하지 않는다. Application Support 아래에서 package/control/data/config를 분리해 두는 위치를 권장하며 선택한 OS의 파일 접근·GUI 세션·실행 조건을 실제 인수해야 한다.
+기존 Mac 서비스 profile은 로그인된 현재 사용자의 GUI 세션에 명시 start로 bootstrap하는 LaunchAgent다. plist는 private control 아래 시도별로 생성하고 `~/Library/LaunchAgents`에는 등록하지 않는다. 로그인 자동 시작·자동 재시작·장기 운영 LaunchDaemon은 제공하지 않는다. Application Support 아래에서 package/control/data/config를 분리해 두는 위치를 권장하며 선택한 OS의 파일 접근·GUI 세션·실행 조건을 실제 인수해야 한다.
 
-RC.3·RC.4 exact profile은 [독립 관리 CLI](./management-cli.md)가 설치본의 인증된 고정 실행기에 start를 위임하도록 구현됐다. RC4-05에서 RC.4 수동 단일노드의 실행기 위임·같은 DB 재시작을 확인했으며 미지원 package의 native 경로는 동일 bytes 조건을 유지한다. 관리 CLI는 package 밖에서 교체하며, 내부 CLI 덮어쓰기와 기존 control/data의 migration은 제공하지 않는다. 시도별 JAR·CLI snapshot/private 로그의 자동 정리도 후속이다. 로그아웃·OS 종료에서는 launchd가 자체 강제 종료할 수 있으므로 수동 stop의 SIGKILL 미사용을 OS 전체 보장으로 확대하지 않는다.
+RC.3·RC.4 exact profile은 [독립 관리 CLI](./management-cli.md)가 설치본의 인증된 고정 실행기에 start를 위임하도록 구현됐다. RC4-05/06에서 RC.4 단일노드·동종망의 실행기 위임·같은 DB 재시작과 실행 중 CLI 전환을 확인했으며 미지원 package의 native 경로는 동일 bytes 조건을 유지한다. 관리 CLI는 package 밖에서 교체하며, 내부 CLI 덮어쓰기와 기존 control/data의 migration은 제공하지 않는다. 시도별 JAR·CLI snapshot/private 로그의 자동 정리도 후속이다. 로그아웃·OS 종료에서는 launchd가 자체 강제 종료할 수 있으므로 수동 stop의 SIGKILL 미사용을 OS 전체 보장으로 확대하지 않는다.
 
 logs/diagnose는 저장된 최신 시도의 제한된 이벤트를 정제해 수집하는 오프라인 기능이다. 실제 health·전체 파일 무결성·DB 안전성을 검사하지 않으며 보고서 생성 성공은 서비스 인수가 아니다. 수집 시간은 파일 작업 사이에서 확인하는 예산이며 막힌 파일시스템 호출의 강제 중단을 보장하지 않는다. [진단 사용 조건](./cli.md#오프라인-기록과-지원-보고서)을 따른다.
 
 2026-09-18 서비스 시험의 Oracle Java21.0.7 jlink는 과거 실행 fixture다. 현재 선정 Temurin과 구분하며, 그 과거 결과가 고객 재배포 승인이나 완전한 NOTICE/SBOM을 의미하지 않는다.
 
-G1-M은 Mac 사용자 설치·launchd·동일 데이터 재시작·사용자 흐름 검증이다. 같은 사용자 권한으로 CLI와 engine가 실행되므로 Linux 전용 service UID와 같은 격리를 주장하지 않는다. 지정 RC.2와 새 RC.3 package에서 4-validator 거래·동일 DB 재시작을 확인했으며 로그인/로그아웃·sleep·실패/재개 UX와 안전한 제거 등 전체 인수는 아직 미완료다.
+G1-M은 Mac 사용자 설치·launchd·동일 데이터 재시작·사용자 흐름 검증이다. 같은 사용자 권한으로 CLI와 engine가 실행되므로 Linux 전용 service UID와 같은 격리를 주장하지 않는다. 지정 RC.2/RC.3/RC.4 package에서 4-validator 거래·같은 DB 재시작을 각각 확인했으며 로그인/로그아웃·sleep·실패/재개 UX와 안전한 제거 등 전체 인수는 아직 미완료다.
 
 G1-L은 실제 Linux VM의 systemd·전용 UID·native·다중 host 네트워크 인수다. G1-D는 container 별도 인수다. 기존 사용자 node/data를 fixture로 사용하지 않는다. 개발 테스트와 과거 다른 revision의 evidence는 각 gate를 대신하지 않는다.
 

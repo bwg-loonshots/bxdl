@@ -14,6 +14,7 @@ mod product;
 mod runtime_http;
 mod runtime_result;
 pub mod setup_plan;
+pub mod systemd;
 
 pub use product::{ProductReport, preflight_product};
 

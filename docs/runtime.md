@@ -81,3 +81,20 @@ full JRE에 필요한 알려진 모듈이 포함되어도 NIGO 전체 호환성 
 RC.1의 기존 lifecycle 기록과 RC.2의 [Mac package 재인수 이력](../results/2026-10-21-macos-rc2-package.md)을 보존한다. 현재 선택한 RC.3의 같은 새 서명 archive에서 [4-validator·두 복구·wrong-pin](../results/2026-10-22-macos-rc3-package.md)과 [원본 공급 경로 부재 setup13사례](../results/2026-10-22-macos-rc3-setup.md)가 PASS다. setup은 제품 설정을 가져온 범위이며 전체14문답·cancel/hangup은 이번에 재실행하지 않았다. offline Storage A7은 NOT_RUN이고 기존 설치 upgrade·전체 G1-M은 후속이다. 각 후보의 JAR를 재빌드하지 않고 소비자 lifecycle·합의/복구와 공급자 engine/crypto/QBFT 검증을 각각 기록한다.
 JRE를 교체하면 같은 JAR여도 새 제품 패키지의 영향 범위를 다시 시험한다.
 원본 macOS bundle 서명, Apple notarization, 지원 최소 OS, Linux/Docker 지원은 여기서 확정하지 않는다.
+
+
+## Linux 기반 준비 — 2026-11-16
+
+실제 Linux 우선 개발의 첫 대상은 Ubuntu 24.04 LTS·x86_64·glibc다.
+`runtime stage`는 기존 `darwin/arm64` lock과 신규 `linux/amd64` lock을 구분해 검증한다.
+Linux lock의 `platform`에는 `os: "linux"`, `arch: "amd64"`, `javaMajor: 21`,
+`libc: "glibc"`가 모두 필요하다. Mac lock에는 `libc`를 추가하지 않는다.
+Linux ARM64·musl·Windows와 libc 미지정 Linux 입력은 출력 디렉터리를 만들기 전에 거절한다.
+
+staging은 실행 호스트와 다른 대상의 inventory도 오프라인으로 검증할 수 있으며 JVM을 실행하지 않는다.
+보고서 `platform`에 대상 조합을 남긴다. 이 결과는 바이너리의 Linux 호환성이나 glibc 최소 버전을 실행 검증한 결과가 아니다.
+선정 Linux JRE의 공급 archive·전체 inventory·출처·대응 source를 별도로 고정하고,
+같은 RC.4 JAR의 Linux engine-info·native/RocksDB 실행을 실제 Linux 머신에서 확인한 뒤 제품 조합을 인수한다.
+기존 Mac runtime lock·RC.4 archive와 과거 PASS를 Linux용으로 수정하거나 승계하지 않는다.
+현재 저장소의 Linux package spec은 예시이며 Linux JRE/실행기/관리 CLI 조합의 실물 인수는 NOT_RUN이다.
+세부 순서는 [Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따른다.

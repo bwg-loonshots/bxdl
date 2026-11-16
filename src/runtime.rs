@@ -46,6 +46,8 @@ pub struct Platform {
     pub os: String,
     pub arch: String,
     pub java_major: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub libc: Option<String>,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -67,6 +69,7 @@ pub struct StageReport {
     pub symlinks_materialized: usize,
     pub archive_verification: &'static str,
     pub runtime_execution: &'static str,
+    pub platform: Platform,
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct Stamp {
@@ -138,8 +141,14 @@ fn validate(lock: &RuntimeLock) -> Result<BTreeSet<String>> {
         || lock.kind != "bxdl-runtime-lock"
         || !label(&lock.vendor)
         || !label(&lock.version)
-        || lock.platform.os != "darwin"
-        || lock.platform.arch != "arm64"
+        || !matches!(
+            (
+                lock.platform.os.as_str(),
+                lock.platform.arch.as_str(),
+                lock.platform.libc.as_deref()
+            ),
+            ("darwin", "arm64", None) | ("linux", "amd64", Some("glibc"))
+        )
         || lock.platform.java_major != 21
         || !valid_hash(&lock.java_sha256)
         || lock.files.is_empty()
@@ -605,6 +614,7 @@ pub fn stage(options: &StageOptions) -> Result<StageReport> {
         symlinks_materialized: snapshot.values().filter(|s| s.link.is_some()).count(),
         archive_verification: "NOT_PERFORMED",
         runtime_execution: "NOT_PERFORMED",
+        platform: lock.platform,
     })
 }
 #[cfg(test)]

@@ -273,7 +273,7 @@ fn unavailable_install_update_and_rollback_do_not_prompt_or_create_storage() {
         ],
         true,
     );
-    if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+    if bxdl::management::host_target().is_some() {
         assert_eq!(checkout.code, 3, "{}{}", checkout.stdout, checkout.stderr);
         assert_eq!(checkout.json()["reasonCode"], "CLI_BUNDLE_REQUIRED");
     } else {
@@ -299,7 +299,7 @@ fn unavailable_install_update_and_rollback_do_not_prompt_or_create_storage() {
         }
         for tty in [false, true] {
             let result = invoke(&words, tty);
-            let expected_exit = if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+            let expected_exit = if bxdl::management::host_target().is_some() {
                 3
             } else {
                 4
@@ -412,18 +412,45 @@ fn management_capabilities_are_separate_from_runtime_installation() {
     let capabilities = result["data"]["capabilities"].as_array().unwrap();
     for capability in [
         "management-cli.v1",
-        "management.install.macos",
-        "management.update.macos",
         "management.info",
-        "management.rollback.macos",
         "management.bundle.build",
         "management.bundle.verify",
-        "install.macos",
         "completion.zsh",
-        "executor.rc3-legacy-v1",
-        "executor.rc4-v1",
     ] {
         assert!(capabilities.iter().any(|value| value == capability));
+    }
+    let platform_caps: &[&str] = match bxdl::management::host_target() {
+        Some("darwin-arm64") => &[
+            "management.install.macos",
+            "management.update.macos",
+            "management.rollback.macos",
+            "install.macos",
+            "executor.rc3-legacy-v1",
+            "executor.rc4-v1",
+        ],
+        Some("linux-amd64") => &[
+            "management.install.linux",
+            "management.update.linux",
+            "management.rollback.linux",
+        ],
+        _ => &[],
+    };
+    for capability in platform_caps {
+        assert!(capabilities.iter().any(|value| value == capability));
+    }
+    assert_eq!(
+        result["data"]["primaryTarget"],
+        bxdl::management::host_target().unwrap_or("unsupported")
+    );
+    if bxdl::management::host_target() == Some("linux-amd64") {
+        for unsupported in [
+            "management.install.macos",
+            "start.macos-launchagent",
+            "executor.rc3-legacy-v1",
+            "executor.rc4-v1",
+        ] {
+            assert!(!capabilities.iter().any(|value| value == unsupported));
+        }
     }
     let runtime = invoke(&["install", "--help"], false);
     assert!(runtime.stdout.contains("bxdl install <tar.gz>"));

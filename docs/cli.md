@@ -16,6 +16,17 @@
 
 engine 명령과 결합/등록형 preflight는 고정한 JVM의 cold 명령을 실행한다. cold timeout은 직접 child를 종료·회수하고 UNKNOWN/exit 6을 반환한다. 쓰기 작업인 init/resume-init은 TERM 후 최대 5초를 더 기다리며 SIGKILL하지 않는다. child가 살아 있거나 잠금을 보유할 수 있으므로 UNKNOWN을 종료 완료로 해석하지 않는다. 두 경로 모두 자동 재시도하지 않는다.
 
+## Linux 호스트 기준 확인
+
+Linux 사용자 목록·설치 준비 자료의 기본 경로는 `~/.local/share/BXDL`이다. `--home`으로 명시할 수 있으며 관리 CLI 설치 경로 `~/.local/share/BXDL-CLI`나 노드 DB 경로와는 별개다. Mac의 기존 기본 위치는 유지한다.
+이 기본값은 `nodes`와 이름 기반 `setup new/resume/list/show/edit`에 적용한다. 기존 `bxdl setup` 제품 초안 명령은 Linux에서 `--workspace`를 명시한다. 초안의 dataDirectory 제안은 시스템 서비스 설치 경로를 확정하지 않는다.
+
+`bxdl host check [--timeout-seconds 1..30] [--json]`은 Linux x86_64/glibc에서 OS·배포판·kernel·PID 1과 systemd system manager 상태를 읽기 전용으로 확인한다. 기본 조회 제한은 5초다. sudo·설치·unit 등록·서비스 시작/종료는 수행하지 않는다.
+
+Ubuntu 24.04·systemd 255 이상·manager running이면 `SUCCEEDED/HOST_BASELINE_OBSERVED`와 exit 0을 반환한다. 이는 기준 환경 관측 결과이며 엔진이나 서비스 인수 성공이 아니다. Mac/미지원 target, 다른 배포판, systemd 조건 미충족 또는 WSL은 `INCOMPLETE`와 exit 3을 반환하고 WSL의 reasonCode는 `HOST_WSL_DEFERRED`다. 조회 실패도 exit 3이며 인자 오류는 exit 2다.
+
+JSON에는 `scope=READ_ONLY_HOST_BASELINE`, `linuxServiceControl=NOT_IMPLEMENTED`, `engineAcceptance=NOT_RUN`, `serviceMutations=0`을 구분해 기록한다. Linux 관리 CLI 설치·업데이트는 추가되었지만 Linux 노드 설치·초기화·start/stop은 아직 구현 중이다. [Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따른다.
+
 ## 명령별 도움말과 대화형 입력
 
 `bxdl help`와 인자 없는 실행은 내 노드·운용·설치·제작 과업별 진입점을 보여준다. 상세 옵션은 각 명령 도움말에서 확인한다. `bxdl start --help`, `bxdl setup --install --help`, `bxdl setup --network --help`처럼 해당 명령·모드의 사용법을 직접 볼 수 있다. 도움말 조회는 질문을 읽거나 설치·초기화·서비스를 실행하지 않는다. 도움말 호출에는 해당 명령·모드와 도움말 옵션만 지정하며 실행 옵션·파일 경로를 함께 넣지 않는다.
@@ -233,4 +244,4 @@ logs는 수집 결과를 출력한다. diagnose는 이미 존재하는 부모 �
 
 ## 미구현 명령
 
-upgrade/uninstall은 명시적인 UNSUPPORTED 오류를 반환한다. no-op 성공이나 가짜 PID/engine 상태를 만들지 않는다. 로그인 자동 시작·장기 운영 LaunchDaemon·Linux/systemd·Docker와 인증된 원격 관리는 아직 제공하지 않는다. macOS를 첫 UX 대상으로 구현할 순서는 [Mac 우선 설계](../design/2026-09-17-rust-macos-first.md)를 따른다.
+upgrade/uninstall은 명시적인 UNSUPPORTED 오류를 반환한다. no-op 성공이나 가짜 PID/engine 상태를 만들지 않는다. 로그인 자동 시작·장기 운영 LaunchDaemon·Linux/systemd·Docker와 인증된 원격 관리는 아직 제공하지 않는다. Mac 최초 구현 이력은 [Mac 우선 설계](../design/2026-09-17-rust-macos-first.md), 현재 우선순위는 [실제 Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따른다.

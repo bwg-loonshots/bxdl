@@ -763,3 +763,15 @@ fn help_options_are_offered_only_for_exact_supported_help_forms() {
         assert!(!candidates.contains(&"-h"), "{}", result.stdout);
     }
 }
+
+#[test]
+fn host_check_completion_only_proposes_syntax() {
+    assert_eq!(
+        complete(1, &["host", ""]).candidates("values"),
+        vec!["check"]
+    );
+    assert_eq!(
+        complete(2, &["host", "check", "--time"]).candidates("values"),
+        vec!["--timeout-seconds"]
+    );
+}

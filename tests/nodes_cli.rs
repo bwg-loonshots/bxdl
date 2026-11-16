@@ -561,3 +561,53 @@ fn overlapping_management_location_is_rejected_before_any_write() {
     }
     assert_eq!(snapshot(&fixture.root), before);
 }
+
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+#[test]
+fn native_default_catalog_is_read_only_and_ignores_xdg_override() {
+    let mut fixture = Fixture::new();
+    fixture.home = fixture.root.join(if cfg!(target_os = "macos") {
+        "Library/Application Support/BXDL"
+    } else {
+        ".local/share/BXDL"
+    });
+    let run = |args: &[&str]| {
+        let output = std::process::Command::new(env!("CARGO_BIN_EXE_bxdl"))
+            .args(args)
+            .env("HOME", &fixture.root)
+            .env("XDG_DATA_HOME", fixture.root.join("ignored-xdg"))
+            .stdin(std::process::Stdio::null())
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+        assert!(output.stderr.is_empty());
+        String::from_utf8(output.stdout).unwrap()
+    };
+    let before = snapshot(&fixture.root);
+    let absent: Value = serde_json::from_str(&run(&["nodes", "--json"])).unwrap();
+    assert!(absent["data"]["entries"].as_array().unwrap().is_empty());
+    assert_eq!(snapshot(&fixture.root), before);
+
+    fixture.add("local").assert_code(0);
+    let before = snapshot(&fixture.root);
+    let listed: Value = serde_json::from_str(&run(&["nodes", "--json"])).unwrap();
+    assert_eq!(listed["data"]["entries"][0]["name"], "local");
+    assert_eq!(
+        run(&[
+            "completion",
+            "__complete",
+            "--cursor",
+            "1",
+            "--",
+            "status",
+            "loc"
+        ]),
+        "values\nlocal\n"
+    );
+    assert_eq!(snapshot(&fixture.root), before);
+    assert!(!fixture.root.join("ignored-xdg").exists());
+}

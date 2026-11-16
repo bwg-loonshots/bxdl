@@ -2,14 +2,14 @@
 
 - 작성일: 2026-09-16
 - 상태: 기반 구현 IN_PROGRESS. 현재 구현·부분 완료·공급 대기는 [작업 상태](../docs/implementation-status.md)에 기록하며, 아래 표는 전체 완료 기준을 유지한다.
-- 플랫폼 방향 확정: 2026-09-17. 사용자 확정: **Rust 전환 + macOS Apple Silicon 로컬 운영 우선**, Linux 서버/systemd와 Docker/Compose는 후속이다.
-- 실행 순서 갱신: 2026-11-15. [RC.4 수신·패키징·관리 CLI 조합 인수](./2026-11-15-rc4-adoption-plan.md)를 진행한다. RC4-01 [실물 수신·engine-info 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md), RC4-02 [영향 확인·실제 fixture 준비](../results/2026-11-15-rc4-fixture-preparation.md), RC4-03 [서명 runtime 조립·lock/spec 명시 선택](../results/2026-11-15-rc4-runtime-assembly.md), RC4-04 [외부 관리 CLI/인수 도구·CLI-only 검증](../results/2026-11-15-rc4-cli-harness.md)·[JSON](../results/2026-11-15-rc4-cli-harness.json)을 완료했다. 같은 고정 R+A/B의 [RC4-05 Mac 수동 단일 노드 서비스](../results/2026-11-15-rc4-macos-service.md)·[JSON](../results/2026-11-15-rc4-macos-service.json)는 실물21사례·독립 감사·전체 회귀 PASS로 완료했다. 다음은 RC4-06 동종망·RPC 인수이며 네트워크·RPC·사람 과업은 NOT_RUN이다. 기존 RC.3 지원과 과거 PASS/partial은 보존한다.
-- 플랫폼 기준: [Rust 전환·macOS 우선 UX](./2026-09-17-rust-macos-first.md). 기존 M/BX 식별자는 작업 추적을 위해 유지하며 과거 Go 실행 근거를 Rust 결과로 바꾸지 않는다.
+- 플랫폼 방향: 2026-09-17 Rust·Mac 우선 결정을 거쳐, **2026-11-16 실제 Linux 머신 우선 개발·검증으로 변경**했다. [Linux 우선 계획](./2026-11-16-linux-first-implementation-plan.md)의 LNX-01~06을 실행하고 WSL2는 LNX-07 후속으로 둔다. Mac 기능·과거 인수·Rust 선택은 유지한다.
+- 실행 순서 갱신: 2026-11-16. [RC.4 도입 계획](./2026-11-15-rc4-adoption-plan.md)의 RC4-01~07을 완료했다. [수신](../contracts/nigo/engine-rc4-2026-11-15/README.md)·[시험 자료 준비](../results/2026-11-15-rc4-fixture-preparation.md)·[runtime 조립](../results/2026-11-15-rc4-runtime-assembly.md)·[관리 CLI 구현](../results/2026-11-15-rc4-cli-harness.md)에 이어 [RC4-05 단일 노드](../results/2026-11-15-rc4-macos-service.md)와 [RC4-06 동종망·RPC·실행 중 CLI 전환](../results/2026-11-16-rc4-macos-network.md)·[JSON](../results/2026-11-16-rc4-macos-network.json)을 각각 실제 검증했다. Mac RC4-08/CLI05-04 사람 과업은 NOT_RUN·이연이다. 다음은 실제 Linux 기반·고정 공급물·systemd·단일노드 인수와 Linux 사용자 과업이다. NIGO 정식 소비자 회신은 전용 worktree에서 작성해 [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257)로 게시·머지했다. 상대 작업자의 수신 확인·검토 동의는 별도이며 아직 완료로 기록하지 않는다. BXDL의 RC4-06 결과·이번 계획 갱신은 아직 미커밋이고 BXDL 근거 PR은 미게시다. 기존 RC.3 지원과 과거 PASS/partial은 보존한다.
+- 플랫폼 기준: [현재 Linux 우선 계획](./2026-11-16-linux-first-implementation-plan.md), [Rust 전환·Mac 우선 결정 이력](./2026-09-17-rust-macos-first.md). 기존 M/BX 식별자는 작업 추적을 위해 유지하며 과거 Go 실행 근거를 Rust 결과로 바꾸지 않는다.
 - 연결: [아키텍처](./2026-09-16-product-architecture.md), [엔진 계약](./2026-09-16-engine-integration.md), [인수 계획](./2026-09-16-acceptance-and-release.md).
 
 ## 1. 첫 구현 범위와 단계
 
-첫 제품은 **macOS arm64 오프라인 패키지 + Rust CLI/setup + 사용자 LaunchAgent + 기존 엔진 콘솔**이다. 하나의 validator instance를 설치·초기화·시작·종료·진단하고 동일 데이터로 재시작하는 로컬 UX를 먼저 검증한다. test-owned 4-validator mTLS 로컬 회귀를 포함하며 Linux 다중 호스트 인수와 구분한다. setup·파일 설치·등록/초기화·수동 LaunchAgent 연결까지 구현했으며 부분 검증과 전체 잔여 인수는 [현재 상태](../docs/implementation-status.md)를 따른다.
+최초 제품 범위는 **macOS arm64 오프라인 패키지 + Rust CLI/setup + 사용자 LaunchAgent + 기존 엔진 콘솔**이었다. 하나의 validator instance를 설치·초기화·시작·종료·진단하고 동일 데이터로 재시작하는 로컬 UX를 먼저 검증한다. test-owned 4-validator mTLS 로컬 회귀를 포함하며 Linux 다중 호스트 인수와 구분한다. setup·파일 설치·등록/초기화·수동 LaunchAgent 연결까지 구현했으며 부분 검증과 전체 잔여 인수는 [현재 상태](../docs/implementation-status.md)를 따른다.
 
 단계는 작업 분해를 위한 것이다. 매 단계마다 사용자에게 새 승인을 요구하는 절차가 아니다. 실행 권한·외부 게시가 필요한 작업은 실제 구현 당시 사용자 요청 범위와 환경 권한에 따른다. 이 문서는 구현·외부 게시를 이미 수행했다는 기록이 아니다.
 
@@ -21,11 +21,11 @@
 | M3 | Mac setup·설치·launchd·상태·진단 | M1+M2, NIGO-04 | 사용자 profile lifecycle와 로그인·sleep·단절/실패 검증 |
 | M4 | Mac package의 로컬 QBFT 인수·첫 RC | M3, NIGO-01~04/06 | G1-M의 필수 항목 모두 PASS |
 | M5 | 검증한 버전 쌍 업데이트·오프라인 검사 | 해당 profile의 M4, compatibility, NIGO-05 | 해당 G1 profile 회귀 + G2 |
-| M6 | Linux·Docker profile 및 고객 운영 확대 | M4 및 선택 기능의 선행 계약 | G1-L·G1-D, 원격 보안·키 운영·복원·SLO별 독립 인수 |
+| M6 | Linux·Docker profile 및 고객 운영 확대 | 현재 Linux는 공통 M1~M3 기반과 LNX 단계 의존성, 선택 기능의 선행 계약. Mac G1-M 전체 완료를 착수 선행으로 두지 않음 | G1-L·G1-D, 원격 보안·키 운영·복원·SLO별 독립 인수 |
 
 M1의 artifact/installer 개발, M2의 설정 adapter, M3의 setup/launchd test harness는 fixture로 병행 가능하다. 실제 init/preflight/start 성공을 주장하려면 합의된 엔진 산출물을 연결해야 한다. 공급 계약이 없으면 해당 작업만 BLOCKED로 기록하고 독립 작업을 계속한다.
 
-G1-M은 같은 Mac UID의 사용자 profile, G1-L은 root 제어자·전용 service UID·systemd 서버 profile, G1-D는 후속 container profile이다. Linux와 Docker의 플랫폼 확장은 M6에서 추적하며 M5의 두 번째 release 공급을 기다릴 필요는 없다. 최신 결정의 R0~R6은 플랫폼별 진행 순서이고 M0~M6은 기존 작업 분류다.
+G1-M은 같은 Mac UID의 사용자 profile, G1-L은 root 제어자·전용 service UID·systemd 서버 profile, G1-D는 후속 container profile이다. Linux와 Docker의 플랫폼 확장은 M6에서 추적하며 M5의 두 번째 release 공급을 기다릴 필요는 없다. R0~R6은 기존 Mac 진행 순서이고 M0~M6은 작업 분류다. 현재 실제 Linux는 [LNX-01~07](./2026-11-16-linux-first-implementation-plan.md) 순서로 실행하며 Mac 사람 과업·G1-M 전체 완료를 기다리지 않는다.
 
 ## 2. M0 — 구현 기준 확정
 
@@ -37,7 +37,7 @@ G1-M은 같은 Mac UID의 사용자 profile, G1-L은 root 제어자·전용 serv
 | BX-004 | BXDL 제안, NIGO 합의 / 계약 요청 초안 | NIGO-01~06의 우선 결과·fixture·인수 기준 협의 | 실제 NIGO 요구 ID·owner·제공 상태 기록. 작성만으로 ACCEPTED 처리하지 않음 |
 | BX-005 | BXDL / 테스트 환경 사양 | test-owned Mac instance/LaunchAgent·data/ports/PKI, 오프라인 구간·증거 위치 정의 | 기존 사용자 node·서비스를 사용하지 않는 teardown와 자원 상한; Linux VM·Docker는 별도 환경 |
 
-Rust와 Mac 우선은 사용자 결정이다. Java 21 동봉·RocksDB·signed development tar.gz를 초기 안으로 유지하되 JRE 공급자·patch·hash와 macOS 최소 버전은 실제 조합으로 확정한다. Rust 의존성의 license·갱신 책임을 기록하며 Go의 무외부의존성 특성을 재사용하지 않는다. Linux 배포판·systemd/glibc와 Docker base/image 조합은 해당 후속 profile에서 선정한다.
+Rust와 초기 Mac 우선은 당시 사용자 결정이며 현재 실행 우선순위는 실제 Linux다. Java 21 동봉·RocksDB·signed development tar.gz를 초기 안으로 유지하되 JRE 공급자·patch·hash와 macOS 최소 버전은 실제 조합으로 확정한다. Rust 의존성의 license·갱신 책임을 기록하며 Go의 무외부의존성 특성을 재사용하지 않는다. Linux 배포판·systemd/glibc는 현재 LNX 단계에서 확정하고 Docker base/image 조합은 후속 profile에서 선정한다.
 
 ## 3. M1 — 공급 산출물과 package 기반
 
@@ -77,7 +77,7 @@ Rust와 Mac 우선은 사용자 결정이다. Java 21 동봉·RocksDB·signed de
 
 Mac 설치는 자동 시작하지 않는다. setup은 설정 초안과 검사·수정·취소/재개를 제공하고 init/start는 명시 작업으로 분리한다. 수동 init·start·상태 검증 후 로그인 시 시작을 opt-in할 수 있게 한다. 사용자 LaunchAgent는 로그인 세션 실행이며 부팅 전 server daemon이 아니다. 미완료 upgrade/init·복구 필요 marker에서는 자동 시작하지 않는다. 무제한 KeepAlive는 기본으로 두지 않는다.
 
-서비스 직접 시작에도 artifact/identity/복구 필요 gate를 적용한다. Mac은 gate 후 exec하는 제한된 wrapper 등으로 JVM에 신호가 도달하게 한다. Linux 후속 profile은 `systemctl start`와 재부팅에도 `ExecStartPre` 또는 동등한 통제를 적용한다. 실제 엔진의 startup 검증은 계속 필요하다. 서비스 제거 요청만으로 정상 종료를 확정하지 않으며 OS가 강제 종료할 수 있는 조건도 해당 profile에서 검증한다.
+서비스 직접 시작에도 artifact/identity/복구 필요 gate를 적용한다. Mac은 gate 후 exec하는 제한된 wrapper 등으로 JVM에 신호가 도달하게 한다. Linux 서버 profile은 `systemctl start`와 재부팅에도 `ExecStartPre` 또는 동등한 통제를 적용한다. 실제 엔진의 startup 검증은 계속 필요하다. 서비스 제거 요청만으로 정상 종료를 확정하지 않으며 OS가 강제 종료할 수 있는 조건도 해당 profile에서 검증한다.
 
 Mac 첫 profile은 sudo 없이 같은 사용자 UID의 CLI·engine로 운영한다. 별도 control 디렉터리·0700/0600은 같은 UID engine의 journal 변조나 instance 간 접근을 막는 강한 경계가 아니다. Linux G1-L에서는 root 제어 journal과 instance별 서비스 UID를 분리해 그 경계를 실제 검사한다. 범용 root daemon·원격 shell·무제한 passwordless sudo를 만들지 않는다.
 
@@ -85,17 +85,19 @@ Mac 첫 profile은 sudo 없이 같은 사용자 UID의 CLI·engine로 운영한�
 
 현재 RC.4는 [RC4-01~04](./2026-11-15-rc4-adoption-plan.md)의 수신·fresh 준비·R/A 고정·lock/spec 명시 선택과 외부 B/인수 하네스 구현·CLI-only 검증을 완료했다. clean `65fe83f0d569fcf2231474342fa0d60ca72555d5`에서 B를 빌드했고 고정 R/A는 보존했다. `make check` Rust596/Python151 PASS·2 SKIP·fmt/Clippy와 Linux 타입 검사, signed CLI-only 설치·구형 bootstrap→B update·RC.3 전용 update/rollback 거절 및 현재 선택 보존을 통과했다. CLI-only 검증의 노드/JVM0, 실제 새 서비스 입력 복사의 child0을 제품 실행과 구분한다.
 
-후속 [RC4-05 로컬 서비스](../results/2026-11-15-rc4-macos-service.md)는21사례 PASS다. imported `--from`의 취소/resume/edit·새 revision, 조회 무쓰기, 원래 supply3파일 경로 부재에서 V2 사본 운용·복원, report0600 완전수집, 같은 DB init1/start2/stop2·payload/JRE/worker 불변을 확인했다. 독립 감사 및 `make check` Rust596·Python165개 중163 PASS/기존 opt-in2 SKIP·fmt/Clippy를 통과했다. 이번 Linux 타입 검사는 재실행하지 않았으며 위 RC4-04의 PASS 이력을 유지한다. 다음은 RC4-06 동종망·복구·선정 RPC21사례/52read → RC4-07 회신·RC4-08 사람 과업 순서다. `MANUAL_START_INITIALIZED` 로컬 인수와 동종망·RPC·사람 과업 NOT_RUN을 구분하며 정상 signed Type-4·provider fault·Native recipe·Console 기능 등의 제외 범위는 [RC4-04 설계](./2026-11-15-rc4-cli-harness-implementation.md)를 따른다. NIGO 선행 대기는 없으며 RC.3 지원은 보존·회귀한다. 이 작업의 PASS만으로 로그인·sleep·REM-01·공급망 등 모든 G1-M 잔여가 완료되지는 않는다.
+후속 [RC4-05 로컬 서비스](../results/2026-11-15-rc4-macos-service.md)는21사례 PASS다. imported `--from`의 취소/resume/edit·새 revision, 조회 무쓰기, 원래 supply3파일 경로 부재에서 V2 사본 운용·복원, report0600 완전수집, 같은 DB init1/start2/stop2·payload/JRE/worker 불변을 확인했다. 당시 독립 감사 및 `make check` Rust596·Python165개 중163 PASS/기존 opt-in2 SKIP·fmt/Clippy를 통과했다. Linux 타입 검사는 RC4-04의 PASS 이력과 구분한다.
+
+[RC4-06 동종망 결과](../results/2026-11-16-rc4-macos-network.md)는 고정 R/A를 유지한 4-validator mTLS·거래/복구·wrong-pin, 관리 CLI B→C→B→C의3전환과 RPC21사례/52read를525.714초의 한 실행에서 검증했다. init5·run12·정상 stop12, 거래8개/제출9회이며 live 복구의 nonce3은 재제출하지 않았고 같은 DB 전체 재시작의 nonce5만 같은 bytes로1회 명시 재제출했다. source fixture67파일과 실행 하네스9파일을 보존했다. RPC 전후 관측5계정의 balance/nonce/code가 같았고 독립 RPC 감사도 PASS다. 전체 독립 종료 감사도 PASS했으며 하네스를 포함한 기록 PID107개·LaunchAgent12개·시험8포트의 잔존 부재와 기존 서비스 기준선 불변을 확인했다. 설치본5개 각각의 payload269파일·JRE259파일도 일치했다. Rust·하네스 코드 변경과 `make check` 재실행은 없으며 RC4-05에서 검사한136파일이 C clean source와 같음을 대조했다. 이전596/163 PASS·2 SKIP를 이번 신규 시험 수로 복사하지 않는다. RC4-07 정식 회신은 [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257) 머지로 게시를 완료했고 Mac RC4-08 사람 과업은 NOT_RUN·이연이다. 정상 signed Type-4·provider fault·Native 전체 recipe·Console 기능은 [선정 범위](./2026-11-15-rc4-cli-harness-implementation.md) 밖이다. NIGO 엔진 선행 구현 대기는 없으며 전체 G1-M/J5·로그인/sleep·REM-01은 별도다.
 
 | 작업 ID | 산출물 | 구현·검증 | 완료 기준 |
 | --- | --- | --- | --- |
-| BX-040 | `tests/acceptance`, Mac runner; 후속 Linux/Docker runner | 완성 package의 설치·setup·lifecycle·실패 suite | 먼저 [G1-M 인수](./2026-09-16-acceptance-and-release.md), G1-L/D는 별도 profile evidence |
+| BX-040 | `tests/acceptance`, 기존 Mac·다음 Linux runner, 후속 Docker | 완성 package의 설치·setup·lifecycle·실패 suite | Linux 우선 단계와 [G1-M/L/D 인수](./2026-09-16-acceptance-and-release.md)를 별도 profile evidence로 기록 |
 | BX-041 | 4-validator test harness | 같은 archive의 Mac 로컬 instance, mTLS·거래·재시작·peer 부정 사례 | finalized hash/root와 후속 확정; Linux 다중 호스트는 G1-L 별도 인수 |
 | BX-042 | `docs/` 운영 문서 | 설치·PKI 입력·init·start/stop·diagnose·용량 관리·장애 절차 | 작성자가 아닌 세션/검토자가 package+문서만으로 재현 |
 | BX-043 | `results/<candidate>/` | 제품/엔진/runtime hash, 환경, fixture·실행 근거, 제한 목록 | evidence sanitizer 통과; 테스트한 바이트 그대로 RC로 승격 |
 | BX-044 | `.github/workflows` 또는 동등 runner | Rust PR 검사, Mac candidate 인수, 후속 Linux/Docker 인수와 release promotion 분리 | 해당 profile 필수 gate 미완료면 발행 차단; NIGO workflow·스케줄은 변경하지 않음 |
 
-첫 RC는 **G1-M Mac 로컬 운영 패키지**다. Linux/systemd·다중 호스트·Docker·일반 고객 production·원격 API 승인을 포함하지 않는다. 동일 validator key로 standby 복제본을 자동 기동하는 failover는 제공하지 않는다.
+최초 RC 목표는 G1-M Mac 로컬 운영 패키지였으며 당시 Mac 지정 조합 결과를 보존한다. 현재 개발 순서는 실제 Linux 우선이지만 G1-M·G1-L 각각의 전체 필수 gate는 별도다. Linux/systemd 기반 코드만으로 다중 host·Docker·일반 고객 production·원격 API 승인을 포함하지 않는다. 동일 validator key로 standby 복제본을 자동 기동하는 failover는 제공하지 않는다.
 
 ## 7. M5 — 업데이트와 오프라인 도구
 
@@ -110,7 +112,7 @@ RC.4 공급은 두 번째 호환 엔진 release의 확보를 뜻하지 않는다
 
 첫 RC에 두 번째 호환 엔진 release가 없으면 upgrade는 plan/실패 fixture까지만 제공하거나 명령을 미지원으로 둔다. 성공 경로를 시험하지 않은 apply를 공식 기능으로 내보내지 않는다. 유지보수 tool 제공 지연은 G1을 막지 않지만 해당 기능 출시는 막는다.
 
-## 8. M6 — 후속 제품화
+## 8. M6 — Linux 우선 확장과 후속 제품화
 
 | 항목 | 선행 조건 | 범위 |
 | --- | --- | --- |
@@ -136,7 +138,7 @@ PR은 위 묶음 안에서 리뷰 가능한 크기로 나누되 public DTO 변�
 
 ## 10. 일정 산정과 주요 위험
 
-RC.4 개발 후보는 공급 완료됐으나 BXDL 실물 재인수·전체 지원 Mac 조합·후속 Linux/Docker 환경·정식 출시 조건은 별도로 남아 있어 전체 완료 날짜를 약속하지 않는다. M0 후 각 작업을 구현/실제 인수/공급 대기 시간으로 나눠 산정한다. CPU·JRE·backend를 늘릴 때 지원 matrix와 테스트 비용을 함께 늘린다.
+RC.4 개발 후보의 지정 Mac 기술 재인수와 회신 게시를 완료했으나 전체 G1-M·Linux 실제 조합/G1-L·후속 WSL2/Docker·정식 출시 조건은 별도로 남아 있어 전체 완료 날짜를 약속하지 않는다. M0 후 각 작업을 구현/실제 인수/공급 대기 시간으로 나눠 산정한다. CPU·JRE·backend를 늘릴 때 지원 matrix와 테스트 비용을 함께 늘린다.
 
 | 위험 | 대응·판정 |
 | --- | --- |
@@ -147,4 +149,4 @@ RC.4 개발 후보는 공급 완료됐으나 BXDL 실물 재인수·전체 지�
 | 범위 확대 | G1에서 신규 웹·fleet·전 backend 지원 제외; 필요한 기능은 M5/M6에 독립 조건 추가 |
 | 오래된 운영 문구 재사용 | 최신 source·해당 task evidence 교차 확인. 수동 GC/자동 GC·inspect/backup 차이를 유지 |
 
-최초 구현 착수 지점은 BX-001~005와 BX-010~014였으며 완료된 부분은 현재 상태 문서에 보존한다. RC4-01~04 수신·준비·runtime 조립과 선택·외부 관리 CLI B/인수 도구 및 CLI-only 검증에 이어 RC4-05 로컬 서비스 실물 PASS를 확인했다. RC4-01~05 DONE이며 다음 착수 지점은 고정 R+B의 RC4-06 동종망·RPC 인수다. M/BX ID는 전체 제품 완료 기준을 추적하는 데 계속 사용한다.
+최초 구현 착수 지점은 BX-001~005와 BX-010~014였으며 완료 이력은 유지한다. RC4-01~07 수신·준비·runtime/관리 CLI와 Mac 단일 노드·동종망 인수 및 정식 회신 게시를 완료했다. Mac RC4-08/CLI05-04는 NOT_RUN·이연하며 다음은 [Linux 우선 계획](./2026-11-16-linux-first-implementation-plan.md)의 기반·실물 인수·Linux 사람 과업이다. NIGO 정식 소비자 회신은 전용 worktree에서 작성해 [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257)로 게시·머지했다. 상대 작업자의 수신 확인·검토 동의는 별도이며 아직 완료로 기록하지 않는다. M/BX ID는 전체 제품 완료 기준을 추적하는 데 계속 사용한다.

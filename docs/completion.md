@@ -8,7 +8,7 @@ CLI05-01에서 zsh 자동완성을 구현·검증했다. 전체 검사와 최종
 
 ## 현재 터미널에서 사용하기
 
-먼저 새 관리 CLI를 실행할 수 있도록 준비한다. CLI 전용 Mac 배포본은 [독립 설치·업데이트 가이드](./management-cli.md)에 따라 설치한다. 기본 위치에 설치했다면 다음과 같이 PATH를 연결한다.
+먼저 새 관리 CLI를 실행할 수 있도록 준비한다. CLI 전용 배포본은 [독립 설치·업데이트 가이드](./management-cli.md)에 따라 설치한다. 기본 위치에 설치했다면 다음과 같이 PATH를 연결한다.
 
 ```zsh
 export PATH="$HOME/.local/bin:$PATH"
@@ -47,7 +47,7 @@ bxdl status local --[Tab]              → 해당 명령의 옵션
 bxdl status --home "/path/to/team home" lo[Tab]
 ```
 
-`local`은 예시다. 실제 저장된 이름만 제안하며 `setup new`나 `nodes add`의 새 이름은 사용자가 정한다. `--home`이 있는 명령줄은 그 관리 위치의 이름을 사용하고 없으면 Mac의 `~/Library/Application Support/BXDL`을 사용한다. 다른 OS에서는 명시 `--home`을 사용한다. `--home`, `--instance`, 입력 파일 등의 경로 값에서는 zsh의 디렉터리/파일 완성을 사용한다.
+`local`은 예시다. 실제 저장된 이름만 제안하며 `setup new`나 `nodes add`의 새 이름은 사용자가 정한다. `--home`이 있는 명령줄은 그 관리 위치의 이름을 사용하고 없으면 Mac의 `~/Library/Application Support/BXDL`, Linux의 `~/.local/share/BXDL`을 사용한다. Linux에서도 현재 자동완성은 zsh 전용이며 bash/fish 완성은 후속이다. `--home`, `--instance`, 입력 파일 등의 경로 값에서는 zsh의 디렉터리/파일 완성을 사용한다.
 
 후보 조회는 명령줄의 변수나 명령 치환을 평가하지 않는다. 예를 들어 `--home "$HOME/team"` 또는 `--home '$HOME/team'`의 `$HOME`은 후보 조회에서 실제 경로로 바꾸지 않는다. 명시 `--home`에는 절대경로나 이미 완성된 경로를 입력하면 같은 이름 목록을 조회할 수 있다. `$(...)`도 실행하지 않는다. `--home ~/team`처럼 따옴표 없는 별도 인자의 `~/` 접두어는 현재 HOME 경로로 안전하게 바꿔 조회한다. 따옴표 안의 `~/`, `--home=~/team`, `~다른사용자/`는 이 변환에 포함하지 않으므로 절대경로나 이미 완성된 경로를 사용한다.
 
@@ -89,4 +89,4 @@ Tab 조회는 관리 폴더·잠금·기록을 만들거나 수정하지 않으�
 
 후보가 나타나지 않으면 `command -v bxdl`과 `bxdl completion zsh --help`로 새 관리 CLI를 선택했는지 확인한다. 별도 관리 위치의 이름은 같은 명령줄에 `--home`을 입력한 뒤 완성한다. 잘못된 명령/옵션 조합이나 후보 조회 실패는 후보 없이 끝나며, 자동으로 다른 관리 위치를 찾아보거나 설정을 복구하지 않는다.
 
-자동완성은 관리 CLI의 입력 편의 기능이다. 기존 RC.3 runtime package를 다시 만들지 않으며 NIGO/JRE·노드 DB·LaunchAgent 동작은 바꾸지 않는다. 독립 Mac 관리 CLI 배포·업데이트는 [사용 가이드](./management-cli.md)를 따른다. 새 CLI와 기존 runtime 조합의 서비스/네트워크 인수, 작성자가 아닌 사용자의 과업 검증은 [CLI-05 후속 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)에 따로 남긴다.
+자동완성은 관리 CLI의 입력 편의 기능이다. 기존 RC.3 runtime package를 다시 만들지 않으며 NIGO/JRE·노드 DB·LaunchAgent 동작은 바꾸지 않는다. 독립 관리 CLI 배포·업데이트는 [사용 가이드](./management-cli.md)를 따른다. 새 CLI와 기존 runtime 조합의 서비스/네트워크 인수, 작성자가 아닌 사용자의 과업 검증은 [CLI-05 후속 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)에 따로 남긴다.

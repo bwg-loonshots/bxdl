@@ -57,6 +57,7 @@ pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
   bxdl package build --help               패키지 조립
   bxdl package verify --help              서명·파일 검증
   bxdl runtime stage --help               고정 JRE 준비
+  bxdl host check                         Linux 호스트 환경 확인
   bxdl engine inspect --help              엔진 identity 검사
   bxdl engine preflight --help            native 설정 cold 검사
 
@@ -75,7 +76,8 @@ pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
   bxdl help <명령>                         같은 명령별 안내
   bxdl version [--json]                    CLI 식별 정보
 
-macOS arm64 우선입니다. start/status/stop은 Mac 사용자 LaunchAgent를 사용합니다.
+Linux amd64/glibc의 관리 CLI 설치·환경 확인과 macOS arm64를 지원합니다.
+노드 start/status/stop은 현재 Mac 사용자 LaunchAgent만 지원하며 Linux systemd 연결은 후속입니다.
 console은 기존 구현을 보존하며 추가 개발은 중단했습니다. bxdl console --help로 확인할 수 있습니다.
 "#;
 
@@ -266,6 +268,13 @@ pub fn run_with_input<'a>(
                 7
             };
         }
+        if response.command == "host check" {
+            return if print_host_summary(out, &data).is_ok() {
+                exit
+            } else {
+                7
+            };
+        }
         if matches!(response.command.as_str(), "nodes" | "nodes add") {
             return if print_nodes_summary(out, &data, response.command == "nodes add").is_ok() {
                 exit
@@ -316,6 +325,42 @@ pub fn run_with_input<'a>(
         }
     }
     exit
+}
+
+fn print_host_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
+    let text = |key: &str| data[key].as_str().unwrap_or("NOT_CHECKED");
+    writeln!(out, "  호스트: {} / {}", text("os"), text("arch"))?;
+    if let Some(distribution) = data.get("distribution").filter(|v| v.is_object()) {
+        writeln!(
+            out,
+            "  배포판: {} {}",
+            distribution["id"].as_str().unwrap_or("UNKNOWN"),
+            distribution["versionId"].as_str().unwrap_or("UNKNOWN")
+        )?;
+    }
+    writeln!(out, "  관측 결과: {}", text("reasonCode"))?;
+    if let Some(manager) = data.get("manager").filter(|v| v.is_object()) {
+        writeln!(
+            out,
+            "  systemd: {} / {}",
+            manager["version"].as_str().unwrap_or("UNKNOWN"),
+            manager["systemState"].as_str().unwrap_or("UNKNOWN")
+        )?;
+    }
+    if data["wsl"].as_bool() == Some(true) {
+        writeln!(
+            out,
+            "  WSL2는 후속 검증 환경입니다. 실제 Linux 서버 인수와 구분합니다."
+        )?;
+    }
+    writeln!(
+        out,
+        "  Linux 노드 서비스 연결: 미구현 / 엔진 실물 인수: 미수행"
+    )?;
+    writeln!(
+        out,
+        "  기준: Ubuntu 24.04 LTS·x86_64·glibc·systemd. 서비스 설정은 변경하지 않았습니다."
+    )
 }
 
 fn print_management_guidance(
@@ -1580,6 +1625,94 @@ fn take_json(args: &[String]) -> (bool, Vec<String>) {
     (json_mode, remaining)
 }
 
+// Capabilities describe this executable's command support, not accepted packages.
+fn capabilities_for(target: Option<&str>) -> Vec<&'static str> {
+    let mut capabilities = vec![
+        "management-cli.v1",
+        "management.bundle.build",
+        "management.bundle.verify",
+        "management.info",
+        "completion.zsh",
+        "nodes.list",
+        "nodes.add",
+        "runtime.stage",
+        "package.build",
+        "package.verify",
+        "config.validate",
+        "config.fingerprint",
+        "preflight.local",
+        "setup.draft",
+        "setup.network",
+        "setup.preparation.sequential",
+        "setup.preparation.list",
+        "setup.preparation.show",
+        "setup.preparation.edit",
+        "engine.inspect",
+        "engine.preflight.cold",
+        "preflight.product-engine",
+        "logs.sanitized",
+        "diagnose.offline",
+        "host.check",
+    ];
+    match target {
+        Some("darwin-arm64") => capabilities.extend([
+            "management.install.macos",
+            "management.update.macos",
+            "management.rollback.macos",
+            "nodes.named-operations",
+            "executor.rc3-legacy-v1",
+            "executor.rc4-v1",
+            "setup.apply",
+            "nodes.named-initialization",
+            "install.macos",
+            "instance.register",
+            "instance.show",
+            "init",
+            "resume-init",
+            "start.macos-launchagent",
+            "status",
+            "status.wait",
+            "stop.macos-launchagent",
+        ]),
+        Some("linux-amd64") => capabilities.extend([
+            "management.install.linux",
+            "management.update.linux",
+            "management.rollback.linux",
+        ]),
+        _ => (),
+    }
+    capabilities
+}
+
+fn dispatch_host(args: &[String]) -> (ResultEnvelope, i32) {
+    if args.first().map(String::as_str) != Some("check") {
+        return invalid("host");
+    }
+    let Some((flags, positions)) = parse(&args[1..], &[("timeout-seconds", true)]) else {
+        return invalid("host check");
+    };
+    let Some(timeout) = timeout_flag(&flags, 5, 30) else {
+        return invalid("host check");
+    };
+    if !positions.is_empty() {
+        return invalid("host check");
+    }
+    match engine::systemd::inspect_host(timeout) {
+        Ok(value) => {
+            let exit = if value.outcome == "SUCCEEDED" { 0 } else { 3 };
+            report(
+                "host check",
+                value.outcome,
+                value.reason_code,
+                "Linux 기준 환경을 읽기 전용으로 확인했습니다. 노드 설치·서비스 시작·엔진 인수는 수행하지 않았습니다.",
+                &value,
+                exit,
+            )
+        }
+        Err(error) => failure("host check", error, 3),
+    }
+}
+
 fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
     if args.is_empty() || (args.len() == 1 && matches!(args[0].as_str(), "help" | "--help" | "-h"))
     {
@@ -1596,6 +1729,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
     }
     match args[0].as_str() {
         "cli" => dispatch_management(&args[1..]),
+        "host" => dispatch_host(&args[1..]),
         "nodes" => dispatch_nodes(&args[1..]),
         "version" => {
             if args.len() != 1 {
@@ -1610,8 +1744,8 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["management-cli.v1", "management.bundle.build", "management.bundle.verify", "management.install.macos", "management.update.macos", "management.info", "management.rollback.macos", "completion.zsh", "nodes.list", "nodes.add", "nodes.named-operations", "executor.rc3-legacy-v1", "executor.rc4-v1", "runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "setup.preparation.sequential", "setup.preparation.list", "setup.preparation.show", "setup.preparation.edit", "setup.apply", "nodes.named-initialization", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
-                        "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
+                        "capabilities": capabilities_for(management::host_target()),
+                        "primaryTarget": management::host_target().unwrap_or("unsupported"), "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),
                 ),
@@ -3019,5 +3153,48 @@ mod management_ux_tests {
         );
         assert_eq!(exit, 4);
         assert_eq!(unsupported.outcome, "UNSUPPORTED");
+    }
+}
+
+#[cfg(test)]
+mod platform_capability_tests {
+    use super::capabilities_for;
+
+    #[test]
+    fn linux_management_does_not_advertise_mac_executor_or_service_support() {
+        let linux = capabilities_for(Some("linux-amd64"));
+        for supported in [
+            "management.install.linux",
+            "management.update.linux",
+            "management.rollback.linux",
+            "host.check",
+            "runtime.stage",
+        ] {
+            assert!(linux.contains(&supported));
+        }
+        for unavailable in [
+            "management.install.macos",
+            "executor.rc3-legacy-v1",
+            "executor.rc4-v1",
+            "start.macos-launchagent",
+            "install.macos",
+            "setup.apply",
+            "init",
+            "start.systemd",
+        ] {
+            assert!(!linux.contains(&unavailable));
+        }
+        let mac = capabilities_for(Some("darwin-arm64"));
+        for preserved in [
+            "management.install.macos",
+            "executor.rc3-legacy-v1",
+            "executor.rc4-v1",
+            "start.macos-launchagent",
+            "install.macos",
+            "setup.apply",
+        ] {
+            assert!(mac.contains(&preserved));
+        }
+        assert!(!mac.contains(&"management.install.linux"));
     }
 }

@@ -1,15 +1,17 @@
 # BXDL 패키지 인수·릴리스 계획
 
 - 상태: 실행 전 계획. 아래 PASS 기준은 실제 검증 결과가 아니다.
-- 갱신일: 2026-09-17. [Rust 전환·macOS 우선 결정](./2026-09-17-rust-macos-first.md)을 적용하며 기존 test ID를 보존한다.
+- 갱신일: 2026-11-16. [실제 Linux 우선 계획](./2026-11-16-linux-first-implementation-plan.md)을 현재 실행 순서에 적용한다. [Rust·Mac 우선 결정](./2026-09-17-rust-macos-first.md), 기존 test ID와 Mac 결과는 보존한다. Linux 실제 머신을 기준으로 인수하고 WSL2는 별도 후속 결과를 남긴다.
 - 연결: [구현 계획](./2026-09-16-implementation-plan.md), [엔진 계약](./2026-09-16-engine-integration.md).
 
 ## 1. 지원 matrix와 인수 환경
 
+현재 초기 Linux 기준은 사용자에게 허용받은 Ubuntu 24.04 LTS·x86_64/glibc·systemd·sudo/SSH 가능 조건이다. 실제 테스터 host의 배포판·버전/접속 관측은 별도로 기록한다. LNX-01의 runtime/관리 CLI·읽기 전용 host 검사와 Linux target 타입 검사는 Linux 노드·서비스 인수가 아니다. LNX-04 단일노드 인수 후 LNX-05 사람 과업을 시작할 수 있고, 그 결과와 G1-L 전체 완료는 구분한다. WSL2·Windows native는 Linux 서버 지원에 자동 포함되지 않는다.
+
 | 환경 | 첫 역할 | 판정 |
 | --- | --- | --- |
 | macOS arm64 + 지정 Java 21 + RocksDB + 사용자 LaunchAgent | 첫 로컬 운영 패키지 후보, G1-M | 최소 macOS·JRE·native 전체 조합 선정 후 실제 인수. 같은 사용자 UID의 신뢰 한계 명시 |
-| Linux x86_64/glibc + 지정 Java 21 + RocksDB + systemd | 후속 서버 profile, G1-L | 배포판·glibc·systemd·JRE·전용 UID·root 제어 경계를 별도 인수 |
+| Linux x86_64/glibc + 지정 Java 21 + RocksDB + systemd | 현재 우선 개발하는 서버 profile, G1-L | 배포판·glibc·systemd·JRE·전용 UID·root 제어 경계를 별도 인수 |
 | Docker/Compose의 지정 Linux image·CPU·runtime | 후속 container profile, G1-D | image digest·volume·network·signal·재생성 인수; Mac host만으로 Linux arm64/musl 지원을 주장하지 않음 |
 | file H2 | NIGO 공급자 회귀·개발 비교 | BXDL 첫 지원 gate 밖. 고객 지원 추가 시 별도 matrix 필요 |
 | Intel Mac·Linux ARM64·기타 OS·musl | 별도 후보 | 미지원. dependency에 binary가 있다는 이유로 지원 표기하지 않음 |
@@ -26,12 +28,12 @@ harness의 PKI·key·port·data·서비스 등록·VM/container는 모두 test-o
 | --- | --- | --- |
 | G0 | mock/fixture 기반 개발 준비 | schema·출력·artifact 실패·설정·상태 adapter. 실제 엔진 동작은 미검증 |
 | G1-M | 첫 Mac 사용자 profile 로컬 운영 RC | 공통 G1 case의 Mac 조건 + MAC case + NIGO-01~04/06 실제 계약 + 문서 재현 |
-| G1-L | 후속 Linux 서버 profile RC | 공통 G1 case의 Linux 조건 + systemd·전용 UID/root 제어·4-host 인수 |
+| G1-L | 현재 우선 개발하는 Linux 서버 profile RC | 공통 G1 case의 Linux 조건 + systemd·전용 UID/root 제어·4-host 인수 |
 | G1-D | 후속 Docker/Compose profile RC | 공통 G1 case의 container 조건 + DKR case + 실제 image/runtime 인수 |
 | G2 | 검증된 버전 업데이트·offline 유지보수 | 해당 G1-M/L/D profile 회귀 + UPD/TOOL + NIGO-05·호환 버전 쌍 |
 | G3 | 합의한 고객 운영 범위 승인 | 해당 OS/profile의 engine release gate, 키 운영·복원 drill·보안·장기 부하·실측 운영 기준. 원격 노출 시 인증/권한/감사 포함 |
 
-필수 항목의 NOT_CHECKED/SKIP/환경 대기는 PASS가 아니다. capability가 없는 optional 기능은 미지원으로 명시한다. 첫 RC는 G1-M이며 G2의 두 번째 engine release 대기로 막지 않는다. G1은 profile 계열 이름이며 단독 통과로 기록하지 않는다. G1-M/L/D와 G2를 production 전체 승인으로 표시하지 않는다.
+필수 항목의 NOT_CHECKED/SKIP/환경 대기는 PASS가 아니다. capability가 없는 optional 기능은 미지원으로 명시한다. 최초 RC 목표는 G1-M이었다. 현재 Linux 우선 실행도 G1-M/L의 개별 gate를 생략하지 않으며 G2의 두 번째 engine release 대기로 초기 UX 검증을 막지 않는다. G1은 profile 계열 이름이며 단독 통과로 기록하지 않는다. G1-M/L/D와 G2를 production 전체 승인으로 표시하지 않는다.
 
 ## 3. G1 공통 ID와 profile별 인수
 
@@ -76,7 +78,7 @@ harness의 PKI·key·port·data·서비스 등록·VM/container는 모두 test-o
 | MAC-03 | LaunchAgent 미등록·GUI 세션 부재·직접 시작 | 사용자 세션 범위와 불가 이유 표시, gate 우회 없음, job 제거만으로 정상 종료 판정하지 않음 |
 | MAC-04 | 일반 사용자 설치·코드 서명 경계 | sudo 없는 사용자 위치·공백 경로 재현, 동일 UID의 secret/control 접근 한계 명시, Ed25519 검증과 Apple 서명/notarization 구분 |
 
-### 3.2 G1-L·G1-D 후속 인수
+### 3.2 G1-L Linux 우선 인수와 G1-D 후속 인수
 
 G1-L은 기존 Linux 조건을 유지한다. LIFE-03에서 unit/InvocationID·cgroup을 대조하고 LIFE-04에서 `systemctl start`·재부팅 gate를 시험한다. SEC-01은 root 제어 journal·전용 service UID로 engine의 제어 기록 변조를 거부하며 QBFT-01~03은 4개 Linux VM으로 재현한다.
 
@@ -115,7 +117,7 @@ mock·real engine·target platform 결과를 구분하고 이전 revision 결과
 2. **공급 확보:** 빌드 환경에서 engine/runtime lock의 exact asset을 받고 출처·hash를 검증한다. credential은 환경의 임시 secret이며 package로 복사하지 않는다.
 3. **조립:** 임시 경로에서 allowlist payload만 archive에 포함한다. 순서·권한·timestamp 정규화로 동일 입력의 조립 재현성을 점검한다.
 4. **후보 확정:** package hash를 기록하고 서명/검증 metadata를 붙인다. 검증할 후보와 발행할 후보를 동일하게 유지한다.
-5. **profile 인수:** 먼저 Mac에서 G1-M을 수행한다. 후속 G1-L은 Linux/systemd VM, G1-D는 지정 container runtime에서 별도 수행한다. G2도 동일 profile로 재인수하며 인터넷 차단은 격리된 설치·실행 구간에 적용한다.
+5. **profile 인수:** 다음 개발은 실제 Linux 머신의 단일노드·사용자 과업·서버 인수 순서로 진행하고 G1-L은 Linux/systemd의 전용 UID·다중 host 조건까지 별도 수행한다. 기존 G1-M 결과와 미완료 gate를 보존한다. WSL2는 Linux 기준 조합 뒤 별도 환경으로 확인하고 G1-D는 지정 container runtime에서 수행한다. G2도 동일 profile로 재인수하며 인터넷 차단은 격리된 설치·실행 구간에 적용한다.
 6. **RC 보고:** gate 상태, 지원 조합, 제한, 매뉴얼, SBOM/NOTICE와 근거를 묶는다. 필수 실패/미검사는 승격을 차단한다.
 7. **발행:** 승인된 게시 단계에서 이미 검사한 bytes를 immutable 제품 버전으로 승격한다. release 게시 때 재빌드하지 않는다.
 8. **사후 확인:** 게시 asset을 다시 받아 hash·manifest·출처 증거를 확인한다. 공급 credential이 고객 실행에 필요 없는지 확인한다.

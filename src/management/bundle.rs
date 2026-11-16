@@ -202,7 +202,7 @@ fn from_entries(mut entries: BTreeMap<String, (u32, Vec<u8>)>) -> Result<Bundle>
         }
         files.insert(expected.path.clone(), bytes);
     }
-    validate_binary(files.get("bin/bxdl").ok_or_else(invalid)?)?;
+    validate_binary(files.get("bin/bxdl").ok_or_else(invalid)?, &manifest.target)?;
     Ok(Bundle {
         manifest,
         manifest_sha256: digest(&manifest_bytes),
@@ -216,7 +216,7 @@ fn from_entries(mut entries: BTreeMap<String, (u32, Vec<u8>)>) -> Result<Bundle>
 fn validate_manifest(manifest: &Manifest) -> Result<()> {
     if manifest.schema_version != 1
         || manifest.kind != "bxdl-management-cli"
-        || manifest.target != "darwin-arm64"
+        || !matches!(manifest.target.as_str(), "darwin-arm64" | "linux-amd64")
         || !version(&manifest.version)
         || !(hex_hash(&manifest.revision, 40) || manifest.revision == "development")
         || manifest.files.len() != PAYLOADS.len()
@@ -256,14 +256,70 @@ fn hex_hash(value: &str, len: usize) -> bool {
             .bytes()
             .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
 }
-fn validate_binary(bytes: &[u8]) -> Result<()> {
-    // Thin little-endian Mach-O 64, CPU_TYPE_ARM64. Other formats are never
-    // selected for execution by this first Mac arm64 supply contract.
-    if bytes.len() < 32 || bytes[..8] != [0xcf, 0xfa, 0xed, 0xfe, 0x0c, 0, 0, 1] {
+fn validate_binary(bytes: &[u8], target: &str) -> Result<()> {
+    if binary_target(bytes)? != target {
         return Err(manifest_error());
     }
     Ok(())
 }
+/// Identify only supported executable formats. The signature and bounded version
+/// probe remain mandatory; an ELF header is not an execution safety guarantee.
+fn binary_target(bytes: &[u8]) -> Result<&'static str> {
+    // Keep the existing thin little-endian Mach-O ARM64 supply contract.
+    if bytes.len() >= 32 && bytes[..8] == [0xcf, 0xfa, 0xed, 0xfe, 0x0c, 0, 0, 1] {
+        return Ok("darwin-arm64");
+    }
+    // Linux GNU/x86_64: ELF64 little endian plus the exact glibc interpreter.
+    // Reject musl, ARM, shared objects without an interpreter and truncated tables.
+    if bytes.len() < 64
+        || bytes[..7] != [0x7f, b'E', b'L', b'F', 2, 1, 1]
+        || !matches!(bytes[7], 0 | 3)
+        || bytes[8] != 0
+        || !matches!(u16::from_le_bytes(bytes[16..18].try_into().unwrap()), 2 | 3)
+        || bytes[18..20] != [62, 0]
+        || bytes[20..24] != [1, 0, 0, 0]
+        || bytes[24..32] == [0; 8]
+        || bytes[52..54] != [64, 0]
+        || bytes[54..56] != [56, 0]
+    {
+        return Err(manifest_error());
+    }
+    let offset = usize::try_from(u64::from_le_bytes(bytes[32..40].try_into().unwrap()))
+        .map_err(|_| manifest_error())?;
+    let count = usize::from(u16::from_le_bytes(bytes[56..58].try_into().unwrap()));
+    if offset < 64
+        || count == 0
+        || count > 4096
+        || offset
+            .checked_add(count * 56)
+            .is_none_or(|end| end > bytes.len())
+    {
+        return Err(manifest_error());
+    }
+    let mut interpreter = None;
+    for header in bytes[offset..offset + count * 56].chunks_exact(56) {
+        if header[..4] != [3, 0, 0, 0] {
+            continue;
+        }
+        if interpreter.is_some() {
+            return Err(manifest_error());
+        }
+        let start = usize::try_from(u64::from_le_bytes(header[8..16].try_into().unwrap()))
+            .map_err(|_| manifest_error())?;
+        let length = usize::try_from(u64::from_le_bytes(header[32..40].try_into().unwrap()))
+            .map_err(|_| manifest_error())?;
+        let end = start
+            .checked_add(length)
+            .filter(|end| *end <= bytes.len())
+            .ok_or_else(manifest_error)?;
+        interpreter = Some(&bytes[start..end]);
+    }
+    if interpreter != Some(b"/lib64/ld-linux-x86-64.so.2\0".as_slice()) {
+        return Err(manifest_error());
+    }
+    Ok("linux-amd64")
+}
+
 fn parse_signature(raw: &[u8]) -> Result<Signature> {
     if raw.is_empty() || raw.len() > 128 {
         return Err(signature_error());
@@ -439,11 +495,14 @@ pub fn build(options: &BuildOptions) -> Result<BuildReport> {
         kind: "bxdl-management-cli".into(),
         version: options.version.clone(),
         revision: options.revision.clone(),
-        target: "darwin-arm64".into(),
+        target: binary_target(&entries.get("bin/bxdl").ok_or_else(invalid)?.1)?.into(),
         files,
     };
     validate_manifest(&manifest)?;
-    validate_binary(&entries.get("bin/bxdl").ok_or_else(invalid)?.1)?;
+    validate_binary(
+        &entries.get("bin/bxdl").ok_or_else(invalid)?.1,
+        &manifest.target,
+    )?;
     let manifest_bytes = serde_json::to_vec_pretty(&manifest).map_err(|_| invalid())?;
     let key = options
         .signing_key_path
@@ -568,7 +627,7 @@ fn invalid() -> BxdlError {
 fn manifest_error() -> BxdlError {
     error(
         "CLI_BUNDLE_MANIFEST_INVALID",
-        "지원하는 Mac arm64 관리 CLI의 배포 식별 정보가 아닙니다.",
+        "지원하는 Mac arm64 또는 Linux x86_64/glibc 관리 CLI의 배포 식별 정보가 아닙니다.",
     )
 }
 fn hash_error() -> BxdlError {

@@ -17,11 +17,14 @@ fn run(args: &[&str]) -> (Value, i32) {
     (value, exit)
 }
 #[test]
-fn version_reports_rust_mac_priority_without_service_claims() {
+fn version_reports_native_target_without_service_acceptance_claims() {
     let (r, code) = run(&["version"]);
     assert_eq!(code, 0);
     assert_eq!(r["data"]["implementation"], "rust");
-    assert_eq!(r["data"]["primaryTarget"], "darwin-arm64");
+    assert_eq!(
+        r["data"]["primaryTarget"],
+        bxdl::management::host_target().unwrap_or("unsupported")
+    );
     for (key, value) in [
         ("bundleInspection", "NOT_PERFORMED"),
         ("engineContractStatus", "PROPOSED_DEVELOPMENT"),
@@ -555,4 +558,42 @@ fn help_named_paths_and_options_are_not_intercepted() {
         assert_eq!(result["reasonCode"], "INVALID_ARGUMENTS");
         assert!(!result.to_string().contains("PRIVATE-CANARY"));
     }
+}
+
+#[test]
+fn host_check_arguments_fail_before_environment_inspection() {
+    for args in [
+        vec!["host", "check", "--timeout-seconds", "0"],
+        vec!["host", "check", "--timeout-seconds", "31"],
+        vec!["host", "check", "--timeout-seconds", "CANARY-HOST"],
+        vec!["host", "check", "--execute"],
+        vec!["host", "check", "CANARY-HOST"],
+        vec!["host", "start"],
+    ] {
+        let (value, code) = run(&args);
+        assert_eq!(code, 2);
+        assert_eq!(value["reasonCode"], "INVALID_ARGUMENTS");
+        assert!(!value.to_string().contains("CANARY-HOST"));
+    }
+}
+
+#[test]
+fn host_check_help_describes_observation_without_mutation() {
+    let (value, code) = run(&["host", "check", "--help"]);
+    assert_eq!(code, 0);
+    let help = value["data"]["usage"].as_str().unwrap();
+    assert!(help.contains("읽기 전용"));
+    assert!(help.contains("WSL2"));
+    assert!(help.contains("--timeout-seconds"));
+}
+
+#[cfg(not(all(target_os = "linux", target_arch = "x86_64", target_env = "gnu")))]
+#[test]
+fn host_check_on_non_linux_does_not_claim_linux_eligibility() {
+    let (value, code) = run(&["host", "check"]);
+    assert_eq!(code, 3);
+    assert_eq!(value["outcome"], "INCOMPLETE");
+    assert_eq!(value["data"]["serviceMutations"], 0);
+    assert_eq!(value["data"]["linuxServiceControl"], "NOT_IMPLEMENTED");
+    assert_eq!(value["data"]["engineAcceptance"], "NOT_RUN");
 }

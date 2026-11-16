@@ -29,7 +29,7 @@ build-macos:
 
 # Requires installed Rust target; this performs type checking, not a Linux link/run.
 check-linux:
-	$(CARGO) check --locked --target x86_64-unknown-linux-gnu
+	$(CARGO) check --locked --all-targets --target x86_64-unknown-linux-gnu
 
 # Run on a Linux amd64 builder or with an explicitly configured cross-linker.
 build-linux:
@@ -39,7 +39,7 @@ build-linux:
 
 # CLI-only distribution; supply explicit trust flags and a new output path.
 # Example: make build-cli-dist CLI_DIST_OUTPUT=/tmp/bxdl-cli-dev.tar.gz CLI_DIST_FLAGS="--development --allow-unsigned-development"
-CLI_DIST_OUTPUT ?= dist/bxdl-cli-darwin-arm64.tar.gz
+CLI_DIST_OUTPUT ?= dist/bxdl-cli.tar.gz
 CLI_DIST_FLAGS ?=
 .PHONY: build-cli-dist
 build-cli-dist:

@@ -53,6 +53,7 @@ fn capture(
     Ok(bytes)
 }
 pub(super) fn check(path: &Path, manifest: &Manifest) -> Result<()> {
+    super::require_target(&manifest.target)?;
     run(path, manifest, Duration::from_secs(5))
 }
 fn run(path: &Path, manifest: &Manifest, deadline: Duration) -> Result<()> {
@@ -135,20 +136,31 @@ fn validate(stdout: &[u8], manifest: &Manifest) -> Result<()> {
         return Err(failed());
     }
     let caps = data["capabilities"].as_array().ok_or_else(failed)?;
-    for required in [
-        "management-cli.v1",
-        "management.install.macos",
-        "management.update.macos",
-        "management.info",
-        "management.rollback.macos",
-        "completion.zsh",
-        // This manager's admission baseline preserves both supported runtime
-        // profiles for install, update and rollback. It does not infer which
-        // nodes exist from a particular user's optional catalog.
-        "executor.rc3-legacy-v1",
-        "executor.rc4-v1",
-    ] {
-        if !caps.iter().any(|c| c.as_str() == Some(required)) {
+    let required = match manifest.target.as_str() {
+        // Mac admission retains both exact runtime profiles. Linux has no admitted
+        // runtime profile yet; management support does not claim service support.
+        "darwin-arm64" => &[
+            "management-cli.v1",
+            "management.install.macos",
+            "management.update.macos",
+            "management.info",
+            "management.rollback.macos",
+            "completion.zsh",
+            "executor.rc3-legacy-v1",
+            "executor.rc4-v1",
+        ][..],
+        "linux-amd64" => &[
+            "management-cli.v1",
+            "management.install.linux",
+            "management.update.linux",
+            "management.info",
+            "management.rollback.linux",
+            "completion.zsh",
+        ][..],
+        _ => return Err(failed()),
+    };
+    for required in required {
+        if !caps.iter().any(|c| c.as_str() == Some(*required)) {
             return Err(failed());
         }
     }
@@ -173,7 +185,7 @@ mod tests {
             kind: "bxdl-management-cli".into(),
             version: crate::cli::VERSION.into(),
             revision: crate::cli::REVISION.into(),
-            target: "darwin-arm64".into(),
+            target: super::super::host_target().unwrap().into(),
             files: vec![],
         }
     }
@@ -197,6 +209,7 @@ mod tests {
         assert!(validate(b"{\"schemaVersion\":1,\"schemaVersion\":1}", &manifest()).is_err());
     }
     #[test]
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
     fn rejects_loss_of_either_runtime_profile_in_candidate() {
         let original: serde_json::Value = serde_json::from_slice(&version_bytes()).unwrap();
         for missing in ["executor.rc3-legacy-v1", "executor.rc4-v1"] {
@@ -220,6 +233,47 @@ mod tests {
             .unwrap()
             .push(serde_json::json!("executor.future-v1"));
         validate(&serde_json::to_vec(&candidate).unwrap(), &manifest()).unwrap();
+    }
+
+    #[test]
+    fn linux_candidate_requires_linux_management_without_claiming_runtime_profiles() {
+        let mut v: serde_json::Value = serde_json::from_slice(&version_bytes()).unwrap();
+        let mut m = manifest();
+        m.target = "linux-amd64".into();
+        v["data"]["primaryTarget"] = "linux-amd64".into();
+        v["data"]["capabilities"] = serde_json::json!([
+            "management-cli.v1",
+            "management.install.linux",
+            "management.update.linux",
+            "management.info",
+            "management.rollback.linux",
+            "completion.zsh"
+        ]);
+        validate(&serde_json::to_vec(&v).unwrap(), &m).unwrap();
+        for capability in [
+            "management.install.linux",
+            "management.update.linux",
+            "management.rollback.linux",
+        ] {
+            let mut missing = v.clone();
+            missing["data"]["capabilities"]
+                .as_array_mut()
+                .unwrap()
+                .retain(|item| item.as_str() != Some(capability));
+            assert!(validate(&serde_json::to_vec(&missing).unwrap(), &m).is_err());
+        }
+        let other = if super::super::host_target() == Some("linux-amd64") {
+            "darwin-arm64"
+        } else {
+            "linux-amd64"
+        };
+        m.target = other.into();
+        assert_eq!(
+            check(Path::new("/definitely/not/an/executable"), &m)
+                .unwrap_err()
+                .code,
+            "CLI_TARGET_MISMATCH"
+        );
     }
 
     #[test]

@@ -345,3 +345,90 @@ fn output_collision_and_invalid_build_identity_preserve_existing_files() {
         assert!(!o.output.exists());
     }
 }
+
+#[test]
+fn linux_glibc_bundle_round_trips_and_cannot_be_mislabeled_as_macos() {
+    let f = Fixture::new();
+    fs::write(
+        f.stage.join("bin/bxdl"),
+        crate::management::test_binary("linux-amd64", b'l'),
+    )
+    .unwrap();
+    let (private, public) = f.keys(57);
+    let mut options = f.options("linux-signed.tar.gz");
+    options.signing_key_path = Some(private);
+    options.allow_unsigned_development = false;
+    let built = build(&options).unwrap();
+    assert_eq!(built.manifest.target, "linux-amd64");
+    let verified = verify(
+        &options.output,
+        &VerifyOptions {
+            public_key_path: Some(public),
+            allow_unsigned_development: false,
+        },
+    )
+    .unwrap();
+    assert_eq!(verified.manifest, built.manifest);
+    let mut entries = archive_entries(&fs::read(&options.output).unwrap()).unwrap();
+    let mut manifest = built.manifest;
+    manifest.target = "darwin-arm64".into();
+    entries.insert(
+        "manifest.json".into(),
+        (0o644, serde_json::to_vec(&manifest).unwrap()),
+    );
+    assert_eq!(
+        from_entries(entries).unwrap_err().code,
+        "CLI_BUNDLE_MANIFEST_INVALID"
+    );
+}
+
+#[test]
+fn linux_binary_checks_architecture_glibc_interpreter_and_bounded_headers() {
+    let original = crate::management::test_binary("linux-amd64", 0);
+    assert_eq!(binary_target(&original).unwrap(), "linux-amd64");
+    let mut invalid = Vec::new();
+    for (offset, value) in [
+        (4, 1),
+        (5, 2),
+        (6, 0),
+        (7, 9),
+        (8, 1),
+        (16, 1),
+        (18, 183),
+        (20, 2),
+        (52, 63),
+        (54, 55),
+        (56, 0),
+        (120, b'!'),
+    ] {
+        let mut changed = original.clone();
+        changed[offset] = value;
+        invalid.push(changed);
+    }
+    let mut zero_entry = original.clone();
+    zero_entry[24..32].fill(0);
+    invalid.push(zero_entry);
+    let mut overflow_offset = original.clone();
+    overflow_offset[32..40].fill(255);
+    invalid.push(overflow_offset);
+    let mut overflow_interp = original.clone();
+    overflow_interp[72..80].fill(255);
+    invalid.push(overflow_interp);
+    let mut overflow_length = original.clone();
+    overflow_length[96..104].fill(255);
+    invalid.push(overflow_length);
+    let mut musl = original.clone();
+    musl[120..146].copy_from_slice(b"/lib/ld-musl-x86_64.so.1xx");
+    invalid.push(musl);
+    let mut duplicate = original.clone();
+    duplicate[56..58].copy_from_slice(&2_u16.to_le_bytes());
+    let header = duplicate[64..120].to_vec();
+    duplicate[120..176].copy_from_slice(&header);
+    invalid.push(duplicate);
+    for bytes in invalid {
+        assert!(binary_target(&bytes).is_err());
+    }
+    for length in 0..148 {
+        assert!(binary_target(&original[..length]).is_err());
+    }
+}

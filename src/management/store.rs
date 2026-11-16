@@ -735,12 +735,16 @@ pub(super) fn install(o: &InstallOptions, update: bool, probe: Probe) -> Result<
         ));
     }
     let bundle = trust.verify(&supply)?;
+    super::require_target(&bundle.manifest.target)?;
     let root = match existing {
         Some(r) => r,
         None => Root::create(l, trust)?,
     };
     let _lock = root.lock()?;
     let old = root.selection()?;
+    if let Some((_, selection)) = &old {
+        super::require_target(&root.admission(&selection.current)?.release.target)?;
+    }
     if update && old.is_none() {
         return Err(not_installed());
     }
@@ -844,6 +848,8 @@ pub(super) fn rollback(l: &Locations, probe: Probe) -> Result<Report> {
         .clone()
         .ok_or_else(|| error("CLI_PREVIOUS_MISSING", "복귀할 이전 관리 CLI가 없습니다."))?;
     let (candidate, b) = root.admitted(&previous)?;
+    super::require_target(&b.manifest.target)?;
+    super::require_target(&root.admission(&old.1.current)?.release.target)?;
     probe(
         &l.root
             .join("releases")
