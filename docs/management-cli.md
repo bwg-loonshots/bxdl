@@ -195,4 +195,6 @@ RC.3 전용 구형 CLI는 RC.4 운용 중 정상 복귀 대상으로 사용하�
 
 CLI capability는 구현 지원 식별자다. RC.4의 실제 설치·초기화·LaunchAgent·네트워크 인수 완료는
 [RC4-05/06 계획](../design/2026-11-15-rc4-adoption-plan.md)과 별도 결과로 확인한다.
+[RC4-05 결과](../results/2026-11-15-rc4-macos-service.md)는 고정 R+B의 Mac 수동 단일노드 설치·서비스21사례 PASS다.
+RC.4 동종망·RPC·실행 중 CLI 업데이트/복귀는 RC4-06에서 별도 인수하며 아직 NOT_RUN이다.
 CLI update/rollback은 노드 엔진·JRE·DB를 업그레이드하거나 되돌리는 명령이 아니다.

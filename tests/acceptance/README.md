@@ -10,6 +10,8 @@
 
 RC4-04 시점의 RC.4 설치·genesis·서비스·네트워크·RPC 실물 인수는 **NOT_RUN**이며 RC4-05/06 후속 작업이다. 후보 지원이나 오프라인 회귀를 실물 PASS로 해석하지 않는다. RC1~3의 기존 재현 경로는 유지하며 RC.3 DB 이전·혼합 후보 네트워크는 지원하지 않는다.
 
+후속 [RC4-05 실제 Mac 인수](../../results/2026-11-15-rc4-macos-service.md)는 고정 R+B의 수동 단일노드21사례·독립 사후 감사 PASS다. 아래 서비스 명령에 `--exercise-setup-recovery --caller-umask 022 --expect-complete-diagnostics`를 적용했다. 네트워크·선정 RPC·실행 중 CLI 전환은 다음 RC4-06이며 아직 NOT_RUN이다.
+
 ## 도구와 실행 경계
 
 | 파일 | 역할 | 실행하지 않는 것 |
@@ -347,17 +349,24 @@ python3 -B tests/acceptance/prepare_management_fixture.py \
   --http-port 29680 --p2p-port 30680
 ```
 
-출력은 `supply/{package.tar.gz,public-key.pem,engine-lock.json}`, `operational inputs/`의 제품/native/chain·시험 credential 사본, `service-fixture.json` provenance다. 변환 전후 pin·원본 불변성·fresh data 조건을 기록한다. 서비스 runner는 RC4 provenance를 필수로 확인한다. 아래 실제 서비스 실행은 RC4-05 후속이며, 변환 입력과 다른 새 instance ID와 비어 있는 포트를 쓴다.
+출력은 `supply/{package.tar.gz,public-key.pem,engine-lock.json}`, `operational inputs/`의 제품/native/chain·시험 credential 사본, `service-fixture.json` provenance다. 변환 전후 pin·원본 불변성·fresh data 조건을 기록한다. 서비스 runner는 RC4 provenance를 필수로 확인한다. 아래는 RC4-05에서 사용한 서비스 실행 형태다. 다시 실행할 때도 변환 입력과 다른 새 instance ID와 비어 있는 포트를 쓴다.
 
 ```sh
 python3 -B tests/acceptance/run_management_service.py \
   --run --candidate rc4 \
   --manager-entry /test/service-bin/bxdl --cli-root /test/service-cli \
   --manager-sha256 EXPECTED_RC4_MANAGER_BINARY_SHA256 \
+  --exercise-setup-recovery \
   --fixture /test/new-rc4-service-fixture \
   --output /test/new-rc4-service-run --instance-id rc4-service-run \
   --http-port 29780 --p2p-port 30780 \
   --caller-umask 022 --expect-complete-diagnostics
 ```
+
+`--exercise-setup-recovery`는 추가 설치 UX 검증을 명시적으로 켠다. 기본값은 꺼짐이므로 기존 RC.3 서비스 범위는 유지한다. 새 준비 세션에서 archive까지 승인·저장한 뒤 trust 문답에서 `:cancel`(exit5), 미완성 `list/show`, trust부터 `resume`, `instanceId` 한 항목 `edit`, 다시 검토·승인하여 revision2 생성을 수행한다. 처음에는 별도 임시 ID를 쓰며 최종 ID는 `--instance-id`다. 취소 상태는 revision0/DRAFT, 첫 준비는 revision1, 수정 직후는 revision1/DRAFT, 재승인은 revision2이며 이전 generated 파일의 bytes·inode·metadata를 보존해야 한다.
+
+최초 설치·등록 후 binding V2가 `control/trust`의 archive·공개키·lock 사본을 가리키고 provenance가 이번 실행의 `supply` 세 파일과 일치하는지 확인한다. 이어 **이번 실행 폴더의 세 공급 사본만** 별도 보관 폴더로 이동한 상태에서 init/start/status/logs/diagnose/stop, 같은 DB 재시작, 완료된 준비의 reapply와 list/show를 수행한다. 원본 fixture, 고정 R 공급 경로, chain·credential·generated 입력은 옮기지 않는다. 완료된 show의 `inspection.verification=NOT_CHECKED`는 application의 저장본 검사(`PASSED`, 설치·등록 `CONFIRMED`)와 구분하며 실행 중 건강 상태로 해석하지 않는다.
+
+종료 전 공급 사본을 복원하고 입력 hash를 다시 대조한다. 실패 시에도 자신이 이동한 공급 사본만 복원하며, 경로 충돌·파일 변경·복원 불명은 기존 실패를 보존한 `INCOMPLETE`다. 충돌 파일을 덮어쓰거나 서비스 자동 재시도·강제 종료하지 않는다. `result.json`의 `setupRecovery`, `retainedSupply`, `supplyAbsence`, `supplyRestoration`과 각 단계의 `cases`가 해당 범위를 기록한다. 모든 list/show 전후 및 정지 후 reapply 전후 snapshot은 private evidence JSON의 `before`/`after`/`equal`로 보관하고 `querySnapshots`/`stoppedReapplySnapshot`에서 파일명·SHA-256을 연결한다. 이 옵션의 구현·오프라인 회귀가 실제 RC4-05 성공을 뜻하지는 않는다.
 
 네트워크 시험은 변환한 서비스 입력 대신 원래의 새 네 validator fixture를 사용한다. 위 CLI05-03 `run_management_acceptance.py` 명령에 `--candidate rc4`를 추가하고 archive·공개키·lock·fixture를 모두 RC.4로 바꾼다. `--bundle-next`와 `--revision`은 RC4 profile을 지원하는 다음 관리 CLI B 배포본·실제 source commit이며, 처음 설치한 B와 다른 identity를 요구한다. 서비스·네트워크 실물 인수와 업데이트/복귀 결과는 RC4-05/06에서 별도 기록한다.

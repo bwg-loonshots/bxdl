@@ -55,4 +55,4 @@ Native/Console은 동일 수신 JAR의 catalog 378 payload·47 stock projection 
 
 `make check`, Linux 타입 검사, RC.3/RC.4 교차·변조·미지원 profile·UNKNOWN·capability 손실·harness provenance 회귀를 수행한다. clean 관리 CLI B를 별도로 조립·검증하고, 엔진을 시작하지 않는 CLI 설치/조회 및 구형 capability 전환 거절을 확인한다. 정확한 수행 횟수·source·artifact identity·한계는 RC4-04 결과에 남긴다.
 
-다음은 고정 R+B와 새 서비스 입력으로 RC4-05의 설치·명시 init·로그/진단·같은 DB 재시작을 검증하는 것이다. RC.3→RC.4 DB migration·혼합망 rolling upgrade·정식 고객 릴리스·LaunchDaemon·Linux 실제 운용은 이번 범위에 추가하지 않는다.
+RC4-04 작성 당시 다음 단계는 고정 R+B의 RC4-05 서비스 검증이었다. 이후 [RC4-05 결과](../results/2026-11-15-rc4-macos-service.md)에서 순차 설치·취소/재개/편집·원본 공급 경로 부재, 명시 init·로그/진단 완전수집·같은 DB 재시작의21사례와 독립 감사를 PASS했다. 현재 다음은 RC4-06의 동종망·선정 RPC·실행 중 관리 CLI 전환이다. RC.3→RC.4 DB migration·혼합망 rolling upgrade·정식 고객 릴리스·LaunchDaemon·Linux 실제 운용은 이번 범위에 추가하지 않는다.

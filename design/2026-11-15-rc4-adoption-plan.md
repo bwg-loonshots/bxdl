@@ -1,9 +1,9 @@
 # RC.4 수신·패키징·관리 CLI 조합 인수 계획
 
 - 작성: 2026-11-15. BXDL 기준 `241038cf5f594dfc603318be5a3aba4883990237`.
-- 상태: **RC4-01~04 DONE. 수신·fresh 준비·runtime 조립과 명시 선택에 이어 exact profile·외부 관리 CLI B·실행 인수 도구 구현과 CLI-only 실물 검증을 완료했다. 제품 서비스·네트워크 인수는 NOT_RUN이며 다음은 RC4-05다.** [수신 결과](../contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 결과](../results/2026-11-15-rc4-fixture-preparation.md), [계약·fixture 영향](./2026-11-15-rc4-contract-fixture-impact.md), [RC4-03 결과](../results/2026-11-15-rc4-runtime-assembly.md)·[JSON](../results/2026-11-15-rc4-runtime-assembly.json), [RC4-04 결과](../results/2026-11-15-rc4-cli-harness.md)·[JSON](../results/2026-11-15-rc4-cli-harness.json).
+- 상태: **RC4-01~05 DONE. 고정 R+B의 Mac 수동 단일 노드 서비스 실물21사례·독립 감사·전체 회귀 PASS. 다음은 RC4-06 동종망·RPC 인수다. 네트워크·RPC·사람 과업은 NOT_RUN이다.** [수신 결과](../contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 결과](../results/2026-11-15-rc4-fixture-preparation.md), [계약·fixture 영향](./2026-11-15-rc4-contract-fixture-impact.md), [RC4-03 결과](../results/2026-11-15-rc4-runtime-assembly.md)·[JSON](../results/2026-11-15-rc4-runtime-assembly.json), [RC4-04 결과](../results/2026-11-15-rc4-cli-harness.md)·[JSON](../results/2026-11-15-rc4-cli-harness.json), [RC4-05 결과](../results/2026-11-15-rc4-macos-service.md)·[JSON](../results/2026-11-15-rc4-macos-service.json).
 - 결정: 새 사용자 검증의 후보를 RC.4로 준비한다. 기본 순서는 RC.4 수신 → 새 runtime/관리 CLI 조합 인수 → CLI05-04 사람 과업이다. RC.3 기반 안내서 준비·기존 기능 검증은 병행할 수 있다.
-- 외부 관리 CLI B는 기존 RC.3 exact profile을 유지하며 고정 RC.4 runtime R 지원을 추가했다. RC.3 lock/spec·runtime·지원 profile·기존 사용자 설치본·서비스·DB와 RC4-03의 R·내부 실행기 A를 보존했다. 새 private CLI 설치·조회·전환 검증은 완료했으나 RC.4 제품 서비스 운용 인수는 아직 수행하지 않았다.
+- 외부 관리 CLI B는 기존 RC.3 exact profile을 유지하며 고정 RC.4 runtime R 지원을 추가했다. RC.3 lock/spec·runtime·지원 profile·기존 사용자 설치본·서비스·DB와 RC4-03의 R·내부 실행기 A를 보존했다. 새 private CLI 설치·조회·전환에 이어 RC4-05에서 fresh control/data의 수동 단일 노드 로컬 서비스를 실제 검증했다. 동종망·합의·RPC·실행 중 CLI 전환은 별도 RC4-06이다.
 - 여기의 RC.4는 NIGO 엔진 후보 `nigo-engine-v0.1.0-rc.4`이며, 이전 BXDL 로드맵의 R4 단계와 구분한다.
 
 ## 1. 확인한 공급 상태와 근거
@@ -19,7 +19,8 @@ NIGO는 동일 고정 JAR의 G1~G6, 게시·새 다운로드 대조를 완료해
 | BXDL archive 수신·전체 파일·실제 engine-info 대조 | RC4-01 PASS — 공급24파일·선정 JRE259파일 전후 불변, engine-info1회 exit0·stderr0 |
 | RC.4 lock/spec 및 runtime package 선택 | RC4-03 DONE — clean 내부 실행기 A·기존 선정 JRE·수신 JAR로 서명한 development runtime R 조립·전체 검증 PASS |
 | RC.4 외부 관리 CLI·인수 도구 | RC4-04 DONE — exact profile·clean B·CLI-only signed 설치/전환·capability 거절·서비스 입력 준비 PASS |
-| RC.4 Mac 제품 서비스·동종망·RPC 실물 인수 | NOT_RUN — RC4-05/06에서 수행 |
+| RC.4 Mac 설치·수동 단일 노드 서비스 | RC4-05 DONE — 실물21사례·독립 감사·전체 회귀 PASS. 로컬 READY는 `MANUAL_START_INITIALIZED` |
+| RC.4 동종망·RPC 실물 인수 | NOT_RUN — 다음 RC4-06에서 수행 |
 | CLI05-04 작성자가 아닌 사용자 과업 | NOT_RUN |
 
 인계의 G1~G6는 NIGO 공급 gate다. BXDL의 G1-M·G1-L·G1-D/G2와 같은 완료 기준으로 세지 않는다. 원본 manifest의 `supplierTests=NOT_RECORDED`, `consumerAcceptance=NOT_RUN`, native `NOT_CHECKED`는 그대로 보존하고 공급자의 별도 evidence를 해당 digest에 연결한다. RC.3 결과를 새 후보 PASS로 복사하지 않는다.
@@ -72,9 +73,9 @@ RC.3 표준 catalog DB가 새 JAR에서 거절될 것이라는 NIGO 설명은 �
 | `packaging/engine-lock.rc4-temurin-development.json`, `package-spec.rc4-temurin.example.json` | 후보별 source/JAR/Console·engine-info 고정 | RC4-03에서 RC.4 파일 추가·명시 선택 완료. RC.3 lock/spec은 원문 보존 |
 | `src/engine/instance/executor.rs`, `executor/profiles.rs` | 후보별 archive·manifest·실행기·JAR·Java exact pin | RC4-04 완료: RC.3 유지, RC4-03에서 고정한 R만 `BXDL_RC4_EXECUTOR_V1`에 등록 |
 | `src/engine/instance/executor/reply.rs` | 선택된 인증 profile의 전체 expected identity 대조 | RC4-04 완료: source/Console/계약/Java 등을 엄격하게 검사하고 교차 응답·변조·미지원 조합 거절 및 UNKNOWN 보존 |
-| `src/engine/setup_plan.rs`, `src/engine/instance/service.rs` | 미지원 package의 same-CLI 검사와 worker의 exact CLI 검사 | 기존 `supports_package` 연결로 새 profile을 사용하며 해당 파일 변경 없이 검사 유지. 실제 worker A·제품 서비스 인수는 RC4-05/06 |
+| `src/engine/setup_plan.rs`, `src/engine/instance/service.rs` | 미지원 package의 same-CLI 검사와 worker의 exact CLI 검사 | 기존 `supports_package` 연결로 새 profile을 사용하며 해당 파일 변경 없이 검사 유지. RC4-05의 로컬 서비스에서 worker A·payload 불변 확인. 동종망 인수는 RC4-06 |
 | `tests/acceptance/candidates.py`, `prepare_fixture.py`, `fixture_guard.py`, `run_acceptance.py` 및 회귀 | 준비와 실제 실행의 별도 검증 경계 | RC4-04 완료: 고정 R+A만 받는 rc4 실행 경로·fixture/lock identity·복구·RPC hook 추가. 재조립 입력 거절, 기존 후보 동작 보존 |
-| `run_management_service.py`, `run_management_acceptance.py`, `prepare_management_fixture.py` 및 회귀 | 후보별 고정 runtime과 fresh 입력 provenance | RC4-04 완료: RC.3 270파일·RC.4 269파일을 각각 검증. 4-member chain·n1 credential을 보존한 수동 peerless 서비스 입력 실제 준비 PASS. 제품 실행은 RC4-05/06 |
+| `run_management_service.py`, `run_management_acceptance.py`, `prepare_management_fixture.py` 및 회귀 | 후보별 고정 runtime과 fresh 입력 provenance | RC4-04 완료: RC.3 270파일·RC.4 269파일을 각각 검증. 4-member chain·n1 credential을 보존한 수동 peerless 서비스 입력 실제 준비 PASS. RC4-05에서 취소/resume/edit·공급 원래 경로 부재를 포함한 로컬 서비스 실행 PASS, 동종망은 RC4-06 |
 | `src/cli.rs`, `src/management/probe.rs` | RC.3 capability 보존 및 `executor.rc4-v1` 추가 | RC4-04 완료: 새 B의 install/update/rollback 후보에 두 capability 모두 요구. 구형 bootstrap의 기존 정책을 소급 변경한 것으로 설명하지 않음 |
 | `tools/build-management-cli.py`, 지원 문서·결과 | 외부 CLI와 runtime이 독립 공급물 | RC4-04 완료: clean B와 signed CLI-only bundle의 별도 identity 및 실제 설치·전환·거절 결과 기록. R 재조립 없음 |
 
@@ -82,12 +83,12 @@ RC.3 표준 catalog DB가 새 JAR에서 거절될 것이라는 NIGO 설명은 �
 
 새 package hash를 그 package 내부 실행기에 내장하려고 하면 자기 자신의 hash에 의존하는 순환이 생긴다. 다음 순서를 따른다.
 
-1. **완료:** 기존 `umask 077`이 포함된 내부 실행기 A를 clean source에서 빌드·고정했다. 계약·소스 대조상 native adapter 변경이 필요하지 않아 Rust 제품 코드를 변경하지 않았다. 실제 제품 응답 호환성은 RC4-05에서 확인한다.
+1. **완료:** 기존 `umask 077`이 포함된 내부 실행기 A를 clean source에서 빌드·고정했다. 계약·소스 대조상 native adapter 변경이 필요하지 않아 Rust 제품 코드를 변경하지 않았다. 실제 수동 단일 노드 응답은 RC4-05에서 기존 엄격 parser로 확인했다.
 2. **완료:** A + 수신한 RC.4 JAR + 선정 JRE로 runtime package R을 조립·서명·검증하고 archive/manifest/실행기 identity를 고정했다.
 3. **완료:** 구현 commit `65fe83f0d569fcf2231474342fa0d60ca72555d5`의 clean source에서 외부 관리 CLI B를 빌드했다. `BXDL_RC4_EXECUTOR_V1` profile과 `executor.rc4-v1` capability가 구현됐으며 signed CLI-only 설치·구형 bootstrap→B update 및 RC.3 전용 후보의 update/rollback 거절·현재 선택 보존을 확인했다.
-4. **RC4-05/06:** B가 R의 A에 위임하는 실제 제품 서비스 경로와 A가 자기 bytes의 worker로 실행되는 경로를 검사한다. RC4-04에서는 노드·JVM을 실행하지 않았다. B를 R 안에 덮어쓰거나 profile 추가만으로 R을 재조립하지 않는다.
+4. **RC4-05 서비스 실물 PASS:** 같은 B가 R의 A에 위임하고 A bytes의 worker 두 개로 로컬 서비스를 실행·정상 종료했으며 R/JRE/payload를 보존했다. RC4-04 당시 노드·JVM0과 구분한다. RC4-06 동종망·실행 중 CLI 전환은 아직 미수행이다. B를 R 안에 덮어쓰거나 R을 재조립하지 않았다.
 
-RC4-03에서 고정한 A/R과 RC4-04의 B identity는 다음과 같다. A/R의 전체 검사 범위는 [조립 결과](../results/2026-11-15-rc4-runtime-assembly.md)·[JSON](../results/2026-11-15-rc4-runtime-assembly.json), B의 빌드·CLI-only 검증은 [RC4-04 결과](../results/2026-11-15-rc4-cli-harness.md)·[JSON](../results/2026-11-15-rc4-cli-harness.json)을 따른다. A/R의 pin은 RC4-04 profile에 등록됐으며 B 검증 뒤에도 보존됐다. 제품 서비스 인수 PASS는 아니다.
+RC4-03에서 고정한 A/R과 RC4-04의 B identity는 다음과 같다. A/R의 전체 검사 범위는 [조립 결과](../results/2026-11-15-rc4-runtime-assembly.md)·[JSON](../results/2026-11-15-rc4-runtime-assembly.json), B의 빌드·CLI-only 검증은 [RC4-04 결과](../results/2026-11-15-rc4-cli-harness.md)·[JSON](../results/2026-11-15-rc4-cli-harness.json)을 따른다. A/R의 pin은 RC4-04 profile에 등록됐으며 B 검증 뒤에도 보존됐다. 위 조립·CLI-only 기록과 후속 [RC4-05 로컬 서비스 결과](../results/2026-11-15-rc4-macos-service.md)는 별도 근거다.
 
 | 항목 | 고정 값 |
 | --- | --- |
@@ -104,36 +105,38 @@ RC4-03에서 고정한 A/R과 RC4-04의 B identity는 다음과 같다. A/R의 �
 
 ### 새 시험 자료 준비
 
-현재 `prepare_fixture.py`는 고정 JAR 내 `QbftDevnetGenerator`를 호출한다. RC.4 고정 source에는 해당 helper가 있지만 공식 source-free 생성기 공급 계약과는 구분한다. RC4-02에서 준비 전용 후보에 RC.4 pin을 추가하고 `prepare_fixture.py`/`fixture_guard.py`의 준비 경로와 회귀를 구현했다. 실제 수신 JAR의 helper로 새 자격증명·chain/network/product·서명 거래를 준비하고 catalog lock을 정적으로 대조했다. RC4-02 당시 실행 후보 목록은 RC1~3였으며 준비 성공을 runtime 지원으로 승계하지 않았다. 이후 RC4-04에서 고정 R의 실행 지원을 별도로 구현했다. genesis DB 생성은 RC4-05/06의 명시 init이다. 이 단계는 확정 runtime을 요구하는 RC4-04 실행·관리 인수 하네스와 구분한다. 이번 helper 사용은 PASS했으며 별도 NIGO 선행 구현 요청은 없다. 이후 사용할 수 없으면 같은 후보용 fixture/도구 지원을 요청한다. 후보 JAR를 main에서 재빌드하거나 RC.3 genesis·서명 거래를 새 망에 복사해 우회하지 않는다. 이 준비기는 고객 PKI 발급 기능으로 배포하지 않는다.
+현재 `prepare_fixture.py`는 고정 JAR 내 `QbftDevnetGenerator`를 호출한다. RC.4 고정 source에는 해당 helper가 있지만 공식 source-free 생성기 공급 계약과는 구분한다. RC4-02에서 준비 전용 후보에 RC.4 pin을 추가하고 `prepare_fixture.py`/`fixture_guard.py`의 준비 경로와 회귀를 구현했다. 실제 수신 JAR의 helper로 새 자격증명·chain/network/product·서명 거래를 준비하고 catalog lock을 정적으로 대조했다. RC4-02 당시 실행 후보 목록은 RC1~3였으며 준비 성공을 runtime 지원으로 승계하지 않았다. 이후 RC4-04에서 고정 R의 실행 지원을 별도로 구현했다. genesis DB 생성은 별도 명시 init이며 RC4-05의 새 로컬 서비스 DB에서 수행했다. RC4-06의 동종망 DB 초기화는 아직 미수행이다. 이 단계는 확정 runtime을 요구하는 RC4-04 실행·관리 인수 하네스와 구분한다. 이번 helper 사용은 PASS했으며 별도 NIGO 선행 구현 요청은 없다. 이후 사용할 수 없으면 같은 후보용 fixture/도구 지원을 요청한다. 후보 JAR를 main에서 재빌드하거나 RC.3 genesis·서명 거래를 새 망에 복사해 우회하지 않는다. 이 준비기는 고객 PKI 발급 기능으로 배포하지 않는다.
 
 ## 5. 단계별 실행 계획과 완료 기준
 
-RC4-01~04는 DONE이며 RC4-05~08은 PLAN이다. PR 단위는 아래 단계의 의존 관계를 유지하면서 묶을 수 있으며, archive 수신 PASS·제품 PASS·사람 과업 PASS는 따로 기록한다.
+RC4-01~05는 DONE이며 RC4-06~08은 PLAN이다. PR 단위는 아래 단계의 의존 관계를 유지하면서 묶을 수 있으며, archive 수신 PASS·제품 PASS·사람 과업 PASS는 따로 기록한다.
 
 | 순서 | 산출물·작업 | 선행·완료 기준 |
 | --- | --- | --- |
 | RC4-01 수신 검증 · DONE | 새 수신 경로, [2026-11-15 정제 수신 기록](../contracts/nigo/engine-rc4-2026-11-15/README.md) | 신뢰한 archive hash/크기 → 해제 전 24개 일반 파일·상대경로/중복/link/용량 검사 → 전체 checksum/JAR/원본 manifest/계약 → 선정 Java의 실제 engine-info·실행 전후 불변. lock 선택과 서비스 실행은 별도 |
 | RC4-02 계약·fixture 영향 확정 · DONE | [영향 설계](./2026-11-15-rc4-contract-fixture-impact.md), [실제 fresh 준비·회귀 결과](../results/2026-11-15-rc4-fixture-preparation.md)와 유한 시험 목록 | RC4-01. `candidates.py`의 RC.4 pin·`prepare_fixture.py`/`fixture_guard.py`의 최소 지원과 해당 회귀를 먼저 구현. 새 후보로 만든 fresh genesis 입력·제품/native 입력·거래·시험 자격증명과 실제 helper 호출 PASS. genesis DB 생성·native 실행은 미수행. 공급자 evidence를 digest별로 연결하고 통합 검사 범위 확정 |
 | RC4-03 runtime 조립·명시 선택 · DONE | RC.4 전용 engine lock/spec, 내부 실행기 A, signed development runtime R, [조립·검증 결과](../results/2026-11-15-rc4-runtime-assembly.md)·[JSON](../results/2026-11-15-rc4-runtime-assembly.json) | RC4-01/02 후 수신 JAR bytes 유지·선정 JRE259파일 전수 대조·clean A/source 고정·새 서명 archive의 payload269파일 전체 검증 PASS. RC.3 lock/설치본 보존. 외부 profile·실행 하네스 구현과 제품 서비스 인수는 별도 |
-| RC4-04 외부 CLI·인수 도구 · DONE | [구현 설계](./2026-11-15-rc4-cli-harness-implementation.md), exact RC.3/RC.4 profile·reply 검증·고정 R 인수 하네스·clean B, [검증 결과](../results/2026-11-15-rc4-cli-harness.md)·[JSON](../results/2026-11-15-rc4-cli-harness.json) | `make check` Rust596·Python151 PASS/2 SKIP·fmt/Clippy 및 Linux 타입 검사 PASS. signed CLI-only 설치·구형 bootstrap→B 전환·RC.3 전용 update/rollback 거절과 선택 보존 PASS. fresh 서비스 입력9(credential6 포함)·공급3 복사 PASS/child0. R/A 보존, 노드·JVM0; 제품 서비스·RPC 실물은 NOT_RUN |
-| RC4-05 Mac 설치·서비스 | 같은 R+B의 순차 setup·apply·이름 기반 운용 결과 | RC4-04. 새 control/data에서 init/start/status/logs/diagnose/stop·같은 RC.4 DB 재시작, 취소/재개/원본 공급 경로 부재/조회 무쓰기, report0600·완전수집, worker/JRE/payload 불변·정상 정리 |
+| RC4-04 외부 CLI·인수 도구 · DONE | [구현 설계](./2026-11-15-rc4-cli-harness-implementation.md), exact RC.3/RC.4 profile·reply 검증·고정 R 인수 하네스·clean B, [검증 결과](../results/2026-11-15-rc4-cli-harness.md)·[JSON](../results/2026-11-15-rc4-cli-harness.json) | `make check` Rust596·Python151 PASS/2 SKIP·fmt/Clippy 및 Linux 타입 검사 PASS. signed CLI-only 설치·구형 bootstrap→B 전환·RC.3 전용 update/rollback 거절과 선택 보존 PASS. fresh 서비스 입력9(credential6 포함)·공급3 복사 PASS/child0. R/A 보존, 노드·JVM0; 당시 제품 서비스·RPC 실물은 NOT_RUN |
+| RC4-05 Mac 설치·서비스 · DONE | 같은 R+B의 [로컬 서비스21사례](../results/2026-11-15-rc4-macos-service.md)·[JSON](../results/2026-11-15-rc4-macos-service.json) | imported `--from` 순차 준비의 취소/resume/edit·revision2, 조회7쌍 무쓰기, apply 거절/승인, 설치에 쓴 공급3파일의 원래 경로 부재 중 V2 사본 운용·복원, 명시 init1·같은 DB start2/stop2·report0600 완전수집 PASS. payload269/JRE259/worker2 불변, 정지 재apply snapshot 불변·정리 확인. 수동 단일 노드 `MANUAL_START_INITIALIZED`이며 global consensus는 NOT_CHECKED |
 | RC4-06 새 동종망·변경 영향 | 같은 R+B의 4-validator mTLS·거래/복구·선정 통합 검사 | RC4-05. 4/4→3/4→catch-up, 2/4 무정족수, live 복구는 원 거래 무재제출, 같은 RC.4 DB round-skew 재시작은 명시 재제출과 구분, wrong-pin, [선정 RPC 21사례·52read](./2026-11-15-rc4-cli-harness-implementation.md)의 KZG/공개 host/Type-4 오류 경계와 fresh init·bootstrap/health의 전체 identity 대조. 정상 signed Type-4·provider fault·Native 전체 recipe·Console 기능은 이 RPC subset 밖이며 별도 범위를 따른다. RC.4 지원 관리 CLI 두 버전의 실행 중 업데이트/복귀와 worker 불변, 정상 stop·PID/job/포트·inventory 독립 대조 |
 | RC4-07 정식 소비자 회신 | 수신/선택/제품 결과·잔여를 NIGO REQ-0003에 회신 | RC4-01의 수신 사실은 먼저 공유 가능, RC4-05/06 결과는 완료 후 별도 추가. 외부 CLI/내부 실행기/runtime/JAR/JRE/source/harness·PASS/FAIL/NOT_RUN 분리. NIGO 수정은 전용 worktree/브랜치 |
 | RC4-08 / CLI05-04 사람 과업 | 고정 배포본·안내서·기록 양식, 작성자가 아닌 사용자의 결과 | RC.4 기준 실제 수행은 RC4-05/06 뒤. 처음 설치·한 항목 수정·다음 날 재개·새 터미널 운용·실패 진단을 관찰. 안내/양식 준비는 병행, 자동 PTY 결과로 사람 과업을 완료 처리하지 않음 |
 
 RC4-04의 RPC 도구·모의 회귀 완료는 실제 RPC PASS가 아니다. RC4-06에서 첫 start 후 첫 거래 제출 전에 21사례·52read를 한 번 수행하며 자동 재시도·거래 제출은 하지 않는다. 성공한 Type-4 authorization simulation·signed Type-4·KZG provider fault·중첩 host·Native recipe·Console 기능은 이 subset에서 NOT_RUN으로 유지한다. 세부 기대값·근거·예산·실패 시 private 부분 증거는 [RC4-04 설계](./2026-11-15-rc4-cli-harness-implementation.md)를 따른다.
 
-RC4-05의 report0600은 [기존 개선](./2026-10-23-private-initialization-report.md)을 새 내부 실행기/JVM 조합에서 확인하는 항목이다. 기존 RC.3의 0644 보고서 복구는 별도 과제로 유지한다. 설치 준비에서 가져오는 입력도 RC.4 fresh fixture여야 하며 기존 사용자 자료를 시험 대상으로 선택하지 않는다.
+RC4-05에서는 [기존 개선](./2026-10-23-private-initialization-report.md)을 같은 R+A/B/JVM 조합에서 실제 검증해 새 init 보고서0600과 logs/diagnose 완전수집을 확인했다. imported `--from`의 저장값 재사용·취소/재개·한 항목 편집을 검증했으며, 빈 초안의14개 제품 항목 전체 수기 입력이나 작성자가 아닌 사람의 과업으로 확대하지 않는다. 기존 RC.3의 0644 보고서 복구는 별도 과제로 유지한다. 설치 준비에서 가져오는 입력도 RC.4 fresh fixture여야 하며 기존 사용자 자료를 시험 대상으로 선택하지 않는다.
 
 RC4-06의 공급자 G4/G5 성공은 시험 선정 근거로 재사용하지만 BXDL 서비스 adapter·설치 inventory·클라이언트 응답 parser의 제품 인수를 대체하지 않는다. 공급자의 438/1,634/751/69 등의 시험 수, 10.688/29.365초, child15개를 BXDL 결과나 SLA로 복사하지 않는다. 실제 실행별 source/JAR/harness·입력·횟수·시간·skip과 미실행을 기록한다.
 
 ## 6. 실행 환경·증거와 NIGO 의존성
 
-RC4-01에서 다운로드·정적 대조와 선정 JRE의 실제 engine-info를 완료했다. 엔진 호출 전 검증기 정렬·빈 속성 파싱 오류2건은 이력을 보존하고 수정했다. JVM 호출은 총4회(속성2·module1·engine-info1), 자동 재시도0회다. 이 수신 단계에서는 노드·서비스·DB·다중 노드·generator를 실행하지 않았다. 후속 RC4-02는 준비 helper1·오프라인 Node 서명1·keytool4를 별도 새 경로에서 실행했고 노드·DB·서비스는 계속 미실행이다. RC4-03에서는 별도 clean A와 새 R을 고정하고 lock/spec을 선택했으며, 제품 노드·DB 초기화·서비스·네트워크 인수는 실행하지 않았다. 세부 실행과 inventory 근거는 별도 조립 결과에 기록했다. RC4-04에서는 clean B와 CLI-only signed bundle을 만들고 별도 private CLI 설치·전환·구형 capability 거절을 검증했다. R/A를 보존했으며 해당 CLI-only 실물 검증의 노드·JVM 호출은0회다. RC4-02 원본에서 새 수동 peerless 서비스 입력을 실제 복사·검증했고 child0·새 data 부재를 확인했다. 자동 검사·CLI-only 결과와 아직 실행하지 않은 서비스·RPC 검증을 [RC4-04 결과](../results/2026-11-15-rc4-cli-harness.md)에 구분한다. 후속 실물 시험은 전용 장비 또는 업무와 분리한 Mac 시간에 새 경로·포트·최대 동시 노드 수·감독 시간·횟수·정리 기준을 정해 수행한다. 기본은 각 시나리오 1회, 자동 재시도 0이며 실패 원자료와 미실행 항목을 보존한다. 종료가 불명이면 상태를 확인한 뒤 정상 stop 절차로 정리하고 기존 데이터 삭제나 성공까지 재실행하지 않는다. 장기 soak/성능 MAIN을 자동으로 포함하지 않는다.
+RC4-01에서 다운로드·정적 대조와 선정 JRE의 실제 engine-info를 완료했다. 엔진 호출 전 검증기 정렬·빈 속성 파싱 오류2건은 이력을 보존하고 수정했다. JVM 호출은 총4회(속성2·module1·engine-info1), 자동 재시도0회다. 이 수신 단계에서는 노드·서비스·DB·다중 노드·generator를 실행하지 않았다. 후속 RC4-02는 준비 helper1·오프라인 Node 서명1·keytool4를 별도 새 경로에서 실행했고 노드·DB·서비스는 계속 미실행이다. RC4-03에서는 별도 clean A와 새 R을 고정하고 lock/spec을 선택했으며, 제품 노드·DB 초기화·서비스·네트워크 인수는 실행하지 않았다. 세부 실행과 inventory 근거는 별도 조립 결과에 기록했다. RC4-04에서는 clean B와 CLI-only signed bundle을 만들고 별도 private CLI 설치·전환·구형 capability 거절을 검증했다. R/A를 보존했으며 해당 CLI-only 실물 검증의 노드·JVM 호출은0회다. RC4-02 원본에서 새 수동 peerless 서비스 입력을 실제 복사·검증했고 child0·새 data 부재를 확인했다. 자동 검사·CLI-only 결과와 당시 실행하지 않은 서비스·RPC 검증을 [RC4-04 결과](../results/2026-11-15-rc4-cli-harness.md)에 구분한다. 후속 실물 시험은 전용 장비 또는 업무와 분리한 Mac 시간에 새 경로·포트·최대 동시 노드 수·감독 시간·횟수·정리 기준을 정해 수행한다. 기본은 각 시나리오 1회, 자동 재시도 0이며 실패 원자료와 미실행 항목을 보존한다. 종료가 불명이면 상태를 확인한 뒤 정상 stop 절차로 정리하고 기존 데이터 삭제나 성공까지 재실행하지 않는다. 장기 soak/성능 MAIN을 자동으로 포함하지 않는다.
+
+후속 RC4-05는 같은 고정 B/R/A의 새 private control/data에서21사례를161.513초에 수행했다. init1·start2·정상 stop2, `MANUAL_START_INITIALIZED`, query7쌍 무쓰기, 설치에 쓴 이번 실행의 supply3파일 부재 중 운용·V2 managed copy 검증과 원위치 복원, 보고서0600·완전수집, payload269/JRE259/worker2와 같은 DB identity 보존을 확인했다. 정상 종료 뒤 runner는 기록 PID38개·launchd job2개·시험 포트2개의 잔존 부재를 확인했다. 독립 감사는 runner38개와 harness1개를 합한 PID39개·job2개·포트2개의 잔존 부재 및 원자료·현재 파일 identity 일치를 확인했다. 최초 감사의 sandbox `ps` 접근 실패는 보존했고 OS 읽기 감사만 권한 범위 안에서 다시 수행했다. 서비스 재실행은 없었다. 전체 `make check`는 Rust596·Python165개 중163 PASS/기존 opt-in2 SKIP·fmt/Clippy PASS이며 검사 source136파일 불변을 확인했다. Rust 변경이 없어 이번 Linux 타입 검사는 재실행하지 않았고 RC4-04의 PASS 이력을 구분한다. 실행별 세부 근거는 [RC4-05 결과](../results/2026-11-15-rc4-macos-service.md)를 따른다. 이 관측을 동종망·RPC·사람 과업 PASS로 승계하지 않는다.
 
 | 의존 사항 | 현재 판단 |
 | --- | --- |
-| 새 NIGO 엔진 기능·새 RC 공급 | 선행 대기 없음. RC4-01~04 수신·준비·R/A 선택·외부 B/도구와 CLI-only 검증 완료. 다음은 고정 R+B의 RC4-05 Mac 설치·서비스 인수 |
+| 새 NIGO 엔진 기능·새 RC 공급 | 선행 대기 없음. RC4-01~05 수신·준비·조립·CLI/도구·로컬 서비스 인수 DONE. 다음은 고정 R+B의 RC4-06 동종망·복구·RPC 인수 |
 | 실제 archive 접근/무결성·engine-info 불일치 | RC4-01에서 일치 확인. 향후 불일치 시 후보 선택을 중지하고 고정 identity/근거로 공급자에게 문의 |
 | 새 fixture/helper | 공급 JAR의 실제 helper 준비 PASS. 고객 PKI/공식 생성기 공급·제품 인수와 구분하며 추가 선행 요청 없음 |
 | 계약이 같은 fingerprint인 경우 | source/Console/Native·wire·DB 차이 검토와 실제 제품 인수는 계속 필요 |

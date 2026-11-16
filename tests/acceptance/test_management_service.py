@@ -213,5 +213,236 @@ class ServiceHarnessBoundary(unittest.TestCase):
         self.assertEqual(runner.parser().parse_args(required + ["--candidate", "rc4"]).candidate, "rc4")
 
 
+
+class SetupRecoveryBoundaries(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name).resolve()
+
+    def detail(self, revision, instance_id, prepared, next_input=None):
+        return {"inspection": {"summary": {"planRevision": revision,
+                "preparation": "PREPARED_RECORDED" if prepared else "DRAFT",
+                "installation": "NOT_PERFORMED"},
+                "verification": "VERIFIED" if prepared else "NOT_PREPARED",
+                "fields": [{"name": "instanceId", "value": instance_id}],
+                "nextInput": next_input, "missingInputs": ["trustPolicy"] if next_input else []},
+                "application": None}
+
+    def test_draft_id_is_opt_in_valid_distinct_and_does_not_change_legacy(self):
+        self.assertEqual(runner.draft_instance_id(SimpleNamespace(instance_id="node-1")), "node-1")
+        args = SimpleNamespace(instance_id="node-1", exercise_setup_recovery=True)
+        draft = runner.draft_instance_id(args)
+        self.assertNotEqual(draft, args.instance_id)
+        self.assertRegex(draft, r"^[a-z][a-z0-9-]{0,31}$")
+        for value in ("Uppercase", "a" * 33, "../outside"):
+            with self.subTest(value=value), self.assertRaisesRegex(h.Failure, "RECOVERY_INSTANCE_ID_INVALID"):
+                runner.draft_instance_id(SimpleNamespace(instance_id=value, exercise_setup_recovery=True))
+
+    def test_cancel_dto_requires_archive_saved_and_trust_next_without_review(self):
+        valid = self.detail(0, "draft-node", False, "trustPolicy")
+        runner.preparation_state(valid, 0, "draft-node", False, "trustPolicy")
+        changes = [lambda d: d["inspection"].update(nextInput="archive"),
+                   lambda d: d["inspection"]["missingInputs"].append("archive"),
+                   lambda d: d["inspection"].update(verification="VERIFIED"),
+                   lambda d: d["inspection"]["summary"].update(planRevision=1),
+                   lambda d: d.update(application={"record": "READABLE"})]
+        for change in changes:
+            changed = copy.deepcopy(valid)
+            change(changed)
+            with self.assertRaises(h.Failure):
+                runner.preparation_state(changed, 0, "draft-node", False, "trustPolicy")
+
+    def test_edit_dto_requires_invalidated_review_without_rewinding_revision(self):
+        valid = self.detail(1, "final-node", False)
+        runner.preparation_state(valid, 1, "final-node", False)
+        for field, value in (("planRevision", 0), ("preparation", "PREPARED_RECORDED")):
+            changed = copy.deepcopy(valid)
+            changed["inspection"]["summary"][field] = value
+            with self.assertRaises(h.Failure):
+                runner.preparation_state(changed, 1, "final-node", False)
+
+    def test_actual_flow_cancels_then_resumes_at_trust_and_edits_one_field(self):
+        args = SimpleNamespace(instance_id="final-node", exercise_setup_recovery=True)
+        home, inputs, supply = self.root / "home", self.root / "inputs", self.root / "supply"
+        generated = home / "sessions/local/generated"
+        generated.mkdir(parents=True)
+        calls = []
+        initial_product = {"instanceId": runner.draft_instance_id(args), "unchanged": "public-config"}
+        native = {"backend": "rocksdb", "node": {"manual": True}}
+
+        class Terminal:
+            def __init__(self, words, label):
+                self.label = label
+                self.answers = []
+                calls.append((list(words), label, self.answers))
+
+            def answer(self, prompt, answer):
+                self.answers.append((prompt, answer))
+
+            def finish(self, reason, code=0):
+                self.answers.append(("FINISH", (reason, code)))
+                if self.label in ("resume-trust", "resume-edited-review"):
+                    revision = 1 if self.label == "resume-trust" else 2
+                    product = dict(initial_product)
+                    if revision == 2:
+                        product["instanceId"] = args.instance_id
+                    h.write_json(generated / f"instance-{revision:04d}.json", product)
+                    h.write_json(generated / f"node-{revision:04d}.json", native)
+
+        details = [self.detail(0, runner.draft_instance_id(args), False, "trustPolicy"),
+                   self.detail(1, runner.draft_instance_id(args), True),
+                   self.detail(1, args.instance_id, False), self.detail(2, args.instance_id, True)]
+        with patch.object(h, "command") as command:
+            result, notes = {}, []
+            runner.prepare_session(args, Terminal, lambda action: ["setup", action, "local"],
+                                   lambda label: details.pop(0), home, inputs, supply, result, notes.append)
+        command.assert_not_called()
+        self.assertEqual(calls[0][2][2], ("패키지 검증 방법", ":cancel"))
+        self.assertEqual(calls[0][2][-1][1][1], 5)
+        self.assertEqual(calls[1][0], ["setup", "resume", "local"])
+        self.assertEqual(calls[1][2][0], ("패키지 검증 방법", "1"))
+        self.assertFalse(any(prompt == "패키지 archive 파일" for prompt, _ in calls[1][2]))
+        self.assertEqual(calls[2][0][-2:], ["--field", "instanceId"])
+        self.assertEqual(calls[2][2][0][1], args.instance_id)
+        self.assertEqual(result["setupRecovery"]["finalRevision"], 2)
+        self.assertTrue(result["setupRecovery"]["onlyInstanceIdChanged"])
+        self.assertEqual(result["setupRecovery"]["firstRevisionSnapshots"],
+                         result["setupRecovery"]["afterResumeOldRevisionSnapshots"])
+
+    def test_old_generated_bytes_or_inode_replacement_is_rejected(self):
+        home = self.root / "home"
+        generated = home / "sessions/local/generated"
+        generated.mkdir(parents=True)
+        for name in ("instance", "node"):
+            h.write_json(generated / f"{name}-0001.json", {"public": "original"})
+        before = runner.revision_files(home, 1)
+        path = generated / "instance-0001.json"
+        old = path.read_bytes()
+        path.unlink()
+        h.write(path, old)
+        with self.assertRaisesRegex(h.Failure, "PREVIOUS_GENERATED_REVISION_CHANGED"):
+            runner.require_old_revision_unchanged(before)
+
+    def test_retained_binding_requires_owned_trust_and_this_runs_original_supply(self):
+        control, supply = self.root / "control", self.root / "supply"
+        (control / "trust").mkdir(parents=True)
+        binding = {"schemaVersion": 2, "supply": {}}
+        fields = {"archive": "package.tar.gz", "publicKey": "public-key.pem", "lock": "engine-lock.json"}
+        expected = {}
+        for field, name in fields.items():
+            path = control / "trust" / name
+            h.write(path, ("PUBLIC_STUB_" + name).encode())
+            expected[name] = h.sha(path)
+            binding[field] = str(path)
+            binding["supply"][field] = {"path": str(supply / name), "sha256": expected[name]}
+        h.write_json(control / "binding.json", binding)
+        self.assertEqual(runner.retained_supply(control, supply, expected)["filesVerified"], 3)
+        binding["supply"]["archive"]["path"] = str(self.root / "external/package.tar.gz")
+        (control / "binding.json").write_text(__import__("json").dumps(binding))
+        with self.assertRaisesRegex(h.Failure, "MANAGED_SUPPLY_IDENTITY"):
+            runner.retained_supply(control, supply, expected)
+
+    def test_managed_show_needs_retained_binding_verification_not_source_recheck(self):
+        detail = {"inspection": {"verification": "NOT_CHECKED", "summary": {"preparation": "PREPARED_RECORDED"}},
+                  "application": {"record": "READABLE", "nameBinding": "CONNECTED", "runtime": "NOT_OBSERVED",
+                  "summary": {"sourceMatch": "MATCH", "verification": "PASSED", "registrationConfirmed": True,
+                              "installation": "CONFIRMED", "registration": "CONFIRMED", "preparationRevision": 2}}}
+        runner.require_managed_application(detail, 2)
+        for field, value in (("verification", "FAILED"), ("sourceMatch", "UNAVAILABLE"),
+                             ("registrationConfirmed", False), ("preparationRevision", 1)):
+            bad = copy.deepcopy(detail)
+            bad["application"]["summary"][field] = value
+            with self.assertRaisesRegex(h.Failure, "MANAGED_APPLICATION_NOT_VERIFIED"):
+                runner.require_managed_application(bad, 2)
+
+
+class OwnedSupplyRecovery(unittest.TestCase):
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.root = Path(temp.name).resolve()
+        supply = self.root / "supply"
+        supply.mkdir(mode=0o700)
+        self.expected = {}
+        for name in runner.SUPPLY:
+            h.write(supply / name, ("OFFLINE_PUBLIC_SUPPLY_" + name).encode())
+            self.expected[name] = h.sha(supply / name)
+        self.relocation = runner.OwnedSupplyAbsence(self.root, self.expected)
+
+    def test_hide_restore_preserves_three_files_and_never_touches_external_source(self):
+        external = self.root / "original-fixture"
+        external.mkdir()
+        (external / "sentinel").write_text("preserve")
+        before = {name: (self.root / "supply" / name).stat().st_ino for name in runner.SUPPLY}
+        self.relocation.hide()
+        self.relocation.require_absent()
+        self.assertEqual(list((self.root / "supply").iterdir()), [])
+        result = {"outcome": "INCOMPLETE"}
+        runner.restore_owned_supply(self.relocation, result)
+        self.assertEqual(result["supplyRestoration"]["outcome"], "PASS")
+        self.assertEqual(before, {name: (self.root / "supply" / name).stat().st_ino for name in runner.SUPPLY})
+        self.assertFalse((self.root / "withheld supply").exists())
+        self.assertEqual((external / "sentinel").read_text(), "preserve")
+
+    def test_partial_move_failure_is_restored_without_hiding_primary_failure(self):
+        rename = runner.os.rename
+        calls = 0
+
+        def fail_second(source, target):
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                raise OSError("OFFLINE_INJECTED_RENAME_FAILURE")
+            rename(source, target)
+
+        with patch.object(runner.os, "rename", side_effect=fail_second), self.assertRaises(OSError):
+            self.relocation.hide()
+        result = {"outcome": "INCOMPLETE", "failure": "PRIMARY_TEST_FAILURE"}
+        runner.restore_owned_supply(self.relocation, result)
+        self.assertEqual(result["failure"], "PRIMARY_TEST_FAILURE")
+        self.assertEqual(result["outcome"], "INCOMPLETE")
+        self.assertEqual(result["supplyRestoration"]["outcome"], "PASS")
+        self.assertEqual({name: h.sha(self.root / "supply" / name) for name in runner.SUPPLY}, self.expected)
+
+    def test_collision_does_not_overwrite_new_file_and_cannot_leave_pass(self):
+        self.relocation.hide()
+        path = self.root / "supply/package.tar.gz"
+        path.write_text("DO_NOT_OVERWRITE")
+        result = {"outcome": "PASS", "failure": "PRIMARY_TEST_FAILURE"}
+        runner.restore_owned_supply(self.relocation, result)
+        self.assertEqual(path.read_text(), "DO_NOT_OVERWRITE")
+        self.assertEqual(result["outcome"], "INCOMPLETE")
+        self.assertEqual(result["failure"], "PRIMARY_TEST_FAILURE")
+        self.assertEqual(result["supplyRestoration"]["outcome"], "INCOMPLETE")
+        self.assertTrue((self.root / "withheld supply/package.tar.gz").exists())
+        self.assertTrue((self.root / "supply/public-key.pem").exists())
+
+    def test_changed_hidden_file_is_preserved_for_operator_and_not_restored_as_original(self):
+        self.relocation.hide()
+        path = self.root / "withheld supply/engine-lock.json"
+        path.write_text("TAMPERED_STUB")
+        result = {"outcome": "PASS"}
+        runner.restore_owned_supply(self.relocation, result)
+        self.assertEqual(result["outcome"], "INCOMPLETE")
+        self.assertTrue(path.exists())
+        self.assertFalse((self.root / "supply/engine-lock.json").exists())
+
+    def test_unexpected_member_or_symlink_is_refused_before_any_move(self):
+        extra = self.root / "supply/extra"
+        extra.write_text("extra")
+        with self.assertRaisesRegex(h.Failure, "SUPPLY_ABSENCE_MEMBERSHIP"):
+            self.relocation.hide()
+        self.assertFalse((self.root / "withheld supply").exists())
+        extra.unlink()
+        path = self.root / "supply/public-key.pem"
+        path.unlink()
+        path.symlink_to(self.root / "supply/engine-lock.json")
+        with self.assertRaisesRegex(h.Failure, "INPUT_NOT_REGULAR"):
+            self.relocation.hide()
+        self.assertFalse((self.root / "withheld supply").exists())
+
+
+
 if __name__ == "__main__":
     unittest.main()

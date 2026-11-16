@@ -2,11 +2,13 @@
 
 NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구다. **Rust로 구현하며 macOS Apple Silicon에서 설치·운용 UX를 먼저 완성한다.** Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
 
-**2026-11-15: RC4-01~04를 완료했다. RC.4 수신·시험 자료 준비·개발 runtime 조립에 이어, 외부 관리 CLI profile·인수 도구 구현과 실제 CLI-only 배포·전환 검증을 PASS했다.** [수신 기록](./contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 준비 결과](./results/2026-11-15-rc4-fixture-preparation.md), [RC4-03 runtime 조립](./results/2026-11-15-rc4-runtime-assembly.md), [RC4-04 구현·CLI-only 검증](./results/2026-11-15-rc4-cli-harness.md)을 구분한다. clean source `65fe83f0d569fcf2231474342fa0d60ca72555d5`의 독립 관리 CLI B는 고정 RC.4 runtime R의 내부 실행기 A를 인증한다. R/A/JAR/JRE는 그대로 유지한다.
+**2026-11-15: RC4-01~05를 완료했다. 고정 R+B의 Mac 설치·수동 단일노드 서비스21사례와 독립 종료 감사를 PASS했다.** [수신 기록](./contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 준비 결과](./results/2026-11-15-rc4-fixture-preparation.md), [RC4-03 runtime 조립](./results/2026-11-15-rc4-runtime-assembly.md), [RC4-04 구현·CLI-only 검증](./results/2026-11-15-rc4-cli-harness.md), [RC4-05 Mac 서비스 결과](./results/2026-11-15-rc4-macos-service.md)를 구분한다. clean source `65fe83f0d569fcf2231474342fa0d60ca72555d5`의 독립 관리 CLI B로 기존 R/A/JAR/JRE를 재빌드·교체하지 않고 운용했다.
 
-`make check`는 Rust596 PASS, Python153개 중151 PASS·2 SKIP, fmt·Clippy PASS이며 Linux 타입 검사도 PASS다. 새 서명 CLI 배포본 설치·구형 bootstrap에서 B로 업데이트, B의 RC.3 전용 CLI update/rollback 거절과 기존 선택 보존을 확인했다. RC4-02 원자료에서 단일노드 수동 운용 입력도 준비했고 4-validator chain·자격증명6개 bytes를 보존했다. **RC.4 노드 패키지 설치·DB 초기화·서비스·네트워크·RPC 실물 인수는 NOT_RUN**이다. 이번 CLI-only 검증과 입력 변환에서는 JVM·노드·서비스를 실행하지 않았다.
+RC4-05에서 준비 취소·trust부터 재개·한 항목 수정과 revision2 승인, 새 설치·등록·명시 init1회, 수동 시작·정상 stop 각2회와 같은 RC.4 DB 재시작을 확인했다. 최초 등록 뒤 이번 시험의 공급 사본3개를 옮긴 상태로 운용·재적용·조회했고 종료 전 복원했다. 초기화 보고서는 `0600`이며 logs/diagnose가 완전수집했다. list/show7쌍과 정지 후 reapply의 전후 snapshot, 설치 payload269파일·JRE259파일·worker2개의 불변성을 보존했다. **단일노드의 `MANUAL_START_INITIALIZED` 로컬 준비 상태를 검증한 범위**이며 RC.4 네트워크·RPC·실행 중 관리 CLI 전환·사용자 과업은 NOT_RUN이다. 독립 종료 감사도 PASS했으며 이번 `make check`는 Rust596 PASS, Python165개 중163 PASS·2기존 opt-in SKIP, fmt·Clippy PASS다. Rust 변경이 없어 Linux 타입 검사는 이번에 재실행하지 않았으며 RC4-04의 PASS 이력을 유지한다.
 
-[CLI·하네스 설계](./design/2026-11-15-rc4-cli-harness-implementation.md)와 [RC.4 도입 계획](./design/2026-11-15-rc4-adoption-plan.md)에 따라 다음은 **RC4-05 고정 R+B의 Mac 설치·수동 서비스·같은 RC.4 DB 재시작 인수**다. 이후 새 DB·새 genesis의 동종 네트워크와 변경 API/native 영향 → 정식 인수 회신 → CLI05-04 사용자 과업을 진행한다. 기존 RC.3 lock/spec/runtime·인수 이력은 유지하며 추가 NIGO 선행 구현 요청은 없다. 안내서 준비와 RC.3 UX 시험은 병행할 수 있지만 RC.4 제품 인수로 승계하지 않는다.
+RC4-04 당시 `make check`는 Rust596 PASS, Python153개 중151 PASS·2 SKIP, fmt·Clippy와 Linux 타입 검사 PASS였다. 당시 CLI-only 설치·전환과 입력 준비의 JVM·노드·서비스 호출0회 기록은 보존한다. 이번 서비스 결과를 앞선 기록에 소급하지 않는다.
+
+[CLI·하네스 설계](./design/2026-11-15-rc4-cli-harness-implementation.md)와 [RC.4 도입 계획](./design/2026-11-15-rc4-adoption-plan.md)의 다음 구현·인수는 **RC4-06 새 DB·새 genesis의 동종 네트워크·변경 영향·실행 중 CLI 전환**이다. 이후 RC4-07 정식 인수 회신 → RC4-08 CLI05-04 사용자 과업을 진행한다. 기존 RC.3 lock/spec/runtime·인수 이력은 유지하며 추가 NIGO 선행 구현 요청은 없다. 안내서 준비와 RC.3 UX 시험은 병행할 수 있지만 RC.4 제품 인수로 승계하지 않는다.
 
 개선 우선순위를 **직접 CLI 중심**으로 변경했다. `bxdl console`의 추가 개발은 중단하고 기존 구현은 보존한다. `bxdl nodes`와 `bxdl nodes add <이름> --instance <경로>`로 console 없이 목록 조회와 기존 노드 이름 연결을 제공한다. 이름 기반 운용을 연결하고 관리 CLI가 기존 RC.3 패키지 실행기에 작업을 위임하도록 분리했다. `setup new/resume`은 저장한 답을 재사용해 필요한 질문부터 순서대로 진행하며, `setup list/show/edit`으로 준비 목록·내용 조회와 제품 항목 하나 수정을 제공한다. `setup apply <이름>`은 별도 TTY 승인 뒤 설치·cold 검사·등록·이름 연결까지 수행한다. 준비와 설치 실행 기록은 나누어 조회하며 초기화·시작은 `init <이름> --confirm-initialize`, `start <이름>`로 별도 실행한다. CLI-04의 자동 검사와 기존 RC.3를 그대로 사용한 Mac 설치·초기화·시작·종료·재적용을 통과했다. [CLI-04 검증 기록](./results/2026-10-23-cli04-apply-and-lifecycle.md)에 실행별 범위를 구분했다. [CLI 작업 계획](./design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따르며, 다음 실행 순서는 위 RC.4 도입 계획을 우선한다. 순차 문답·조회·수정의 자동 검사와 실제 Mac 시험 범위는 [CLI-03 검증 결과](./results/2026-10-23-cli03-sequential-preparation.md)에 기록했다.
 
@@ -28,7 +30,7 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 
 **offline Storage A7은 NOT_RUN**, 기존 설치 upgrade와 전체 G1-M은 후속이다. RC.2 원본 INCOMPLETE·경로 원인 미확정과 RC.3 수신/앞선 시험/NIGO 회신의 당시 미선택·NOT_RUN은 각 시점의 이력으로 보존한다.
 
-관리 CLI는 노드 패키지 밖에서 독립적으로 업데이트할 수 있다. 고정 RC.3·RC.4 package profile을 코드로 지원하며 실제 노드 운용 인수가 완료된 조합은 기존 RC.3다. 설치본의 CLI·NIGO JAR·JRE를 교체하지 않는다. 실행기 자체를 변경할 때는 새 패키지 인수가 필요하다. [분리 설계](./design/2026-10-23-independent-management-cli.md)와 [운용 가이드](./docs/management-cli.md)를 따른다. [독립 관리 CLI 인수](./results/2026-10-23-independent-management-cli.md)의 직접 운용16사례·설치 도우미 PTY8사례, payload/worker 불변과 정상 종료 독립 대조가 PASS다.
+관리 CLI는 노드 패키지 밖에서 독립적으로 업데이트할 수 있다. 고정 RC.3·RC.4 package profile을 지원한다. 기존 RC.3 서비스·네트워크 인수와 새 RC.4 수동 단일노드 서비스 관측을 구분하며 RC.4 네트워크 인수는 후속이다. 설치본의 CLI·NIGO JAR·JRE를 교체하지 않는다. 실행기 자체를 변경할 때는 새 패키지 인수가 필요하다. [분리 설계](./design/2026-10-23-independent-management-cli.md)와 [운용 가이드](./docs/management-cli.md)를 따른다. [독립 관리 CLI 인수](./results/2026-10-23-independent-management-cli.md)의 직접 운용16사례·설치 도우미 PTY8사례, payload/worker 불변과 정상 종료 독립 대조가 PASS다.
 
 CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bxdl completion zsh`로 셸 스크립트를 출력하고 명령·옵션·저장한 이름을 Tab으로 완성한다. 적용 방법은 [자동완성 가이드](./docs/completion.md), 전체 검사와 최종 release의 실제 zsh 13시나리오·인용 경로 결과는 [검증 기록](./results/2026-10-23-cli05-zsh-completion.md)을 따른다. 독립 관리 CLI의 Mac 배포·업데이트(CLI05-02)도 [전용 설계](./design/2026-10-23-management-cli-distribution.md)에 따라 구현·검증했다. `bxdl cli install/update/info/rollback`으로 별도 사용자 root의 CLI와 자동완성을 함께 선택한다. [검증 기록](./results/2026-10-23-cli05-management-distribution.md)에 자동 검사와 개발 인수 배포본의 실제 Mac signed13/unsigned13사례를 구분했다. 후속 **CLI05-03의 지정 Mac 서비스·네트워크 조합 인수도 PASS**했다. 실제 설치한 관리 CLI로 서비스16사례와 네트워크12개 실행 시도·거래8개/제출9회, 실행 중 CLI 업데이트·복귀·재업데이트를 확인했다. [조합 인수 기록](./results/2026-10-23-cli05-runtime-acceptance.md)에 고정 RC.3 payload/worker·정상 정리와 진단의 partial 결과를 구분했다. 당시 진단 partial은 그대로 보존한다. 후속 [초기화 보고서 권한 개선](./design/2026-10-23-private-initialization-report.md)으로 새 관리 CLI가 실행하는 초기화 보고서를 `0600`으로 생성하며, 같은 RC.3에서 신규 보고서 수집을 [별도 재검증](./results/2026-10-23-private-initialization-report.md)했다. 기존 `0644` 보고서는 자동 복구하지 않아 계속 partial이며, 작성자가 아닌 사용자의 CLI05-04 과업은 NOT_RUN이다.
 
@@ -76,13 +78,13 @@ CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bx
 
 `upgrade/uninstall`은 exit 4와 CAPABILITY_NOT_IMPLEMENTED를 반환한다. 기본 setup 저장 성공은 초안 저장이며 설치 모드의 `finish`도 현재 단계까지만 저장한다. init 성공은 실행 중 노드·서비스 준비 완료가 아니다. logs/diagnose는 raw 로그·비밀·경로·hash를 내보내지 않고 누락은 partial로 표시한다. 보고서 생성 성공을 노드 안전·정상 판정으로 해석하지 않는다. [사용법과 한도](./docs/cli.md#오프라인-기록과-지원-보고서)를 따른다.
 
-새 standalone CLI는 Unix 프로세스 진입 시 `umask 077`을 적용해 자식 실행기와 JVM에 상속한다. 호출한 셸의 설정은 바꾸지 않으며 기존 파일 권한도 바꾸지 않는다. 기존 RC.3 패키지의 내장 CLI를 직접 실행하거나 라이브러리 API만 호출하는 경우에는 이 정책이 적용되지 않는다. 새 RC.4 내부 실행기 A에는 이 진입 정책이 포함됐으며 실제 초기화 보고서 권한은 RC4-05에서 확인한다. 새 노드 archive의 외부 파일은 `0600`으로 생성되지만 archive 내부의 payload 권한·바이트와 설치 파일의 명시 권한은 유지한다. [관리 CLI의 파일 권한 범위](./docs/management-cli.md#파일-생성-권한과-초기화-보고서)를 따른다.
+새 standalone CLI는 Unix 프로세스 진입 시 `umask 077`을 적용해 자식 실행기와 JVM에 상속한다. 호출한 셸의 설정은 바꾸지 않으며 기존 파일 권한도 바꾸지 않는다. 기존 RC.3 패키지의 내장 CLI를 직접 실행하거나 라이브러리 API만 호출하는 경우에는 이 정책이 적용되지 않는다. 새 RC.4 내부 실행기 A에도 이 진입 정책이 포함됐다. RC4-05에서 caller umask022로 실행한 새 초기화 보고서의 `0600` 생성과 완전수집을 확인했다. 새 노드 archive의 외부 파일은 `0600`으로 생성되지만 archive 내부의 payload 권한·바이트와 설치 파일의 명시 권한은 유지한다. [관리 CLI의 파일 권한 범위](./docs/management-cli.md#파일-생성-권한과-초기화-보고서)를 따른다.
 
-인증된 RC.3·RC.4 profile은 외부 관리 CLI로 start를 호출하면 package의 고정 실행기에 위임한다. RC.4의 실제 서비스 인수는 후속이며 미지원 package는 기존 동일 bytes 조건을 적용한다. 관리 CLI는 설치본 밖에서 교체하며 package 내부 CLI는 덮어쓰지 않는다. 로그인된 Mac 사용자 세션에서 수동 시작하며 로그인 자동 시작·자동 재시작은 제공하지 않는다. 정상 종료가 검증된 뒤에만 다음 명시 start를 허용한다. 실패·UNKNOWN 복구와 보존된 snapshot/private 로그의 자동 정리는 후속이다.
+인증된 RC.3·RC.4 profile은 외부 관리 CLI로 start를 호출하면 package의 고정 실행기에 위임한다. RC4-05의 수동 단일노드 서비스에서 고정 실행기 위임·같은 DB 재시작을 확인했으며 미지원 package는 기존 동일 bytes 조건을 적용한다. 관리 CLI는 설치본 밖에서 교체하며 package 내부 CLI는 덮어쓰지 않는다. 로그인된 Mac 사용자 세션에서 수동 시작하며 로그인 자동 시작·자동 재시작은 제공하지 않는다. 정상 종료가 검증된 뒤에만 다음 명시 start를 허용한다. 실패·UNKNOWN 복구와 보존된 snapshot/private 로그의 자동 정리는 후속이다.
 
 ## 설치 도우미와 설정 준비
 
-Mac arm64에서 새 설치를 진행하려면 별도 설치 세션을 지정한다. 검증된 기존 RC.3는 독립 관리 CLI로 설치·운용할 수 있다. RC.4의 정확한 profile 지원은 구현됐으며 실제 설치·운용 인수는 RC4-05/06에서 진행한다. 미지원 package는 공급된 동일 CLI 조건을 적용한다. 부모 폴더는 미리 있어야 하며 자동 생성하지 않는다.
+Mac arm64에서 새 설치를 진행하려면 별도 설치 세션을 지정한다. 검증된 기존 RC.3는 독립 관리 CLI로 설치·운용할 수 있다. RC.4는 RC4-05에서 새 설치·초기화·수동 단일노드 운용을 확인했고, RC4-06에서 네트워크와 실행 중 CLI 전환을 인수한다. 미지원 package는 공급된 동일 CLI 조건을 적용한다. 부모 폴더는 미리 있어야 하며 자동 생성하지 않는다.
 
 ```bash
 bxdl setup --install --workspace /absolute/existing-parent/new-session
