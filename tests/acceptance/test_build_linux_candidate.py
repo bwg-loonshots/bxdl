@@ -9,8 +9,9 @@ from pathlib import Path
 import shutil
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
@@ -243,6 +244,48 @@ class NativeBuilderTests(unittest.TestCase):
         with patch.object(builder,'LIMIT',128):
             with self.assertRaisesRegex(builder.Failure,'BUILD_COMMAND_OUTPUT_LIMIT'):
                 builder.run([sys.executable,'-c','import os; os.write(1,b"x"*4096)'],self.root,{},'bounded',timeout=5)
+
+    def assert_eperm_cleanup(self, terminated):
+        process=MagicMock()
+        process.returncode=None
+        process.pid=4321
+        process.stdout.fileno.return_value=100
+        process.stderr.fileno.return_value=101
+        def wait(timeout):
+            if not terminated:
+                raise builder.subprocess.TimeoutExpired('private command', timeout)
+            process.returncode=0
+            return 0
+        process.wait.side_effect=wait
+        selector=MagicMock()
+        selector.get_map.return_value={'pending':True}
+        selector.select.return_value=[(SimpleNamespace(fd=100,data='stdout'),None)]
+        evidence=self.root/'cleanup-evidence'
+        evidence.mkdir(mode=0o700)
+        with patch.object(builder.subprocess,'Popen',return_value=process), \
+             patch.object(builder.selectors,'DefaultSelector',return_value=selector), \
+             patch.object(builder.os,'set_blocking'), \
+             patch.object(builder.os,'read',side_effect=[b'x',b'xx']), \
+             patch.object(builder.os,'killpg',side_effect=PermissionError('private OS detail')) as kill, \
+             patch.object(builder,'LIMIT',1):
+            expected='BUILD_COMMAND_OUTPUT_LIMIT' if terminated else 'BUILD_COMMAND_CLEANUP_FAILED'
+            with self.assertRaisesRegex(builder.Failure,expected):
+                builder.run(['private-child'],self.root,{},'eperm',evidence)
+            kill.assert_called_once_with(process.pid,builder.signal.SIGKILL)
+        process.wait.assert_called_once_with(timeout=5)
+        process.poll.assert_not_called()
+        process.stdout.close.assert_called_once()
+        process.stderr.close.assert_called_once()
+        selector.close.assert_called_once()
+        self.assertEqual((evidence/'eperm.stdout').read_bytes(),b'x')
+        self.assertEqual((evidence/'eperm.stderr').read_bytes(),b'')
+        self.assertEqual((evidence/'eperm.stdout').stat().st_mode & 0o777,0o600)
+
+    def test_exited_child_eperm_preserves_original_failure_and_evidence(self):
+        self.assert_eperm_cleanup(terminated=True)
+
+    def test_live_child_eperm_cleanup_timeout_is_reported_and_pipes_close(self):
+        self.assert_eperm_cleanup(terminated=False)
 
     def test_bad_cargo_and_rustc_versions_are_rejected(self):
         with patch.object(builder.shutil,'which',side_effect=lambda n:'/usr/bin/'+n),patch.object(builder,'run',return_value=(b'cargo 1.87.0 (abc 2025-01-01)',b'')):

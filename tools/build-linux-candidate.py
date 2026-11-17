@@ -102,15 +102,22 @@ def run(argv, cwd, env, label, evidence=None, timeout=60):
         require(proc.wait(timeout=1) == 0, 'BUILD_COMMAND_FAILED')
         return bytes(buffers['stdout']), bytes(buffers['stderr'])
     finally:
-        # A reaped child's process group identifier may have been reused. Only
-        # terminate our still-owned group while its leader remains unreaped.
-        if proc.returncode is None:
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
         try:
-            proc.wait(timeout=5)
+            # A reaped child's process group identifier may have been reused.
+            # Never signal after wait/poll has established that it has exited.
+            if proc.returncode is None:
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except (ProcessLookupError, PermissionError):
+                    # macOS may report EPERM while our child is already exiting.
+                    # Do not assume termination: bounded wait must establish it.
+                    pass
+            try:
+                proc.wait(timeout=5)
+            except (subprocess.TimeoutExpired, OSError) as error:
+                raise Failure('BUILD_COMMAND_CLEANUP_FAILED') from error
+        except OSError as error:
+            raise Failure('BUILD_COMMAND_CLEANUP_FAILED') from error
         finally:
             selector.close()
             proc.stdout.close()
