@@ -1,6 +1,6 @@
-# CLI·설치·설정·초기화와 Mac 서비스
+# CLI 사용 안내
 
-**현재 개선 방향:** console의 추가 개발은 중단했다. 직접 명령의 이름 기반 대상 지정과 순차 준비 흐름을 우선하며 [CLI 계획](../design/2026-10-22-cli-simplification.md)을 따른다. 이 문서는 현재 구현된 명령만 설명한다. `setup new/resume`은 누락된 입력부터 순차 문답으로 안내하고 `setup list/show/edit`을 제공한다. 준비한 자료는 `setup apply <이름>`의 별도 승인으로 설치·등록하고, 초기화·시작은 별도 명령으로 실행한다.
+BXDL은 이름 기반 직접 명령으로 설치 준비와 노드 운용을 수행한다. 이 문서는 공통 명령과 Mac 세부 계약을 설명하며, Linux의 설치·권한·systemd 운용은 [Linux 안내](./linux-operations.md)를 함께 따른다. 구현과 실제 검증 범위는 [현재 상태](./implementation-status.md)에서 확인한다. `setup new/resume`은 누락된 입력부터 순차 문답으로 안내하고 `setup list/show/edit`을 제공한다. 준비한 자료는 `setup apply <이름>`의 별도 승인으로 설치·등록하고, 초기화·시작은 별도 명령으로 실행한다.
 
 `--json`은 명령 인자 앞/뒤에서 받을 수 있으며 stdout에 JSON 문서 하나만 쓴다. 기본 setup에서는 `--non-interactive`와 함께 사용해야 한다. `console`, `setup new/resume/edit/apply`, `setup --install`, `setup --network`는 터미널 전용이며 `--json`을 지원하지 않는다. `setup list/show`는 비TTY에서 `--json`으로 조회할 수 있다. 사람용 결과도 같은 내부 결과를 표현한다. 대화형 setup 질문은 stderr에 출력하며, 비대화형 JSON 실행은 질문이나 로그 없이 결과만 stdout에 쓴다. 잘못된 인자나 parser 오류에 입력값·secret을 그대로 되돌려 쓰지 않는다.
 
@@ -25,7 +25,7 @@ Linux 사용자 목록·설치 준비 자료의 기본 경로는 `~/.local/share
 
 Ubuntu 24.04·systemd 255 이상·manager running이면 `SUCCEEDED/HOST_BASELINE_OBSERVED`와 exit 0을 반환한다. 이는 기준 환경 관측 결과이며 엔진이나 서비스 인수 성공이 아니다. Mac/미지원 target, 다른 배포판, systemd 조건 미충족 또는 WSL은 `INCOMPLETE`와 exit 3을 반환하고 WSL의 reasonCode는 `HOST_WSL_DEFERRED`다. 조회 실패도 exit 3이며 인자 오류는 exit 2다.
 
-JSON에는 `scope=READ_ONLY_HOST_BASELINE`, `linuxServiceControl=NOT_IMPLEMENTED`, `engineAcceptance=NOT_RUN`, `serviceMutations=0`을 구분해 기록한다. Linux 관리 CLI 설치·업데이트는 추가되었지만 Linux 노드 설치·초기화·start/stop은 아직 구현 중이다. [Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따른다.
+JSON에는 `scope=READ_ONLY_HOST_BASELINE`, `linuxServiceControl=DEVELOPMENT_BACKEND_IMPLEMENTED`, `engineAcceptance=NOT_RUN`, `serviceMutations=0`을 구분해 기록한다. Linux 관리 CLI 설치·업데이트와 개발용 노드 설치·초기화·systemd start/status/stop이 구현되어 있다. Ubuntu CI의 CLI 빌드·자동 검사는 통과했으며, 실제 선정 JRE/RC.4 조합의 노드·서비스 인수는 비공개 Linux 시험 대상으로 남아 있다. [Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따른다.
 
 ## 명령별 도움말과 대화형 입력
 
@@ -33,11 +33,11 @@ JSON에는 `scope=READ_ONLY_HOST_BASELINE`, `linuxServiceControl=NOT_IMPLEMENTED
 
 제품·설치·네트워크 문답의 모든 입력 단계에서 `:help`, `:back`, `:cancel`을 공통으로 사용한다. 도움말은 현재 질문으로 돌아오고, 뒤로가기는 앞 질문 또는 이전 검토 단계로 돌아가며, 취소/EOF는 저장한 checkpoint를 보존한다. 예약 문자가 파일명이라면 `./:help` 같은 명시 경로로 지정한다. 기존 문답의 항목 편집은 번호 하나를 고르고 검토로 돌아간다. 이름 있는 순차 준비는 검토의 `edit <필드>` 또는 별도 `setup edit <이름> --field <제품필드>`로 한 항목만 수정한다. 파일 출력·apply·init·start의 대화형 확인은 `y`/`yes`만 승인하며 빈 Enter는 거절이다.
 
-`bxdl console [--home <관리-루트>] [--instance <기존-control>]`은 홈·목록·기존 자료 읽기를 제공한다. 홈 조회는 무쓰기이며 목록 저장/갱신/숨기기는 개별 승인한다. 홈 1번은 기존 번호 메뉴 방식의 자료 준비를 제공한다. 직접 `setup new/resume`과 준비 저장 형식은 공유하지만 화면 흐름은 별개다. console의 추가 개발은 중단했으며 실제 운용 연결은 직접 CLI에서 진행한다. [console 사용 가이드](./console.md)를 따른다. HTML과 Python 터미널 체험판은 별도의 시안이며 제품 웹서버를 실행하지 않는다.
+`bxdl console [--home <관리-루트>] [--instance <기존-control>]`은 홈·목록·기존 자료 읽기를 제공한다. 홈 조회는 무쓰기이며 목록 저장/갱신/숨기기는 개별 승인한다. 홈 1번은 기존 번호 메뉴 방식의 자료 준비를 제공한다. Mac의 직접 `setup new/resume`과 준비 저장 형식을 공유하지만 화면 흐름은 별개이며 Linux 준비 형식과는 다르다. console의 추가 개발은 중단했으며 실제 운용 연결은 직접 CLI에서 진행한다. [console 사용 가이드](./console.md)를 따른다. HTML과 Python 터미널 체험판은 별도의 시안이며 제품 웹서버를 실행하지 않는다.
 
 ## JSON envelope
 
-`schemaVersion`, `command`, `outcome`, `reasonCode`, `message`, `observedAt`, 선택 `data`로 구성된다. outcome은 SUCCEEDED/FAILED/INCOMPLETE/UNSUPPORTED/UNKNOWN이다. Rust 이식 후에도 명령·exit·envelope를 유지한다. `version`은 CLI build와 capability만 표시하며 설치된 bundle을 탐색하지 않는다. data에 implementation=rust, primaryTarget=darwin-arm64, macosServiceAcceptance=NOT_CHECKED를 추가하고 기존 linuxServiceAcceptance도 유지한다.
+`schemaVersion`, `command`, `outcome`, `reasonCode`, `message`, `observedAt`, 선택 `data`로 구성된다. outcome은 SUCCEEDED/FAILED/INCOMPLETE/UNSUPPORTED/UNKNOWN이다. `version`은 CLI build와 capability만 표시하며 설치된 bundle을 탐색하지 않는다. data의 `implementation=rust`, `primaryTarget=darwin-arm64|linux-amd64`는 실행 바이너리를 식별한다. `macosServiceAcceptance`·`linuxServiceAcceptance`는 명령 실행만으로 제품 인수를 주장하지 않는 `NOT_CHECKED`이며 capability도 실행 검증 결과와 구분한다.
 
 ## 직접 노드 목록과 이름 연결
 
@@ -46,9 +46,11 @@ bxdl nodes add local --instance /path/to/control
 bxdl nodes
 ```
 
-두 명령은 `--home <관리-루트>`와 `--json`을 지원하며 비TTY에서도 입력을 읽지 않는다. `add`는 기존 등록에 이름을 연결하는 명시 저장 요청이다. 목록은 저장 당시 상태이며 `currentStatus=NOT_OBSERVED`다. `status/start/stop/logs <이름>`과 `diagnose <이름> --output <새.json>`을 지원한다. 이름에는 같은 `--home`을 사용하고 기존 `--instance`와는 섞지 않는다. [독립 관리 CLI](./management-cli.md)는 검증한 RC.3 package의 실행기에 위임한다. [노드 이름 가이드](./nodes.md)에 충돌·호환·출력 계약을 설명한다.
+두 명령은 `--home <관리-루트>`와 `--json`을 지원하며 비TTY에서도 입력을 읽지 않는다. `add`는 기존 등록에 이름을 연결하는 명시 저장 요청이다. 목록은 저장 당시 상태이며 `currentStatus=NOT_OBSERVED`다. `status/start/stop/logs <이름>`과 `diagnose <이름> --output <새.json>`을 지원한다. 이름에는 같은 `--home`을 사용하고 기존 `--instance`와는 섞지 않는다. [독립 관리 CLI](./management-cli.md)는 Mac의 고정 RC.3·RC.4 package 실행기 또는 Linux 등록의 root 보호 descriptor가 고정한 worker에 위임한다. [노드 이름 가이드](./nodes.md)에 충돌·호환·출력 계약을 설명한다.
 
 ## 이름 있는 설치 준비
+
+아래의 명령 이름은 Mac·Linux 공통이다. 이 절의 archive/network 준비 순서와 `operations/<이름>` JSON 설명은 **Mac 준비 경로**다. Linux는 flat JRE·RC.4 JAR·native 입력을 준비하고 고정 시스템 경로로 설치한다. Linux 공급물 필드·저장 구조·관리자 승인은 [Linux 설치·운용](./linux-operations.md)을 따른다.
 
 ```text
 bxdl setup new <이름> [--home <관리-루트>] [--from <instance.json>]
@@ -67,7 +69,7 @@ bxdl setup apply <이름> [--home <관리-루트>]
 
 `setup apply`는 TTY 최종 검토에서 `y/yes`로 설치·cold 검사·등록·노드 이름 연결을 승인한다. Enter/n/no는 실행하지 않고, 취소/EOF는 저장 자료를 보존한다. 준비 기록 `sessions/<이름>`과 설치 실행 기록 `operations/<이름>`은 분리되며 `list/show`에서 함께 조회한다. 완료 실행을 다시 부르면 완료 근거 검증과 필요한 이름 연결만 복구한다. 자료 변경·UNKNOWN에서 자동 재설치하지 않는다. 초기화와 시작은 아래의 별도 명령이며 현재 상태는 `status`로 확인한다. [상세 실행·재개 계약](./preparation.md#준비한-자료로-설치-실행)을 따른다.
 
-## setup 명령
+## 제품 설정 초안 명령
 
 ```text
 bxdl setup [--workspace <dir>] [--resume | --from <instance.json>]
@@ -95,11 +97,11 @@ bxdl setup --network --workspace <new-session> --from <instance.json>
 bxdl setup --network --workspace <session> --resume [--output <new-node.json>]
 ```
 
-`config fingerprint`는 공개 leaf DER의 NIGO MTLS pin을 계산한다. 일반 인증서 SHA256이나 인증서 신뢰 검증이 아니다. `setup --network`는 공통 공개 목록과 기존 제품 설정으로 RC.1~RC.3 공통 계약의 native를 준비하는 별도 터미널 모드다. 출력 파일 생성도 cold/실행 검증을 뜻하지 않는다. `--json`, `--non-interactive`, `--install` 혼용은 거부한다. 사용법과 입력 계약은 [네트워크 가이드](./network.md)를 따른다.
+`config fingerprint`는 공개 leaf DER의 NIGO MTLS pin을 계산한다. 일반 인증서 SHA256이나 인증서 신뢰 검증이 아니다. `setup --network`는 공통 공개 목록과 기존 제품 설정으로 지원 후보가 공유하는 QBFT native 계약의 설정을 준비하는 별도 터미널 모드다. 출력 파일 생성도 cold/실행 검증을 뜻하지 않는다. `--json`, `--non-interactive`, `--install` 혼용은 거부한다. 사용법과 입력 계약은 [네트워크 가이드](./network.md)를 따른다.
 
 ## 제품 설정 v1
 
-현재는 JSON을 사용하며 schema는 `contracts/bxdl/instance.schema.json`이다. NIGO는 별도 native node/chain JSON 계약을 제공했다. 제품 schema는 유지하며 peer/pin/validator 상세 자료는 별도 공개 network 입력으로 받아 `setup --network`에서 RC.1~RC.3 공통 계약의 native를 생성한다. `engine preflight --config`는 이 제품 JSON이 아닌 NIGO node.json을 받는다.
+현재는 JSON을 사용하며 schema는 `contracts/bxdl/instance.schema.json`이다. NIGO는 별도 native node/chain JSON 계약을 제공했다. 제품 schema는 유지하며 peer/pin/validator 상세 자료는 별도 공개 network 입력으로 받아 `setup --network`에서 지원 후보가 공유하는 QBFT native 계약의 설정을 생성한다. `engine preflight --config`는 이 제품 JSON이 아닌 NIGO node.json을 받는다.
 
 - schemaVersion 1, validator role, RocksDB backend를 명시한다.
 - HTTP는 127.0.0.1 또는 ::1, P2P는 명시한 unicast IP다. 두 port는 1~65535 범위의 서로 다른 값이다.
@@ -147,9 +149,11 @@ bxdl preflight --config <instance.json> --engine-config <node.json>
 
 ## 파일 설치와 엔진 cold 검사
 
-`install`은 명시한 새 폴더에만 설치한다. 외부 신뢰 key 또는 서명 없는 개발 자료 opt-in이 필요하다. `engine inspect`/`engine preflight`는 `--jar`, `--java`, `--lock`, `--allow-development`가 필수다. preflight에는 NIGO `--config`도 필요하다. 선택 `--timeout-seconds`는 1~120, 기본 30이며 각 JVM 호출에 적용한다. [설치](./install.md)와 [엔진](./engine.md) 가이드의 신뢰·실패 경계를 따른다.
+`install`은 macOS arm64에서 명시한 새 폴더에만 runtime archive를 설치한다. Linux 노드 설치는 `setup new/apply`와 [Linux 공급물 준비](./linux-native-build.md) 경로를 사용한다. 외부 신뢰 key 또는 서명 없는 개발 자료 opt-in이 필요하다. `engine inspect`/`engine preflight`는 `--jar`, `--java`, `--lock`, `--allow-development`가 필수다. preflight에는 NIGO `--config`도 필요하다. 선택 `--timeout-seconds`는 1~120, 기본 30이며 각 JVM 호출에 적용한다. [설치](./install.md)와 [엔진](./engine.md) 가이드의 신뢰·실패 경계를 따른다.
 
-## 등록 인스턴스와 명시 초기화
+## Mac 인스턴스 등록과 명시 초기화
+
+아래 `instance register`·V1/V2 binding 설명은 Mac용이다. Linux는 `setup apply`로 시스템 등록을 만든 뒤 같은 이름 기반 `init/resume-init` 명령을 사용한다. root helper·전용 UID·sudo 인증과 Linux reasonCode는 [Linux 운용 안내](./linux-operations.md)에 설명한다.
 
 ```text
 bxdl instance register --instance <new-control-dir> --package <installed-dir>
@@ -193,7 +197,7 @@ bxdl status --instance <absolute-control-dir> --wait [--timeout-seconds <1..600>
 bxdl stop --instance <absolute-control-dir> [--timeout-seconds <1..600>] [--json]
 ```
 
-macOS arm64의 현재 사용자 GUI 로그인 세션에서 이미 등록·초기화한 개발 인스턴스를 제어한다. [지원하는 RC.3](./management-cli.md)는 독립 관리 CLI가 인증한 package의 고정 실행기에 위임한다. 실행기의 동일 bytes 검사와 전체 inventory 검증을 유지하므로 package 안의 CLI는 덮어쓰지 않는다. 미지원 package의 native start는 다른 bytes의 외부 CLI에 `SERVICE_CLI_MISMATCH`를 반환한다. 관리 CLI 교체는 기존 등록/data의 업데이트·migration을 수행하지 않는다.
+macOS arm64의 현재 사용자 GUI 로그인 세션에서 이미 등록·초기화한 개발 인스턴스를 제어한다. [지원하는 RC.3·RC.4](./management-cli.md)는 독립 관리 CLI가 인증한 package의 고정 실행기에 위임한다. 실행기의 동일 bytes 검사와 전체 inventory 검증을 유지하므로 package 안의 CLI는 덮어쓰지 않는다. 미지원 package의 native start는 다른 bytes의 외부 CLI에 `SERVICE_CLI_MISMATCH`를 반환한다. 관리 CLI 교체는 기존 등록/data의 업데이트·migration을 수행하지 않는다.
 
 start마다 control 아래에 고유 attempt·worker/JAR snapshot·plist·report를 만든다. 수동 bootstrap의 `RunAtLoad=true`, `KeepAlive=false`를 사용하며 `~/Library/LaunchAgents` 자동 로그인 등록은 하지 않는다. worker는 한 번 실행 허가를 소비하고 입력·전체 설치본·cold·INITIALIZED/genesis를 다시 검증한 뒤 같은 PID로 Java를 실행한다. `service-run`은 이 내부 진입점이며 직접 실행·kickstart로 실패 시도를 재사용할 수 없다.
 
@@ -244,4 +248,4 @@ logs는 수집 결과를 출력한다. diagnose는 이미 존재하는 부모 �
 
 ## 미구현 명령
 
-upgrade/uninstall은 명시적인 UNSUPPORTED 오류를 반환한다. no-op 성공이나 가짜 PID/engine 상태를 만들지 않는다. 로그인 자동 시작·장기 운영 LaunchDaemon·Linux/systemd·Docker와 인증된 원격 관리는 아직 제공하지 않는다. Mac 최초 구현 이력은 [Mac 우선 설계](../design/2026-09-17-rust-macos-first.md), 현재 우선순위는 [실제 Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따른다.
+upgrade/uninstall은 명시적인 UNSUPPORTED 오류를 반환한다. no-op 성공이나 가짜 PID/engine 상태를 만들지 않는다. 로그인/부팅 자동 시작·자동 재시작·장기 운영 Mac LaunchDaemon·Docker와 인증된 원격 관리는 아직 제공하지 않는다. Linux/systemd는 개발용 설치·운용 경로를 제공하며 실제 노드 인수는 별도다. 현재 우선순위는 [실제 Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md), 검증 완료와 남은 범위는 [현재 상태](./implementation-status.md)를 따른다.

@@ -1,32 +1,33 @@
 # Linux 네이티브 빌드와 개발 패키지 고정
 
-2026-11-17: **빌드 입력 키트 준비·오프라인 검증 완료, 실제 Linux 빌드와 패키지 해시 확정은 대기**다. 이 작업 환경은 Mac arm64이며 사용 가능한 Linux 빌더가 없다. SSH 접속 정보를 공유할 필요는 없다. Ubuntu 장비 사용자가 아래 빌드 명령을 직접 실행하고 결과를 전달할 수 있다.
+고정 source·Linux JRE·RC.4 JAR로 개발용 runtime과 독립 관리 CLI를 제작하고 검증하는 절차다. Ubuntu CI의 native CLI 빌드·자동 검사는 통과했다. 아래 도구로 만드는 **선정 JRE/RC.4 runtime 후보의 실제 제작·노드·systemd 인수는 아직 대기**다. CI의 CLI 빌드를 이 조합의 실행 인수로 대신하지 않는다. Ubuntu 장비 사용자가 직접 진행하므로 개발자에게 SSH 접속 정보를 제공할 필요는 없다.
 
 테스터 검증은 Git 저장소와 분리한 비공개 전달 패키지로 진행한다. 안내서·빈 결과/개선 의견 양식·개별 실행 기록은 저장소에 보관하지 않는다. 전달본의 `HANDOFF.json`에 제품 source commit과 지원 도구·공급물 해시를 기록하며, 빌드는 사전 준비이고 본 과업은 노드 설치·초기화·서비스 운용 검증이다.
 
 ## 1. 고정한 입력과 산출물의 구분
 
-이번 키트의 제품 source는 LNX-04 commit `ba4d5af6b505ea880be034b73094ac8c92018d57`이다. dirty checkout을 복사하지 않고 그 commit을 `git archive`로 내보낸다. `Cargo.lock`, Rust 1.86.0 toolchain, Linux runtime/engine lock도 같은 commit에서 읽는다. 네이티브 빌드 도구 두 파일은 별도 SHA-256으로 고정한다. 이번 후속 작업의 CLI 오류 코드 보완·Linux 테스트 분리는 이 source commit에 포함되지 않는다. 해당 변경을 포함하는 후속 후보는 커밋 후 새 입력 키트를 만들어야 한다.
+키트의 제품 source는 전달 담당자가 검토한 완전한 commit SHA로 고정한다. dirty checkout을 복사하지 않고 그 commit을 `git archive`로 내보내며 `Cargo.lock`, Rust 1.86.0 toolchain, Linux runtime/engine lock도 같은 commit에서 읽는다. 제품 source와 별도로 네이티브 빌드 도구 두 파일의 SHA-256을 기록한다. 실제 전달본의 기준은 `HANDOFF.json`과 `build-plan.json`이며, 소스나 도구를 변경하면 새 키트와 외부 checksum을 발행한다.
 
 | 대상 | 현재 고정 상태 |
 | --- | --- |
 | Linux JRE | Temurin 21.0.13+9-LTS, Linux amd64/glibc; 기존 선정 archive·Java·257개 inventory 유지 |
 | NIGO | 기존 RC.4 JAR·source·contract fingerprint 유지 |
-| 제품 source | 위 LNX-04 commit, Git archive·Cargo.lock·toolchain 해시 |
+| 제품 source | 각 전달본이 지정한 검토된 commit, Git archive·Cargo.lock·toolchain 해시 |
 | 빌드 도구 | build-linux-candidate.py·linux_build_contract.py의 별도 해시 |
 | Linux 실행기 A / 관리 CLI C | 실제 native build 후 바이너리 SHA-256 확정. 초기 후보는 동일 bytes, 역할과 archive는 분리 |
 | runtime R-L / CLI bundle | 실제 조립 후 archive·manifest SHA-256과 payload inventory 확정 |
 | 인수·신뢰 | unsigned development 전용. 서명된 제품 배포·Linux 실행기 profile 인수는 별도 |
 
-[준비 기록](../results/2026-11-17-linux-native-build-preparation.md)과 [입력 계획 사본](../packaging/linux-native-build-plan-20261117.json)을 함께 본다. 과거 LNX-02 cold probe 전달본은 변경하지 않는다. 입력의 해시 고정은 빌드 재현성·공급자 서명·엔진 정상 실행의 증명이 아니다.
+[최초 준비 기록](../results/2026-11-17-linux-native-build-preparation.md)과 [당시 입력 계획 사본](../packaging/linux-native-build-plan-20261117.json)은 과거 입력의 근거다. 현재 전달본의 source나 해시를 지정하는 파일로 사용하지 않는다. 입력의 해시 고정은 빌드 재현성·공급자 서명·엔진 정상 실행의 증명이 아니다.
 
 ## 2. 준비 담당자가 키트를 만드는 방법
 
 이미 검증한 JRE archive와 RC.4 JAR를 사용한다. 새 출력 경로를 지정하며 기존 키트나 실패 결과는 덮어쓰지 않는다. Mac의 `/tmp`·`/var` 같은 symlink 별칭 대신 `/private/tmp` 또는 실제 경로를 쓴다. 출력의 부모 디렉터리는 미리 존재해야 한다.
 
 ```sh
+SOURCE_COMMIT='<검토한 40자리 commit SHA>'
 python3 -B tools/prepare-linux-build.py \
-  --source-commit ba4d5af6b505ea880be034b73094ac8c92018d57 \
+  --source-commit "$SOURCE_COMMIT" \
   --runtime-archive /absolute/received/jre.tar.gz \
   --jar /absolute/received/nigo-node.jar \
   --output /private/tmp/bxdl-linux-inputs \
@@ -85,7 +86,7 @@ python3 -B tools/receive-linux-candidate.py \
 
 로컬 CLI의 읽기 전용 archive verifier로 두 archive 전체를 검사하고 manifest·source·JAR·JRE 전체 inventory·A/C/Java 해시를 대조한다. ELF header는 bytes로 읽는다. 결과 `VERIFIED`는 **고정 입력에 대한 오프라인 수신 검증**이다. receipt의 native build 성공은 빌더가 보고한 값이며 원격 실행 증명은 아니다. systemd·engine native·실행기 profile 상태는 자동으로 PASS로 바뀌지 않는다.
 
-## 비공개 시험용 후보를 설치 입력으로 연결
+## 5. 후보를 설치 입력으로 연결
 
 빌드 이후에는 같은 장비에서 직접 만든 native verifier와 별도로 기록한 plan/receipt/CLI SHA-256을 사용한다. 받은 임의 실행 파일이나 receipt 자체를 실행 신뢰 근거로 삼지 않는다.
 
@@ -114,8 +115,8 @@ python3 -B tools/prepare-linux-test-inputs.py \
 
 두 도구는 sibling `build-linux-candidate.py`, `linux_build_contract.py`를 필요로 하며 operations 도구는 `receive-linux-candidate.py`도 필요하다. inputs 도구의 상위 `packaging/`에는 선정 Linux runtime/engine lock이 있어야 한다. private 전달본은 이 의존성과 외부 checksum을 함께 제공한다. 자세한 제품 명령과 권한은 [Linux 운용 안내](./linux-operations.md)를 따른다.
 
-## 5. 패키지 고정 후 다음 단계
+## 6. 패키지 고정 후 실제 시험
 
 현재 Linux `setup`은 flat JRE/JAR 경로를 입력받고 관리자 helper를 고정 worker로 snapshot한다. generic `bxdl install`의 runtime archive 설치 경로는 아직 Mac 전용이다. 이 빌드 도구로 R-L archive를 만들었다고 Linux 일반 설치·profile 인수가 완료되는 것은 아니다. 다음 Linux 설치 시험의 root helper는 수신 검증한 실행기 A bytes에서 배치하고 해시를 확인해야 한다. 자세한 권한·수동 bootstrap은 [Linux 설치·운용](./linux-operations.md)을 따른다.
 
-후속 순서는 실제 빌드 결과 수신·조합 해시 확정 → 선정 JRE의 cold/engine-info·native/RocksDB 확인 → 새 Linux 설치·init·systemd 수동 시작/정상 종료 → SSH 단절 유지·동일 DB 재시작·독립 관리 CLI 전환이다. 각 결과를 확보한 뒤에만 exact executor profile을 인수한다. 비공개 테스터 전달본은 기술 검증과 사용성 관측을 함께 진행하되 판정을 분리한다. 현재 새로운 NIGO 선행 구현 요청은 없다. Linux 실행에서 엔진/native 문제가 발견되면 고정된 RC.4 조합과 재현 자료로 별도 요청한다.
+비공개 시험은 빌드·후보 검증을 사전 단계로 두고 새 Linux 설치 → 명시 init → systemd 수동 시작·로컬 READY·진단 → SSH 단절 유지 → 정상 종료·동일 DB 재시작까지 진행한다. 선정 JRE/엔진의 cold·native/RocksDB와 서비스 관측은 실제 실행의 근거로 구분한다. 별도 CLI 버전 전환·다중 노드·재부팅/자동 복구는 후속이다. 각 결과를 확보한 뒤에만 exact executor profile을 인수한다. 비공개 테스터 전달본은 기술 검증과 사용성 관측을 함께 진행하되 판정을 분리한다. 현재 새로운 NIGO 선행 구현 요청은 없다. Linux 실행에서 엔진/native 문제가 발견되면 고정된 RC.4 조합과 재현 자료로 별도 요청한다.

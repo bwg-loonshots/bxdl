@@ -1,16 +1,40 @@
-# BXDL Mac 4-validator 패키지 인수 도구
+# BXDL 인수·회귀 도구
 
-실제 RC.2 full 실행은 [2026-10-21 결과](../../results/2026-10-21-macos-rc2-package.md)를, 기존 RC.3 패키지 실행은 [2026-10-22 결과](../../results/2026-10-22-macos-rc3-package.md)를 따른다. 독립 관리 CLI의 설치 진입점과 같은 고정 RC.3를 조합한 후속 [CLI05-03 인수 결과](../../results/2026-10-23-cli05-runtime-acceptance.md)는 아래 별도 runner를 사용했다. 도구 지원과 실행별 실제 판정은 구분한다.
+이 디렉터리는 패키지·관리 CLI·서비스의 인수 하네스와 오프라인 회귀 검사를 담는다. 제품의 현재 구현·검증 수준은 [구현 상태](../../docs/implementation-status.md), 대상 OS와 인수 한계는 [지원 범위](../../docs/support-matrix.md)를 따른다. 도구가 존재하거나 회귀 검사가 통과했다고 실제 노드 시험을 PASS로 기록하지 않는다.
 
-이 도구는 새 시험 자료와 격리된 로컬 인스턴스로 BXDL 패키지를 검증한다. 고객 설치기나 고객용 키·CA 발급기가 아니다. 이 문서는 실행 절차와 판정 범위를 설명하며, 현재 시험의 PASS를 선언하지 않는다.
+## 검사 종류와 시작점
 
-첫 대상은 로그인된 GUI 세션이 있는 macOS arm64, RocksDB, 사용자 LaunchAgent다. HTTP와 P2P를 모두 `127.0.0.1`에 두고 노드별 포트를 분리한다. 같은 사용자 UID의 네 인스턴스이며, 서로 다른 호스트나 강한 보안 격리를 검증하는 구성이 아니다.
+| 목적 | 시작점 | 실행 범위 |
+| --- | --- | --- |
+| 기본 자동 회귀 | 저장소 루트의 `make test-acceptance` 또는 `make check` | Python 회귀와 Rust 검사. 기본 실행은 실제 노드·systemd·LaunchAgent 인수가 아님 |
+| Linux 후보 빌드·수신·시험 입력 준비 | [Linux 네이티브 빌드 안내](../../docs/linux-native-build.md) | 고정 source/JRE/JAR로 후보를 만들고 설치 입력을 준비 |
+| 실제 Linux 설치·서비스 시험 | [Linux 설치·운용](../../docs/linux-operations.md)과 별도 비공개 전달본 | Ubuntu 24.04 x86_64의 일반 사용자와 명시 관리자 승인으로 설치·init·systemd 운용 |
+| Mac 패키지·네트워크 인수 | 아래 Mac 하네스 절차 | 로그인한 macOS arm64 사용자 LaunchAgent와 격리된 시험 DB·키 |
 
-2026-11-15 [RC4-02](../../results/2026-11-15-rc4-fixture-preparation.md)에서 새 RC.4 fixture를 준비하고, [RC4-03](../../results/2026-11-15-rc4-runtime-assembly.md)에서 전용 lock/spec과 서명 runtime R을 고정했다. RC4-04는 이 **고정 R을 재조립하지 않고** 일반·독립 관리 CLI 인수 하네스에서 선택하도록 확장한다. 구현·오프라인 검증 기록은 [RC4-04 결과](../../results/2026-11-15-rc4-cli-harness.md)와 [JSON](../../results/2026-11-15-rc4-cli-harness.json)을 따른다.
+Ubuntu·macOS CI의 빌드/회귀 성공과 실제 엔진·RocksDB·서비스 인수는 별도다. Linux의 실제 노드·systemd와 테스터 관측 결과는 아직 NOT_RUN이다. Mac의 고정 RC.3/RC.4 지정 조합은 [RC.3 독립 CLI 인수](../../results/2026-10-23-cli05-runtime-acceptance.md), [RC.4 단일노드](../../results/2026-11-15-rc4-macos-service.md), [RC.4 네트워크](../../results/2026-11-16-rc4-macos-network.md)의 범위별 결과를 따른다.
 
-RC4-04 시점의 RC.4 설치·genesis·서비스·네트워크·RPC 실물 인수는 **NOT_RUN**이며 RC4-05/06 후속 작업이다. 후보 지원이나 오프라인 회귀를 실물 PASS로 해석하지 않는다. RC1~3의 기존 재현 경로는 유지하며 RC.3 DB 이전·혼합 후보 네트워크는 지원하지 않는다.
+## Linux 도구
 
-후속 [RC4-05 실제 Mac 인수](../../results/2026-11-15-rc4-macos-service.md)는 고정 R+B의 수동 단일노드21사례·독립 사후 감사 PASS다. 아래 서비스 명령에 `--exercise-setup-recovery --caller-umask 022 --expect-complete-diagnostics`를 적용했다. 후속 [RC4-06 실제 Mac 네트워크 인수](../../results/2026-11-16-rc4-macos-network.md)에서 고정 R에 외부 B/C를 조합한 동종4-validator·두 복구·wrong-pin·선정 RPC21사례/읽기52요청·live CLI 전환3회와 독립 종료 감사를 PASS했다. RPC probe의 제출0과 전체 합의 시험의 거래8개/제출9회를 구분한다.
+Linux 준비 도구는 저장소 루트의 `tools/`에 있으며 대응 회귀는 이 디렉터리의 `test_linux_*`와 `test_*linux*.py`에 있다. 실제 시험을 위한 안내서·결과/개선 의견 양식·개별 원자료는 Git 밖의 비공개 전달본으로 관리한다.
+
+| 도구 | 역할 | 실제 노드에 대한 의미 |
+| --- | --- | --- |
+| [`prepare-linux-build.py`](../../tools/prepare-linux-build.py) | 명시 source commit·선정 공급물·빌드 도구를 kit와 외부 plan hash로 고정 | 빌드·JVM·설치·서비스 실행 없음 |
+| [`build-linux-candidate.py`](../../tools/build-linux-candidate.py) | 실제 Ubuntu 24.04 x86_64에서 native CLI와 개발 runtime/CLI archive·receipt 제작 | JVM·초기화·systemd 실행 없음 |
+| [`receive-linux-candidate.py`](../../tools/receive-linux-candidate.py) | 신뢰하는 로컬 verifier로 전달 archive·manifest·전체 inventory와 고정 입력 대조 | 받은 Linux CLI/JRE를 실행하지 않으며 profile을 승인하지 않음 |
+| [`prepare-linux-operations.py`](../../tools/prepare-linux-operations.py) | 직접 빌드한 verifier와 외부 pin으로 후보를 검증하고 flat runtime/JAR·worker·독립 CLI 추출 | 새 사용자 폴더에 입력 준비만; root helper 배치·setup은 별도 승인 |
+| [`prepare-linux-test-inputs.py`](../../tools/prepare-linux-test-inputs.py) | 고정 RC.4 helper/keytool로 장비 안에 새 시험 키와 단일 노드 설정 생성 | 일반 사용자 JVM 도구 실행은 있으나 노드 DB/init/서비스 실행 없음 |
+| [`linux_runtime_probe.py`](./linux_runtime_probe.py) | 명시 pin을 사용한 native Linux Java·engine-info cold identity 관측 | RocksDB·설치·설정·init·서비스 인수를 대신하지 않음 |
+
+비공개 Linux 단일노드 과업은 빌드를 사전 준비로 두고 `setup` 중단/재개·설치·명시 init·로컬 READY·로그/진단·SSH 단절 유지·정상 stop·같은 DB 재시작을 관측한다. loopback의 수동 peerless 설정이므로 합의·거래 확정 시험이 아니다. Windows native·WSL2·다중 host·재부팅·자동 재시작은 이 과업 밖이다. 실패 원자료와 UNKNOWN을 보존하고 후속 성공으로 소급 변경하지 않는다.
+
+## Mac 4-validator 하네스
+
+아래의 `prepare_fixture.py`, `run_acceptance.py`, management runner는 macOS arm64·RocksDB·사용자 LaunchAgent용이다. Linux `setup`/systemd에 그대로 적용하지 않는다. 로그인된 GUI 세션에서 HTTP와 P2P를 `127.0.0.1`로 제한하고 노드별 포트를 나누며, 같은 사용자 UID의 인스턴스를 사용한다. 다중 host나 강한 계정 격리를 검증하는 구성은 아니다.
+
+고정 RC1~RC4의 기존 재현 경로를 제공한다. RC1~3 일반 runner는 archive를 조립하며 RC4는 고정 runtime R을 검증·복사해 사용하고 재조립·재서명하지 않는다. RC.3 DB 이전·혼합 후보 네트워크·고객 키/DB 채택은 지원하지 않는다. 각 실행 결과는 당시 artifact·source·범위에만 적용한다.
+
+RC.4의 지정 Mac 서비스·동종4-validator·두 복구·wrong-pin·선정 RPC·실행 중 관리 CLI 전환은 위 링크의 별도 결과에 기록되어 있다. 과거 RC4-02/04 준비 summary의 NOT_RUN 등은 그때의 실행 범위를 보존한 값이다. 새 시험은 고객 자료와 분리한 새 입력·출력 경로를 사용하며 기존 결과나 원문 summary를 바꾸지 않는다.
 
 ## 도구와 실행 경계
 
@@ -261,7 +285,7 @@ CLI 관측 timeout은 실행 취소가 아니다. 지원 코드는 timeout에 �
 
 ## 도구 자체 검사
 
-이 디렉터리에서 `python3 -B -m unittest -v test_oracles test_candidates test_listeners test_rc4_rpc_probe`로 판정·불명 cleanup 회귀를 검사한다. 엔진이나 노드를 시작하지 않는다. Rust 제품 검사는 저장소 루트의 `make check`를 사용한다. 이 두 검사는 위 실제 패키지 인수와 별개다.
+이 디렉터리에서 `python3 -B -m unittest -v test_oracles test_candidates test_listeners test_rc4_rpc_probe`로 판정·불명 cleanup 회귀를 검사한다. 엔진이나 노드를 시작하지 않는다. 전체 Python 회귀는 저장소 루트의 `make test-acceptance`, Rust와 Python 전체 검사는 `make check`를 사용한다. 이 검사는 위 실제 패키지 인수와 별개다.
 
 
 ## CLI05-03: 독립 관리 CLI와 기존 RC.3 조합

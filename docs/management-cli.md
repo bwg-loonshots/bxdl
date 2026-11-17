@@ -2,7 +2,7 @@
 
 이 문서의 `design/`·`results/`·다른 문서 상대 링크는 BXDL 저장소 기준이다. CLI-only 배포본의 문서는 `management-cli.md`와 `completion.md`이며, 설치·업데이트·자동완성 명령은 동봉 문서만으로 따라 할 수 있다.
 
-새 관리 CLI를 설치 package 밖에서 실행해도 검증된 기존 RC.3 package를 운용할 수 있다. package 내부의 `bin/bxdl`·NIGO JAR·JRE를 덮어쓰거나 archive를 다시 만들지 않는다. 관리 CLI는 대상과 입력을 검사한 뒤 해당 package의 실행기에 고정 명령·JSON으로 위임한다.
+관리 CLI는 노드 runtime과 별도로 설치·업데이트한다. Mac에서는 고정 RC.3·RC.4 package profile을, Linux 개발 경로에서는 등록 당시 root가 보호한 descriptor와 고정 worker를 사용한다. 관리 CLI를 교체해도 노드의 내부 실행기·NIGO JAR·JRE·DB를 교체하지 않는다. 플랫폼별 구현과 실제 인수 범위는 [현재 상태](./implementation-status.md)를 따른다.
 
 ```sh
 /path/to/new/bxdl nodes add local --instance /path/to/control
@@ -19,16 +19,16 @@
 개발 checkout에서는 `make build`로 만든 `bin/bxdl`을 외부 관리 CLI로 사용한다. 배포 시에도 package 밖의 관리 CLI 실행 파일만 교체한다. `bxdl version --json`의 version/revision은 현재 관리 CLI의 식별 정보이며 NIGO 엔진 버전과 별도로 관리한다. 기존 이름 목록은 같은 사용자/관리 home에서 이어 읽는다.
 
 
-## Linux 관리 CLI 기반 — 2026-11-16
+## 플랫폼과 Linux 권한 경계
 
-독립 관리 CLI의 배포·설치·업데이트·복귀 코드를 Linux x86_64/glibc로 확장했다.
-실제 Linux 인수는 별도이며 Linux 노드 서비스·패키지 초기화 지원은 아직 완료되지 않았다.
+독립 관리 CLI의 배포·설치·업데이트·복귀는 Mac arm64와 Linux x86_64/glibc에 구현되어 있다.
+Ubuntu CI의 native CLI 빌드·자동 검사는 통과했으며 실제 Linux 설치·초기화·systemd 운용·CLI 전환 인수는 별도다. Linux 개발용 노드 설치·운용 절차는 [Linux 안내](./linux-operations.md)를 따른다.
 `version --json`의 `primaryTarget`은 실행 바이너리 대상(`darwin-arm64` 또는 `linux-amd64`)이며,
 Linux는 `management.install.linux`·`management.update.linux`·`management.rollback.linux`를 표시한다.
 Mac의 고정 RC.3/RC.4 실행기 capability를 Linux 지원 근거로 표시하지 않는다.
 
 Linux의 기본 CLI root는 `~/.local/share/BXDL-CLI`, 실행 진입점은 `~/.local/bin/bxdl`이다.
-이번 단계에서는 `XDG_DATA_HOME`을 자동 채택하지 않으며 다른 위치는 `--root`·`--bin-dir`로 명시한다.
+`XDG_DATA_HOME`을 자동 채택하지 않으며 다른 위치는 `--root`·`--bin-dir`로 명시한다.
 노드 이름·설치 준비를 저장하는 사용자 목록의 기본 위치는 `~/.local/share/BXDL`이며 `--home`으로 바꾼다. 관리 CLI root와 사용자 목록, node control·DB는 별개의 저장소다. Linux의 PATH 안내는 기본 셸에서 사용할 수 있는 다음 형태다.
 
 ```sh
@@ -40,7 +40,7 @@ bxdl cli info
 bxdl host check --json
 ```
 
-CLI-only 설치와 `cli update/rollback` 문법·서명 신뢰·기존 선택 보존은 아래 Mac 안내와 같다.
+CLI-only 설치와 `cli update/rollback` 문법·서명 신뢰·기존 선택 보존은 두 OS에서 공통이다.
 해당 OS의 배포본만 설치하며 다른 OS/CPU의 배포본은 실행·새 root 생성 전에 거절한다.
 Linux 배포본에는 ELF64/x86_64와 glibc interpreter가 필요하다. 같은 version/revision이라도 다른 target 배포본을 섞지 않는다.
 자동완성 배포물은 계속 zsh용이며 Bash 자동완성은 아직 제공하지 않는다. 셸 설정 파일은 자동으로 바꾸지 않는다.
@@ -49,11 +49,13 @@ Linux 빌더에서 `tools/build-management-cli.py --target linux-amd64`를 사�
 기본 target은 실행 중인 지원 호스트이며 빌더의 OS/CPU와 다른 target은 빌드 전에 거절한다.
 실제 clean source의 버전·revision·target을 확인한 배포본을 만들어야 하며, 개발 모드와 서명 정책은 기존과 같다.
 Mac 빌더의 Linux 타입 검사를 Linux 바이너리 링크·실행·인수로 기록하지 않는다.
-[Linux 우선 개발 계획](../design/2026-11-16-linux-first-implementation-plan.md)에 단계별 완료 범위를 기록한다.
+Linux 운용은 일반 사용자 CLI가 root 소유 `management.json`의 control identity·protocol·worker hash를 검증하고 최초 설치 때 고정한 worker로 정해진 요청만 위임한다. `setup apply`는 TTY 승인 뒤 관리자 인증을 요청하며, init/start/status/stop/logs/diagnose는 기존 sudo 인증을 사용한다. 인증이 없거나 만료됐으면 `sudo -v` 후 다시 실행한다. 명령 전체를 `sudo bxdl ...`로 실행해 사용자 catalog를 root home과 섞지 않는다.
 
-## Mac 관리 CLI 설치
+Linux의 `linux-executor.development.v1`은 개발용 descriptor 프로토콜이다. Mac의 exact archive profile이나 정식 Linux runtime 인수와 구분한다. 관리 CLI 업데이트는 기존 worker를 바꾸거나 구형 Linux control에 descriptor를 자동 추가하지 않는다.
 
-CLI05-02는 Mac arm64용 CLI 전용 배포본과 사용자 권한의 `cli install/update/info/rollback`을 제공한다. 검증 범위와 현재 상태는 [구현 현황](./implementation-status.md)을 따른다. 관리 CLI 배포본에는 JRE나 NIGO 엔진이 없으므로 Rust/Cargo, Java 또는 노드 실행 없이 CLI를 설치할 수 있다. 기존 노드용 `bxdl install`은 유지한다.
+## 관리 CLI 설치
+
+해당 OS용 CLI 전용 배포본으로 사용자 권한의 `cli install/update/info/rollback`을 실행한다. 관리 CLI 배포본에는 JRE나 NIGO 엔진이 없으므로 Rust/Cargo, Java 또는 노드 실행 없이 CLI를 설치할 수 있다. 기존 노드용 `bxdl install`은 유지한다.
 
 공급받은 배포본을 새 디렉터리에 푼 뒤 그 안의 실행 파일로 최초 설치한다. 서명 배포본의 공개키는 배포본과 별도로 신뢰한 경로에서 받는다. 다음 `./bxdl-cli`는 풀어 둔 디렉터리의 예시다.
 
@@ -69,16 +71,16 @@ CLI05-02는 Mac arm64용 CLI 전용 배포본과 사용자 권한의 `cli instal
 
 기본 경로는 다음과 같다. `sudo`가 필요하지 않으며 셸 설정 파일을 자동으로 편집하지 않는다.
 
-| 용도 | 기본 경로 |
-| --- | --- |
-| CLI 배포본·선택 기록 | `~/Library/Application Support/BXDL-CLI` |
-| PATH에 넣을 실행 진입점 | `~/.local/bin/bxdl` |
-| 선택한 CLI의 자동완성 | `~/Library/Application Support/BXDL-CLI/current/share/zsh/site-functions` |
-| 기존 노드 목록·준비·운용 기록 | `~/Library/Application Support/BXDL` |
+| 용도 | Mac | Linux |
+| --- | --- | --- |
+| CLI 배포본·선택 기록 | `~/Library/Application Support/BXDL-CLI` | `~/.local/share/BXDL-CLI` |
+| PATH 실행 진입점 | `~/.local/bin/bxdl` | `~/.local/bin/bxdl` |
+| 자동완성 | `<CLI root>/current/share/zsh/site-functions` | `<CLI root>/current/share/zsh/site-functions` |
+| 노드 목록·준비 기록 | `~/Library/Application Support/BXDL` | `~/.local/share/BXDL` |
 
 CLI 위치는 `--root`/`--bin-dir`, 노드 목록 위치는 `--home`으로 지정한다. 서로 다른 저장소다. 사용자 자료가 있는 폴더나 노드·runtime package를 CLI root로 선택하지 않는다. 기존 `bin-dir/bxdl`이 이 설치가 관리하는 링크가 아니면 덮어쓰지 않는다.
 
-현재 터미널에서 설치한 CLI와 자동완성을 사용한다.
+zsh 터미널에서는 설치한 CLI와 자동완성을 다음처럼 사용한다. Bash에서는 `rehash` 대신 `hash -r`을 사용하고 compinit/source 단계는 생략한다.
 
 ```zsh
 export PATH="$HOME/.local/bin:$PATH"
@@ -93,7 +95,7 @@ source <(bxdl completion zsh)
 
 `command -v bxdl`의 경로가 원하는 진입점인지 확인한다. `cli info`는 CLI root·실행 진입점·이번 명령을 실행한 파일·현재와 이전 버전·PATH의 파일 우선순위를 표시한다. 셸의 alias나 함수까지 검사하지는 않으므로 다른 결과가 나오면 `type -a bxdl`로 셸 설정을 확인한다. 아직 설치하지 않았으면 `NOT_INSTALLED`를 성공 응답으로 돌려주며 폴더를 만들지 않는다.
 
-새 터미널에도 적용하려면 자신의 `.zshrc`에서 다음 PATH/fpath를 설정한다. fpath는 기존 `compinit` 호출 앞에 넣는다. 이미 초기화하는 설정이 있다면 `compinit`을 중복 추가하지 않는다.
+Mac 기본 CLI root를 새 zsh 터미널에도 적용하려면 자신의 `.zshrc`에서 다음 PATH/fpath를 설정한다. fpath는 기존 `compinit` 호출 앞에 넣는다. 이미 초기화하는 설정이 있다면 `compinit`을 중복 추가하지 않는다.
 
 ```zsh
 export PATH="$HOME/.local/bin:$PATH"
@@ -102,7 +104,7 @@ autoload -Uz compinit
 compinit
 ```
 
-이 고정 경로는 선택한 CLI와 함께 전환된다. 다른 디렉터리에 복사한 예전 `_bxdl`이 먼저 로드되지 않도록 fpath 순서를 확인한다. 현재 셸이 이미 읽은 완성 함수는 업데이트 뒤 `source <(bxdl completion zsh)`로 다시 읽는다. [자동완성 가이드](./completion.md)에서 Tab 예시를 볼 수 있다.
+Linux 기본 CLI root의 fpath는 `$HOME/.local/share/BXDL-CLI/current/share/zsh/site-functions`다. 다른 root를 사용했다면 `cli info`에 표시된 경로를 사용한다. 이 고정 경로는 선택한 CLI와 함께 전환된다. 다른 디렉터리에 복사한 예전 `_bxdl`이 먼저 로드되지 않도록 fpath 순서를 확인한다. 현재 셸이 이미 읽은 완성 함수는 업데이트 뒤 `source <(bxdl completion zsh)`로 다시 읽는다. [자동완성 가이드](./completion.md)에서 Tab 예시를 볼 수 있다.
 
 ## 업데이트와 복귀
 
@@ -167,67 +169,44 @@ python3 tools/build-management-cli.py --development --allow-unsigned-development
 bxdl cli bundle verify /downloads/bxdl-cli.tar.gz --public-key /trusted/bxdl-cli-public.pem --json
 ```
 
-이 형식의 Ed25519 manifest 서명과 SHA-256 검사는 Apple code signing·notarization이나 정식 고객 배포 인수를 대신하지 않는다. CLI05-02 당시 배포 대상은 Mac arm64였으며 Linux 관리 CLI 코드는 위 LNX-01 범위로 확장했다. `.pkg`/Homebrew, 자동 온라인 업데이트, 설치 제거와 Linux 실제 설치 인수는 아직 후속 범위다. 후속 CLI05-03의 지정 서비스·네트워크 조합 인수는 [별도 결과](../results/2026-10-23-cli05-runtime-acceptance.md)를 따른다. 후속 [초기화 보고서 권한 개선과 재검증](../results/2026-10-23-private-initialization-report.md)은 신규 보고서를 대상으로 완료했다. 기존 `0644` 보고서 복구와 작성자가 아닌 사용자의 CLI05-04 과업은 완료하지 않았으며 사람 과업은 NOT_RUN이다.
+이 형식의 Ed25519 manifest 서명과 SHA-256 검사는 Apple code signing·notarization이나 정식 고객 배포 인수를 대신하지 않는다. `.pkg`/Homebrew, 자동 온라인 업데이트와 설치 제거는 제공하지 않는다. Linux 비공개 시험은 [고정 소스 빌드와 준비 도구](./linux-native-build.md)를 사용하며, 명령 구현·자동 검사·실제 노드 인수는 [지원 범위](./support-matrix.md)에서 구분한다.
 
 ## 지원 범위
 
-첫 호환 profile은 [RC.3 인수 기록](../results/2026-10-22-macos-rc3-package.md)의 archive `8a45cb8b…`, 실행기 `b7d677b4…` 조합이다. 다른 RC.3 재빌드나 같은 `0.1.0-dev` 문자열은 이 profile에 자동 포함되지 않는다. [분리 설계](../design/2026-10-23-independent-management-cli.md)에 전체 hash·계약을 기록했다.
+Mac은 고정 RC.3·RC.4 archive·manifest·실행기·JAR·Java 조합을 각각 인증한다. 같은 버전 문자열이나 임의 재빌드는 지원 profile에 자동 포함되지 않는다. 전체 identity는 [실행기 분리 설계](../design/2026-10-23-independent-management-cli.md), [RC.4 runtime 조립 기록](../results/2026-11-15-rc4-runtime-assembly.md)에 고정되어 있다.
 
-등록된 RC.3의 `instance show`, `preflight`, `init`/`resume-init`, `start`, `status`/`--wait`, `stop`, `logs`, `diagnose`를 위임한다. init/resume-init은 기존 명시 확인 플래그가 필요하다. 최초 설치와 등록은 기존 API를 사용하며, `setup --install`도 이 RC.3를 선택해 노드 작업을 내부 실행기에 위임할 수 있다. `setup new/resume`은 순차 문답으로 자료를 준비하며, `setup apply <이름>`은 TTY 승인 뒤 기존 installer/등록 API로 설치·cold 검사·등록·이름 연결까지 진행한다. `init <이름> --confirm-initialize`와 조건부 `resume-init <이름> --confirm-resume`도 이름 또는 기존 `--instance`를 선택해 같은 고정 RC.3 실행기에 위임한다. 초기화와 start를 설치 승인에 묶지 않는다.
+지원하는 Mac 등록의 `instance show`, `preflight`, `init`/`resume-init`, `start`, `status`/`--wait`, `stop`, `logs`, `diagnose`를 고정 실행기에 위임한다. init/resume-init의 명시 확인 플래그는 유지한다. 최초 설치·등록과 `setup apply`는 별도 승인 범위이며 초기화·시작을 설치 승인에 묶지 않는다. 미지원 package에는 기존 same-CLI 검증 조건을 적용하고 임의 실행기를 대신 실행하지 않는다.
 
-미지원 package는 새 CLI가 임의로 내부 실행기를 실행하지 않는다. 기존 native 경로의 조건을 적용하며, 특히 start는 기존과 같이 package CLI 일치를 요구한다. 지원 profile에서 서명·파일 검증이 실패하면 실행 방식 변경이나 자동 복구 없이 거절한다.
-
-[기존 Mac 검증](../results/2026-10-23-independent-management-cli.md)에서는 두 관리 CLI로 같은 RC.3의 직접 운용16사례와 설치 도우미 재개8사례를 확인했다. 당시 READY는 단일 노드의 MANUAL_START_INITIALIZED이며 합의·거래 확정 근거가 아니었다.
-
-후속 [CLI05-03 조합 인수](../results/2026-10-23-cli05-runtime-acceptance.md)는 실제 설치한 진입점으로 서비스 16사례와 4-validator 네트워크를 수행했다. 같은 source tree의 PR head `994c48f`와 merge `3a0bb5c` 배포본을 실행 중 3회 전환하면서 동일 attempt/PID·data·초기화 journal·설정·고정 worker를 확인했고, RPC/monitor 근거로 지정 거래·두 복구·wrong-pin을 별도 판정했다. 이 검증도 `status`의 로컬 READY를 전역 합의 판정으로 바꾸지 않는다.
+Linux는 [Linux 설치·운용](./linux-operations.md)의 등록 descriptor와 최초 worker를 대조한다. 독립 관리 CLI 설치 성공만으로 실제 systemd 서비스 인수나 버전 전환 호환이 검증된 것은 아니다. 현재 비공개 시험의 최초 management/worker bytes는 같으며 별도 버전 전환은 후속이다.
 
 ## 동작과 결과
 
-명령·JSON envelope·exit 의미는 기존 계약을 유지한다. service의 READY는 로컬 상태이며 합의 전체의 확인이 아니다. logs/diagnose는 저장 기록이고 현재 runtime을 관측하지 않는다. CLI05-03 단일 노드 실행에서는 init report mode 0644와 private reader의 읽기 거절을 관측했고, `logs`·`diagnose`가 `LOGS_PARTIAL`·`DIAGNOSTIC_PARTIAL` / INCOMPLETE를 반환했다. 해당 실행의 실제 umask는 기록하지 않았으므로 당시 원인은 미확정으로 보존한다. 후속 조사는 보고서 writer의 생성 권한이 상속된 mask에 의존하는 경로를 확인했고, 새 관리 CLI 아래의 신규 보고서 생성·수집을 보완했다. 기존 `0644` 보고서는 그대로 보존하므로 새 CLI로 조회해도 partial일 수 있다. partial 보고서가 생성돼도 모든 기록을 읽은 것으로 해석하지 않는다. 위임 전 archive와 설치 inventory 인증 비용도 있으므로 `--timeout-seconds`를 전체 명령의 벽시계 상한으로 해석하지 않는다.
+service의 READY는 로컬 상태이며 전역 합의의 확인이 아니다. logs/diagnose는 저장 기록을 수집하며 현재 runtime을 관측하지 않는다. 누락·권한 오류·손상·수집 한도는 partial로 표시한다. 특히 기존 `0644` 초기화 보고서는 자동 복구하지 않아 새 CLI에서도 partial일 수 있다. 파일이 생성됐다는 사실만으로 완전 수집으로 판단하지 않는다. Mac 위임 전 archive와 설치 inventory 인증 비용이 있으므로 `--timeout-seconds`를 전체 명령의 벽시계 상한으로 해석하지 않는다.
 
-작업이 실행기에 전달된 뒤 결과를 확정할 수 없으면 변경 가능 작업은 `EXECUTOR_OPERATION_UNKNOWN`/exit 6으로 종료한다. 원문 출력은 노출하지 않으며 자동으로 재시도·초기화·start하지 않는다. 관리 CLI 종료/timeout은 노드 중지나 작업 취소를 보장하지 않는다. `status`와 기존 기록을 확인한다.
+작업이 실행기에 전달된 뒤 결과를 확정할 수 없으면 변경 가능 작업은 UNKNOWN으로 보존하고 자동 재시도·초기화·start하지 않는다. Mac 위임의 대표 코드는 `EXECUTOR_OPERATION_UNKNOWN`/exit 6이며 Linux 사유 코드는 [Linux 안내](./linux-operations.md)를 따른다. 관리 CLI 종료/timeout은 노드 중지나 작업 취소를 보장하지 않는다. `status`와 기존 기록을 확인한다.
 
-노드의 실제 초기화·시작 journal과 worker snapshot은 기존 실행기가 작성한다. 구형 실행기의 stop은 잠금을 얻었을 때 현재 실행 시도를 대상으로 한다. 관리 CLI는 이름의 root/binding을 직전 재검사하지만, 구형 실행기가 지원하지 않는 원자적 expected-attempt 승인 전달을 제공한다고 주장하지 않는다.
+초기화·시작 journal과 worker snapshot은 각 고정 실행기가 관리한다. 구형 Mac 실행기의 stop은 잠금을 얻었을 때의 실행 시도를 대상으로 한다. 관리 CLI는 이름의 root/binding을 직전 재검사하지만 구형 실행기가 지원하지 않는 원자적 expected-attempt 승인 전달을 추가한 것으로 간주하지 않는다.
 
 ## 파일 생성 권한과 초기화 보고서
 
-새 standalone `bxdl`은 Unix 프로세스의 첫 진입에서 `umask 077`을 설정한다. 호출한 셸의 mask는 바꾸지 않으며, 이후 직접 실행하는 JVM과 지원 RC.3의 고정 실행기/JVM에는 `077`이 상속된다. 새 init/resume-init 시도의 보고서를 처음부터 `0600`으로 만들기 위한 정책이다. 초기화 승인·결과 판정·UNKNOWN 처리와 명령/JSON 계약은 유지한다. [설계](../design/2026-10-23-private-initialization-report.md)와 [검증 결과](../results/2026-10-23-private-initialization-report.md)를 따른다.
+standalone `bxdl`은 Unix 프로세스 진입 시 `umask 077`을 설정하고 자식 실행기와 JVM에 상속한다. 호출 셸의 mask나 기존 파일 권한은 바꾸지 않는다. 새 init/resume-init 보고서는 private `0600`으로 생성한다. 라이브러리 API를 직접 호출하거나 이 정책이 없는 구형 내장 CLI를 직접 실행하는 경우에는 같은 정책이 자동 적용되지 않는다.
 
-라이브러리 API를 직접 호출할 때는 process-wide mask를 바꾸지 않는다. 기존 패키지의 내장 CLI를 관리 CLI 없이 직접 실행하는 경우에도 새 정책이 추가되지 않는다. 관리 CLI를 업데이트해도 기존 `0644` 보고서를 chmod·덮어쓰기하거나 초기화를 다시 실행하지 않는다. private reader의 `0600` 검사는 유지되므로 기존 보고서의 누락 사유와 partial 상태를 보존한다. 수집만을 위해 초기화를 재실행하지 않는다.
+기존 `0644` 보고서를 chmod·덮어쓰기하거나 수집 목적으로 초기화를 재실행하지 않는다. private reader의 권한 검사는 유지하고 누락 사유와 partial 상태를 보존한다. [권한 설계](../design/2026-10-23-private-initialization-report.md)와 [Mac 검증 근거](../results/2026-10-23-private-initialization-report.md)를 참고한다.
 
-이 정책은 새 CLI가 생성하는 파일 전체에 적용된다. 새 노드 `package build` archive의 외부 파일은 `0600`으로 생성되며 archive 내부 payload의 bytes·mode와 설치 시 명시하는 실행 파일 `0755`·일반 payload `0644`는 유지한다. 기존 archive의 권한은 바꾸지 않는다. 셸의 `>` 리다이렉션으로 만든 출력 파일은 호출한 셸이 먼저 열기 때문에 이 정책의 대상이 아니다.
-
-실제 Mac 비교 검증은 4개 실행 조건의 서비스16사례와 독립 검사를 구분해 기록했다. 수정 CLI 아래에서 새로 생성한 초기화 보고서의 private 권한과 수집 성공을 확인했지만, 기존 파일 복구나 모든 누락·손상 원인의 해소를 뜻하지 않는다. CLI05-04 사용자 과업은 계속 NOT_RUN이다.
+새 `package build` archive의 외부 파일은 `0600`이며 내부 payload bytes/mode와 설치 시 실행 파일 `0755`·일반 payload `0644`는 유지한다. 셸의 `>` 리다이렉션 파일은 호출 셸이 먼저 열므로 이 정책의 대상이 아니다.
 
 ## 업데이트 기준
 
-- 이름·도움말·표시·문답 개선: 관리 CLI만 교체하고 지원 runtime과의 호환 조합을 검사한다.
-- 실행기 동작/보안 수정 또는 NIGO/JRE 변경: 새 runtime package를 만들고 인수한다.
+- 이름·도움말·표시·문답 개선은 관리 CLI를 교체하고 지원 runtime과의 호환 조합을 검사한다.
+- 실행기 동작·보안 수정 또는 NIGO/JRE 변경은 새 runtime package를 만들고 인수한다.
 - 기존 노드 DB·control 이동·upgrade/migration은 별도 작업이다. 관리 CLI 교체가 이를 수행하지 않는다.
 
-현재의 사용자 LaunchAgent 운영 범위는 그대로다. 별도 상주 관리 서버나 자동 재시작 기능을 추가하지 않는다.
-
+Mac 사용자 LaunchAgent와 Linux 개발용 systemd의 범위는 각각 유지된다. CLI 업데이트가 별도 상주 관리 서버·자동 재시작·부팅 자동 시작을 추가하지 않는다.
 
 ## RC.4 고정 런타임 지원과 CLI 전환 기준
 
-RC4-04 관리 CLI는 기존 `executor.rc3-legacy-v1`과 신규 `executor.rc4-v1` capability를 함께 제공한다.
-RC.3과 RC.4는 각 수신 기록의 전체 engine identity 및 별도의 archive·manifest·내부 실행기·JAR·Java pin으로 인증한다.
-RC.4는 [RC4-03에서 고정한 runtime](../results/2026-11-15-rc4-runtime-assembly.md)을 그대로 사용한다.
-관리 CLI를 빌드하면서 runtime을 다시 조립하거나 내부 실행기를 덮어쓰지 않는다.
+Mac 관리 CLI의 설치·업데이트·복귀 probe는 `executor.rc3-legacy-v1`과 `executor.rc4-v1` capability를 모두 요구한다. 하나라도 없으면 `CLI_CANDIDATE_FAILED`로 거절하고 기존 CLI 선택을 유지한다. RC.3 전용 구형 CLI를 RC.4 운용 중 정상 복귀 대상으로 사용하지 않는다. 이미 배포된 구형 bootstrap의 검사 정책을 소급 변경하지는 않는다.
 
-새 관리 CLI가 실행하는 `cli install`, `cli update`, `cli rollback`은 후보의 두 capability를 모두 요구한다.
-한쪽 지원이 없으면 `CLI_CANDIDATE_FAILED`로 거절하고 기존 CLI 선택을 유지한다.
-노드 목록은 선택적인 사용자별 저장소이므로, 해당 목록만 보고 다른 곳의 RC.4 노드가 없다고 추정하지 않는다.
-이 보수적인 관리 CLI 기준선은 기존 RC.3 노드 운용 지원을 유지하면서 RC.4 지원이 사라지는 전환을 막는다.
-RC.3 전용 구형 CLI는 RC.4 운용 중 정상 복귀 대상으로 사용하지 않는다.
-이미 배포된 구형 bootstrap 실행기의 검사 정책까지 소급 변경하는 기능은 아니다.
+Linux 관리 CLI probe는 Linux 관리 기능과 zsh completion capability를 확인하며 Mac exact runtime capability를 요구하지 않는다. 이 차이는 Linux runtime profile을 자동 승인한다는 뜻이 아니다.
 
-패키지 인증 이후에만 해당 패키지의 고정 실행기에 작업을 위임하고, 선택한 profile과 다른 engine 응답은 거절한다.
-변경 작업이 실행된 뒤 결과를 확정하지 못한 경우에는 `UNKNOWN`을 유지하며 자동 재시도하지 않는다.
-알려지지 않은 패키지는 기존 same-CLI·worker 검사 경로를 따르며, 임의 패키지 실행기를 외부 CLI가 대신 실행하지 않는다.
-
-CLI capability는 구현 지원 식별자다. RC.4의 실제 설치·초기화·LaunchAgent·네트워크 인수 완료는
-[RC4-05/06 계획](../design/2026-11-15-rc4-adoption-plan.md)과 별도 결과로 확인한다.
-[RC4-05 결과](../results/2026-11-15-rc4-macos-service.md)는 고정 R+B의 Mac 수동 단일노드 설치·서비스21사례 PASS다.
-[RC4-06 결과](../results/2026-11-16-rc4-macos-network.md)는 동종4-validator·두 복구·wrong-pin·선정 RPC21사례와 live B→C→B→C 전환3회 및 독립 종료 감사 PASS다. B/C는 Rust 제품 구현이 같고 실제 source revision·배포 문서와 identity가 다르며 R/A/JAR/JRE는 유지했다. 성공 서명 Type-4·KZG provider fault·전체 Native/Console·다른 기능 변경 CLI의 호환은 이 결과에 포함하지 않는다.
-CLI update/rollback은 노드 엔진·JRE·DB를 업그레이드하거나 되돌리는 명령이 아니다.
+Mac 지정 RC.4 조합의 단일노드·동종망·실행 중 CLI 전환 근거는 [서비스 결과](../results/2026-11-15-rc4-macos-service.md)와 [네트워크 결과](../results/2026-11-16-rc4-macos-network.md)를 따른다. 다른 기능 변경 CLI나 Linux 조합에 그 결과를 승계하지 않는다. `cli update/rollback`은 노드 엔진·JRE·DB의 업그레이드·복구 명령이 아니다.

@@ -1,382 +1,59 @@
-# 구현 상태 — 2026-11-17
+# 현재 구현·검증 상태
 
-**Linux 비공개 설치·운용 시험 지원 — 2026-11-17:** 빌드를 사전 준비로 분리하고, 검증한 Linux 후보 archive를 설치 입력으로 연결하는 `tools/prepare-linux-operations.py`와 시험 장비에서 새 키·설정을 만드는 `tools/prepare-linux-test-inputs.py`를 추가했다. 전자는 후보 receipt·archive·전체 JRE inventory·실행기 pin을 대조한 뒤 새 사용자 폴더에만 추출하고, 후자는 고정 RC.4 helper를 일반 사용자로 실행해 단일 노드의 manual peerless 입력을 준비한다. 설치·init·start/stop은 기존 BXDL 명령과 명시 관리자 승인으로 따로 수행한다. 비공개 전달본의 본 과업은 설치·초기화·로컬 READY·진단·SSH 단절 유지·정상 종료·같은 DB 재시작이다. 실제 Linux 실행과 사용자 관측은 **NOT_RUN**, 정식 runtime/executor profile은 **NOT_ADMITTED**다.
+기준 소스는 [PR #24](https://github.com/bwg-loonshots/bxdl/pull/24)가 머지된 main `00451dee657013b3ba3a793ddbf864ec66800f58`다. 이 문서는 현재 구현과 확인된 실행 범위를 요약하며, 과거 작업별 기록은 [구현·검증 변경 이력](./implementation-history.md)에 분리한다. 배포본의 정확한 소스·공급물·도구 해시는 그 전달본의 `HANDOFF.json`을 따른다.
 
-안내서·결과/개선 의견 양식과 전달물은 Git에 보관하지 않는다. 기존 `UAT` 폴더는 삭제했다. 저장소에는 재사용 가능한 준비 도구·회귀 검사·제품 설계만 남기며, 실행 기록은 비공개로 반환한다. 빌드/공급물 확인·설치 기술 결과·사용 편의성 평가는 별도로 기록한다. 현재 단일 노드 시험은 합의·거래 확정과 재부팅 자동 복구를 포함하지 않는다.
+BXDL은 Rust 기반 개발 제품이며 **실제 Linux 설치·운용 검증과 직접 CLI의 사용성 평가를 우선**한다. macOS 지정 조합의 검증 결과는 유지한다. `console`은 기존 구현만 보존하고 추가 개발하지 않는다.
 
-이번 변경 검증: `CARGO_PROFILE_TEST_DEBUG=0 make check`의 fmt·Clippy·Rust709 PASS, Python285개 중283 PASS·기존2 SKIP. 이후 Python 전체287개 중285 PASS·기존2 SKIP를 확인했고, 마지막 helper의 일반 사용자 통과 권한 보강도 bridge16사례로 재검증했다. 입력 준비10사례는 전체 검사에 포함된다. 실제 Linux JRE/node/systemd 실행은 수행하지 않았다. 전달 준비 스크립트도 Mac에서 파일 생성 전 미지원 host를 거절함을 확인했다.
+## 구현과 인수
 
-**Linux native build·후보 고정 준비:** LNX-04는 `ba4d5af6b505ea880be034b73094ac8c92018d57`로 커밋했다. 이 정확한 제품 source와 기존 Linux JRE/RC.4 lock을 기준으로 새 빌드 kit·native 제작 도구·수신 검증 도구를 준비했다. 상태는 **PREPARED**이며 실제 Linux host가 없어 compile/link·Linux CLI/runtime archive 생성은 **NOT_RUN**, 생성물 hash는 아직 없다. 설치·native/RocksDB·systemd 인수도 **NOT_RUN**, 정식 executor profile은 **NOT_ADMITTED**다. [네이티브 빌드 안내](./linux-native-build.md)에 전달·제작·회수 절차와 남은 인수 조건을 구분한다.
-
-[후속 준비 검증 결과](../results/2026-11-17-linux-native-build-preparation.md): Mac 전체 `make check` Rust709 PASS, Python259개 중257 PASS·기존 opt-in2 SKIP, fmt·Clippy PASS와 Linux all-target 타입 검사 PASS다. Linux 전용 CLI8사례는 Mac에서 실행하지 않았으며 native build·서비스 인수를 대신하지 않는다. 실제 공급물로 만든 전달 archive와 8개 파일의 별도 해시 대조도 PASS다.
-
-kit의 제품 source와 제작 도구는 따로 고정한다. 이번 후속 setup 입력 오류의 exit code·조기 필드 검증·플랫폼별 테스트 변경은 해당 source commit에 포함되지 않는다. 이를 실물 후보에 포함하려면 새 commit으로 kit를 재생성해야 한다. 기존 LNX-02 전달본·결과는 그대로 보존하며 새 kit로 과거 결과를 바꾸지 않는다. 향후 unsigned 개발 archive의 hash 고정·오프라인 수신 검증 성공은 설치 승인이나 서비스 profile 인수가 아니다.
-
-**LNX-04 개발용 설치·운용 UX 연결 — 2026-11-17:** Linux 순차 문답·준비 조회/수정·명시 apply, 전용 계정 준비와 root 설치, 사용자 노드 이름 연결, 최초 고정 worker의 운용 위임과 제한된 정제 진단을 연결했다. [운용 안내](./linux-operations.md)에 일반 사용자 준비와 관리자 승인 경계를 기록한다. 실제 Linux build/link·JRE/native/RocksDB·설치·systemd·독립 CLI 전환 인수와 signed runtime/exact profile은 아직 NOT_RUN/후속이다.
-
-사용자 준비 기록의 선택 항목을 `null`로 저장하면 엄격 JSON 파서가 재개를 거부하는 문제를 합성 검증에서 발견해, 없는 항목을 생략하도록 수정했다. 고정 인스턴스 이름·데이터 위치를 최초 checkpoint에 함께 저장하고 재개 시 대조한다. 잘못된 입력과 같은 값 재입력은 기존 검토·파일을 유지하며 실제 변경은 검토를 해제한다. Mac의 테스트 전용 임시 control 경로로 중단·재개·조회·수정·미확정 apply 동결·symlink 거부를 검증했다. production control은 `/var/lib/bxdl/instances/<이름>`으로 유지한다. Linux 실행 증거를 생성한 것은 아니다.
-
-[LNX-04 자동 검증 결과](../results/2026-11-17-linux-operations-ux.md): `make check` Rust708 PASS·Python205 PASS/2 SKIP·fmt/Clippy PASS. 마지막 상태 표시·자동완성 수정은 Linux 관련80·자동완성17 집중 검사와 fmt/Clippy·Linux all-targets 타입 검사로 확인했다. 최종 Mac CLI 직접 실행7사례도 통과했다. 전체 검사와 마지막 집중 검사의 시점, 최초 실패·수정 이력은 결과 문서에 구분했다. 실제 Linux 실행은 NOT_RUN이다.
-
-**LNX-03 당시 개발용 systemd 경로 — 2026-11-16:** root 제어 기록·전용 계정·일회성 시작 gate를 갖는 Linux 개발용 서비스 backend를 구현했다. `linux-service register`와 명시 `--instance` 운용을 사용한다. 당시 순차 설치·이름 기반 연결은 후속이었으며 현재 LNX-04에서 개발 경로를 연결했다. 고정 Linux runtime archive/실행기 profile 및 실제 Linux 인수는 여전히 후속이다. [관리자 개발 경로](./linux-service-development.md)에서 권한·명령·미검증 범위를 확인한다. [자동 검사 결과](../results/2026-11-16-linux-systemd-development.md)는 Rust659 PASS·Python205 PASS/2 SKIP·Linux 타입 검사 PASS이며, 기본 병렬 실행의 기존 시간 민감 실패2건과 재검증 이력을 포함한다.
-
-LNX-02 자동 검사: `make check` Rust623 PASS, Python205 PASS·2 SKIP, fmt·Clippy PASS. 실제 Linux 실행은 NOT_RUN이다. 개발용 전달 archive는 생성·전체 checksum 검증했으며 Git에는 포함하지 않는다.
-
-**LNX-02 수신·도구 준비 — 2026-11-16:** Linux Temurin21.0.13+9 full JRE와 RC.4 JAR의 별도 조합을 고정하고257파일의 오프라인 준비·Rust staging을 검증했다. 실제 Linux Java/native/RocksDB·서비스 인수는 NOT_RUN이다. [결과](../results/2026-11-16-linux-rc4-supply.md)와 [테스터 실행 안내](../docs/linux-validation.md)를 따른다. SSH 정보 공유 없이 테스터가 직접 실행한 정제 JSON을 회수할 수 있다.
-
-2026-11-16 사용자 결정으로 **실제 Linux 머신 우선 개발·검증**으로 전환했다. [Linux 구현 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 현재 실행 기준으로 삼고 Mac 기능·인수 이력은 보존한다. WSL2는 Linux 실물 인수 후속이다. 아래 R1~R3는 Mac 구현 이력이다. R1 설정 초안 이후 **R2의 Mac 새 폴더 패키지 설치**와 **R3의 NIGO 개발 후보 정보·cold 사전검사**를 추가했다. clean NIGO 후보를 별도로 수신하고 제품 설정과 명시 native QBFT 설정을 연결하는 preflight를 추가했다. 이후 설치본·설정을 등록해 `--instance`로 preflight와 명시 init/resume-init을 호출하고, Mac 사용자 LaunchAgent의 start/status/stop을 연결했다. 이번에는 `setup --install`에서 이 단계를 선택하고 재개하는 A~C 흐름을 구현했다. 기존 package의 단일 validator 서비스 근거와 새 setup의 exact package·TTY 인수, 전체 G1-M을 구분한다.
-
-테스터 검증은 Git 저장소와 분리한 비공개 전달 패키지로 진행한다. 안내서·빈 결과/개선 의견 양식·개별 실행 기록은 저장소에 보관하지 않는다. 전달본의 `HANDOFF.json`에 제품 source commit과 지원 도구·공급물 해시를 기록하며, 빌드는 사전 준비이고 본 과업은 노드 설치·초기화·서비스 운용 검증이다.
-
-## 현재 Linux 단계 — 비공개 단일노드 설치·운용 시험 준비
-
-사용자가 Ubuntu 24.04 LTS·x86_64/glibc·systemd와 sudo/SSH 가능을 기준으로 진행하도록 허용했다. 실제 호스트의 배포판·버전/접속은 아직 관측하지 않아 Linux 실행은 NOT_RUN이다. Linux runtime staging·독립 관리 CLI 배포·읽기 전용 `host check` 기반 코드를 추가했다. Linux 기본 사용자 경로는 CLI 배포 `$HOME/.local/share/BXDL-CLI`, 노드 목록·준비 기록 `$HOME/.local/share/BXDL`로 분리한다. LNX-01 당시 전체 자동 검사와 Linux target 타입 검사를 통과했으며 당시에는 Linux 노드 서비스 capability를 선언하지 않았다. LNX-03은 명시 관리자 backend를 추가했고, LNX-04는 일반 사용자 setup·이름 연결과 root 공개 descriptor/최초 worker 위임을 구현했다. **고정 runtime profile·실제 Linux init/systemd 인수는 NOT_RUN**이다. [LNX-01 결과](../results/2026-11-16-linux-foundation.md)의 `make check`는 Rust 623 PASS, Python 168개 중 166 PASS·기존 opt-in 2 SKIP, fmt·Clippy PASS다. `make check-linux`의 GNU/x86_64 all-targets 타입 검사와 현재 Mac CLI의 version/host check/자동완성 직접 실행도 통과했다. Mac host 검사의 정상적인 미지원 INCOMPLETE(exit 3)는 Linux 실행 성공이 아니며 기존 Mac PASS도 Linux로 승계하지 않는다.
-
-| 단계 | 현재 상태 |
-| --- | --- |
-| LNX-01 환경·플랫폼 기반 | IMPLEMENTED / AUTO_CHECKED — Linux runtime/관리 CLI·읽기 전용 host 검사, 실제 머신 실행 NOT_RUN |
-| LNX-02 Linux JRE·RC.4 고정 공급물 | SUPPLY_PINNED / OFFLINE_VERIFIED — `fe84ca6` 커밋. 실제 Linux cold/native·package 조립 NOT_RUN |
-| LNX-03 systemd 시스템 서비스·권한 | `b9ee89a` 커밋. 개발용 관리자 backend 구현·당시 자동 검사 PASS. 실제 Linux NOT_RUN |
-| LNX-04 설치·운용 UX / 실제 Linux 단일노드 | `ba4d5af` 커밋. DEVELOPMENT_UX_IMPLEMENTED / HOST_ACCEPTANCE_NOT_RUN — 문답·계정/설치 승인·이름·고정 worker·진단 연결. 설치/init/운용/SSH 단절·동일 DB 재시작·CLI 전환 인수는 남음 |
-| LNX-04 후속 native build·후보 고정 | PREPARED — 고정 source kit·native 제작·수신 검증 도구 준비. 실제 Linux compile/link·CLI/runtime archive 생성 NOT_RUN, archive hash 미생성, executor profile NOT_ADMITTED |
-| LNX-05 Linux 사람 과업 | PRIVATE_HANDOFF_PREPARED / NOT_RUN — 빌드는 사전 준비, 동일한 비공개 전달본으로 설치·init·서비스 기술 검증과 사용자 편의성 관측을 분리해 수행 |
-| LNX-06 서버·네트워크 | PLAN / NOT_RUN — 재부팅·동종망·다중 host와 G1-L 개별 gate |
-| LNX-07 WSL2 | DEFERRED / NOT_RUN — Linux 기준 조합 이후 |
-
-## RC.4 Mac 서비스·동종망·선정 RPC — RC4-01~07 완료 이력
-
-2026-11-15 [RC4-01 수신](../contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 시험 자료 준비](../results/2026-11-15-rc4-fixture-preparation.md), [RC4-03 runtime 조립](../results/2026-11-15-rc4-runtime-assembly.md), [RC4-04 외부 CLI·인수 도구 구현과 CLI-only 검증](../results/2026-11-15-rc4-cli-harness.md)을 완료했다. RC4-03의 내부 실행기 A와 signed development runtime R은 그대로 유지한다. RC.4 [engine lock](../packaging/engine-lock.rc4-temurin-development.json)·[package spec](../packaging/package-spec.rc4-temurin.example.json)은 SELECTED다. R은 payload269파일·326,373,420bytes와 JRE259파일을 담으며 identity는 [조립 기록](../results/2026-11-15-rc4-runtime-assembly.json)에 고정했다.
-
-독립 관리 CLI B는 clean source `65fe83f0d569fcf2231474342fa0d60ca72555d5`에서 빌드했다. B SHA-256은 `f08578809744d21313aad3c8cb39644107af67d5558661d2ecc9d81f2edb138c` / 4,219,952bytes, 서명 CLI-only bundle은 `0b03f7324c6b2b735aed9ab7793e65d151af1445f93e0506068289d19cb03a23` / 1,911,951bytes다. 실제 CLI-only 설치·구형 bootstrap에서 B로 업데이트, B의 RC.3 전용 CLI update/rollback 거절·선택 보존을 PASS했다. 새 CLI가 두 profile의 capability를 요구하는 전환 정책과 구형 bootstrap의 기존 정책을 구분한다. 후속 RC4-06에서는 clean source `62f138941f0650a085e88e08d7db057d228a34b7`의 관리 CLI C를 추가해 실제 RC.4 노드 실행 중 B→C→B→C 전환을 인수했다. C는 B와 Rust 제품 구현이 같고 source revision·관리 가이드·배포 identity가 다르다. C binary SHA-256은 `f12110d0644042c1cb97482cf68943e0dcf05b09bcc9514e25e2c26df0f8a153`, CLI-only bundle SHA-256은 `847588c78c5bca01745a1113548a2e5113679d0bc41a9c2be2eb5430af4249d5`다.
-
-[CLI·하네스 설계](../design/2026-11-15-rc4-cli-harness-implementation.md)에 따라 exact profile·응답 identity, 후보별 runtime inventory, 관리 CLI capability와 유한 RPC 검사를 구현했다. 기존 엄격한 관리 endpoint parser의 허용 범위를 넓히지 않았다. `prepare_management_fixture.py`를 실제 RC4-02 원자료에 적용해 입력9개·공급3개를 준비하고 4-validator chain과 자격증명6개의 bytes를 보존했다. 수동·peerless 단일노드 입력만 변환했고 새 DB·키 생성 및 child 실행은0회다. private provenance 전체는 Git에 넣지 않는다.
-
-RC4-04 당시 전체 `make check`는 Rust596 PASS, Python153개 중151 PASS·2 SKIP, fmt·Clippy PASS이며 Linux 타입 검사도 PASS다. 두 기존 opt-in SKIP와 이번 제한된 CLI-only 실물 검증은 [구조화 결과](../results/2026-11-15-rc4-cli-harness.json)에 분리한다. RC4-04 실제 빌드·배포·전환·입력 준비에서 JVM·노드·서비스 호출은0회이며 추가 NIGO 선행 구현 대기는 없다. RC4-04 당시의 미실행 범위는 보존하며 후속 서비스 결과는 아래에서 구분한다.
-
-| 단계 | 현재 상태 |
-| --- | --- |
-| NIGO RC.4 공급 | DELIVERED — 공급자의 게시·재다운로드 검증 완료 회신 |
-| BXDL RC4-01 archive 수신 | PASS — 원격 수신·공급24파일·전체 identity·선정 JRE engine-info·입력 불변 |
-| BXDL RC4-02 계약 영향·시험 자료 준비 | PASS — 준비용 후보·guard 구현, helper/catalog 대조·새 fixture·당시 전체 검사 |
-| BXDL RC4-03 제품 선택·runtime 조립 | SELECTED / PASS — RC.4 전용 lock/spec, clean 내부 실행기 A·서명 runtime R·전체 inventory |
-| BXDL RC4-04 외부 CLI profile·인수 도구 | IMPLEMENTED / PASS — RC.3/RC.4 exact profile·capability·하네스·입력 변환·RPC 도구와 회귀 |
-| BXDL RC4-04 독립 B 배포·전환·준비도구 실물 검사 | PASS — CLI-only 설치·업데이트·미지원 전환 거절·선택 보존, fresh 입력 준비·R/A 불변 |
-| BXDL RC4-05 Mac 설치·수동 단일노드 서비스 | DONE / PASS — 실행21사례·완전 진단 수집·원본 공급 사본 부재 운용·독립 종료 감사 |
-| BXDL RC4-06 네트워크·RPC·실행 중 CLI 전환 | DONE / PASS — fresh 동종4-validator·두 복구·wrong-pin·선정 RPC21/52read·B/C 전환3회; 범위와 독립 감사는 아래 결과 참조 |
-| BXDL RC4-07 정식 회신 | DONE — [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257) 머지 완료; 기술 인수 범위는 RC4-01~06, NIGO 작업자 수신·동의 확인은 별도 |
-| BXDL Mac RC4-08 사용자 과업 | NOT_RUN·이연 — 실제 Linux 구현·기술 인수·Linux 사람 과업 우선 |
-
-RC4-07 정식 회신은 [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257)로 머지 완료했다. NIGO 작업자의 수신·동의 확인은 별도이며 BXDL 근거 공유 PR은 아직 미게시다. RC4-06 결과는 로컬 commit `9f460e6`에 보존했으며 원격 근거 PR은 아직 미게시다. merge commit은 `d06b6b2dbf010fa8e26364c8d4cf4439d85450a0`이며 REQ-0002/0003 OPEN과 개발 후보 인수 범위를 유지한다.
-
-[RC4-05 실제 결과](../results/2026-11-15-rc4-macos-service.md)와 [구조화 근거](../results/2026-11-15-rc4-macos-service.json)는 21사례의 161.513초 실행을 기록한다. 준비 취소·trust부터 재개·`instanceId` 수정과 revision2 재승인, 설치·등록·init1회, 수동 시작·정상 stop 각2회와 같은 RC.4 DB 재시작이 PASS다. 최초 등록 뒤 이번 시험의 공급 사본3개를 옮긴 상태로 운용·reapply·조회한 뒤 복원했다. 초기화 보고서는 `0600`이고 logs/diagnose 모두 완전수집했다. 조회7쌍과 정지 후 reapply의 전후 snapshot이 같으며 설치 payload269파일·JRE259파일·worker2개와 R/A/B가 유지됐다. runner의 PID38개와 harness1개를 포함한 독립 PID39개·job2개·port2개 부재, 원자료와 현재 파일 identity 대조도 PASS했다. 첫 독립 감사는 OS 읽기 권한 제한으로 종료했으며 해당 기록을 보존하고 감사만 다시 실행했다. 서비스는 재실행하지 않았다. RC4-05 당시 `make check`는 Rust596 PASS, Python165개 중163 PASS·2기존 opt-in SKIP, fmt·Clippy PASS다. Rust 변경이 없어 Linux 타입 검사는 이번에 재실행하지 않았으며 RC4-04의 PASS 이력을 유지한다. `MANUAL_START_INITIALIZED`는 수동 단일노드 로컬 준비 상태이며 전역 quorum·거래 확정·RC.4 RPC·실행 중 CLI 전환·사람 과업의 성공이 아니다.
-
-[RC4-06 실제 결과](../results/2026-11-16-rc4-macos-network.md)·[JSON](../results/2026-11-16-rc4-macos-network.json)는 525.714초의 단일 실행 PASS를 기록한다. 정상 4개 노드와 별도 wrong-pin 설치본의 init5회, 서비스 기동·정상 stop 각12회, 거래8개·제출9회다. 두 2/4 구간은 45.519초/45.174초·각 85표본이며 live 복구 nonce3은 무재제출, 같은 DB round-skew 재시작 nonce5는 같은 bytes를 명시1회 재제출했다. wrong-pin3건·fault peer0과 정상 세 노드의 확정을 확인했다. 실행 중 CLI 전환3회는 attempt/PID·data/설정/초기화 기록·worker를 보존했다. 선정 RPC21사례·52read는 0.202초에 수행했고 독립 RPC 감사도 PASS했다. 종료 독립 감사도 PASS해 정상 stop 12회 뒤 기록된 PID 107개(하네스 포함)·job 12개·8개 포트의 잔존 부재와 기존 서비스 baseline 불변을 확인했다. 첫 종료 감사는 의도된 CLI stable symlink를 일반 파일로 요구한 감사 오류로 INCOMPLETE였고, 원본을 보존한 뒤 검사만 바로잡아 재감사했다. 제품·서비스·RPC를 재실행하지 않았다. 원 fixture67파일·하네스9파일·runtime bytes 불변을 확인했다.
-
-RC4-06 실행 당시 제품 Rust·하네스 코드는 RC4-05에서 검사한136파일과 같았으며 그 실행의 `make check`를 재실행하지 않았다. Rust596·Python163 PASS/기존 opt-in2 SKIP·fmt/Clippy는 RC4-05의 이전 검사 근거다. RPC subset의 성공은 정상 signed Type-4·성공 authorization simulation·KZG provider fault·중첩 host·Native 전체 recipe·Console UI 인수를 뜻하지 않는다. 사람 과업도 NOT_RUN이다.
-
-선정 Temurin JRE와 고정 R, 새 DB·새 genesis·동일 RC.4 망에서 인수했다. 기존 DB migration·혼합 버전 rolling upgrade는 지원하지 않는다. 기존 RC.3 인수 지원과 아래 역사 결과는 바꾸지 않았다.
-
-## 현재 방향 — console 개발 중단, 직접 CLI 우선
-
-2026-10-22 사용자가 실제 console의 직관성이 부족하다고 평가해 개발 중단을 요청했다. 기존 console 코드·시안·검증 이력은 보존하고 새 메뉴·화면·서비스 연결은 진행하지 않는다. 공통 catalog/home/target와 Preparation 검증·저장 API는 직접 CLI에서 재사용한다.
-
-**CLI-01 이름 연결·목록, CLI-02 독립 관리 CLI·이름 기반 운용, CLI-03 순차 설치 준비·조회·수정을 구현·검증했다.** CLI-04의 실제 설치 실행·이름 연결·이름 기반 초기화도 구현·검증했다. CLI-05 중 zsh 자동완성(CLI05-01)과 독립 Mac 배포·업데이트(CLI05-02)의 구현·검증을 완료했다. 후속 CLI05-03의 지정 Mac 서비스·네트워크 조합 인수도 완료했다. 후속 초기화 보고서 권한 개선과 신규 보고서 수집 재검증을 완료했다. 기존 `0644` 보고서는 미복구 partial로 보존하며 CLI05-04 사용자 과업은 NOT_RUN이다. [최신 설계](../design/2026-10-22-cli-simplification.md)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
-
-직접 `setup new/resume`은 저장한 답을 재사용하고 누락된 항목부터 순차 질문한다. 기존 console 메뉴는 보존하며 저장 형식만 공유한다. `setup list/show/edit`로 조회와 제품 한 항목 수정을 직접 실행한다. 아래 UX-01~03의 PASS는 당시 기술 검증 이력이며 새 CLI 단계의 검증과 구분한다.
-
-## 후속 개선 — 새 초기화 보고서의 private 생성
-
-[설계](../design/2026-10-23-private-initialization-report.md)에 따라 standalone CLI의 Unix 프로세스 진입 시 `umask 077`을 적용했다. 명시 권한 없이 새 보고서를 만드는 NIGO writer가 호출자의 mask를 상속하는 경로를 확인했으며, 새 관리 CLI 아래의 고정 RC.3 실행기/JVM도 `077`을 상속한다. native init/resume-init에도 같은 생성 정책이 적용된다. 기존 CLI05-03 실행의 당시 umask를 소급해 확정하지는 않는다.
-
-[별도 검증 결과](../results/2026-10-23-private-initialization-report.md)의 실제 Mac 4개 실행 조건에서 각 서비스16사례와 독립 사후 검사를 통과했다. 비교 조건의 partial과 수정 CLI로 새로 만든 `0600` 보고서의 수집 성공을 구분한다. 자동 회귀에서는 caller mask `002/022/077`, 부모 셸의 mask 불변, native init의 UNKNOWN 유지·무재시도, archive 바이트와 설치 권한 보존을 확인했다. 최종 전체 검사 집계는 새 결과 문서를 따른다.
-
-부모 셸·라이브러리 직접 호출·기존 내장 CLI의 직접 실행에는 새 정책을 적용하지 않는다. 기존 파일을 chmod하거나 초기화를 다시 실행하지 않으며 reader의 `0600` 조건도 유지한다. 따라서 기존 `0644` 보고서의 `LOGS_PARTIAL`·`DIAGNOSTIC_PARTIAL` / INCOMPLETE는 남는다. 새 노드 archive 외부 파일은 `0600`이고 내부 payload·설치 파일의 명시 권한은 그대로다. NIGO/JRE·기존 RC.3 archive/실행기 bytes는 변경하지 않았다. CLI05-04 사람 과업은 NOT_RUN이다.
-
-## CLI05-03 — 독립 관리 CLI와 기존 RC.3의 Mac 조합 인수
-
-**상태: CLI05-03 DONE — 지정 서비스·네트워크 범위와 partial 표현 인수 PASS. 당시 진단 완전수집 OPEN은 보존하며 후속 개선은 위 절에서 구분한다. CLI05-04 사람 과업 NOT_RUN.** [정제 결과와 정확한 identity](../results/2026-10-23-cli05-runtime-acceptance.md)를 따른다.
-
-CLI-only 배포본을 설치한 stable entry로 순차 설치·이름 기반 운용의 서비스16사례를 수행했다. 네트워크에서는 같은 source tree의 실제 Git PR head `994c48f`와 merge `3a0bb5c`를 각각 빌드해 A→B 업데이트·B→A 복귀·A→B 재업데이트3회를 실행했다. 같은 attempt/PID·data identity·초기화 journal·설정·worker를 유지한 채 거래 확정을 확인했다. 서로 다른 미래 구현의 일반 호환을 보장하는 시험은 아니다.
-
-기존 RC.3 archive를 재조립하지 않고4-validator/3-validator 확정·catch-up·live 정족수 복구·같은4DB 전체 재시작 복구·wrong-pin을 재인수했다. 네트워크12개 실행 시도, 거래8개·제출9회와 정상 종료, 고정 payload/JRE/worker와 잔존 PID/job/LISTEN 부재를 확인했다. 제품 코드·NIGO/JRE bytes·니고 저장소는 변경하지 않았다. `make check`의 fmt·Clippy·Rust/Python 검사와 실제 서비스·네트워크 실행은 각각 별도 근거이며 최종 검사 수는 결과 문서를 따른다.
-
-단일 노드의 `logs`·`diagnose`는 실제 **INCOMPLETE / LOGS_PARTIAL / DIAGNOSTIC_PARTIAL**이었다. init report의 mode0644와 private reader의 읽기 거절을 관측했지만 해당 실행의 실제 umask는 기록하지 않아 원인을 확정하지 않는다. 이번 PASS는 partial을 그대로 표시하고 완료로 오인하지 않는지 확인한 범위다. 당시 진단 완전수집의 원인 확인·보완·재인수는 OPEN이었다. 파일 권한을 바꿔 이 결과를 성공으로 고치지 않았으며, 새 CLI의 후속 개선은 위 절과 별도 결과로 기록한다.
-
-## CLI05-02 — 독립 Mac 관리 CLI 배포·업데이트
-
-**상태: CLI05-02 DONE.** CLI 전용 bundle, 사용자 권한의 별도 root·버전별 설치, `cli install/update/info/rollback`, 셸 연결과 실제 Mac 설치·업데이트·복귀를 구현·검증했다. [배포 설계](../design/2026-10-23-management-cli-distribution.md)와 [사용 가이드](./management-cli.md)를 따른다. 최초 외부 공개키 pin 또는 매회 명시 unsigned 개발 정책을 적용하고, 검증한 payload/admission wrapper와 선택 기록을 원자 게시한다. 기존 실행 진입점의 소유·손상·경로 충돌·권한·동시 변경에서 자료를 보존하며 셸 rc를 자동 편집하지 않는다.
-
-[검증 기록](../results/2026-10-23-cli05-management-distribution.md)의 최종 전체 Rust590, Python60 PASS/2 opt-in SKIP, fmt·Clippy·Linux 타입 검사와 별도 실제 Mac signed13+unsigned13사례가 PASS다. 같은 작업 소스에 서로 다른 합성 revision을 주입한 개발 인수 배포본을 사용했으며 공식 release로 표시하지 않는다. 기존 catalog/sessions/operations/control/data/runtime-package fixture 불변과 새 zsh source/fpath를 확인했다. 이 CLI05-02 결과의 작성 시점에는 실제 RC.3 runtime·서비스·네트워크 재인수와 사람 과업이 **NOT_RUN**이었다. 이후 CLI05-03의 지정 조합 결과는 위에서 별도 기록하며 CLI05-04 사람 과업은 계속 NOT_RUN이다. NIGO/JRE pin과 노드 관리 home 형식은 바꾸지 않았다.
-
-## CLI05-01 — zsh 자동완성
-
-**상태: CLI05-01 DONE.** 공개 `bxdl completion zsh`는 비TTY에서도 zsh 스크립트를 stdout으로 출력한다. `--json` 혼합은 사용법 오류이며 JSON 요청에는 기존 오류 envelope를 반환한다. `completion`/`completion zsh`의 정확한 도움말과 [셸 적용 가이드](./completion.md)를 제공한다.
-
-명령·옵션·정해진 값과 입력 위치에 맞는 이름을 제안한다. 노드 이름은 선택한 관리 루트의 catalog, 준비 이름은 관리 namespace만 읽는다. 명시 `--home` 또는 Mac 기본 관리 위치를 사용하며 폴더·잠금·기록 생성, 대상 control 검사, 엔진·서비스·네트워크 호출을 하지 않는다. 경로 입력은 zsh의 파일/디렉터리 완성을 사용한다. 셸 설정/PATH를 자동 수정하지 않으며 bash/fish는 지원하지 않는다.
-
-전체 `make check` Rust561/Python58, 이후 `completion_cli`15개, zsh 프런트엔드10개와 최종 보강2개, 최종 release의 실제 zsh13시나리오·인용 바이너리 경로를 통과했다. fmt·Clippy·Linux 타입 검사·release 빌드와 내장 스크립트 대조도 통과했다. [검증 기록](../results/2026-10-23-cli05-zsh-completion.md)에 전체 실행과 후속 검사를 구분했다. 검사 횟수를 합산한 누적 건수로 제시하지 않는다.
-
-위 결과는 CLI05-01 당시 범위다. 후속 CLI05-02 배포와 CLI05-03 지정 RC.3 조합 인수는 각각 위 절의 별도 근거를 따른다. CLI05-03 당시 partial과 후속 신규 보고서 권한 개선·수집 검증을 구분하며 CLI05-04 작성자가 아닌 사용자의 과업은 PLAN이다. 실제 사용자 과업은 NOT_RUN이며 CLI-05 전체 완료나 고객 배포 인수를 뜻하지 않는다. 기존 RC.3 package·실행기·NIGO/JRE pin과 새 NIGO 선행 요구사항은 바꾸지 않는다.
-
-## CLI-04 — 준비 결과의 설치 실행과 이름 기반 초기화
-
-`setup apply <이름> [--home <관리-루트>]`는 TTY에서 y/yes로 최종 승인받아 기존 workflow를 통해 설치·cold 검사·control 등록·노드 이름 연결을 수행한다. Enter/n/no와 취소/EOF는 실행을 승인하지 않으며 JSON·비TTY를 입력/쓰기 전에 거절한다. DB 초기화와 LaunchAgent 시작은 별도 명령이다.
-
-준비 `sessions/<이름>`과 설치 실행 `operations/<이름>`은 분리한다. 준비 revision·파일 identity/hash·대상 경로를 결속하고 기존 lock·intent·소유 근거를 유지한다. 완료 apply 재호출은 현재 source·설치·등록 완료 근거를 검증하고 필요한 이름 연결만 복구한다. 이름 충돌/저장 실패는 실제 설치 완료와 별도로 표시하며 SOURCE_CHANGED·UNKNOWN에서 자동 재설치하지 않는다. 완료 V2 등록의 원본 archive/key/lock 부재는 보관된 trust 자료로 확인한다.
-
-`setup list/show`는 준비와 별도 실행 요약을 무쓰기 조회하며 현재 runtime을 관측하지 않는다. sessions/operations의 이름을 합쳐 준비가 손상·삭제되어도 남은 실행 기록을 표시한다. show는 완료 설치 근거를 엔진 실행 없이 재검증한다. 이름 기반 `init/resume-init`은 기존 확인 플래그와 --instance 대안, timeout/exit/UNKNOWN 및 고정 RC.3 실행기 계약을 유지하며 호출 직전에 catalog/root/binding을 재검사한다.
-
-**검증 상태: PASS.** 전체 `make check` Rust545/Python50, 최종 경로 보호를 포함한 prepare_cli34·fmt·Clippy·Linux 타입 검사·release 빌드와 최종 RC.3 Mac 12개 사례를 통과했다. 중복을 제외한 Rust 검사는 546개이며, [CLI-04 검증 기록](../results/2026-10-23-cli04-apply-and-lifecycle.md)에 실행별 코드와 검사 범위를 구분했다. 아래 CLI-03·CLI-02의 PASS는 각각 당시 구현의 근거다. [실행 사용 가이드](./preparation.md#준비한-자료로-설치-실행)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
-
-## CLI-03 — 순차 설치 준비와 직접 조회·수정
-
-공급 자료→네트워크/자기 노드→누락 제품/정책→검토 순서로 진행하며 :help/:back/:cancel/EOF와 저장한 답 재사용을 지원한다. 최종 검토에서 `edit <항목>`·`details`를 사용하고 명시적인 y/yes 승인으로 새 설정 revision을 준비한 뒤 종료한다. 이미 준비한 유효 결과를 다시 승인하면 무쓰기이며 실제 설치·등록·초기화·시작은 실행하지 않는다.
-
-`setup list/show`는 읽기 전용이며 비TTY/JSON schemaVersion 1을 지원한다. 손상된 목록 항목의 부분 결과와 기록된 준비 상태/현재 자료 검사 결과를 구분한다. `setup edit <이름> --field <제품필드>`는 해당 항목만 묻고 종료하며 다른 답·기존 출력은 보존한다. 입력 중 홈/세션/checkpoint 변경을 재검사하고 자격 경로와 원문 답변은 공개 조회에 노출하지 않는다.
-
-`make check` Rust525/Python50·fmt·Clippy, 추가 회귀를 포함한 최종 prepare_cli26개와 fmt·Clippy, Linux 타입 검사, 실제 Mac PTY8개·비TTY JSON3개를 통과했다. [검증 기록](../results/2026-10-23-cli03-sequential-preparation.md)과 [가이드](./preparation.md)를 따른다. 실제 Mac 검증은 합성 패키지의 준비 기능이며 엔진·서비스 재인수가 아니다. CLI-04의 setup apply 검증과 CLI-05의 사용자 과업은 별도 범위다.
-
-## CLI-02 — 관리 CLI와 기존 RC.3 실행기 분리
-
-[새 설계](../design/2026-10-23-independent-management-cli.md)에 따라 관리 CLI를 package 밖에서 업데이트한다. 정확한 RC.3 archive/manifest/실행기 hash profile을 검증한 뒤 기존 실행기에 고정 명령·JSON으로 위임한다. 기존 worker의 exact CLI 검사·NIGO/JRE pin·private journal은 유지한다. 이름 기반 운용과 기존 경로 명령, 기존 설치 문답의 runtime 경로를 연결한다. [가이드](./management-cli.md)를 따른다. [새 실제 검증](../results/2026-10-23-independent-management-cli.md)에서 두 관리 CLI/같은 RC.3의 직접 운용16사례·설치 도우미 PTY8사례와 독립 정리를 통과했다. 최종 `make check` Rust512/Python50·fmt·Clippy, Linux 타입 검사도 PASS다. 기존 실행기 worker와 각 설치본270파일/JRE259파일은 그대로다. 단일 노드 로컬 READY 범위이며 합의·거래 확정을 재검증한 결과는 아니다.
-
-## CLI-01 — 직접 노드 목록·이름 연결
-
-`bxdl nodes [--home <root>] [--json]`와 `bxdl nodes add <이름> --instance <control> [--home <root>] [--json]`를 구현했다. 두 명령은 문답 없이 실행하며 목록은 대상·서비스를 열지 않는다. add는 기존 등록을 검증하고 관리 목록만 저장한다. V1 목록 읽기를 유지하고 명시 이름 저장 때만 V2로 새 revision을 남긴다. 기존 ID/표시명/저장 시각을 보존하고 중복 이름·자동 rename·root/binding 교체·동시 갱신을 거절한다.
-
-최상위 도움말을 과업별로 줄였다. 이름과 경로를 위한 공통 해석기는 catalog revision·root·binding을 재검사한다. 이후 CLI-02에서 `status local` 등 이름 기반 운용에 연결했다. [가이드](./nodes.md)와 [CLI-01 검증 기록](../results/2026-10-23-cli01-node-names.md)을 따른다. console 확장·NIGO·RC.3/JRE pin 변경은 없다. 전체 `make check` Rust482/Python50와 마지막 추가 테스트를 포함한 nodes suite13개가 통과해 최종 Rust483개를 검증했다. 최종 fmt·Clippy, Linux 타입 검사, 실제 Mac PTY10개도 PASS다.
-
-## 통합 UX 3단계 — 이름 기반 CLI와 설치 자료 준비
-
-`bxdl setup new <이름>` / `bxdl setup resume <이름>`과 console 홈 1번을 같은 준비 controller에 연결했다. 생성 승인, 제품 가져오기·개별 수정, 공급 자료·공개 network의 자기 노드 선택 또는 기존 native, 정책별 중간 저장, 검토 승인 뒤 immutable 제품/native revision 저장을 제공한다. 이전 답과 출력은 보존하고 변경한 입력의 준비 결과만 무효화한다. 입력 변경·동일 bytes 교체·경로 충돌·저장 충돌을 검사하며 package/control/data는 생성하지 않는다.
-
-`make check` **Rust464·Python50·fmt·Clippy**, Linux 타입 검사와 실제 Mac PTY의 생성 거절/승인·직접/console 재개·미완성 수정·EOF 보존을 통과했다. [사용 가이드](./preparation.md)와 [UX-03 검증 결과](../results/2026-10-22-ux03-preparation.md)를 따른다. 이후 실제 설치·등록·init 연결은 CLI-04, `nodes`와 이름 기반 `start/status/stop/logs`는 CLI-01/02에서 진행한다. [CLI 간소화 설계](../design/2026-10-22-cli-simplification.md)에 명령·이름·호환 계약을 반영했다. 기존 명령·JSON·저장 schema와 NIGO RC.3/JRE pin은 유지한다. 새 package 실인수·사람 과업은 후속이다.
-
-## 통합 UX 2단계 — 홈·목록·기존 자료 읽기
-
-`bxdl console [--home <관리-루트>] [--instance <control>]`을 구현했다. 홈은 무쓰기이며 등록 V1/V2·설치 세션·제품 초안·네트워크 준비 세션을 직접 지정해 읽는다. 별칭을 붙인 목록 저장·갱신·숨기기만 y/yes 뒤 수행하고, 저장 단계와 현재 서비스 미조회를 구분한다. 잘못된 관리 root, 대상 inode 교체, 목록 손상, 오래된 목록의 동시 갱신, private 입력/DB/package를 침범하는 저장 위치를 거절한다. 목록 실패가 기존 등록/설치 결과를 바꾸지 않는다.
-
-새 관리 root marker와 catalog는 별도 schema V1이다. 기존 setup/workflow/instance 저장 형식과 개별 CLI JSON/exit는 유지한다. 목록에는 저장한 공개 단계만 보관한다. console의 실제 설치·서비스 연결은 중단하고, 직접 CLI 연결은 CLI-02/04에서 진행한다. [console 가이드](./console.md)와 [구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다. `make check`(Rust 427개·Python 50개·fmt·Clippy), Linux 타입 검사, 실제 Mac PTY의 홈 무쓰기·목록 저장 거절/승인·재열기/숨기기·원본 보존을 통과했다. [UX-02 검증 기록](../results/2026-10-22-ux02-console-catalog.md)을 따른다. 실제 엔진 등록 직후 목록 실패 주입·새 package 인수는 후속이다.
-
-## 통합 UX 1단계 — 공통 문답·수정·안내
-
-[통합 UX 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)의 UX-01을 구현했다. 기존 제품·네트워크·설치 도우미의 모든 질문·출력·확인에서 `:help`·`:back`·`:cancel`을 공통 처리하고, 번호로 항목 하나를 수정한 뒤 검토로 돌아간다. 공개 식별자·주소·포트는 검토하되 자격 자료의 원문 경로는 검토 목록에 표시하지 않는다. 변경 없는 답·잘못된 값·취소는 기존 설치 계획을 보존하고 유효한 실제 변경만 계획을 무효화한다.
-
-명령별 `--help`와 공통 상태 안내를 추가했다. 알려진 cold `INCOMPLETE`, 관측 기한 만료, 실제 실패, 상태 불명, 정상 종료 확인 필요/완료를 구별하며 JSON envelope·exit code·저장 schema와 실행 승인 조건은 유지한다. `make check`(Rust 383개·Python 50개·fmt·Clippy)와 실제 PTY 초안 수정·출력 거절 검증을 통과했다. [UX-01 검증 기록](../results/2026-10-22-ux01-common-prompts.md)을 따른다.
-
-통합 홈의 기존 구현 이력은 위 UX-02/03을 따르며 현재 추가 개발은 중단했다. NIGO/engine lock/JRE·기존 accepted archive는 바꾸지 않는다. 변경 CLI를 기존 package에 덮어쓰지 않으며 독립 관리 CLI와 기존 runtime의 실제 서비스·네트워크 조합 인수는 CLI-05 후속 단계에서 별도로 수행한다. 실행기 자체나 NIGO/JRE가 바뀔 때만 새 runtime package 인수가 필요하다.
-
-## 등록 자료 보관과 시작 진단 — 2026-10-22
-
-[새 설계](../design/2026-10-22-managed-supply-and-start-diagnostics.md)에 따라 새 등록 V2는 검증한 archive·engine lock·선택 외부 공개키를 control의 private `trust/`에 보관한다. 등록 이후 worker와 setup 재개는 원본 경로를 다시 읽지 않고 보관본을 검증한다. 원래 경로/hash는 출처로 남기고 설치 inventory·서명·엔진 pin 대조는 유지한다. 기존 V1은 자동 변환하지 않으며 native·제품·chain·키 참조와 설치/control/data는 계속 필요하다.
-
-시작 journal의 `startupStage`와 허용된 `startupFailureReason`를 status/setup/diagnose에 표시한다. 마지막 진입 단계이며 완료 증거나 특정 파일/TCC 원인의 확정이 아니다. timeout/UNKNOWN을 자동 성공·재시작으로 바꾸지 않는다. 인수 helper는 bind 가능 여부와 실제 OS LISTEN 관측을 분리하도록 보완한다.
-
-**새 RC.2 시험 package의 지정 로컬 lifecycle 13사례가 PASS**다. 원본 공급 세 경로 부재 상태의 재개·init/start/stop·진단·동일 DB 재시작을 확인했다. 독립 검사에서 기록된15 PID 잔존0·두 job NOT_LOADED·시험2포트 LISTEN0·설치 inventory270파일 일치를 확인했다. Rust363개·Python34개·fmt/clippy·Mac release build·Linux 타입 검사도 PASS다. [새 검증 기록](../results/2026-10-22-macos-managed-supply.md)을 따른다. RC.2 Run A/B와 기존 package PASS/INCOMPLETE는 당시 bytes의 이력으로 보존한다.
-
-## 현재 선택한 RC.3 — 지정 Mac 패키지 재인수 PASS
-
-[RC.3 snapshot](../contracts/nigo/engine-rc3-2026-10-22/README.md)은 source `7ec5abd8…`·JAR `05a38bd1…`의 별도 수신 기록이다. 원격 archive22파일/21checksum, 원본 manifest·계약과 고정 source, Console fingerprint/assets를 대조했고 선정 Temurin의 실제 `engine-info` 전체 identity가 일치했다. JRE259파일·49모듈을 확인하고 실행 후 공급22파일의 불변을 검사했다.
-
-수신 검증은 **PASS**이며 당시에는 제품 후보를 선택하거나 노드·init·Storage inspect/repair·서비스를 실행하지 않았다. snapshot의 미선택·package/A7 NOT_RUN은 그 시점의 기록으로 보존한다.
-
-이후 사용자 요청으로 RC.3를 명시 선택하고 [전용 engine lock](../packaging/engine-lock.rc3-temurin-development.json)·[package spec](../packaging/package-spec.rc3-temurin.example.json)을 추가했다. 제품 source는 PR #13의 `53bb11b9`이며 선정 Temurin full JRE를 유지한다. [재인수 설계](../design/2026-10-22-rc3-package-reacceptance.md)에 따른 같은 새 서명 archive의 **4-validator·두 정족수 복구 경로·wrong-pin과 원본 공급 경로 부재 상태의 setup 13사례가 PASS**다.
-
-[4-validator 결과](../results/2026-10-22-macos-rc3-package.md)는 거래8개·제출9회, 독립된 두45초 정족수 상실 후 실시간 무재제출 복구와 같은 네 DB 전체 재시작·명시1회 재제출 복구를 포함한다. 정상 stop12회와 독립 검사에서 기록된62 PID 잔존0·12개 job NOT_LOADED·8포트 LISTEN0을 확인했다. 5개 설치본의 각270파일과 V2 보관 자료도 대조했다.
-
-[같은 archive의 setup 결과](../results/2026-10-22-macos-rc3-setup.md)는 원본 archive·lock·공개키 세 경로가 없는 상태의 재개·init/start·진단·정상 stop·같은 DB 재시작 13사례다. 정상 stop2회와 기록된14 PID 잔존0·2개 job NOT_LOADED·2포트 LISTEN0을 확인했다. 이13사례 시험은 제품 설정을 가져온 뒤 공급 자료 문답을 진행했으며 당시 전체14문답·cancel/hangup 경로는 재실행하지 않았다. Rust363개·Python50개·fmt·Clippy·Mac release build가 PASS다.
-
-RC.2 결과와 공급자의 RC.3 Storage/QBFT 검증은 각 이력으로 보존한다. **offline Storage A7은 별도 구현·인수 대상이며 NOT_RUN**이다. 기존 설치 upgrade와 전체 G1-M도 후속이다.
-
-## RC.3 전체 설치 UX 후속 — 2026-10-22
-
-[NIGO PR #230](https://github.com/bwg-loonshots/nigo-protocol/pull/230) merge `cd3e3e08`으로 RC.3 지정 인수를 정식 회신한 뒤 같은 archive·CLI·JAR·JRE를 재빌드 없이 시험했다. **전체14문답·수정·취소/EOF·대기 중 HUP·원본 공급 경로 부재 상태의 설치/운용21사례와 독립 검사8항목이 PASS**다. [새 전체 UX 결과](../results/2026-10-22-macos-rc3-full-setup.md)를 따른다.
-
-초기화1회·서비스2회·정상 stop2회, 확인 전 mutation과 재개 시 추가 작업 부재를 대조했다. 기록된28 PID 잔존0·두 job NOT_LOADED·두 시험 포트 LISTEN0과 설치270파일·JRE259파일·고정 입력17개·V2 보관본3파일 일치를 확인했다. HUP은 문답/메뉴 대기 중 PTY 종료이며 mutation crash·Mac 로그아웃은 미시험이다. diagnose의 ENGINE_EXEC/NOT_OBSERVED와 live READY 관측을 구분한다.
-
-제품 source는 기반 `53bb11b9`와65파일이 같고 CLI도 동일하다. 이 기록 작업에서 `make check`를 재실행하지 않았으며 Rust363/Python50·fmt/Clippy·Mac build 및 PR #14 CI는 앞선 이력이다. RC.3 앞선13사례·package 결과와 NIGO 회신의 당시 전체 문답 NOT_RUN, RC.2 원본 INCOMPLETE·경로 원인 미확정은 보존한다. A7·upgrade·안전 제거·전체 G1-M·J5는 후속이다.
-
-## 이전 엔진 선택과 Mac 패키지 인수 이력 — 2026-10-21 RC.2
-
-NIGO `nigo-engine-v0.1.0-rc.2`(source `67c9f8e5`, JAR `b1aa84cb…`)를 명시 선택했다.
-[수신 snapshot](../contracts/nigo/engine-rc2-2026-10-21/README.md)과 RC.2 전용 lock/spec을 추가하고,
-RC.1 자료·기존 INCOMPLETE 결과는 이력으로 보존한다. 계약·Console·DB/schema·선정 JRE는 동일하며 Rust 제품 source 변경은 없다.
-
-새 서명 Mac package의 설치·등록·명시 init·네트워크 설정 PTY·LaunchAgent start/status/stop 경로에서
-4/4·3/4 거래, 동일 DB catch-up, 2/4 45초 후 재제출 없는 복구, 별도 skew 형성 후 같은 네 DB 전체 재시작·명시1회 재제출·후속 거래, wrong-pin 격리를 **PASS**했다.
-8개 거래의 receipt·블록 포함·동일 hash/root를 독립 대조했고 정상 stop12회·기록된62 PID 잔존0·시험8포트 listener0을 확인했다.
-[실제 결과와 범위](../results/2026-10-21-macos-rc2-package.md), [설계](../design/2026-10-21-rc2-package-reacceptance.md)를 따른다.
-
-Rust343개와 Python28개 회귀·Mac release build가 통과했다. 후보 혼용·재제출·복구 판정 검사는 `make check`에 포함한다.
-이 package 인수 당시 RC.2 전체 setup 설치 문답은 별도였으며 아래 후속 실행으로 구분한다. 기존 RC.1 설치의 RC.2 upgrade, 전체 G1-M·J5·고객 배포는 미완료다.
-아래 RC.1·이전 후보 기록의 PASS/INCOMPLETE는 당시 입력과 범위로 유지한다.
-
-## RC.2 전체 설치 UX 후속 — 2026-10-21
-
-[NIGO PR #225](https://github.com/bwg-loonshots/nigo-protocol/pull/225)에서 A4 수신/선택과 지정 package 복구 인수를 정식 회신한 뒤 같은 archive·CLI/JRE/JAR로 실제 TTY 전체 설치 흐름을 검증했다. 제품 source나 package는 바꾸지 않았다.
-
-[새 결과](../results/2026-10-21-macos-rc2-setup.md)의 run B는 14문답·수정·취소/EOF·실제 터미널 hangup·재개, apply/init/start의 거절/승인, 같은 attempt의 READY, 정상 stop2회·동일 DB 재시작 등 **20개 사례 PASS**다. 다만 정리 시 포트 bind 실패로 원본 자동 최종 집계는 **INCOMPLETE**이며 그대로 보존한다. 후속 독립 검사에서 설치 inventory270파일·입력15개가 일치하고 기록된26 PID·두 LaunchAgent·두 포트의 listener가 없음을 확인했다.
-
-앞선 run A는 Documents의 원본 archive/key/lock 참조를 사용했고 초기화 이후 start worker의 파일 열기 대기·UNKNOWN으로 INCOMPLETE였다. 명시 종료 요청 뒤 worker가 취소로 종료했고 잔존 등록만 정리했다. TCC를 포함한 원인은 미확정이며 B 통과로 해결됐다고 판단하지 않는다. 위 후속 변경에서 공급 자료 보관과 마지막 시작 단계·실제 LISTEN 관측을 보완했으며 새 package의 지정 로컬 시험은 별도 기록했다. 이 진단은 모든 경로의 접근 권한 사전 검사를 보장하지 않는다. 이 두 실행은 단일 노드 로컬 lifecycle이며 이전 4-validator 근거와 구분한다. 전체 G1-M은 아직 완료하지 않았다.
-
-## 이전 엔진 후보 — 2026-10-19 RC1
-
-NIGO `nigo-engine-v0.1.0-rc.1`(source `540a89f0`, JAR `f1ea80e2…`)을 원격 수신·검증하고
-[계약 snapshot](../contracts/nigo/engine-rc1-2026-10-19/README.md), 새 lock/spec 예시를 추가했다.
-등록 모드 OPEN/ALLOWLISTED와 빈 허용목록의 의미를 설치 계획에 표시하며 기존 journal 형식을 유지한다.
-이후의 9월 구현/시험 기록은 당시 303e 후보의 이력이다.
-
-`make check` 280개·Mac release 빌드·Linux 타입 검사 PASS. 실제 RC1과 외부 Ed25519 시험 key로 서명한 package에서
-전체 14문답·취소/재개·cold/등록/init/start/stop·동일 DB 재시작을 통과했다. 최종 service NOT_LOADED·engine STOPPED다.
-4-validator 합의는 NOT_CHECKED이며 test-only JRE를 정식 재배포 대상으로 선정하지 않았다.
-[전체 근거와 남은 범위](../results/2026-10-19-engine-rc1-adoption.md)를 따른다.
-
-## 선정 JRE — 2026-10-19 Temurin
-
-Temurin21.0.12.1+1 전체 JRE·archive/source/launcher/259파일을 고정하고 제작자용 `runtime stage`를 추가했다.
-사용자 설치 마법사에는 JRE 선택 단계를 추가하지 않는다. 290개 자동 검사·Mac release·Linux 타입 검사를 통과했고,
-선정 JRE+RC1의 실제 서명 package에서 전체14문답·취소/재개·설치/init/start/stop·동일 DB 재시작이 PASS다.
-최종 노드는 정지했으며 4-validator 합의는 NOT_CHECKED다. 당시 NIGO 공급자 호환성·전체 제품 공급망·출시는 후속으로 남겼다. 아래 최신 회신 수신 상태를 함께 따른다.
-[새 검증 기록](../results/2026-10-19-temurin-runtime.md)을 따르며 이전280개/Oracle 기록은 당시 조합의 이력이다.
-
-## 최종 잠금 수정과 재검증
-
-설치 세션 잠금 해제를 보완하고 회귀 2개를 추가해 자동 검사 292개를 통과했다.
-최종 패키지의 설치·초기화·첫 기동/종료는 통과했지만 재시작 15초 관측은 UNKNOWN으로 끝나 자동 하네스는 INCOMPLETE다.
-같은 실행의 후속 READY·정상 종료·재개를 별도로 확인했다. [최종 기록](../results/2026-10-19-workflow-lock-release.md)을 따른다.
-
-## NIGO JRE 회신과 시작 관측 UX
-
-NIGO PR #212의 J1~J3를 검토해 현재 RC1·Temurin full JRE 개발 후보 조합에서 수용했다.
-공급자 exact-JAR 하네스 9/9 PASS와 runtime 259파일·49모듈 일치를 확인했으며
-[수신 기록](../contracts/nigo/jre-feedback-2026-10-19/README.md)에 검토 revision·근거 hash·범위를 고정했다.
-공급자의 storage-open→RUNNING 시간은 HTTP READY·합의 완료·기동 SLA가 아니며,
-이전 BXDL 15초 관측 INCOMPLETE 판정은 그대로 유지한다.
-
-`status --wait`와 설치 도우미 `wait`로 같은 시작 시도의 준비 상태를 이어서 관측한다.
-관측 기한 만료와 실제 실패를 구분하고 시도 ID·마지막 관측 사유를 보존한다.
-설치 화면에서 확인한 시도가 바뀌면 대기를 중단하며 자동 재시작하지 않는다.
-[설계](../design/2026-10-19-start-observation-ux.md)를 따른다. 자동 검사312개·Mac release·Linux 타입 검사를 통과했고, 실제 signed package에서
-1초 status 관측 만료→같은 시도의 setup/CLI READY→정상 종료·재개를 확인했다.
-[최종 검증 기록](../results/2026-10-19-start-observation-ux.md)의 범위와 예비 시험을 구분한다.
-
-## 네트워크 설정 준비
-
-별도 `setup --network`에서 기존 제품 설정·승인 chain·전체 validator 공개 목록을 받아 RC1 native `node.json`을 준비한다.
-공개 인증서의 NIGO MTLS pin 계산, local/peer identity·endpoint·권한·pin/membership 정적 검사,
-TLS 저장소 형식과 새 네트워크/참가·합의·archive 정책 선택, 취소/재개·입력 고정·새0600 파일 게시를 구현했다.
-기존 제품 v1·설치 journal은 유지하며 기존 NGVK/TLS/password 참조를 재사용한다.
-[설계](../design/2026-10-19-network-preparation.md)와 [사용 가이드](./network.md)를 따른다.
-키 발급·observer·trusted checkpoint·실제 4-validator 거래/인증 인수는 포함하지 않는다.
-자동 검사343개·Mac release·Linux 타입 검사를 통과했고, 실제 TTY 취소/재개 및 new-network/join-network의 RC1 cold INCOMPLETE·binding MATCHED를 확인했다.
-[검증 기록](../results/2026-10-19-network-preparation.md)을 따른다. peer3개는 합성 공개 입력이며 실제 네트워크 합의·새 package 설치는 이번 시험에 포함하지 않았다.
-
-## 동일 package의 4-validator 실행 — 2026-10-20
-
-네트워크 준비 UX를 `fecf7a6`으로 커밋하고 같은 RC1·Temurin 서명 archive로 실제 네 validator를 설치·기동했다.
-4/4·3/4 거래 확정, 같은 DB의 canonical catch-up과 재합류 후 새 거래, 2/4 상태 45초 동안의 no-finality를 확인했다.
-독립 새 네트워크에서는 잘못된 expected pin의 outbound WRONG_PIN·peer 0과 정상 세 노드의 TLS1.3·거래 확정도 통과했다.
-
-**전체 결과는 INCOMPLETE**다. 2/4→3/4 복구 뒤 원 거래가 90초 내 확정되지 않았고,
-같은 DB의 네 노드 재시작·명시 재제출에서도 모든 노드가 거래를 보유하고 연결됐지만 round가 수렴하지 않았다.
-당시 NIGO의 라운드 복구 검토와 고정 후보 재인수가 필요했다. 현재 RC.2 결과는 위 별도 기록을 따르며 원래 실패 판정은 보존한다. 당시 모든 시험 노드를 정상 종료했다.
-[실행별 근거·NIGO 확인 사항](../results/2026-10-20-macos-qbft-package.md)과 [재현 도구](../tests/acceptance/README.md)를 따른다.
-아래 9월/10월19일 단일 노드·NOT_CHECKED 기록은 각 당시 시험 범위이며 이번 결과로 덮어쓰지 않는다.
-
-## 실제 제공 기능
-
-- `runtime stage`: 신뢰 lock의 전체 JRE 파일을 검증해 새 staging·provenance 생성. 오프라인 제작자용이며 다운로드/JVM 실행 없음.
-- `package build/verify`: 기대 hash·결정적 tar/gzip·외부 Ed25519 key·전체 파일 inventory·경로/형식/한도 검사.
-- `install`: Mac arm64 개발 package를 새 명시 경로에 설치. 기존 대상 거부, 검증 중 파일 비실행, 최종 gzip 검사 뒤 receipt 기록. 중단 폴더를 자동 덮어쓰기·삭제·resume하지 않음.
-- `engine inspect`: 신뢰 lock의 정확한 JAR/Java hash 및 engine-info build/source/console/contract identity 대조.
-- `engine preflight`: 명시 NIGO native config/chain을 입력받는 cold JVM 검사. timeout/출력 한도·환경 분리, engine exit 3을 BXDL INCOMPLETE/exit 5로 보존.
-- `config validate`/기본 `preflight`: BXDL 제품 설정·로컬 metadata 검사. 엔진 옵션이 없는 preflight는 엔진을 실행하지 않는다.
-- 결합 `preflight`: 제품/local 검사, 명시 QBFT VALIDATOR/MTLS 설정과 ID·경로·endpoint·키 참조 일치, 같은 native snapshot의 pinned engine cold 검사. 제품/설정/chain hash와 결과를 연결한다. 로컬 FAIL·불일치는 JVM 실행 전에 거부한다.
-- `config fingerprint` / `setup --network`: 공개 leaf 인증서 pin 계산·공통 validator/peer 목록에서 RC.1~RC.3 공통 native 계약의 설정 준비. 엔진·네트워크 검증과 구분한다.
-- `setup`: 14개 제품 설정 입력·수정·checkpoint·재개·기존 JSON 가져오기·새 JSON 출력. 파일 저장 성공은 engine/service 준비 완료가 아니다.
-- `setup --install --workspace`: Mac arm64 TTY에서 archive·신뢰 key·lock·native 입력과 제품 설정을 계획으로 고정하고, apply/init/start를 각각 확인한 뒤 기존 API로 연결한다. 별도 세션 잠금·소유 증거·완료 결과를 확인해 명시 재개한다. 기본 초안 모드는 유지한다.
-- `instance register/show`: archive·외부 key·engine lock·전체 설치 manifest·제품/native/cold 결과를 고정해 private 등록 journal 생성, 저장 상태와 advisory busy 조회. 새 V2 등록은 archive/lock/선택 공개키 보관본을 사용하고 V1은 원본 참조를 유지한다. 운용 설정·chain·키 참조는 계속 필요하다.
-- `preflight --instance`: 등록 입력 hash·전체 설치본을 재검증하고 기존 결합 cold 실행. 정상도 INCOMPLETE다.
-- `init/resume-init`: 작업별 확인 flag, durable intent, inherited advisory lock, 단발 NIGO 호출, process exit/stdout/동일 attempt report/engine journal 대조. 불명 결과와 시도 자료를 보존한다.
-- `start/status/stop`: Mac 사용자 GUI 세션의 시도별 LaunchAgent, 일회 gate와 같은 PID의 Java exec, report·launchd·로컬 HTTP 관측, 정상 종료 증명 후 등록 정리. `status --wait`와 설치 도우미 `wait`는 같은 시도의 READY·실패·종료를 읽기 관측하고 시간 초과를 구분한다. `startupStage`는 마지막 진입 검사이며 완료로 추정하지 않는다. 로그인 자동 시작·자동 재시작은 제공하지 않는다.
-
-`upgrade/uninstall`은 미구현이다. `logs/diagnose`는 아래 오프라인 범위로 제공한다. 제품 config에서 NIGO QBFT peer/pin/validator 상세 설정을 추측 렌더링하지 않는다. `setup`의 instance.json과 `engine preflight`의 node.json을 구별한다.
-
-## 새로 수신한 NIGO 결과
-
-문서 HEAD `49d1cefc`(#119)에서 clean 인계 자료를 읽었다. source `303e163a9b3f293fa39e42d02b8daa1843973c14`, dirty=false인 실제 JAR `dd5a366ee990d58ff4fa7da89812f66ec9025443229027bffe1b648cab6d6455`를 별도로 검증했다. [새 원문·공급자 증거 snapshot](../contracts/nigo/development-clean-2026-09-18/README.md)과 [소비자 실행 결과](../results/2026-09-18-clean-engine-preflight.md)를 따른다. 기존 dirty 후보 snapshot·결과는 당시 이력으로 보존했다.
-
-#118의 QBFT drain·fresh sync·genesis-only observer·실제 source 종료 후 재선택 보완과 clean JAR 공급은 제공자 근거에서 확인됐다. BXDL에서는 같은 clean JAR를 담은 시험 Mac package를 새로 설치하고 **한 validator의 실제 QBFT cold 설정·NGVK/TLS 자료 검사**까지 확인했다. 이전 cold 검증은 peer 없는 정적 fixture였으며 당시 실제 4-node 운영·DB/native·launchd·G1-M은 수행하지 않았다. NIGO 저장소·요구 원장은 변경하지 않았고 REQ-0002 OPEN/계약 PROPOSED를 유지한다.
-
-## 이전 등록·초기화 구현의 근거와 한계
-
-새 경로의 실제 테스트·실행·중단 주입 결과는 [인스턴스 초기화 검증 기록](../results/2026-09-18-instance-initialization.md)에 별도로 기록한다. 위 이전 cold 결과를 DB 초기화·runtime·전체 G1-M 증거로 소급하지 않는다. 공급 source는 같은 clean `303e163a`이며 새로운 NIGO 계약/원장 변경은 없다.
-
-초기화의 exit 0은 저장소 초기화와 종료 확인이다. launchd 등록·노드 시작·네트워크 정상·4-validator 인수가 아니다. timeout은 TERM 후 최대 5초 대기하며 SIGKILL하지 않아 child와 잠금이 남을 수 있다. UNKNOWN 뒤 자동 재시도·INITIALIZED 자동 채택은 없다. V1 원본 또는 V2 관리 보관본의 archive/key와 credential hash 고정, 매 작업의 전체 설치본 재검증을 유지한다.
-
-제어 기록은 같은 UID의 로컬 파일이며 암호학적 상태 로그가 아니다. inode에 고정한 control 복사/이동·복원 절차와 수동 결과 채택은 미구현이다. 각 시도의 약 160 MB JAR snapshot·report는 남고 자동 GC는 없다. 세부 사용법은 [인스턴스 가이드](./instance.md), 상태 전이와 실패 정책은 [설계](../design/2026-09-18-instance-initialization.md)를 따른다.
-
-등록·초기화 구현은 `make check` 162개 테스트, Mac release 빌드, Linux 타입 검사를 통과했다. 설치된 당시 Mac package의 실제 NIGO JAR로 초기화, 실제 controller crash에서의 잠금 유지·UNKNOWN 보존, 합성 중단 checkpoint에서의 실제 resume을 확인했다. [검증 기록](../results/2026-09-18-instance-initialization.md)에 시험 범위와 JRE 모듈 보완을 구분했다. PR #4의 Mac·Ubuntu fast CI 통과도 그 revision의 이력이며 이번 LaunchAgent 변경의 근거로 소급하지 않는다.
-
-## 이전 LaunchAgent 구현의 근거와 한계
-
-서비스 명령과 내부 worker gate를 구현했다. macOS 26.6.2 arm64의 실제 새 package에서 새 install/register/init 후 start/status·중복 start 거부·정상 stop을 확인했다. 같은 DB 재시작에서는 nodeInstanceId가 바뀌고 genesis가 유지됐다. start controller만 강제 종료한 시험에서도 LaunchAgent worker/Java가 계속 진행해 로컬 READY에 도달했고, 중복 start는 거부한 뒤 정상 stop했다. 소비된 attempt의 직접 kickstart 재실행 거부·데이터 hash 불변과 정상 종료 뒤 job 등록 해제도 확인했다. 이는 peer 없는 단일 validator의 서비스 시험이며 거래 확정·4-validator 인수가 아니다.
-
-당시 `make check`의 fmt·Clippy·200개 테스트와 `make check-linux` 타입 검사는 통과했다. 이번 설치 도우미의 검사 결과로 전용하지 않는다. 원격 CI 결과는 해당 PR의 revision별 검사 기록을 따른다. 시험 경로·제약·실제 결과는 [LaunchAgent 검증 기록](../results/2026-09-18-macos-launchagent.md)을 따른다. Documents 아래 첫 시험은 worker 진입 전 exit 78로 종료했고 임시 경로로 입력을 분리한 시험은 동작했으나, OS 접근 제어/TCC를 원인으로 확정하지 않는다. 설계와 실패 정책은 [LaunchAgent 문서](../design/2026-09-18-macos-launchagent.md), 실제 사용법은 [인스턴스 가이드](./instance.md)를 따른다.
-
-당시 native start에는 설치 package의 `bin/bxdl`과 동일한 바이트의 CLI가 필요했다. 현재 CLI-02는 지원하는 RC.3에 한해 독립 관리 CLI가 해당 고정 실행기에 위임하며, 실행기 자체의 동일 bytes 검사는 유지한다. 기존 초기화용 package에 서비스 CLI만 덮어쓰는 방법은 사용할 수 없다. 새 archive·설치본의 전체 inventory를 검증하며 기존 등록/data의 migration은 후속이다. 시도별 worker/JAR snapshot과 private 로그는 보존하고 자동 용량 정리는 제공하지 않는다.
-
-정상 STOPPED report·launchd의 프로세스 부재·control 잠금 획득을 함께 확인한 뒤에만 STOPPED_VERIFIED를 게시한다. status는 읽기 전용이며 복구 기록을 쓰지 않는다. gate 실패·UNKNOWN은 자동 init/repair/restart로 해결하지 않는다. stop timeout에 SIGKILL·live job bootout을 하지 않아 엔진과 잠금이 남을 수 있다. start timeout은 cold 명령(최대120초)과 사전 검증·bootstrap 뒤 시작 대기에 각각 적용되며, 실행 취소나 전체 명령 총 시간 제한이 아니다.
-
-현재 profile은 수동 bootstrap한 사용자 LaunchAgent다. 자동 로그인 시작, 장기 운영 LaunchDaemon, 로그아웃/OS 종료의 escalation·sleep/wake 인수, 같은 package의 4-validator 거래/재시작과 전체 G1-M, 선정 JRE의 정식 공급망·최소 macOS 인수는 남아 있다. 같은 최종 package로 `Library/Application Support/BXDL` 아래 고유 시험 control/data/config에서도 register/init/start/status/stop을 확인했다. 공백 경로를 포함한 이 호스트의 결과이며 추가 OS·접근 정책 조합을 보장하지 않는다.
-
-## 오프라인 logs/diagnose
-
-`logs --instance`는 최신 초기화·서비스 시도의 고정 이벤트와 저장된 상태를 읽는다. `diagnose --instance --output`은 같은 정제 결과를 새0600 JSON으로 저장한다. 원문 stdout/stderr·설정·credential·ID·경로·hash는 내보내지 않는다. 서비스가 꺼져 있어도 동작하며 JVM·네트워크·launchctl·DB를 실행하거나 복구하지 않는다. 수집 누락·손상·변경·크기/시간 제한은 partial과 사유로 남긴다. 파일 생성 성공은 노드 health나 초기화의 새 검증이 아니다.
-
-설계와 한도는 [오프라인 진단 설계](../design/2026-09-21-offline-diagnostics.md), 실제 검사 근거는 [진단 검증 기록](../results/2026-09-21-offline-diagnostics.md)을 따른다. raw/follow·전체 시도 검색·로그 rotation·보존/용량 정리·UNKNOWN 조정·안전한 제거는 후속이다. NIGO 공급 revision과 요구 원장은 그대로 유지한다.
-
-## setup 설치 흐름 A~C
-
-`--install --workspace <새 세션>`과 `--resume`은 기본 초안 모드와 독립된 진입점이다. `--from`으로 제품 JSON을 가져올 수 있으며 설치 모드는 `--json`, `--output`, `--non-interactive` 혼용과 비터미널 입력을 거부한다. 공급 자료·현재 CLI 일치 검사, 계획 고정, 새 제품 설정 출력·파일 설치·cold·등록, 별도 명시 init/resume-init/start를 연결했다.
-
-세션 container 아래 workflow·draft·generated를 분리하고 세션 전체 잠금과 inode 소유 기록을 유지한다. installer/register의 create-new 직후 기록한 소유 증거와 전체 완료 결과가 함께 맞는 경우에만 재개에서 완료를 재구성한다. partial·외부 결과는 자동 채택하지 않으며 엔진 UNKNOWN을 자동 성공이나 새 초기화로 전환하지 않는다.
-
-최초 범위는 workspace와 package/control/data의 **기존 부모**를 요구한다. package/control/data 기본 제안은 workspace의 sibling이다. 계획했던 Application Support 상위 폴더 자동0700 준비는 미구현으로 남겼다. 자동 GC 값과 발행자 주소 수는 안내만 하며 native/chain 설정을 수정하지 않는다. 기존 clean `303e163a` 공급 pin과 검증 이력을 유지하고 이번에 최신 NIGO JAR로 교체하지 않는다.
-
-`make check` 270개 테스트와 Mac release 빌드·Linux 타입 검사를 통과했다. 새 CLI를 담은 unsigned-development package와 실제 TTY에서 취소·재개, 공백 경로 설치·등록, 별도 init/start, 정상 stop과 동일 DB 재시작을 확인했다. 단일 노드 로컬 READY이며 전역 합의는 NOT_CHECKED다. 최종 상태는 job NOT_LOADED·engine STOPPED다. 실제 강제 중단·실패 주입과 전체 G1-M은 남았다. [검증 기록](../results/2026-09-27-setup-install-flow.md), [설계와 남은 인수](../design/2026-09-27-setup-install-flow.md), [사용법](./setup.md)을 따른다.
-
-## 계획 대비 상태
-
-| 작업 | 상태 | 남은 조건 |
+| 영역 | 구현 상태 | 확인된 범위·남은 인수 |
 | --- | --- | --- |
-| BX-001/005 | IN_PROGRESS | 첫 Mac profile, 최소 OS/JRE/native·launchd 인수 |
-| BX-002/010 | DONE | Rust 기반·CLI envelope·고정 toolchain/lock |
-| BX-003 | IN_PROGRESS | Temurin21.0.12.1+1 full JRE 고정·runtime stage·runtime BOM/source 확보와 NIGO J1~J3 수용. 전체 제품 NOTICE/SBOM/소스 전달·출시 인수 후속 |
-| BX-004 | IN_PROGRESS | RC.1 이력·RC.2 지정 package PASS 보존, BXDL PR #11/#12·NIGO PR #225/#229 공유. RC.3 전용 lock/spec 선택 후 동일 Mac archive의 4-validator·두 복구·wrong-pin·setup13 및 독립 정리 PASS. RC4-01~07 완료·01~06 단일노드21사례와 동종망·두 복구·선정 RPC·CLI 전환 PASS·07 정식 회신 머지, A7·전체 제품 인수 후속 |
-| BX-011~014 | IN_PROGRESS | build/verify/새 폴더 설치 구현, 정식 공급·릴리스/업데이트 후속 |
-| BX-020 | IN_PROGRESS | v1 제품/native 대조와 validator network/peer/pin 입력·공통 native 렌더 구현. RC.2 이력 보존, 새 RC.3 archive의 4-validator 거래/catch-up·두 정족수 복구 경로·pin 거부 PASS. observer 등 확장 후속 |
-| BX-021/022/024 | IN_PROGRESS | instance journal·명시 init/resume·gated run과 기존 정상 종료/같은 DB 재시작 근거 유지. 새 V2 등록 자료 보관·시작 단계 진단의 RC.2 로컬13사례와 새 RC.3 동일 archive의 setup13사례 PASS. 전체 실패·복구/운영 인수 후속 |
-| BX-023 | IN_PROGRESS | 제품/native cold·실제 RocksDB 단발 초기화 확인. 지속 runtime·DB/WAL 복구·service 인수 후속 |
-| BX-030 | IN_PROGRESS | RC.2 지정 경로20사례 PASS·원본 INCOMPLETE·독립 정리 PASS와 자료 경로 문제 OPEN 보존. RC.3 동일 archive의 setup13사례와 후속 전체14문답·취소/EOF·대기 중 HUP·원본 부재 운용21사례 PASS. mutation 중단·전체 인수 후속 |
-| BX-031/032 | IN_PROGRESS | 수동 LaunchAgent·status·정상 stop·restart와 같은 시도 관측 대기 구현. 로그인/로그아웃·sleep/wake와 전체 사용자 lifecycle 인수 후속 |
-| BX-033 | IN_PROGRESS | 오프라인 최신 시도 logs/diagnose·정제·bounded partial 출력 구현. 전체 시도 조회·보존/용량 정책 후속 |
-| BX-034 | PLAN | 데이터·키를 보존하는 안전한 제거 |
-| BX-040~043 | IN_PROGRESS | RC.2 이력 보존, 새 RC.3 동일 archive의 4-validator 거래/catch-up·두 복구·pin 거부·setup13사례 PASS. RC.4 단일노드21사례·동종망·두 복구·선정 RPC·CLI 전환 인수 PASS. G1-M 전체 사용자 흐름·Linux/Docker 후속 |
-| BX-044 | IN_PROGRESS | LaunchAgent PR #5 fast CI 통과. 진단 변경의 로컬 검사는 연결된 결과 기록을 따르며 원격 CI는 해당 PR 기록 참조. 전체 package 인수·릴리스 pipeline 후속 |
-| BX-050~053/M6 | PLAN | 버전 쌍 업데이트·offline 유지보수·고객 운영 확대 |
+| 공통 CLI·JSON·zsh 자동완성 | 구현 | macOS·Ubuntu CI 검사 및 CLI native 빌드 통과. Bash/fish 자동완성은 미지원 |
+| 패키지 조립·무결성·서명 검증 | 구현 | development manifest v1, 외부 Ed25519 공개키 또는 명시 unsigned 개발 정책. 정식 출시 채널 미제공 |
+| JRE·엔진 공급물 | 고정 | macOS Temurin21.0.12.1+1, Linux Temurin21.0.13+9 및 RC.4 조합. Mac RC.3도 지원 유지 |
+| 관리 CLI 독립 배포·업데이트·복귀 | 구현 | Mac RC.3·RC.4 지정 조합에서 실행 중 CLI 전환과 노드 보존 확인. Linux 실제 배포·버전 전환 인수는 대기 |
+| 순차 준비·조회·수정·설치 | 구현 | Mac archive 기반, Linux flat JRE/JAR/native 설정 기반. 설치 승인과 init/start는 분리 |
+| macOS 노드 운용 | 지정 조합 인수 | 사용자 LaunchAgent, 초기화·시작·관측·진단·정상 종료·동일 DB 재시작. 전체 macOS lifecycle·최소 OS·정식 운영 인수는 남음 |
+| macOS 네트워크 | 지정 조합 인수 | RC.4 동종 4-validator, 두 복구 경로, wrong-pin, 선정 RPC·거래·관리 CLI 전환. 전체 엔진 기능 인수를 뜻하지 않음 |
+| Linux 서비스·권한 | 개발 경로 구현 | systemd, 노드별 비root UID, root 보호 제어 기록, 고정 worker 위임. 실제 노드·계정 격리·서비스 인수는 NOT_RUN |
+| Linux 빌드·시험 입력 전달 | 준비 도구 구현 | 고정 source kit·후보 제작/수신·설치 입력 추출·장비 내 fresh 시험 키 생성. 실제 선정 JRE/RC.4 런타임 archive 및 노드 실행은 테스터 과업 |
+| 사용자 편의성 평가 | 비공개 과업 준비 | Linux 설치부터 초기화·서비스 운용까지 안내서·결과/개선 양식 동봉. 실제 사용자 관측은 NOT_RUN |
+| WSL2·Docker/Compose | 후속 | Linux 실물 기준 조합 검증 뒤 별도 구현·인수 |
 
-## 다음 순서
+Linux의 `bxdl install <archive>` 일반 설치 경로는 제공하지 않는다. 검증한 개발 후보를 준비 도구로 추출한 뒤 `setup new/apply`를 사용한다. Linux의 root 공개 descriptor·고정 worker 위임 구현과 Mac의 승인된 exact runtime profile을 같은 인수 상태로 취급하지 않는다. 자세한 지원 조합은 [지원 범위](./support-matrix.md)를 따른다.
 
-CLI-01~04 구현·검증을 완료했다. [CLI-05](../design/2026-10-22-integrated-operations-ux-implementation-plan.md) 중 CLI05-01 zsh 자동완성, CLI05-02 독립 Mac 배포·업데이트, CLI05-03 지정 조합 인수와 후속 신규 초기화 보고서 권한 개선·수집 검증을 완료했다. RC4-01~07을 완료했다. 기술 인수01~06에서 Mac 단일노드21사례와 동종망·두 복구·선정 RPC·실행 중 CLI 전환을 확인했고, RC4-07 정식 회신은 [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257)로 머지했다. Mac RC4-08 사람 과업은 NOT_RUN·이연하며 다음은 실제 Linux 기반·단일노드 인수와 Linux 사용자의 CLI05-04 과업이다. 기존 `0644` 보고서의 명시 복구 정책은 별도 미해결 과제로 남긴다. console의 후속 화면·서비스 연결은 중단했다. 아래는 그와 별도로 유지하는 전체 제품의 후속 과제다.
+## 자동 검사와 실제 실행 근거
 
-[RC.4 수신 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md), [RC4-02 구현·준비 검증](../results/2026-11-15-rc4-fixture-preparation.md), [RC4-03 runtime 조립](../results/2026-11-15-rc4-runtime-assembly.md), [RC4-04 구현·CLI-only 검증](../results/2026-11-15-rc4-cli-harness.md)은 PASS다. [RC4-05 Mac 서비스 결과](../results/2026-11-15-rc4-macos-service.md)는 실행21사례와 독립 종료 감사가 PASS다. [RC4-06 네트워크 결과](../results/2026-11-16-rc4-macos-network.md)는 동종망·두 복구·wrong-pin·선정 RPC·CLI 전환을 별도로 기록한다. Mac [RC.4 도입 계획](../design/2026-11-15-rc4-adoption-plan.md)의 RC4-08 CLI05-04는 NOT_RUN·이연이다. 다음 실행은 [Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따른다. RC4-07 정식 회신은 [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257)로 머지 완료했다. 사용자 과업 안내서·기록 양식 준비와 RC.3 UX 시험은 병행 가능하나 RC.4 PASS로 전용하지 않는다.
+[PR #24 CI](https://github.com/bwg-loonshots/bxdl/actions/runs/44015292246)는 같은 PR source에서 두 플랫폼의 fmt·Clippy·테스트·native CLI 빌드와 `version --json`을 통과했다.
 
-NIGO PR #230 정식 회신 뒤 완료한 RC.3 전체 설치 UX21사례·독립 검사8항목의 근거는 [전체 UX 결과](../results/2026-10-22-macos-rc3-full-setup.md)에 기록했다. 기존 회신과 앞선 결과의 당시 NOT_RUN, RC.2 원본 INCOMPLETE·경로 원인 미확정은 보존한다.
+| 환경 | Rust | Python | 의미 |
+| --- | --- | --- | --- |
+| Ubuntu 24.04 | 605 PASS | 287개 중275 PASS·12 SKIP | Linux CLI compile/link·실행과 자동 회귀. JRE·노드·systemd 인수 아님 |
+| macOS 15 CI | 709 PASS | 287개 중285 PASS·2 SKIP | Mac CLI compile/link·실행과 자동 회귀. 아래 실제 엔진 시험과 별도 |
 
-1. Mac 중단·실패 경계·로그인/로그아웃·sleep/wake와 데이터·키를 보존하는 안전한 제거를 구현·검증한다. 제거(REM-01)는 G1-M 완료 전 필수 항목이다. 저장 기록과 실제 health를 구분하며 UNKNOWN 뒤 자동 재시작하지 않는다. 운용 참조 경로의 사전 접근 검사도 남아 있으며 기존 설치의 binding 변환/upgrade·DB migration은 별도다.
-2. J5의 upstream SBOM archive hash 불일치·서명 출처 확인·전체 제품 NOTICE/SBOM·대응 소스 전달·최소 macOS를 확정한다. NIGO J1~J3와 RC.2 공급·복구 회신은 수용했으며, 이 실행 호환성 근거를 공급망 승인으로 전용하지 않는다.
-3. RC.3의 offline Storage A7을 별도 구현·인수한다. 서비스 중지·자동 재기동 차단·backend/경로 매핑·백업·명시 repair 확인·UNKNOWN·재시작을 구현하고 검증해야 한다. 수신 PASS와 이번 package 재인수는 A7 완료를 뜻하지 않는다.
-4. 검증한 바이트의 정식 릴리스 pipeline과 나머지 공통·Mac 인수를 완료해 G1-M을 확정한다. 이후 버전 쌍 업데이트·지원 진단/보존 정책을 확장한다. Linux/systemd G1-L, Docker G1-D는 Mac과 분리해 검증한다.
+선정 엔진을 실제 실행한 근거는 [RC.4 Mac 단일노드](../results/2026-11-15-rc4-macos-service.md), [RC.4 Mac 네트워크](../results/2026-11-16-rc4-macos-network.md), [기존 RC.3 관리 CLI 조합](../results/2026-10-23-cli05-runtime-acceptance.md)에 있다. 이 결과는 각 문서의 정확한 artifact·환경·시험 범위에 한정한다. CI 통과나 Mac 결과를 Linux 노드 인수로 승계하지 않는다.
 
-R2 파일 receipt는 instance 등록·NIGO journal이 아니며 전체 R2/R3 완료라고 표시하지 않는다. 현재 Mac 사용자 profile의 CLI·엔진은 같은 UID다. 파일 권한만으로 강한 격리를 보장하지 않는다. 기존 사용자 node/data/key는 시험하지 않는다.
+## 현재 Linux 시험 범위
+
+대상은 실제 Ubuntu 24.04 LTS·x86_64/glibc·systemd 장비와 sudo 가능한 일반 사용자다. 전달본에는 고정 source·JRE/JAR·준비 도구가 포함되며 빌드는 사전 단계다. 설치 원자료는 검증한 archive에서 준비하고 시험용 키는 장비 안에서 새로 생성한다.
+
+1. 독립 관리 CLI 설치와 최초 관리자 helper 준비.
+2. `setup new`의 순차 문답·중단/재개·목록/내용 조회·검토 승인.
+3. `setup apply`로 전용 계정·시스템 노드 설치와 이름 연결.
+4. 명시 `init` 후 `start/status`의 로컬 READY 확인.
+5. `logs/diagnose`, SSH 재접속 후 같은 시도의 지속 동작 확인.
+6. 정상 `stop`, 같은 DB에서 새 start와 마지막 정상 종료.
+
+기술 결과와 사용 편의성은 별도로 기록한다. 선행 단계 실패 시 의존 단계는 NOT_RUN으로 남기며, 이미 경험한 문답·오류·도움 요청도 피드백으로 회수한다. 이번 manual peerless 단일 노드 과업은 정족수·거래·재부팅 복구·CLI 버전 전환을 포함하지 않는다.
+
+이번 비공개 Linux 시험의 안내서·빈 결과/개선 양식·개별 실행 기록·전달 archive는 Git 밖에서 관리한다. UAT 폴더를 다시 만들지 않는다. 이 과업에서 저장소에 추가하는 대상은 재사용 가능한 제품/준비 도구와 자동 회귀 검사이며, 기존 `results/`의 검증 근거는 보존한다. 시작점은 [Linux 설치·운용](./linux-operations.md)과 전달본의 `START-HERE.md`다.
+
+## 남은 작업과 우선순위
+
+1. **Linux 실물 시험과 CLI 사용성 개선:** 위 과업을 실행하고 실패·막힘을 수정한다. 선정 JRE/RC.4의 native/RocksDB, 계정 격리, 정상 종료·DB 재시작과 SSH 단절 근거를 확보한다.
+2. **Linux 조합 고정과 서버 인수:** 실제 runtime/worker/관리 CLI 바이트를 확정하고 독립 CLI 전환, 장애·재부팅 정책, 동종망·다중 host를 별도로 검증한다. 자동 재시작·부팅 enable은 아직 제공하지 않는다.
+3. **공통 운영 기능:** 엔진/DB migration, 안전한 제거, backup/restore·offline Storage A7, UNKNOWN 복구 정책, 전체 시도 조회와 로그 보존·용량 정리.
+4. **제품 릴리스 요건:** 전체 dependency NOTICE/SBOM·대응 소스·서명 출처·지원 최소 OS·실패 경계·릴리스 pipeline과 정식 공급 채널을 확정한다.
+5. **후속 플랫폼:** WSL2·Docker/Compose와 추가 OS/CPU 조합. Mac의 사용자 세션 종료·sleep/wake·장기 운영 LaunchDaemon도 별도다.
+
+현재 Linux 시험을 시작하기 위해 새 NIGO JAR/API 구현을 선행 요청하지 않는다. 엔진/native 결함이나 계약 차이가 실제로 관측되면 고정된 JAR/JRE/OS identity와 정제 재현 근거로 협의한다. 세부 작업 순서는 [Linux 구현 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따른다.

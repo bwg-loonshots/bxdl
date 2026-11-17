@@ -4,7 +4,7 @@
 
 ## Build 입력
 
-검증해 선택한 JAR·대상 OS/CPU용 Java runtime·Rust CLI·배포 자료를 별도의 staging 폴더에 준비한다. Mac arm64를 우선하고 Linux amd64도 개발 profile로 유지한다. 모든 파일은 실제 regular file, 권한은 0644 또는 0755여야 한다. 심볼릭 링크·hardlink tar entry·장치·sparse/PAX/GNU extension은 허용하지 않는다. runtime 배포물에 링크가 있다면 신뢰한 빌드 준비 과정에서 실제 파일로 정리한 결과를 별도로 검토한다.
+검증해 선택한 JAR·대상 OS/CPU용 Java runtime·Rust CLI·배포 자료를 별도의 staging 폴더에 준비한다. Mac arm64와 Linux amd64/glibc를 서로 다른 개발 profile로 다룬다. 모든 파일은 실제 regular file, 권한은 0644 또는 0755여야 한다. 심볼릭 링크·hardlink tar entry·장치·sparse/PAX/GNU extension은 허용하지 않는다. runtime 배포물에 링크가 있다면 신뢰한 빌드 준비 과정에서 실제 파일로 정리한 결과를 별도로 검토한다.
 
 ```text
 stage/
@@ -23,13 +23,13 @@ stage/
 
 기존에 운용 인수한 Mac 개발 후보의 [RC.3+Temurin spec](../packaging/package-spec.rc3-temurin.example.json)은 검증해 수신한 엔진 identity와 선정 Java hash를 채운 예시다. [RC.3 engine lock](../packaging/engine-lock.rc3-temurin-development.json)과 함께 사용하며 `engine.contractRevision`에는 source commit이 아닌 계약 fingerprint를 넣는다. 조립 시 실제 CLI revision·전체 payload inventory를 채우고 선택한 입력과 대조한다. RC.1/RC.2 예시는 당시 후보의 재현용으로 보존하며 서로 혼용하지 않는다.
 
-새 RC.4 조립 후보는 별도 [RC.4+Temurin spec](../packaging/package-spec.rc4-temurin.example.json)과
+현재 Mac RC.4 조합은 별도 [RC.4+Temurin spec](../packaging/package-spec.rc4-temurin.example.json)과
 [engine lock](../packaging/engine-lock.rc4-temurin-development.json)을 사용한다.
 [RC4-03 조립 결과](../results/2026-11-15-rc4-runtime-assembly.md)에서 내부 실행기 A의 clean source·실제 engine-info·새 archive의 269파일과 서명을 확인했다.
-외부 관리 CLI의 RC.4 profile과 실제 설치/서비스 인수는 아직 후속이며 기존 RC.3 조합의 지원을 유지한다.
+외부 관리 CLI는 고정 RC.3·RC.4 profile을 지원한다. 지정 RC.4의 [Mac 설치·서비스](../results/2026-11-15-rc4-macos-service.md)와 [네트워크·CLI 전환](../results/2026-11-16-rc4-macos-network.md)을 인수했으며, 다시 조립한 archive는 별도 바이트 검증과 인수가 필요하다.
 정확한 A→R→B 빌드 순서와 입력 목록은 [runtime 조립 절차](./runtime.md#rc4-개발용-런타임-조립)를 따른다.
 
-`packaging/package-spec.example.json`은 일반 Mac용이며 `package-spec.linux.example.json`은 기존 Linux용이다. 별도 spec 파일로 복사하고 선택한 입력의 출처와 **예상 SHA-256**을 채운다. 예시의 placeholder나 빈 inventory는 완성 package 검증 근거가 아니다. 신뢰하지 않은 파일의 hash를 계산하여 입력한 것만으로 출처가 인증되지는 않는다. Builder는 제공한 expected engine/Java hash와 staging 실제 bytes를 비교하고 자동으로 expected hash를 채우지 않는다.
+`packaging/package-spec.example.json`은 일반 Mac용이며 `package-spec.linux.example.json`은 Linux용이다. 고정 RC.4 Linux 후보는 [native 빌드 도구](./linux-native-build.md)가 선정 runtime/engine lock에서 spec을 조립한다. 별도 spec 파일로 복사하고 선택한 입력의 출처와 **예상 SHA-256**을 채운다. 예시의 placeholder나 빈 inventory는 완성 package 검증 근거가 아니다. 신뢰하지 않은 파일의 hash를 계산하여 입력한 것만으로 출처가 인증되지는 않는다. Builder는 제공한 expected engine/Java hash와 staging 실제 bytes를 비교하고 자동으로 expected hash를 채우지 않는다.
 
 ```bash
 bxdl package build --root ./stage --spec ./package-spec.json \
@@ -49,7 +49,7 @@ bxdl package build --root ./stage --spec ./package-spec.json \
 3. manifest inventory와 정확히 일치하는 payload regular entries. Builder는 경로를 정렬한다.
 4. 두 개의 zero EOF block. 추가 tar padding은 제한된 zero bytes만 허용한다.
 
-Manifest 자체와 signature는 payload inventory에 포함하지 않는다. 각 payload의 path/size/SHA-256/mode를 manifest가 묶는다. gzip CRC·추가 member·EOF 이후 데이터까지 검사한다. `package verify`는 스트리밍 읽기만 수행한다. `install`은 같은 검증 parser의 payload bytes를 새 폴더에 쓰며 최종 gzip 검증 후에만 완료 receipt를 공개한다. 두 명령은 JVM·서비스·네트워크를 실행하지 않는다.
+Manifest 자체와 signature는 payload inventory에 포함하지 않는다. 각 payload의 path/size/SHA-256/mode를 manifest가 묶는다. gzip CRC·추가 member·EOF 이후 데이터까지 검사한다. `package verify`는 스트리밍 읽기만 수행한다. Mac의 `install`은 같은 검증 parser의 payload bytes를 새 폴더에 쓰며 최종 gzip 검증 후에만 완료 receipt를 공개한다. 두 명령은 JVM·서비스·네트워크를 실행하지 않는다.
 
 허용 root는 `bin`, `engine`, `runtime`, `deploy`, `schemas`, `docs`, `licenses`다. 경로는 상대경로·정규형이어야 하며 절대경로·`..`·backslash·control character·중복 path·file/directory 충돌을 거부한다. 알려진 secret/data/developer 경로와 파일 확장자를 거부하지만 일반적인 모든 내용 유출을 탐지하는 DLP는 아니다. source·키·DB가 없는 staging은 별도 검토한다.
 
@@ -67,7 +67,7 @@ Manifest 자체와 signature는 payload inventory에 포함하지 않는다. 각
 
 Verify 결과는 `manifest`, `archiveSha256`, `manifestSha256`, `authenticity`, `filesVerified`, `bytesVerified`다. authenticity는 `verified-external-ed25519` 또는 `unsigned-development`다. 어떤 host에서 검사해도 **내용·서명 검증**이며 실행 host compatibility를 확인한 것은 아니다.
 
-v1 platform은 `darwin/arm64/none/none` 또는 기존 `linux/amd64/glibc/2.34` 조합이다(OS/arch/libc/minGlibc 순서). Java 21·RocksDB는 유지한다. Mac의 none은 glibc 조건 비적용을 뜻한다. 기존 Linux archive를 Rust에서 읽을 수 있도록 형식을 유지했으며 예전 Go verifier는 신규 Mac profile을 거부하는 것이 정상이다. Rust/Go 압축 구현 사이에 archive bytes가 같을 필요는 없고 각각 같은 고정 입력에서 반복 조립 결과가 같아야 한다.
+v1 platform은 `darwin/arm64/none/none` 또는 `linux/amd64/glibc/2.34` 조합이다(OS/arch/libc/minGlibc 순서). Java 21·RocksDB는 유지한다. Mac의 none은 glibc 조건 비적용을 뜻한다. `minGlibc`는 포맷의 선언이며 실제 최소 OS/실행 인수 결과가 아니다. Linux 제작 도구는 ELF의 요구 glibc가 선언을 넘으면 중단한다.
 
 고정 입력·고정 key의 archive는 파일 정렬과 tar/gzip metadata 정규화로 재현 가능하게 만든다. CLI 바이너리·JRE·JAR 자체의 재현 빌드와는 별도 주장이다. 원본 input은 빌드 중 다른 작업이 수정하지 않는 전용 stage를 사용한다.
 
@@ -75,10 +75,10 @@ v1 platform은 `darwin/arm64/none/none` 또는 기존 `linux/amd64/glibc/2.34` �
 
 기존 운용 인수 후보의 정확한 바이트 식별 정보와 계약은 [RC.3 수신 snapshot](../contracts/nigo/engine-rc3-2026-10-22/README.md)에 보존했다. 수신 이후의 명시 선택과 실제 package 재인수 범위는 [RC.3 선택 설계](../design/2026-10-22-rc3-package-reacceptance.md)로 구분한다. 동일 서명 Mac archive의 [4-validator·복구·wrong-pin](../results/2026-10-22-macos-rc3-package.md)과 [원본 공급 경로 부재 setup13사례](../results/2026-10-22-macos-rc3-setup.md)가 PASS다. 이는 지정 범위의 소비자 인수이며 offline Storage A7·기존 설치 upgrade·전체 G1-M 완료를 뜻하지 않는다. RC.1/RC.2 snapshot과 당시 인수 결과는 이력으로 유지한다.
 
-`engine` 명령의 lock 형식은 `contracts/bxdl/engine-lock.schema.json`이다. 선택한 JAR 및 Java executable의 신뢰 hash와 실제 expected identity를 외부에서 제공한다. Temurin21.0.12.1+1 전체 JRE를 개발 패키지 후보로 선정했다. [runtime stage와 고정 lock](./runtime.md)을 사용하며 기존 Oracle 시험 runtime은 과거 근거로 보존한다. 정식 release lock·운영 지원 승격은 아직 없다. 호환된 공식 contract status·runtime provenance·선정 플랫폼의 native/서비스 인수를 추가한 별도 버전에서 고객 후보 채널을 열어야 한다.
+`engine` 명령의 lock 형식은 `contracts/bxdl/engine-lock.schema.json`이다. 선택한 JAR 및 Java executable의 신뢰 hash와 실제 expected identity를 외부에서 제공한다. Mac은 Temurin21.0.12.1+1, Linux는 Temurin21.0.13+9 전체 JRE를 사용한다. [runtime stage와 고정 lock](./runtime.md)을 사용하며 기존 Oracle 시험 runtime은 과거 근거로 보존한다. 정식 release lock·운영 지원 승격은 아직 없다. 호환된 공식 contract status·runtime provenance·선정 플랫폼의 native/서비스 인수를 추가한 별도 버전에서 고객 후보 채널을 열어야 한다.
 
 ## 선정 runtime 준비
 
-기존 RC.3+Temurin의 구체 예시는 [package-spec.rc3-temurin.example.json](../packaging/package-spec.rc3-temurin.example.json)이다.
+Mac RC.4의 구체 예시는 [package-spec.rc4-temurin.example.json](../packaging/package-spec.rc4-temurin.example.json)이며, 기존 RC.3에는 별도 spec을 사용한다.
 [준비 절차](./runtime.md)에 따라 전체 runtime 파일·원본 legal·provenance를 검증한 새 stage를 만든다.
 package v1 schema와 검증 규칙은 유지한다.
