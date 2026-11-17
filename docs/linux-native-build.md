@@ -2,7 +2,7 @@
 
 2026-11-17: **빌드 입력 키트 준비·오프라인 검증 완료, 실제 Linux 빌드와 패키지 해시 확정은 대기**다. 이 작업 환경은 Mac arm64이며 사용 가능한 Linux 빌더가 없다. SSH 접속 정보를 공유할 필요는 없다. Ubuntu 장비 사용자가 아래 빌드 명령을 직접 실행하고 결과를 전달할 수 있다.
 
-최신 테스터 과업은 [UAT 안내](../UAT/README.md)를 따른다. 아래 `ba4d5af`와 2026-11-17 plan 사본은 최초 준비 이력이며, 새 전달본은 머지된 commit으로 재생성하고 `UAT/deliveries/<commit>/HANDOFF.json`에 source·plan·archive 해시를 기록한다. 생성물은 Git에 넣지 않는다.
+테스터 검증은 Git 저장소와 분리한 비공개 전달 패키지로 진행한다. 안내서·빈 결과/개선 의견 양식·개별 실행 기록은 저장소에 보관하지 않는다. 전달본의 `HANDOFF.json`에 제품 source commit과 지원 도구·공급물 해시를 기록하며, 빌드는 사전 준비이고 본 과업은 노드 설치·초기화·서비스 운용 검증이다.
 
 ## 1. 고정한 입력과 산출물의 구분
 
@@ -85,8 +85,37 @@ python3 -B tools/receive-linux-candidate.py \
 
 로컬 CLI의 읽기 전용 archive verifier로 두 archive 전체를 검사하고 manifest·source·JAR·JRE 전체 inventory·A/C/Java 해시를 대조한다. ELF header는 bytes로 읽는다. 결과 `VERIFIED`는 **고정 입력에 대한 오프라인 수신 검증**이다. receipt의 native build 성공은 빌더가 보고한 값이며 원격 실행 증명은 아니다. systemd·engine native·실행기 profile 상태는 자동으로 PASS로 바뀌지 않는다.
 
+## 비공개 시험용 후보를 설치 입력으로 연결
+
+빌드 이후에는 같은 장비에서 직접 만든 native verifier와 별도로 기록한 plan/receipt/CLI SHA-256을 사용한다. 받은 임의 실행 파일이나 receipt 자체를 실행 신뢰 근거로 삼지 않는다.
+
+```sh
+python3 -B tools/prepare-linux-operations.py \
+  --kit /absolute/kit --plan-sha256 '<plan SHA-256>' \
+  --built /absolute/candidate --receipt-sha256 '<receipt SHA-256>' \
+  --cli /absolute/candidate/work/target/x86_64-unknown-linux-gnu/release/bxdl \
+  --cli-sha256 '<직접 빌드한 CLI SHA-256>' \
+  --output /absolute/new-operations --allow-unsigned-development
+```
+
+이 도구는 전체 archive·manifest·고정 JRE inventory·JAR·실행기 pin을 대조한 뒤 `runtime-package`와 `management-cli`를 새 사용자 폴더에 추출한다. 파일은 manifest의 mode/hash를 유지하고 symlink·hardlink·중복/불명 경로·기존 출력은 거절한다. `operations-plan.json`에는 공급물 identity와 독립 관리 CLI 설치, root helper 최초 배치 단계를 기록한다. sudo·JVM·노드·systemd를 실행하지 않으며 실제 설치나 profile 승인을 뜻하지 않는다.
+
+시험용 입력은 다음처럼 준비한다. `instance` 이름은 새 시스템 노드 이름과 같아야 한다.
+
+```sh
+python3 -B tools/prepare-linux-test-inputs.py \
+  --runtime /absolute/new-operations/runtime-package/runtime \
+  --jar /absolute/new-operations/runtime-package/engine/nigo-node.jar \
+  --output /absolute/new-test-inputs --instance linux-test-01 \
+  --http-port 29680 --p2p-port 30680
+```
+
+선정 JRE257파일·RC.4 JAR·개발 helper class를 대조하고 일반 사용자로 고정 generator/keytool을 실행한다. 키는 시험 장비에서 새로 생성하며 결과는 private 폴더에 보관한다. `inputs/instance.json`, `inputs/node.json`, 체인과 private0600 credential 파일을 기존 `setup new`의 `--from`/`--native-config` 입력으로 사용한다. DB는 `/var/lib/bxdl/instances/<이름>/data`, 주소는 loopback, 로컬 목표는 `MANUAL_START_INITIALIZED`다. 4-validator 체인을 보존하되 한 노드의 자동 합의/sync/archive를 끄므로 정족수·거래 검증으로 계산하지 않는다.
+
+두 도구는 sibling `build-linux-candidate.py`, `linux_build_contract.py`를 필요로 하며 operations 도구는 `receive-linux-candidate.py`도 필요하다. inputs 도구의 상위 `packaging/`에는 선정 Linux runtime/engine lock이 있어야 한다. private 전달본은 이 의존성과 외부 checksum을 함께 제공한다. 자세한 제품 명령과 권한은 [Linux 운용 안내](./linux-operations.md)를 따른다.
+
 ## 5. 패키지 고정 후 다음 단계
 
 현재 Linux `setup`은 flat JRE/JAR 경로를 입력받고 관리자 helper를 고정 worker로 snapshot한다. generic `bxdl install`의 runtime archive 설치 경로는 아직 Mac 전용이다. 이 빌드 도구로 R-L archive를 만들었다고 Linux 일반 설치·profile 인수가 완료되는 것은 아니다. 다음 Linux 설치 시험의 root helper는 수신 검증한 실행기 A bytes에서 배치하고 해시를 확인해야 한다. 자세한 권한·수동 bootstrap은 [Linux 설치·운용](./linux-operations.md)을 따른다.
 
-후속 순서는 실제 빌드 결과 수신·조합 해시 확정 → 선정 JRE의 cold/engine-info·native/RocksDB 확인 → 새 Linux 설치·init·systemd 수동 시작/정상 종료 → SSH 단절 유지·동일 DB 재시작·독립 관리 CLI 전환이다. 각 결과를 확보한 뒤에만 exact executor profile과 테스터 배포본을 인수한다. 현재 새로운 NIGO 선행 구현 요청은 없다. Linux 실행에서 엔진/native 문제가 발견되면 고정된 RC.4 조합과 재현 자료로 별도 요청한다.
+후속 순서는 실제 빌드 결과 수신·조합 해시 확정 → 선정 JRE의 cold/engine-info·native/RocksDB 확인 → 새 Linux 설치·init·systemd 수동 시작/정상 종료 → SSH 단절 유지·동일 DB 재시작·독립 관리 CLI 전환이다. 각 결과를 확보한 뒤에만 exact executor profile을 인수한다. 비공개 테스터 전달본은 기술 검증과 사용성 관측을 함께 진행하되 판정을 분리한다. 현재 새로운 NIGO 선행 구현 요청은 없다. Linux 실행에서 엔진/native 문제가 발견되면 고정된 RC.4 조합과 재현 자료로 별도 요청한다.

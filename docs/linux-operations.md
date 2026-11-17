@@ -1,8 +1,8 @@
 # Linux 설치·운용 개발 경로 — LNX-04
 
-2026-11-17 기준 **설치·운용 UX 코드가 연결된 개발 경로**다. 실제 Linux native build·JRE/native/RocksDB·설치·systemd·SSH 단절·독립 관리 CLI 전환 인수는 아직 NOT_RUN이다. signed Linux runtime archive와 인수된 exact executor profile도 아직 없다. 이 문서는 현재 명령과 권한 경계를 설명하며, LNX-05의 테스터 전달본·사용자 과업 완료를 뜻하지 않는다.
+2026-11-17 기준 **설치·운용 UX 코드가 연결된 개발 경로**다. 실제 Linux native build·JRE/native/RocksDB·설치·systemd·SSH 단절·독립 관리 CLI 전환 인수는 아직 NOT_RUN이다. signed Linux runtime archive와 인수된 exact executor profile도 아직 없다. 이 문서는 현재 명령과 권한 경계를 설명한다. 빌드는 비공개 시험의 사전 준비이며 설치·초기화·운용은 실제 테스터 과업이다.
 
-[Linux 네이티브 빌드 안내](./linux-native-build.md)의 새 kit·제작·수신 검증 도구는 **PREPARED**다. 제품 source는 LNX-04 commit `ba4d5af6b505ea880be034b73094ac8c92018d57`로 고정했고 제작 도구는 별도 hash로 고정했다. 이번 후속 입력 오류·필드 검증·테스트 수정은 다음 kit 갱신 전까지 이 source에 포함하지 않는다. 아직 실제 Linux host에서 제작하지 않아 CLI/runtime archive hash는 없으며, 향후 unsigned 개발 archive 제작·수신 검증만으로 아래 설치·운용 인수를 완료하지 않는다. 기존 LNX-02 전달본은 변경하지 않는다.
+[Linux 네이티브 빌드 안내](./linux-native-build.md)의 도구로 고정 후보를 만들고 `prepare-linux-operations.py`로 archive를 설치용 flat JRE/JAR·worker·독립 CLI로 연결한다. `prepare-linux-test-inputs.py`는 새 시험용 credential과 단일 노드 설정을 장비 안에서 만든다. source·도구·공급물 identity는 각 전달본의 `HANDOFF.json`을 따른다. 과거 `ba4d5af` 준비 기록은 당시 이력이며 최신 전달본의 source로 자동 간주하지 않는다.
 
 대상은 Ubuntu 24.04 LTS·x86_64/glibc·PID 1 systemd의 실제 Linux 머신이다. WSL2는 후속이다. Mac의 기존 설치·LaunchAgent는 그대로 유지하며 Mac에서 `setup new/resume/edit/apply --linux`를 실행하지 않는다. Mac의 `setup list/show --linux`는 저장 기록 조회 형식만 선택한다.
 
@@ -45,7 +45,25 @@ namei -l /usr/local/libexec/bxdl/bxdl
 경로가 새 위치이고 상위 디렉터리가 위 조건에 맞는 것을 확인한 관리자가 다음 두 단계를 별도로 수행한다. `BXDL_BIN`은 앞서 검증한 native Linux 실행 파일이다.
 
 ```sh
-sudo install -d -o root -g root -m 0755 /usr/local/libexec/bxdl
+sudo /bin/sh -eu -c '
+  test ! -e /usr/local/libexec/bxdl/bxdl
+  test ! -L /usr/local/libexec/bxdl/bxdl
+  check_root_dir() {
+    test -d "$1"
+    test ! -L "$1"
+    test "$(/usr/bin/stat -c %u -- "$1")" = 0
+    bxdl_dir_mode=$(/usr/bin/stat -c %a -- "$1")
+    test "$((0$bxdl_dir_mode & 0022))" = 0
+    test "$((0$bxdl_dir_mode & 0001))" = 1
+  }
+  for bxdl_dir in / /usr /usr/local; do check_root_dir "$bxdl_dir"; done
+  for bxdl_dir in /usr/local/libexec /usr/local/libexec/bxdl; do
+    if test ! -e "$bxdl_dir" && test ! -L "$bxdl_dir"; then
+      /usr/bin/mkdir -m 0755 -- "$bxdl_dir"
+    fi
+    check_root_dir "$bxdl_dir"
+  done
+'
 ```
 
 기존 helper가 있으면 종료하는 아래 최초 배치 명령을 사용한다. 상위 경로가 root에 의해 보호된 상태에서만 수행한다.
@@ -130,4 +148,4 @@ bxdl stop local
 
 LNX-03의 오래된 worker/control에는 새 공개 descriptor 프로토콜이 없을 수 있다. 현재 관리 CLI는 이를 자동 채택하거나 worker를 교체하지 않는다. 기존 개발 기록은 원래 실행기로 다루고, 현재 UX는 새 시험 이름·새 control로 검증한다. 새 저수준 `linux-service register`와 옛 기록의 호환 경계는 [개발 backend 안내](./linux-service-development.md)를 따른다.
 
-다음 순서는 준비한 kit의 실제 Linux native build·unsigned 개발 CLI/runtime archive 제작과 receipt 회수, 독립 수신 검증, 선정 JRE/RC.4의 cold/native 조합 확인이다. 이어 같은 고정 조합으로 설치·init·서비스·정상 종료·DB 재시작·SSH 단절·CLI 전환을 인수하고 Linux runtime·실행기 profile의 승인 근거를 확정한다. 제작·수신 성공만으로 profile을 등록하지 않는다. 이후 LNX-05에서 작성자가 아닌 테스터에게 전달본과 짧은 과업을 배정한다. 현재 [전체 계획](../design/2026-11-16-linux-first-implementation-plan.md)의 실물 항목은 NOT_RUN이며 Mac 합성 테스트·타입 검사 결과를 대신 사용하지 않는다.
+다음 순서는 준비한 kit의 실제 Linux native build·unsigned 개발 CLI/runtime archive 제작과 receipt 회수, 독립 수신 검증, 선정 JRE/RC.4의 cold/native 조합 확인이다. 이어 같은 고정 조합으로 설치·init·서비스·정상 종료·DB 재시작·SSH 단절·CLI 전환을 인수하고 Linux runtime·실행기 profile의 승인 근거를 확정한다. 제작·수신 성공만으로 profile을 등록하지 않는다. LNX-05의 비공개 전달본은 이 설치·운용 과업과 결과/개선 의견 양식을 함께 제공하며 기술 결과와 사용 편의성을 나누어 관측한다. 현재 [전체 계획](../design/2026-11-16-linux-first-implementation-plan.md)의 실물 항목은 NOT_RUN이며 Mac 합성 테스트·타입 검사 결과를 대신 사용하지 않는다.

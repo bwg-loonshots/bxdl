@@ -1,5 +1,11 @@
 # 구현 상태 — 2026-11-17
 
+**Linux 비공개 설치·운용 시험 지원 — 2026-11-17:** 빌드를 사전 준비로 분리하고, 검증한 Linux 후보 archive를 설치 입력으로 연결하는 `tools/prepare-linux-operations.py`와 시험 장비에서 새 키·설정을 만드는 `tools/prepare-linux-test-inputs.py`를 추가했다. 전자는 후보 receipt·archive·전체 JRE inventory·실행기 pin을 대조한 뒤 새 사용자 폴더에만 추출하고, 후자는 고정 RC.4 helper를 일반 사용자로 실행해 단일 노드의 manual peerless 입력을 준비한다. 설치·init·start/stop은 기존 BXDL 명령과 명시 관리자 승인으로 따로 수행한다. 비공개 전달본의 본 과업은 설치·초기화·로컬 READY·진단·SSH 단절 유지·정상 종료·같은 DB 재시작이다. 실제 Linux 실행과 사용자 관측은 **NOT_RUN**, 정식 runtime/executor profile은 **NOT_ADMITTED**다.
+
+안내서·결과/개선 의견 양식과 전달물은 Git에 보관하지 않는다. 기존 `UAT` 폴더는 삭제했다. 저장소에는 재사용 가능한 준비 도구·회귀 검사·제품 설계만 남기며, 실행 기록은 비공개로 반환한다. 빌드/공급물 확인·설치 기술 결과·사용 편의성 평가는 별도로 기록한다. 현재 단일 노드 시험은 합의·거래 확정과 재부팅 자동 복구를 포함하지 않는다.
+
+이번 변경 검증: `CARGO_PROFILE_TEST_DEBUG=0 make check`의 fmt·Clippy·Rust709 PASS, Python285개 중283 PASS·기존2 SKIP. 이후 Python 전체287개 중285 PASS·기존2 SKIP를 확인했고, 마지막 helper의 일반 사용자 통과 권한 보강도 bridge16사례로 재검증했다. 입력 준비10사례는 전체 검사에 포함된다. 실제 Linux JRE/node/systemd 실행은 수행하지 않았다. 전달 준비 스크립트도 Mac에서 파일 생성 전 미지원 host를 거절함을 확인했다.
+
 **Linux native build·후보 고정 준비:** LNX-04는 `ba4d5af6b505ea880be034b73094ac8c92018d57`로 커밋했다. 이 정확한 제품 source와 기존 Linux JRE/RC.4 lock을 기준으로 새 빌드 kit·native 제작 도구·수신 검증 도구를 준비했다. 상태는 **PREPARED**이며 실제 Linux host가 없어 compile/link·Linux CLI/runtime archive 생성은 **NOT_RUN**, 생성물 hash는 아직 없다. 설치·native/RocksDB·systemd 인수도 **NOT_RUN**, 정식 executor profile은 **NOT_ADMITTED**다. [네이티브 빌드 안내](./linux-native-build.md)에 전달·제작·회수 절차와 남은 인수 조건을 구분한다.
 
 [후속 준비 검증 결과](../results/2026-11-17-linux-native-build-preparation.md): Mac 전체 `make check` Rust709 PASS, Python259개 중257 PASS·기존 opt-in2 SKIP, fmt·Clippy PASS와 Linux all-target 타입 검사 PASS다. Linux 전용 CLI8사례는 Mac에서 실행하지 않았으며 native build·서비스 인수를 대신하지 않는다. 실제 공급물로 만든 전달 archive와 8개 파일의 별도 해시 대조도 PASS다.
@@ -20,9 +26,9 @@ LNX-02 자동 검사: `make check` Rust623 PASS, Python205 PASS·2 SKIP, fmt·Cl
 
 2026-11-16 사용자 결정으로 **실제 Linux 머신 우선 개발·검증**으로 전환했다. [Linux 구현 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 현재 실행 기준으로 삼고 Mac 기능·인수 이력은 보존한다. WSL2는 Linux 실물 인수 후속이다. 아래 R1~R3는 Mac 구현 이력이다. R1 설정 초안 이후 **R2의 Mac 새 폴더 패키지 설치**와 **R3의 NIGO 개발 후보 정보·cold 사전검사**를 추가했다. clean NIGO 후보를 별도로 수신하고 제품 설정과 명시 native QBFT 설정을 연결하는 preflight를 추가했다. 이후 설치본·설정을 등록해 `--instance`로 preflight와 명시 init/resume-init을 호출하고, Mac 사용자 LaunchAgent의 start/status/stop을 연결했다. 이번에는 `setup --install`에서 이 단계를 선택하고 재개하는 A~C 흐름을 구현했다. 기존 package의 단일 validator 서비스 근거와 새 setup의 exact package·TTY 인수, 전체 G1-M을 구분한다.
 
-테스터용 절차·기록·개선 의견 양식은 [UAT](../UAT/README.md)에 추가했다. 실제 전달 kit는 PR 머지 후 최신 commit으로 다시 생성하며 전달본의 `HANDOFF.json`을 기준으로 한다. 위 `ba4d5af` 준비 결과와 hash는 최초 이력으로 보존한다.
+테스터 검증은 Git 저장소와 분리한 비공개 전달 패키지로 진행한다. 안내서·빈 결과/개선 의견 양식·개별 실행 기록은 저장소에 보관하지 않는다. 전달본의 `HANDOFF.json`에 제품 source commit과 지원 도구·공급물 해시를 기록하며, 빌드는 사전 준비이고 본 과업은 노드 설치·초기화·서비스 운용 검증이다.
 
-## 현재 Linux 단계 — LNX-04 커밋·native build 준비, 실물 인수 대기
+## 현재 Linux 단계 — 비공개 단일노드 설치·운용 시험 준비
 
 사용자가 Ubuntu 24.04 LTS·x86_64/glibc·systemd와 sudo/SSH 가능을 기준으로 진행하도록 허용했다. 실제 호스트의 배포판·버전/접속은 아직 관측하지 않아 Linux 실행은 NOT_RUN이다. Linux runtime staging·독립 관리 CLI 배포·읽기 전용 `host check` 기반 코드를 추가했다. Linux 기본 사용자 경로는 CLI 배포 `$HOME/.local/share/BXDL-CLI`, 노드 목록·준비 기록 `$HOME/.local/share/BXDL`로 분리한다. LNX-01 당시 전체 자동 검사와 Linux target 타입 검사를 통과했으며 당시에는 Linux 노드 서비스 capability를 선언하지 않았다. LNX-03은 명시 관리자 backend를 추가했고, LNX-04는 일반 사용자 setup·이름 연결과 root 공개 descriptor/최초 worker 위임을 구현했다. **고정 runtime profile·실제 Linux init/systemd 인수는 NOT_RUN**이다. [LNX-01 결과](../results/2026-11-16-linux-foundation.md)의 `make check`는 Rust 623 PASS, Python 168개 중 166 PASS·기존 opt-in 2 SKIP, fmt·Clippy PASS다. `make check-linux`의 GNU/x86_64 all-targets 타입 검사와 현재 Mac CLI의 version/host check/자동완성 직접 실행도 통과했다. Mac host 검사의 정상적인 미지원 INCOMPLETE(exit 3)는 Linux 실행 성공이 아니며 기존 Mac PASS도 Linux로 승계하지 않는다.
 
@@ -33,7 +39,7 @@ LNX-02 자동 검사: `make check` Rust623 PASS, Python205 PASS·2 SKIP, fmt·Cl
 | LNX-03 systemd 시스템 서비스·권한 | `b9ee89a` 커밋. 개발용 관리자 backend 구현·당시 자동 검사 PASS. 실제 Linux NOT_RUN |
 | LNX-04 설치·운용 UX / 실제 Linux 단일노드 | `ba4d5af` 커밋. DEVELOPMENT_UX_IMPLEMENTED / HOST_ACCEPTANCE_NOT_RUN — 문답·계정/설치 승인·이름·고정 worker·진단 연결. 설치/init/운용/SSH 단절·동일 DB 재시작·CLI 전환 인수는 남음 |
 | LNX-04 후속 native build·후보 고정 | PREPARED — 고정 source kit·native 제작·수신 검증 도구 준비. 실제 Linux compile/link·CLI/runtime archive 생성 NOT_RUN, archive hash 미생성, executor profile NOT_ADMITTED |
-| LNX-05 Linux 사람 과업 | PLAN / NOT_RUN — 기술 인수한 배포본으로 친구의 직접 사용성 평가 |
+| LNX-05 Linux 사람 과업 | PRIVATE_HANDOFF_PREPARED / NOT_RUN — 빌드는 사전 준비, 동일한 비공개 전달본으로 설치·init·서비스 기술 검증과 사용자 편의성 관측을 분리해 수행 |
 | LNX-06 서버·네트워크 | PLAN / NOT_RUN — 재부팅·동종망·다중 host와 G1-L 개별 gate |
 | LNX-07 WSL2 | DEFERRED / NOT_RUN — Linux 기준 조합 이후 |
 
