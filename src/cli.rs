@@ -1,4 +1,5 @@
 //! Operator interface. Mutations require a registered instance and explicit intent.
+mod linux_service;
 use crate::{
     artifact, config, engine, error::BxdlError, install, management, operator, runtime, setup,
 };
@@ -58,6 +59,9 @@ pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
   bxdl package verify --help              서명·파일 검증
   bxdl runtime stage --help               고정 JRE 준비
   bxdl host check                         Linux 호스트 환경 확인
+  bxdl linux-service account --instance <경로>
+  bxdl linux-service register --instance <새 경로> --spec <json> --allow-development
+                                         Linux 개발용 관리자 등록 (설치 UX 별도)
   bxdl engine inspect --help              엔진 identity 검사
   bxdl engine preflight --help            native 설정 cold 검사
 
@@ -355,7 +359,7 @@ fn print_host_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> 
     }
     writeln!(
         out,
-        "  Linux 노드 서비스 연결: 미구현 / 엔진 실물 인수: 미수행"
+        "  Linux 서비스: 개발용 관리자 경로 구현 / 일반 설치 UX: 후속 / 엔진 실물 인수: 미수행"
     )?;
     writeln!(
         out,
@@ -760,6 +764,9 @@ pub(crate) fn print_service_summary(out: &mut dyn Write, data: &Value) -> std::i
             Some("READY") => ("준비됨", "READY"),
             Some("NOT_READY") => ("아직 준비되지 않음", "NOT_READY"),
             Some("STOPPED") => ("정지됨", "STOPPED"),
+            Some("INACTIVE") => ("비활성 상태", "INACTIVE"),
+            Some("STOPPING") => ("종료 중", "STOPPING"),
+            Some("INITIALIZED") => ("초기화 기록 있음", "INITIALIZED"),
             Some("EXITED") => ("프로세스 종료됨", "EXITED"),
             Some("FAILED") => ("실패 확인됨", "FAILED"),
             Some("NOT_LOADED") => ("서비스에 등록되지 않음", "NOT_LOADED"),
@@ -795,7 +802,24 @@ pub(crate) fn print_service_summary(out: &mut dyn Write, data: &Value) -> std::i
         writeln!(out, "마지막 관측 사유: {last}")?;
     }
     print_startup_summary(out, data)?;
-    print_guidance(out, &operator::view::service(data))?;
+    if data["serviceProfile"] == "LINUX_DEVELOPMENT_SYSTEM_SERVICE" {
+        writeln!(
+            out,
+            "운용 대상: Linux systemd 개발 경로 (관리자 권한과 --instance 경로 사용)"
+        )?;
+        let next = if data["reason"] == "LINUX_SERVICE_STOPPED_VERIFIED"
+            && data["outcome"] == "SUCCEEDED"
+        {
+            "다시 시작하려면 bxdl start --instance <등록 경로>를 실행하세요."
+        } else if data["outcome"] == "SUCCEEDED" && data["runtimeReadiness"] == "READY" {
+            "종료하려면 bxdl stop --instance <등록 경로>를 실행하세요."
+        } else {
+            "status --instance <등록 경로>로 다시 관측하고, 불명 기록과 데이터를 보존하세요."
+        };
+        writeln!(out, "다음 조치: {next}")?;
+    } else {
+        print_guidance(out, &operator::view::service(data))?;
+    }
     writeln!(
         out,
         "네트워크 합의: 미검사 (로컬 READY만으로 quorum·거래 확정을 보장하지 않음)"
@@ -1678,6 +1702,11 @@ fn capabilities_for(target: Option<&str>) -> Vec<&'static str> {
             "management.install.linux",
             "management.update.linux",
             "management.rollback.linux",
+            "linux-service.development.register",
+            "linux-service.development.init",
+            "linux-service.development.start",
+            "linux-service.development.status",
+            "linux-service.development.stop",
         ]),
         _ => (),
     }
@@ -1914,6 +1943,9 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
         command @ ("init" | "resume-init") => dispatch_initialization(command, &args[1..]),
         command @ ("start" | "stop" | "status") => dispatch_service(command, &args[1..]),
         "service-run" => dispatch_service_gate(&args[1..]),
+        "linux-service" => linux_service::dispatch(&args[1..]),
+        "systemd-run" => linux_service::gate(&args[1..]),
+        "systemd-exit" => linux_service::exit_hook(&args[1..]),
         command @ ("logs" | "diagnose") => dispatch_diagnostics(command, &args[1..]),
         command @ ("upgrade" | "uninstall") => (
             result(
@@ -2624,6 +2656,20 @@ fn dispatch_initialization(command: &str, args: &[String]) -> (ResultEnvelope, i
     let Some(timeout) = timeout_flag(&flags, 120, 600) else {
         return invalid(command);
     };
+    if cfg!(all(
+        target_os = "linux",
+        target_arch = "x86_64",
+        target_env = "gnu"
+    )) {
+        let instance = match linux_service::explicit(&target) {
+            Ok(path) => path,
+            Err(error) => return service_failure(command, error),
+        };
+        return linux_service::response(
+            command,
+            engine::linux_service::initialize(instance, resume, timeout),
+        );
+    }
     let target = match target.resolve() {
         Ok(target) => target,
         Err(error) => return instance_failure(command, error),
@@ -2721,6 +2767,22 @@ fn dispatch_diagnostics(command: &str, args: &[String]) -> (ResultEnvelope, i32)
         max_bytes,
         timeout,
     };
+    if cfg!(all(
+        target_os = "linux",
+        target_arch = "x86_64",
+        target_env = "gnu"
+    )) {
+        let instance = match linux_service::explicit(&target) {
+            Ok(path) => path,
+            Err(error) => return service_failure(command, error),
+        };
+        return linux_service::diagnostics(
+            command,
+            instance,
+            flags.get("output").map(PathBuf::from).as_deref(),
+            max_bytes,
+        );
+    }
     let target = match target.resolve() {
         Ok(target) => target,
         Err(error) => return failure(command, error, 3),
@@ -2829,6 +2891,23 @@ fn dispatch_service(command: &str, args: &[String]) -> (ResultEnvelope, i32) {
     let Some(options) = service_options(command, args) else {
         return invalid(command);
     };
+    if cfg!(all(
+        target_os = "linux",
+        target_arch = "x86_64",
+        target_env = "gnu"
+    )) {
+        let instance = match linux_service::explicit(&options.target) {
+            Ok(path) => path,
+            Err(error) => return service_failure(command, error),
+        };
+        let value = match command {
+            "start" => engine::linux_service::start(instance, options.timeout),
+            "stop" => engine::linux_service::stop(instance, options.timeout),
+            _ if options.wait => engine::linux_service::wait_ready(instance, options.timeout),
+            _ => engine::linux_service::status(instance, options.timeout),
+        };
+        return linux_service::response(command, value);
+    }
     let target = match options.target.resolve() {
         Ok(target) => target,
         Err(error) => return service_failure(command, error),
@@ -3167,6 +3246,11 @@ mod platform_capability_tests {
             "management.install.linux",
             "management.update.linux",
             "management.rollback.linux",
+            "linux-service.development.register",
+            "linux-service.development.init",
+            "linux-service.development.start",
+            "linux-service.development.status",
+            "linux-service.development.stop",
             "host.check",
             "runtime.stage",
         ] {

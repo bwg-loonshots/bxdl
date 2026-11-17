@@ -8,6 +8,7 @@ pub mod instance;
 mod instance_fs;
 mod json;
 mod launchd;
+pub mod linux_service;
 mod managed;
 mod process;
 mod product;

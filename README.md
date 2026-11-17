@@ -1,5 +1,7 @@
 # BXDL
 
+**LNX-03 개발용 systemd 경로 — 2026-11-16:** root 제어 기록·전용 계정·일회성 시작 gate를 갖는 Linux 개발용 서비스 backend를 구현했다. `linux-service register`와 명시 `--instance` 운용을 사용한다. 순차 설치·이름 기반 Linux 연결, 고정 Linux runtime archive/실행기 profile 및 실제 Linux 인수는 후속이다. [관리자 개발 경로](./docs/linux-service-development.md)에서 권한·명령·미검증 범위를 확인한다. [자동 검사 결과](./results/2026-11-16-linux-systemd-development.md)는 Rust659 PASS·Python205 PASS/2 SKIP·Linux 타입 검사 PASS이며, 기본 병렬 실행의 기존 시간 민감 실패2건과 재검증 이력을 포함한다.
+
 **LNX-02 수신·도구 준비 — 2026-11-16:** Linux Temurin21.0.13+9 full JRE와 RC.4 JAR의 별도 조합을 고정하고257파일의 오프라인 준비·Rust staging을 검증했다. 실제 Linux Java/native/RocksDB·서비스 인수는 NOT_RUN이다. [결과](./results/2026-11-16-linux-rc4-supply.md)와 [테스터 실행 안내](./docs/linux-validation.md)를 따른다. SSH 정보 공유 없이 테스터가 직접 실행한 정제 JSON을 회수할 수 있다.
 
 NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구다. **Rust로 구현하며 다음 개발·검증의 우선 대상은 실제 Linux 머신이다.** Mac 기능과 인수 이력은 유지하고, WSL2는 Linux 실물 검증 뒤에 확인한다. Docker/Compose는 별도 후속이다.
@@ -42,6 +44,8 @@ CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bx
 
 ## 구현한 명령
 
+이름 기반 설치·운용은 현재 Mac 경로다. Linux 개발 서비스는 관리자 권한의 `linux-service register`와 명시 `--instance`로 시작하며 [별도 안내](./docs/linux-service-development.md)의 범위를 따른다.
+
 | 명령 | 실제 동작 |
 | --- | --- |
 | `bxdl nodes [--home <dir>] [--json]` | 저장한 노드 목록·이름·저장 당시 상태/시각 조회. 현재 실행 상태는 미조회 ([가이드](./docs/nodes.md)) |
@@ -59,6 +63,7 @@ CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bx
 | `bxdl console [--home <dir>] [--instance <control>]` | **추가 개발 중단·기존 구현 보존.** 홈·내 목록·기존 등록/세션의 저장 기록 조회. 승인한 목록 저장/갱신/숨기기와 새 설치 자료 준비 ([가이드](./docs/console.md)) |
 | `bxdl version --json` | Rust CLI identity·실행 target·구현 capability·엔진/서비스 미인수 상태 |
 | `bxdl host check [--timeout-seconds <초>] [--json]` | 실제 Linux 기준의 OS/배포판·PID1/systemd 준비 상태를 읽기 전용 조회. WSL은 후속으로 구분하며 서비스 변경·엔진 실행 없음. host 성공은 Linux 노드 지원/인수 성공이 아님 |
+| `bxdl linux-service account/register ...` | Linux 개발용 전용 계정 이름 계산 또는 root 제어 영역 신규 등록. 초기화·시작 별도, 일반 설치 UX·실제 Linux 인수는 후속 |
 | `bxdl package build ...` | expected hash에 고정한 stage를 결정적인 development archive로 조립·선택 서명·자체 검증 |
 | `bxdl package verify <archive> ...` | 외부 신뢰 key의 Ed25519 서명, 모든 payload hash/size/mode, 경로·형식·한도 검증 |
 | `bxdl install <archive> --destination <new-dir> ...` | macOS arm64에서 검증한 payload를 새 폴더에 설치하고 완료 receipt 기록 |

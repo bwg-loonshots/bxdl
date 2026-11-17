@@ -594,6 +594,9 @@ fn host_check_on_non_linux_does_not_claim_linux_eligibility() {
     assert_eq!(code, 3);
     assert_eq!(value["outcome"], "INCOMPLETE");
     assert_eq!(value["data"]["serviceMutations"], 0);
-    assert_eq!(value["data"]["linuxServiceControl"], "NOT_IMPLEMENTED");
+    assert_eq!(
+        value["data"]["linuxServiceControl"],
+        "DEVELOPMENT_BACKEND_IMPLEMENTED"
+    );
     assert_eq!(value["data"]["engineAcceptance"], "NOT_RUN");
 }

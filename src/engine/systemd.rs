@@ -1,9 +1,12 @@
-//! Read-only Linux host and systemd observations. No unit is installed or started.
+//! Read-only Linux host observations and separately guarded system-unit control.
+//! `inspect_host` never installs or starts a unit; mutations live in `control`.
 //!
 //! Host-baseline success is not Linux package, node, or service acceptance.
 //! Unit metadata must be combined with process/cgroup identity and the engine's
-//! authenticated STOPPED report before a future controller can confirm shutdown.
+//! authenticated STOPPED report before a controller can confirm shutdown.
 //! Property names follow systemctl(1) and org.freedesktop.systemd1(5).
+pub mod control;
+
 use crate::error::{BxdlError, Result};
 use serde::Serialize;
 use std::{
@@ -71,7 +74,7 @@ impl HostReport {
             wsl: false,
             pid1_systemd: false,
             manager: None,
-            linux_service_control: "NOT_IMPLEMENTED",
+            linux_service_control: "DEVELOPMENT_BACKEND_IMPLEMENTED",
             engine_acceptance: "NOT_RUN",
             service_mutations: 0,
         }
@@ -605,7 +608,7 @@ mod tests {
         r.manager = Some(parse_manager(b"Version=255\nSystemState=running\n").unwrap());
         classify(&mut r);
         assert_eq!(r.reason_code, "HOST_BASELINE_OBSERVED");
-        assert_eq!(r.linux_service_control, "NOT_IMPLEMENTED");
+        assert_eq!(r.linux_service_control, "DEVELOPMENT_BACKEND_IMPLEMENTED");
         assert_eq!(r.engine_acceptance, "NOT_RUN");
         for (id, version, manager, code) in [
             (

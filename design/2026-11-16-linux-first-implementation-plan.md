@@ -1,7 +1,7 @@
 # 실제 Linux 우선 구현·인수 계획
 
 - 결정일: 2026-11-16. 반복 검토자가 실제 Linux 머신을 사용할 수 있으므로 **실제 Linux → Linux 사용자 과업·서버 인수 → WSL2 추가 검증** 순서로 변경한다.
-- 상태: **LNX-01 기반 코드 구현·자동 검사 완료. Linux 노드 설치·초기화·systemd 서비스 및 실제 머신 인수는 NOT_RUN.** [LNX-01 결과](../results/2026-11-16-linux-foundation.md)에 Mac 회귀·Linux target 타입 검사와 실물 지원 여부를 별도로 기록한다.
+- 상태: **LNX-01 기반 코드 구현·자동 검사 완료. Linux 노드의 일반 설치 UX·실제 머신 인수는 NOT_RUN. LNX-03은 별도 root 승인 spec을 받는 개발용 systemd backend를 구현하며 실제 실행과 구분한다.** [LNX-01 결과](../results/2026-11-16-linux-foundation.md)에 Mac 회귀·Linux target 타입 검사와 실물 지원 여부를 별도로 기록한다.
 - 연결: [전체 구현 계획](./2026-09-16-implementation-plan.md), [인수·릴리스 기준](./2026-09-16-acceptance-and-release.md), [CLI 과업](./2026-10-22-integrated-operations-ux-implementation-plan.md), [지원 범위](../docs/support-matrix.md).
 
 ## 1. 방향 변경과 보존할 결과
@@ -33,8 +33,8 @@ Rust, 직접 CLI, 순차 설치 문답, 노드 이름 기반 운용, 관리 CLI�
 | --- | --- | --- | --- |
 | LNX-01 환경·플랫폼 기반 | Linux runtime inventory staging, Linux 관리 CLI bundle 제작/검증/설치·업데이트 경계, 읽기 전용 host/systemd 준비 상태 검사, 플랫폼별 실패 안내 | Linux와 Mac의 OS/CPU·신뢰·경로 계약 회귀, Linux target 타입 검사, host 검사 무변경·부분 결과 검증. 실제 Linux 실행은 별도 표기 | IMPLEMENTED / AUTO_CHECKED — 실제 Linux 실행 NOT_RUN·노드/서비스 미지원 |
 | LNX-02 Linux 고정 공급물 | 선정 Linux JRE 전체 inventory·provenance, 고정 RC.4 JAR의 engine-info/native/RocksDB 사전 실행, Linux runtime R-L·내부 실행기 A-L·관리 CLI C-L의 분리 identity | 실제 Linux에서 JRE/JAR·전체 engine identity·inventory 대조, 고정 package 검증. clean source·archive/manifest/JAR/Java/CLI hash를 기록 | SUPPLY_PINNED / OFFLINE_VERIFIED — 실제 Java/native·Linux CLI build·runtime package NOT_RUN |
-| LNX-03 systemd 서비스·권한 | system service adapter, instance별 전용 UID, root 제어 기록, 서비스 시작 gate·시도별 identity, 정상 종료 판정과 정제 로그 | OS 증거와 engine 보고서 결속, 서비스 직접 실행도 gate 적용, 미완료/불명 init 거부, 다른 instance/UID 무영향 및 엔진의 제어 기록 변조 거부 | PLAN / start·stop 미지원 |
-| LNX-04 실제 단일 노드 인수 | 설치→명시 init→start/status/logs/diagnose/stop, 같은 DB 재시작, SSH 연결 종료 뒤 관측, 실행 중 관리 CLI 전환 | 같은 고정 Linux 조합의 원자료·정제 결과, 정상 정리·payload/worker 불변·DB identity 유지. 단일 노드 로컬 readiness와 전역 합의 구분 | PLAN / NOT_RUN |
+| LNX-03 systemd 서비스·권한 | system service adapter, instance별 전용 UID, root 제어 기록, 서비스 시작 gate·시도별 identity, 정상 종료 판정과 정제 로그 | OS 증거와 engine 보고서 결속, 서비스 직접 실행도 gate 적용, 미완료/불명 init 거부, 다른 instance/UID 무영향 및 엔진의 제어 기록 변조 거부 | DEVELOPMENT_BACKEND_AUTO_CHECKED — [검사 결과](../results/2026-11-16-linux-systemd-development.md), 실제 Linux NOT_RUN |
+| LNX-04 실제 단일 노드 인수 | Linux package 조립·고정, 고정 실행기 위임, 전용 계정 생성/설치 승인·이름 연결 UX와 전체 bounded 진단 수집 통합, 설치→명시 init→start/status/logs/diagnose/stop, 같은 DB 재시작, SSH 연결 종료 뒤 관측, 실행 중 관리 CLI 전환 | 같은 고정 Linux 조합의 원자료·정제 결과, 정상 정리·payload/worker 불변·DB identity 유지. 단일 노드 로컬 readiness와 전역 합의 구분 | PLAN / NOT_RUN |
 | LNX-05 Linux 사용자 과업 | 전달용 package·신뢰 공개키/lock·전용 시험 입력·짧은 안내서·기록 양식. 작성자가 아닌 테스터의 직접 실행 | 처음 설치·준비 수정·중단 후 재개·새 터미널 운용·실패 진단을 관찰. 완료/도움/막힘·시간·문구·실제 명령 기록 | PLAN / NOT_RUN |
 | LNX-06 Linux 서버·네트워크 인수 | 동종 4-validator 거래·두 정족수 복구·wrong-pin, systemd lifecycle·재부팅 정책·전용 UID 격리·다중 host | G1-L의 해당 gate별 실제 근거. 로컬4노드와4-host를 구분하고 로그아웃/SSH 단절·재부팅·장애 범위 명시 | PLAN / NOT_RUN |
 | LNX-07 WSL2 추가 검증 | 지원 Linux 배포본을 WSL2에서 설치·운용, shell/PATH·filesystem·network·WSL 종료 조건 확인 | Windows/WSL/kernel/배포판/CPU/systemd 조합을 고정한 별도 결과. Linux 서버 PASS를 자동 승계하지 않음 | DEFERRED / NOT_RUN |
@@ -56,13 +56,13 @@ LNX-04가 끝나면 LNX-05를 시작할 수 있다. 모든 G1-L 장기·다중 h
 
 대규모 plugin framework를 먼저 만들지 않는다. 기존 launchd의 프로세스 관측·서비스 동작을 필요한 최소 adapter 경계로 분리한다. 공통 상태에 GUI domain이나 systemd unit을 강제 공통 필드로 넣지 않으며, 플랫폼별 관측을 해당 adapter에서 검증한 뒤 공통 결과로 표현한다.
 
-LNX-01의 systemd 기반은 **읽기 전용 준비 상태 검사와 명세/파서 검증**이다. unit 생성·등록·daemon-reload·start/stop·사용자 생성·권한 변경·sudo 설정을 자동 수행하지 않는다. 준비 상태 확인 성공은 Linux 서비스 지원 또는 노드 READY가 아니다. 현재 서비스 경로의 미지원 거절을 불완전한 user service로 우회하지 않는다.
+LNX-01의 systemd 기반은 **읽기 전용 준비 상태 검사와 명세/파서 검증**이다. unit 생성·등록·daemon-reload·start/stop·사용자 생성·권한 변경·sudo 설정을 자동 수행하지 않는다. 준비 상태 확인 성공은 Linux 서비스 지원 또는 노드 READY가 아니다. LNX-01 당시 서비스 경로는 미지원이었다. LNX-03의 개발용 system service를 별도로 추가하며 이를 user service로 우회하지 않는다.
 
 ### LNX-01 읽기 전용 host 검사와 runtime staging
 
 `bxdl host check [--timeout-seconds <1..30>] [--json]`은 host 기준만 읽고 systemd의 system manager를 조회한다. 기본 제한은 5초다. 선택 기준은 Linux GNU/x86_64·Ubuntu 24.04·PID 1 systemd·systemd 255 이상·manager의 `running` 상태다. OS/CPU·배포판·kernel과 WSL 여부, PID 1·manager version/state를 관측한다. 실제 glibc 버전·sudo 권한·JRE/RocksDB·서비스 계정 경계는 이 명령의 검사에 포함하지 않는다.
 
-JSON `data`의 `outcome`/`reasonCode`와 상위 결과의 이유를 구분해 읽는다. 기준을 관측하면 `SUCCEEDED / HOST_BASELINE_OBSERVED`(exit 0), 다른 플랫폼·선정 밖 배포판/버전·PID 1/systemd 상태·WSL은 해당 이유를 가진 `INCOMPLETE`(exit 3)다. 조회 자체의 실패는 오류로 반환한다. WSL은 `HOST_WSL_DEFERRED`로 별도 표기한다. `linuxServiceControl=NOT_IMPLEMENTED`, `engineAcceptance=NOT_RUN`, `serviceMutations=0`을 항상 포함하므로 host 성공을 서비스/엔진 인수 성공으로 해석하지 않는다. node HTTP 호출·서비스 변경·sudo 요청·파일 생성은 수행하지 않는다.
+JSON `data`의 `outcome`/`reasonCode`와 상위 결과의 이유를 구분해 읽는다. 기준을 관측하면 `SUCCEEDED / HOST_BASELINE_OBSERVED`(exit 0), 다른 플랫폼·선정 밖 배포판/버전·PID 1/systemd 상태·WSL은 해당 이유를 가진 `INCOMPLETE`(exit 3)다. 조회 자체의 실패는 오류로 반환한다. WSL은 `HOST_WSL_DEFERRED`로 별도 표기한다. LNX-01 당시 `linuxServiceControl=NOT_IMPLEMENTED`였으며 LNX-03에서는 `DEVELOPMENT_BACKEND_IMPLEMENTED`로 표시한다. `engineAcceptance=NOT_RUN`, `serviceMutations=0`은 유지하므로 host 성공을 서비스/엔진 인수 성공으로 해석하지 않는다. node HTTP 호출·서비스 변경·sudo 요청·파일 생성은 수행하지 않는다.
 
 `runtime stage`는 기존 `darwin/arm64`와 새 `linux/amd64`·`libc=glibc`·Java21 lock을 허용한다. Linux에는 명시 `libc`가 필요하고 Mac lock에는 이 필드를 넣지 않는다. 기존 Mac lock의 형식·bytes를 자동 수정하지 않는다. 이 확장은 offline inventory·안전한 symlink materialization·hash/mode·provenance 검증이며 Linux JRE 선택, archive의 원격 출처 인증 또는 Java 실행을 대신하지 않는다. 실제 Linux runtime lock과 package의 고정은 LNX-02다.
 
@@ -91,6 +91,16 @@ Linux 서버 profile은 **systemd system service + instance별 비root 실행 UI
 5. OS가 inactive/failed라고 보고한 사실만으로 정상 종료를 인정하지 않는다. 엔진의 STOPPED·storage/consensus 종료 근거, process/cgroup 부재, DB lock 해제 조건을 함께 확인한다. timeout·관측 불명은 UNKNOWN으로 보존한다.
 6. 첫 서비스 단계의 자동 재시작은 기본 OFF다. 로그인/SSH 세션과 독립인 시스템 서비스 수명주기를 검증하고, 부팅 자동 시작은 명시 정책·startup gate·실제 재부팅 인수를 추가한 뒤 지원한다. 직접 kick/restart가 이전 승인을 재사용하지 않게 한다.
 7. root-owned 기록과 runtime/engine-owned output을 연결하는 프로토콜은 LNX-03에서 별도 회귀·실물 인수한다. 기존 Mac control의 owner 검사를 제거하거나 모든 UID를 허용해 Linux 동작을 만드는 변경은 하지 않는다.
+
+### LNX-03 개발용 경로와 설치 UX 연결 경계
+
+기존 Mac control은 같은 UID를 전제로 하므로 owner 검사를 확장하지 않는다. 별도 Linux control은 새 root0755 디렉터리에 root0600 binding·private journal, root 소유 runtime/JAR/worker/config, 서비스 UID0700 data/output을 둔다. Linux 전용 UID/GID는 경로에서 계산한 `bxdl-<digest>` 계정으로 한정하고, 관리자가 미리 생성한 nologin 계정·전용 그룹을 검증한다. 계정을 암묵 생성하거나 sudoers를 수정하지 않는다.
+
+개발 명령 `linux-service register --instance <새 경로> --spec <json> --allow-development`가 고정 Linux lock·공급 inventory·설정을 검증·보관하고 서비스 UID로 cold 검사를 한다. 이후 `init/resume-init/start/status/stop --instance`와 offline 기록 경로를 연결한다. LNX-03의 명시적인 관리자 경로이며 기존 `setup apply`/`nodes add`를 Linux 시스템 설치 UX로 확장한 것은 아니다. LNX-04에서 package 조립·trust/계정/경로 검토·설치 승인·이름 기반 위임을 연결하고 인수한다.
+
+새 root 소유 gate binary를 시도별 unit이 실행한다. `Type=exec`는 gate 실행 관측이며 Java READY가 아니다. gate는 root 기록을 소비하고 unit/InvocationID/PID/cgroup을 결속한 뒤 고정 `/usr/bin/setpriv`로 보조 그룹·capability를 제거하고 전용 UID/GID로 Java를 exec한다. cold/init도 같은 권한 하향 경계를 사용한다. root journal의 쓰기 descriptor를 엔진에 전달하지 않으며 읽기 전용 operation lock만 stdin으로 상속한다. 자동 restart/enable·범용 shell·임의 Java 옵션은 제공하지 않는다.
+
+종료 직후 `ExecStopPost`가 root 소유 OS 종료 기록을 남겨 systemd GC 이후에도 InvocationID·PID·정상 exit를 검증한다. STOPPED 판정은 이 기록과 engine 보고서의 storage/consensus closure와 root가 결속한 시도의 process/cgroup 부재·DB lock 획득을 함께 요구한다. 종료 불명·gate 중단·권한/자료 불일치를 과거 정상 상태로 덮지 않는다. 실제 Linux에서 계정 격리·잠금·직접 systemctl 재실행·SSH 단절을 확인하기 전에는 systemd 인수 PASS를 기록하지 않는다. [개발 경로와 실제 시험 목록](../docs/linux-service-development.md)을 따른다.
 
 ## 6. JRE·엔진 공급과 패키지 고정
 
