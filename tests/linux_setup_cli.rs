@@ -159,7 +159,8 @@ fn default_linux_route_saves_fixed_identity_and_sources_then_resumes_without_rew
     ));
     let created = run(&f.args(&["setup", "new", NAME]), &mut input, true);
     created.expect(5);
-    assert!(created.out.contains("LINUX_SETUP_PAUSED"));
+    assert!(created.err.contains("LINUX_SETUP_PAUSED"));
+    assert!(!created.out.contains("LINUX_SETUP_PAUSED"));
     let s = Preparation::open(&f.workspace()).unwrap();
     assert_eq!(s.field_value("instanceId").as_deref(), Some(NAME));
     assert_eq!(
