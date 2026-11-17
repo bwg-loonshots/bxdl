@@ -1,0 +1,92 @@
+{
+  "files": [
+    {
+      "mode": 420,
+      "path": "packaging/engine-lock.rc4-temurin-linux-development.json",
+      "sha256": "9817d950f19832c725bfd373829023d44a437ad93e9f6291feef6c3185e94675",
+      "size": 1339
+    },
+    {
+      "mode": 420,
+      "path": "packaging/runtime-lock.temurin-21-linux-amd64.json",
+      "sha256": "23eec871655dea8af8f79cb69f21c4add762226a9314df003edce1233e898f47",
+      "size": 48427
+    },
+    {
+      "mode": 420,
+      "path": "source/bxdl-source.tar.gz",
+      "sha256": "1dc1dee7bc85c81a9ad78582e40f50785838d83d83dbed8abc6910dcbbd56631",
+      "size": 1942576
+    },
+    {
+      "mode": 420,
+      "path": "supply/jre.tar.gz",
+      "sha256": "a535a1df9c6284d9618872984e026ae0352d1f7e9e0605425c0e6114f47351dd",
+      "size": 52181297
+    },
+    {
+      "mode": 420,
+      "path": "supply/nigo-node.jar",
+      "sha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+      "size": 164133636
+    },
+    {
+      "mode": 493,
+      "path": "tools/build-linux-candidate.py",
+      "sha256": "c964bb2400c6d5075de7c6e0f61cb157a1885abaed40898cf18bbd5608e89b49",
+      "size": 22135
+    },
+    {
+      "mode": 420,
+      "path": "tools/linux_build_contract.py",
+      "sha256": "e06531a2d19fabae5313edd6ac358e2d5e31ed7fb035263a691b8a5f24a75df3",
+      "size": 21839
+    }
+  ],
+  "kind": "bxdl-linux-native-build-plan",
+  "platform": {
+    "arch": "amd64",
+    "builderDistribution": "ubuntu",
+    "builderVersion": "24.04",
+    "declaredMinGlibc": "2.34",
+    "libc": "glibc",
+    "os": "linux"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "archive": {
+      "path": "source/bxdl-source.tar.gz",
+      "sha256": "1dc1dee7bc85c81a9ad78582e40f50785838d83d83dbed8abc6910dcbbd56631",
+      "size": 1942576
+    },
+    "cargoLockSha256": "2bd2330a367d957e37b5536ede4c76cbe9365b7d2933f8ba2416cc62c55decfc",
+    "commit": "ba4d5af6b505ea880be034b73094ac8c92018d57",
+    "rustToolchainSha256": "110444165732cf0c2eb24f96f6ab9229d2f4d3ff99da0778385799d6c60dd7b1"
+  },
+  "supply": {
+    "engineLock": {
+      "path": "packaging/engine-lock.rc4-temurin-linux-development.json",
+      "sha256": "9817d950f19832c725bfd373829023d44a437ad93e9f6291feef6c3185e94675",
+      "size": 1339
+    },
+    "jar": {
+      "path": "supply/nigo-node.jar",
+      "sha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+      "size": 164133636
+    },
+    "runtimeArchive": {
+      "path": "supply/jre.tar.gz",
+      "sha256": "a535a1df9c6284d9618872984e026ae0352d1f7e9e0605425c0e6114f47351dd",
+      "size": 52181297
+    },
+    "runtimeLock": {
+      "path": "packaging/runtime-lock.temurin-21-linux-amd64.json",
+      "sha256": "23eec871655dea8af8f79cb69f21c4add762226a9314df003edce1233e898f47",
+      "size": 48427
+    }
+  },
+  "toolchain": {
+    "rust": "1.86.0",
+    "target": "x86_64-unknown-linux-gnu"
+  }
+}

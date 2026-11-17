@@ -2,6 +2,8 @@
 
 2026-11-17 기준 **설치·운용 UX 코드가 연결된 개발 경로**다. 실제 Linux native build·JRE/native/RocksDB·설치·systemd·SSH 단절·독립 관리 CLI 전환 인수는 아직 NOT_RUN이다. signed Linux runtime archive와 인수된 exact executor profile도 아직 없다. 이 문서는 현재 명령과 권한 경계를 설명하며, LNX-05의 테스터 전달본·사용자 과업 완료를 뜻하지 않는다.
 
+[Linux 네이티브 빌드 안내](./linux-native-build.md)의 새 kit·제작·수신 검증 도구는 **PREPARED**다. 제품 source는 LNX-04 commit `ba4d5af6b505ea880be034b73094ac8c92018d57`로 고정했고 제작 도구는 별도 hash로 고정했다. 이번 후속 입력 오류·필드 검증·테스트 수정은 다음 kit 갱신 전까지 이 source에 포함하지 않는다. 아직 실제 Linux host에서 제작하지 않아 CLI/runtime archive hash는 없으며, 향후 unsigned 개발 archive 제작·수신 검증만으로 아래 설치·운용 인수를 완료하지 않는다. 기존 LNX-02 전달본은 변경하지 않는다.
+
 대상은 Ubuntu 24.04 LTS·x86_64/glibc·PID 1 systemd의 실제 Linux 머신이다. WSL2는 후속이다. Mac의 기존 설치·LaunchAgent는 그대로 유지하며 Mac에서 `setup new/resume/edit/apply --linux`를 실행하지 않는다. Mac의 `setup list/show --linux`는 저장 기록 조회 형식만 선택한다.
 
 ## 1. 준비할 자료와 CLI
@@ -11,11 +13,13 @@
 - [선정 Linux JRE](../packaging/runtime-lock.temurin-21-linux-amd64.json)의 flat runtime 폴더. [LNX-02 준비 도구](./linux-validation.md)의 `work/prepared/runtime` 형태이며, 원 archive를 임의로 풀어 legal symlink가 남은 폴더와 구분한다.
 - [Linux engine lock](../packaging/engine-lock.rc4-temurin-linux-development.json)에 고정한 RC.4 JAR. Mac JRE·Mac 실행 파일은 사용할 수 없다.
 - 같은 시험 노드를 위한 제품 `instance.json`, NIGO native `node.json`, 공통 체인 자료와 시험용 validator/TLS key·password **파일**. 비밀번호 원문을 문답이나 명령 인자로 입력하지 않는다.
-- 이번 Linux 변경이 포함된 검토한 BXDL source 또는 별도로 검증한 Linux 관리 CLI. LNX-02의 과거 고정 source archive는 당시 cold probe용이며 LNX-04 명령을 포함하지 않는다.
+- LNX-04가 포함된 검토한 BXDL source 또는 별도로 검증한 Linux 관리 CLI. 새 고정 후보의 제작·회수에는 [native build kit](./linux-native-build.md)를 사용한다. LNX-02의 과거 고정 source archive는 당시 cold probe용이며 LNX-04 명령을 포함하지 않으므로 대체하거나 덮어쓰지 않는다.
 
 키/password 등 private 입력은 호출 사용자가 소유한 `0600` 정규파일로 준비한다. 입력 경로·상위 경로의 소유자/권한과 symlink를 검사하며, root helper가 읽을 수 있다는 이유로 root 전용 비밀을 대신 읽지 않는다. 설치 영역 내부를 공급물 경로로 지정하지 않는다. 사용자 원본은 수정하지 않고 승인한 자료를 시스템 영역에 별도 보관한다.
 
-Linux에서 개발용 CLI를 직접 빌드한다면 검토한 source commit으로 이동해 다음처럼 확인한다. `git status --short`가 비어 있는지 확인한 뒤 진행한다. Rust 1.86.0·C 링커가 필요하며 Cargo 의존성 캐시가 없으면 네트워크가 필요하다. 이는 오프라인 최종 제품 설치 절차가 아니다.
+고정 후보는 [네이티브 빌드 안내](./linux-native-build.md)의 source·도구·JRE/JAR pin을 확인하고 일반 사용자로 제작한다. 제작 도구는 archive와 receipt를 만들며 sudo·계정 생성·설치·JVM·systemd를 수행하지 않는다. Linux 실행기 profile 인수는 별도 단계다.
+
+개별 개발용 CLI를 직접 빌드한다면 검토한 source commit으로 이동해 다음처럼 확인한다. `git status --short`가 비어 있는지 확인한 뒤 진행한다. Rust 1.86.0·C 링커가 필요하며 Cargo 의존성 캐시가 없으면 네트워크가 필요하다. 이는 오프라인 최종 제품 설치 절차가 아니다.
 
 ```sh
 git status --short
@@ -126,4 +130,4 @@ bxdl stop local
 
 LNX-03의 오래된 worker/control에는 새 공개 descriptor 프로토콜이 없을 수 있다. 현재 관리 CLI는 이를 자동 채택하거나 worker를 교체하지 않는다. 기존 개발 기록은 원래 실행기로 다루고, 현재 UX는 새 시험 이름·새 control로 검증한다. 새 저수준 `linux-service register`와 옛 기록의 호환 경계는 [개발 backend 안내](./linux-service-development.md)를 따른다.
 
-다음 순서는 실제 Linux native build와 LNX-02 cold/native 조합 확인, 고정 Linux runtime archive·실행기 profile 준비, 같은 조합의 설치·init·서비스·정상 종료·DB 재시작·SSH 단절·CLI 전환 인수다. 이후 LNX-05에서 작성자가 아닌 테스터에게 전달본과 짧은 과업을 배정한다. 현재 [전체 계획](../design/2026-11-16-linux-first-implementation-plan.md)의 실물 항목은 NOT_RUN이며 Mac 합성 테스트·타입 검사 결과를 대신 사용하지 않는다.
+다음 순서는 준비한 kit의 실제 Linux native build·unsigned 개발 CLI/runtime archive 제작과 receipt 회수, 독립 수신 검증, 선정 JRE/RC.4의 cold/native 조합 확인이다. 이어 같은 고정 조합으로 설치·init·서비스·정상 종료·DB 재시작·SSH 단절·CLI 전환을 인수하고 Linux runtime·실행기 profile의 승인 근거를 확정한다. 제작·수신 성공만으로 profile을 등록하지 않는다. 이후 LNX-05에서 작성자가 아닌 테스터에게 전달본과 짧은 과업을 배정한다. 현재 [전체 계획](../design/2026-11-16-linux-first-implementation-plan.md)의 실물 항목은 NOT_RUN이며 Mac 합성 테스트·타입 검사 결과를 대신 사용하지 않는다.

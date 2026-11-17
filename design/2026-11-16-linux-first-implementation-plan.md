@@ -1,7 +1,7 @@
 # 실제 Linux 우선 구현·인수 계획
 
 - 결정일: 2026-11-16. 반복 검토자가 실제 Linux 머신을 사용할 수 있으므로 **실제 Linux → Linux 사용자 과업·서버 인수 → WSL2 추가 검증** 순서로 변경한다.
-- 갱신: 2026-11-17. 상태: **LNX-01 기반·LNX-02 공급물 고정·LNX-03 개발용 systemd backend와 LNX-04 설치·운용 UX 연결을 구현했다. 실제 Linux build/link·JRE/native·설치·systemd 인수와 signed runtime/exact profile은 NOT_RUN/후속이다.** [LNX-01 결과](../results/2026-11-16-linux-foundation.md)에 Mac 회귀·Linux target 타입 검사와 실물 지원 여부를 별도로 기록한다.
+- 갱신: 2026-11-17. 상태: **LNX-01 기반·LNX-02 공급물 고정·LNX-03 개발용 systemd backend와 LNX-04 설치·운용 UX 연결을 구현했다. LNX-04 `ba4d5af` commit 기준 native build kit·제작·수신 검증 도구는 PREPARED다. 실제 Linux build/link·runtime archive 제작·JRE/native·설치·systemd는 NOT_RUN이며 exact executor profile은 NOT_ADMITTED다.** [LNX-01 결과](../results/2026-11-16-linux-foundation.md)에 Mac 회귀·Linux target 타입 검사와 실물 지원 여부를 별도로 기록한다.
 - 연결: [전체 구현 계획](./2026-09-16-implementation-plan.md), [인수·릴리스 기준](./2026-09-16-acceptance-and-release.md), [CLI 과업](./2026-10-22-integrated-operations-ux-implementation-plan.md), [지원 범위](../docs/support-matrix.md).
 
 ## 1. 방향 변경과 보존할 결과
@@ -34,7 +34,7 @@ Rust, 직접 CLI, 순차 설치 문답, 노드 이름 기반 운용, 관리 CLI�
 | LNX-01 환경·플랫폼 기반 | Linux runtime inventory staging, Linux 관리 CLI bundle 제작/검증/설치·업데이트 경계, 읽기 전용 host/systemd 준비 상태 검사, 플랫폼별 실패 안내 | Linux와 Mac의 OS/CPU·신뢰·경로 계약 회귀, Linux target 타입 검사, host 검사 무변경·부분 결과 검증. 실제 Linux 실행은 별도 표기 | IMPLEMENTED / AUTO_CHECKED — 실제 Linux 실행 NOT_RUN·노드/서비스 미지원 |
 | LNX-02 Linux 고정 공급물 | 선정 Linux JRE 전체 inventory·provenance, 고정 RC.4 JAR의 engine-info/native/RocksDB 사전 실행, Linux runtime R-L·내부 실행기 A-L·관리 CLI C-L의 분리 identity | 실제 Linux에서 JRE/JAR·전체 engine identity·inventory 대조, 고정 package 검증. clean source·archive/manifest/JAR/Java/CLI hash를 기록 | SUPPLY_PINNED / OFFLINE_VERIFIED — 실제 Java/native·Linux CLI build·runtime package NOT_RUN |
 | LNX-03 systemd 서비스·권한 | system service adapter, instance별 전용 UID, root 제어 기록, 서비스 시작 gate·시도별 identity, 정상 종료 판정과 정제 로그 | OS 증거와 engine 보고서 결속, 서비스 직접 실행도 gate 적용, 미완료/불명 init 거부, 다른 instance/UID 무영향 및 엔진의 제어 기록 변조 거부 | DEVELOPMENT_BACKEND_AUTO_CHECKED — [검사 결과](../results/2026-11-16-linux-systemd-development.md), 실제 Linux NOT_RUN |
-| LNX-04 설치·운용 UX와 실제 단일 노드 인수 | Linux package 조립·고정, 고정 실행기 위임, 전용 계정 생성/설치 승인·이름 연결 UX와 전체 bounded 진단 수집 통합, 설치→명시 init→start/status/logs/diagnose/stop, 같은 DB 재시작, SSH 연결 종료 뒤 관측, 실행 중 관리 CLI 전환 | 같은 고정 Linux 조합의 원자료·정제 결과, 정상 정리·payload/worker 불변·DB identity 유지. 단일 노드 로컬 readiness와 전역 합의 구분 | DEVELOPMENT_UX_IMPLEMENTED / HOST_ACCEPTANCE_NOT_RUN — 사용자 준비·root 설치 승인·이름/최초 worker 위임·진단 연결. native build·signed runtime/profile·실제 인수는 남음 |
+| LNX-04 설치·운용 UX와 실제 단일 노드 인수 | Linux package 조립·고정, 고정 실행기 위임, 전용 계정 생성/설치 승인·이름 연결 UX와 전체 bounded 진단 수집 통합, 설치→명시 init→start/status/logs/diagnose/stop, 같은 DB 재시작, SSH 연결 종료 뒤 관측, 실행 중 관리 CLI 전환 | 같은 고정 Linux 조합의 원자료·정제 결과, 정상 정리·payload/worker 불변·DB identity 유지. 단일 노드 로컬 readiness와 전역 합의 구분 | DEVELOPMENT_UX_IMPLEMENTED / HOST_ACCEPTANCE_NOT_RUN — 사용자 준비·root 설치 승인·이름/최초 worker 위임·진단 연결. 고정 source native build kit·제작/수신 도구 PREPARED. 실제 build·archive 생성은 NOT_RUN, profile NOT_ADMITTED |
 | LNX-05 Linux 사용자 과업 | 전달용 package·신뢰 공개키/lock·전용 시험 입력·짧은 안내서·기록 양식. 작성자가 아닌 테스터의 직접 실행 | 처음 설치·준비 수정·중단 후 재개·새 터미널 운용·실패 진단을 관찰. 완료/도움/막힘·시간·문구·실제 명령 기록 | PLAN / NOT_RUN |
 | LNX-06 Linux 서버·네트워크 인수 | 동종 4-validator 거래·두 정족수 복구·wrong-pin, systemd lifecycle·재부팅 정책·전용 UID 격리·다중 host | G1-L의 해당 gate별 실제 근거. 로컬4노드와4-host를 구분하고 로그아웃/SSH 단절·재부팅·장애 범위 명시 | PLAN / NOT_RUN |
 | LNX-07 WSL2 추가 검증 | 지원 Linux 배포본을 WSL2에서 설치·운용, shell/PATH·filesystem·network·WSL 종료 조건 확인 | Windows/WSL/kernel/배포판/CPU/systemd 조합을 고정한 별도 결과. Linux 서버 PASS를 자동 승계하지 않음 | DEFERRED / NOT_RUN |
@@ -112,7 +112,7 @@ Linux 서버 profile은 **systemd system service + instance별 비root 실행 UI
 
 [Linux 운용 안내](../docs/linux-operations.md)에 현재 명령·경로·bootstrap 전제를 기록한다. Mac의 합성 user-journal 9사례와 target/catalog 집중 회귀는 실제 Linux 인수가 아니다. 전체 자동 검사와 Linux 타입 검사 결과도 native linking/서비스 실행과 별도로 기록한다.
 
-LNX-04의 남은 순서는 (1) 실제 Linux native CLI 빌드와 LNX-02 cold/native 조합 확인, (2) Linux runtime R-L/A-L의 archive·실행기 profile 고정, (3) 정확한 조합에서 설치·계정 격리·명시 init·서비스·정상 종료·같은 DB 재시작·SSH 단절·관리 CLI 전환 인수다. 이 근거가 준비되면 LNX-05의 테스터 과업과 전달물을 확정한다. 현재 새 NIGO JAR나 API 구현을 선행 요청하지 않으며 실제 결함·계약 불일치가 관측될 때 별도 근거로 협의한다.
+LNX-04의 남은 순서는 (1) 준비한 고정 kit를 실제 Linux에서 빌드해 unsigned 개발 CLI/runtime archive·receipt를 제작하고 독립 수신 검증, (2) 선정 JRE/RC.4 cold/native 조합 확인, (3) 정확한 조합에서 설치·계정 격리·명시 init·서비스·정상 종료·같은 DB 재시작·SSH 단절·관리 CLI 전환 인수와 Linux runtime R-L/A-L 실행기 profile 승인 근거 확정이다. 개발 archive 제작과 hash 고정만으로 설치·서비스 profile을 승인하지 않는다. 이 근거가 준비되면 LNX-05의 테스터 과업과 전달물을 확정한다. 현재 새 NIGO JAR나 API 구현을 선행 요청하지 않으며 실제 결함·계약 불일치가 관측될 때 별도 근거로 협의한다.
 
 ## 6. JRE·엔진 공급과 패키지 고정
 
@@ -131,6 +131,17 @@ NIGO 문서를 수정할 필요가 생기면 전용 worktree와 브랜치를 사
 2026-11-16에 Linux용 **Temurin21.0.13+9-LTS full JRE**를 별도로 선정했다. 공식 archive·source·build 자료 수신과 정규화257파일 inventory를 고정하고 Python 준비 도구와 LNX-01 clean CLI의 Rust staging으로 교차 검증했다. 고정 RC.4 JAR/expected identity는 유지하고 Linux Java hash를 새 engine lock에 결합했다. [후보 identity](../packaging/linux-rc4-candidate.json)와 [공급 결과](../results/2026-11-16-linux-rc4-supply.md)를 따른다.
 
 LNX-02 전체 완료를 뜻하지 않는다. 실제 Linux CLI build·Java properties/modules·engine-info는 새 probe로 수행하고, native/RocksDB는 NIGO의 명시 exact-JAR/selected-JRE 시험 경로와 별도 입력·결과로 확인해야 한다. cold probe PASS를 native 실행으로 계산하지 않는다. Linux R-L/A-L/C-L byte identity와 실행기 profile은 실제 Linux build/조립 후 고정하며, 현재 Mac runtime의 pin을 재사용하거나 Linux 서비스 미구현 CLI를 운용 인수된 실행기로 등록하지 않는다.
+
+### LNX-04 후속 native build·후보 고정 준비 — 2026-11-17
+
+[네이티브 빌드 안내](../docs/linux-native-build.md)를 따라 새 kit를 전달하고 제작 결과를 회수한다. 현재 상태는 **PREPARED**이며 실행 가능한 Linux host는 아직 제공되지 않았다.
+
+1. 제품 source는 `ba4d5af6b505ea880be034b73094ac8c92018d57`의 committed archive로 고정한다. `Cargo.lock`·Rust 1.86.0·Linux JRE/RC.4 lock도 이 commit의 bytes를 사용한다. 작업 폴더의 미커밋 소스를 섞지 않는다.
+2. 제작 도구는 제품 source와 별도로 전체 파일 hash를 고정하고 build-plan의 외부 SHA-256으로 확인한다. 이번 후속 setup 오류 code·조기 필드 검증·플랫폼별 테스트는 제품 source에 자동 반영되지 않으며 새 commit으로 kit를 갱신해야 포함된다.
+3. Ubuntu 24.04 GNU/x86_64의 일반 사용자 제작에서 native compile/link·CLI identity·unsigned 개발 runtime/관리 CLI archive와 receipt를 만든다. 제작 중 JVM·root 설치·systemd를 실행하지 않는다. 이 단계는 아직 **NOT_RUN**으로 실제 binary/archive hash가 없다.
+4. 회수한 후보는 별도로 신뢰한 로컬 검증기로 plan·receipt·archive/manifest/payload pin을 확인한다. 회수 후보 안의 실행 파일을 검증기로 사용하지 않는다. 결과가 맞아도 native/RocksDB·설치·서비스는 **NOT_RUN**, exact executor profile은 **NOT_ADMITTED** 상태를 유지하며 별도 실물 인수로 진행한다.
+
+LNX-02의 기존 source 전달본·공급물·결과는 불변으로 보존한다. 새 kit를 과거 archive 경로에 덮거나 LNX-02의 이전 실행 이력을 새로운 source 결과로 바꾸지 않는다. 기존 Mac의 고정 runtime/profile도 변경하지 않는다.
 
 ## 7. 실제 Linux·사용자 검증
 

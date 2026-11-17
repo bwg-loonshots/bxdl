@@ -1,5 +1,10 @@
 # BXDL
 
+테스터에게 전달하는 Linux 빌드 검증 과업과 결과·개선 의견 양식은 [UAT 안내](./UAT/README.md)를 따른다. 최신 전달본의 정확한 source commit과 해시는 머지 후 생성하는 `UAT/deliveries/<commit>/HANDOFF.json`에 기록한다.
+
+
+**Linux 네이티브 빌드 준비 — 2026-11-17:** LNX-04를 `ba4d5af6b505ea880be034b73094ac8c92018d57`로 커밋하고, 이 source와 Linux JRE·RC.4 공급물의 빌드 kit 및 제작·수신 검증 도구를 **PREPARED** 상태로 준비했다. [네이티브 빌드 안내](./docs/linux-native-build.md)에서 source pin과 별도로 고정한 도구, 외부 checksum, 실제 Linux 제작·결과 회수 절차를 확인한다. 실제 Linux host가 아직 없어 native compile/link와 Linux CLI·runtime archive의 byte identity는 미생성이다. 설치·native/RocksDB·systemd는 **NOT_RUN**, executor profile은 **NOT_ADMITTED**다. 향후 unsigned 개발 archive 제작 성공도 설치·실행 인수를 뜻하지 않는다. 기존 LNX-02 전달본은 변경하지 않는다.
+
 **LNX-04 Linux 설치·운용 UX 연결 — 2026-11-17:** 일반 사용자 `setup new/resume/list/show/edit/apply`와 노드 이름 기반 운용을 개발용 systemd backend에 연결했다. 검토한 계획만 고정 root helper에 전달하며, 사용자 catalog는 일반 사용자 소유로 유지한다. 등록 후에는 root 공개 descriptor와 최초 worker hash를 대조해 고정 실행기에 위임한다. [Linux 운용 안내](./docs/linux-operations.md)를 따른다. **실제 Linux native build·JRE/엔진·systemd 인수, signed Linux runtime archive·exact executor profile과 사용자 과업은 NOT_RUN/후속**이다. 이번 사용자 journal·catalog 합성 검증을 실제 Linux 실행 결과로 계산하지 않는다. [자동 검증 결과](./results/2026-11-17-linux-operations-ux.md)에 전체 회귀와 최종 집중 검사를 기록했다.
 
 **LNX-03 당시 개발용 systemd 경로 — 2026-11-16:** root 제어 기록·전용 계정·일회성 시작 gate를 갖는 Linux 개발용 서비스 backend를 구현했다. `linux-service register`와 명시 `--instance` 운용을 사용한다. 당시 순차 설치·이름 기반 Linux 연결은 후속이었고 현재 LNX-04에서 개발 경로를 연결했다. 고정 Linux runtime archive/실행기 profile 및 실제 Linux 인수는 여전히 후속이다. [관리자 개발 경로](./docs/linux-service-development.md)에서 권한·명령·미검증 범위를 확인한다. [자동 검사 결과](./results/2026-11-16-linux-systemd-development.md)는 Rust659 PASS·Python205 PASS/2 SKIP·Linux 타입 검사 PASS이며, 기본 병렬 실행의 기존 시간 민감 실패2건과 재검증 이력을 포함한다.
@@ -133,7 +138,9 @@ make build-macos
 
 `make check`는 fmt·Clippy·Rust 단위/통합 테스트와 Python 3 표준 라이브러리 기반의 오프라인 인수 도구 회귀다. `make test-acceptance`는 이 Python 검사만 실행하며 노드를 시작하지 않는다. 예시 설정은 파일 참조만 담고 실제 chain/key/DB를 제공하지 않으므로 preflight 실패가 정상이다. schema 통과는 엔진 기동 가능 여부가 아니다. macOS arm64 산출물은 `dist/bxdl-darwin-arm64`이며 `bin/bxdl`은 빌드 호스트의 실행파일이다.
 
-Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux target type-check는 `make check-linux`로 가능하지만 먼저 해당 Rust target이 필요하다. 실제 Linux linking에는 적절한 Linux linker/sysroot가 필요하며 type-check를 실행 인수로 취급하지 않는다. 의존성을 미리 확보했다면 `cargo ... --locked --offline`을 사용할 수 있다.
+고정 source·공급물을 전달해 Linux 후보를 제작하고 회수하려면 [네이티브 빌드 kit 안내](./docs/linux-native-build.md)를 따른다. 현재 kit의 제품 source는 `ba4d5af6b505ea880be034b73094ac8c92018d57`이며, 이번 후속 입력 오류 코드·플랫폼별 테스트 수정은 다음 source commit으로 kit를 갱신하기 전까지 포함하지 않는다. 빌드 도구의 별도 hash가 source commit을 대체하지 않는다.
+
+개별 개발 빌드에는 Linux builder에서 `make build-linux`를 사용한다. Mac에서 Linux target type-check는 `make check-linux`로 가능하지만 먼저 해당 Rust target이 필요하다. 실제 Linux linking에는 적절한 Linux linker/sysroot가 필요하며 type-check를 실행 인수로 취급하지 않는다. 의존성을 미리 확보했다면 `cargo ... --locked --offline`을 사용할 수 있다.
 
 ## 패키지 검증
 
@@ -160,6 +167,8 @@ Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux targe
 - [RC.3 선택과 Mac 패키지 재인수](./design/2026-10-22-rc3-package-reacceptance.md)
 - [RC.3 전체14문답·취소/EOF·대기 중 HUP·재개 검증](./results/2026-10-22-macos-rc3-full-setup.md)
 - [현재 구현·검증 상태](./docs/implementation-status.md)
+- [Linux 네이티브 빌드 kit·후보 제작·수신](./docs/linux-native-build.md)
+- [Linux 설치·운용 개발 경로](./docs/linux-operations.md)
 - [이름 있는 순차 설치 준비·조회·항목 수정](./docs/preparation.md)
 - [설치 도우미·설정 초안 저장과 재개](./docs/setup.md)
 - [패키지 입력·서명·형식](./docs/package-format.md)

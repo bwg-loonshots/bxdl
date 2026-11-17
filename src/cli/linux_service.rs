@@ -368,6 +368,17 @@ pub(super) fn setup(
     {
         return invalid(&command);
     }
+    if action == "edit"
+        && flags.get("field").is_some_and(|field| {
+            !matches!(field.as_str(), "runtimeRoot" | "engineJar" | "nativeConfig")
+                && !crate::setup::FIELDS.iter().any(|candidate| {
+                    candidate.name == field
+                        && !matches!(candidate.name, "instanceId" | "dataDirectory")
+                })
+        })
+    {
+        return invalid(&command);
+    }
     if !matches!(action, "list" | "show") && (json_mode || !interactive) {
         return failure(
             &command,
@@ -440,6 +451,14 @@ pub(super) fn setup(
     };
     match value {
         Ok(v) => report(&command, v.outcome, v.code, v.message, v.data, v.exit),
+        Err(e)
+            if matches!(
+                e.code.as_str(),
+                "SETUP_INPUT_FAILED" | "SETUP_OUTPUT_FAILED"
+            ) =>
+        {
+            failure(&command, e, 7)
+        }
         Err(e) => service_failure(&command, e),
     }
 }

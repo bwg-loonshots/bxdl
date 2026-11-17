@@ -1,4 +1,6 @@
 //! Manager command routing preserves explicit targets, offline contracts and trust boundaries.
+//! Mac V1/V2 bindings and RC3/RC4 package executors are Mac fixture cases.
+//! Common help/grammar remains Unix; Linux authority refusals are separate tests.
 #![cfg(unix)]
 
 use bxdl::cli;
@@ -97,6 +99,7 @@ impl Fixture {
         args.push("--json".into());
         invoke(&args, &mut NoInput, false)
     }
+    #[cfg(target_os = "macos")]
     fn add(&self) {
         self.run(&[
             "nodes",
@@ -114,6 +117,7 @@ impl Fixture {
         args.extend_from_slice(extra);
         self.run(&args)
     }
+    #[cfg(target_os = "macos")]
     fn explicit(&self, command: &str, extra: &[&str]) -> Run {
         let mut args = vec![command, "--instance", self.control.to_str().unwrap()];
         args.extend_from_slice(extra);
@@ -199,8 +203,18 @@ fn instance_at(control: &Path, references: &Path) {
         &mut NoInput,
         false,
     );
-    result.assert_code(0);
-    assert_eq!(result.json()["data"]["initialization"], "NOT_STARTED");
+    if cfg!(target_os = "linux") {
+        // This is deliberately a Mac control fixture. Linux must reject its
+        // user-owned authority before any managed operation can be admitted.
+        result.assert_code(3);
+        assert_eq!(
+            result.json()["reasonCode"],
+            "LINUX_SERVICE_AUTHORITY_UNSAFE"
+        );
+    } else {
+        result.assert_code(0);
+        assert_eq!(result.json()["data"]["initialization"], "NOT_STARTED");
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -241,6 +255,7 @@ fn snapshot(root: &Path) -> BTreeMap<PathBuf, FileSnapshot> {
     }
     output
 }
+#[cfg(target_os = "macos")]
 fn latest_catalog(home: &Path) -> PathBuf {
     let mut files: Vec<_> = fs::read_dir(home.join("catalog"))
         .unwrap()
@@ -279,6 +294,9 @@ fn named_operation_help_is_exact_available_without_a_terminal_and_matches_json()
 fn ambiguous_targets_unknown_flags_and_missing_diagnostic_output_are_usage_errors_without_writes() {
     let fixture = Fixture::new();
     let marker = fixture.fake_package_cli();
+    // Mac retains its registered target; Linux must reject this grammar before
+    // trying to admit the foreign control or opening a management home.
+    #[cfg(target_os = "macos")]
     fixture.add();
     let before = snapshot(&fixture.root);
     let control = fixture.control.to_str().unwrap();
@@ -318,6 +336,7 @@ fn ambiguous_targets_unknown_flags_and_missing_diagnostic_output_are_usage_error
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn invalid_or_unknown_names_never_fall_back_to_the_only_saved_node() {
     let fixture = Fixture::new();
     fixture.add();
@@ -345,6 +364,7 @@ fn invalid_or_unknown_names_never_fall_back_to_the_only_saved_node() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn named_offline_logs_match_explicit_paths_without_mutation_or_executor_launch() {
     let fixture = Fixture::new();
     let marker = fixture.fake_package_cli();
@@ -362,6 +382,7 @@ fn named_offline_logs_match_explicit_paths_without_mutation_or_executor_launch()
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn a_different_management_root_cannot_select_a_name_from_another_catalog() {
     let fixture = Fixture::new();
     fixture.add();
@@ -374,6 +395,7 @@ fn a_different_management_root_cannot_select_a_name_from_another_catalog() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn damaged_catalog_blocks_name_resolution_but_preserves_explicit_offline_access() {
     let fixture = Fixture::new();
     fixture.add();
@@ -390,6 +412,7 @@ fn damaged_catalog_blocks_name_resolution_but_preserves_explicit_offline_access(
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn a_replaced_control_cannot_receive_a_previously_saved_name() {
     let fixture = Fixture::new();
     fixture.add();
@@ -404,6 +427,7 @@ fn a_replaced_control_cannot_receive_a_previously_saved_name() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn changed_binding_identity_is_rejected_even_when_the_control_inode_is_unchanged() {
     let fixture = Fixture::new();
     fixture.add();
@@ -425,6 +449,7 @@ fn changed_binding_identity_is_rejected_even_when_the_control_inode_is_unchanged
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn unsupported_package_profiles_never_execute_a_user_supplied_package_cli() {
     let fixture = Fixture::new();
     let marker = fixture.fake_package_cli();
@@ -451,6 +476,7 @@ fn unsupported_package_profiles_never_execute_a_user_supplied_package_cli() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn named_diagnose_writes_only_the_requested_report_and_preserves_offline_meaning() {
     let fixture = Fixture::new();
     let marker = fixture.fake_package_cli();
@@ -474,6 +500,7 @@ fn named_diagnose_writes_only_the_requested_report_and_preserves_offline_meaning
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn explicit_logs_preserve_partial_salvage_when_registration_cannot_identify_an_executor() {
     let fixture = Fixture::new();
     let marker = fixture.fake_package_cli();
@@ -495,6 +522,7 @@ fn explicit_logs_preserve_partial_salvage_when_registration_cannot_identify_an_e
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn identified_runtime_authentication_failures_never_fall_back_or_run_the_package_cli() {
     for (archive, manifest, identity) in [
         (
@@ -579,6 +607,9 @@ fn identified_runtime_authentication_failures_never_fall_back_or_run_the_package
 fn initialization_requires_exact_confirmation_and_unambiguous_targets_without_writes() {
     let fixture = Fixture::new();
     let marker = fixture.fake_package_cli();
+    // Mac retains its registered target; Linux must reject this grammar before
+    // trying to admit the foreign control or opening a management home.
+    #[cfg(target_os = "macos")]
     fixture.add();
     let control = fixture.control.to_str().unwrap();
     let home = fixture.home.to_str().unwrap();
@@ -622,6 +653,7 @@ fn initialization_requires_exact_confirmation_and_unambiguous_targets_without_wr
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn initialization_does_not_guess_names_or_create_an_unknown_management_home() {
     let fixture = Fixture::new();
     fixture.add();
@@ -650,6 +682,7 @@ fn initialization_does_not_guess_names_or_create_an_unknown_management_home() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn named_initialization_preserves_legacy_failure_without_running_an_unsupported_executor() {
     let fixture = Fixture::new();
     let marker = fixture.fake_package_cli();
@@ -674,6 +707,7 @@ fn named_initialization_preserves_legacy_failure_without_running_an_unsupported_
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn named_initialization_rejects_changed_catalog_control_and_binding_without_writes() {
     for change in ["catalog", "control", "binding"] {
         let fixture = Fixture::new();

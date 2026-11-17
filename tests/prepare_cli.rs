@@ -1,10 +1,16 @@
 //! Integrated preparation accepts an explicit name and saves only approved
 //! configuration work. Only separately approved apply may install/register;
 //! preparation and query commands never initialize or start a node.
+//! Archive/network-policy fixtures cover the Mac workflow. Shared grammar,
+//! preapproval and cancellation cases also run on Linux; its distinct native
+//! preparation journal and fixed-path rules are covered in linux_setup_cli.rs.
 #![cfg(unix)]
 
 use bxdl::cli;
-use serde_json::{Value, json};
+use serde_json::Value;
+#[cfg(target_os = "macos")]
+use serde_json::json;
+#[cfg(target_os = "macos")]
 use sha2::{Digest, Sha256};
 use std::{
     collections::BTreeMap,
@@ -132,11 +138,13 @@ fn snapshot(root: &Path) -> BTreeMap<PathBuf, Entry> {
     result
 }
 
+#[cfg(target_os = "macos")]
 fn write(path: &Path, contents: impl AsRef<[u8]>) {
     fs::write(path, contents).unwrap();
     fs::set_permissions(path, fs::Permissions::from_mode(0o600)).unwrap();
 }
 
+#[cfg(target_os = "macos")]
 fn prepare_sources(fixture: &Fixture) -> PathBuf {
     let sources = fixture.root.join("sources");
     fs::create_dir(&sources).unwrap();
@@ -203,10 +211,12 @@ fn prepare_sources(fixture: &Fixture) -> PathBuf {
 
 /// A small verified archive permits testing preparation publication without
 /// starting a process or requiring a vendor runtime download.
+#[cfg(target_os = "macos")]
 fn prepare_package(fixture: &Fixture, sources: &Path) -> (PathBuf, PathBuf) {
     prepare_package_with_java(fixture, sources, None)
 }
 
+#[cfg(target_os = "macos")]
 fn prepare_package_with_java(
     fixture: &Fixture,
     sources: &Path,
@@ -300,7 +310,14 @@ fn direct_setup_rejects_nonterminal_and_json_without_reading_or_writing() {
         assert!(result.stderr.is_empty(), "{}", result.stderr);
         let json: Value = serde_json::from_str(&result.stdout).unwrap();
         assert_eq!(json["schemaVersion"], 1);
-        assert_eq!(json["reasonCode"], "INVALID_ARGUMENTS");
+        assert_eq!(
+            json["reasonCode"],
+            if cfg!(target_os = "linux") {
+                "SETUP_INTERACTIVE_TERMINAL_REQUIRED"
+            } else {
+                "INVALID_ARGUMENTS"
+            }
+        );
     }
     assert_eq!(snapshot(&fixture.root), before);
     assert!(!fixture.home.exists());
@@ -470,6 +487,7 @@ fn missing_resume_never_creates_a_management_home_or_fallback_session() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn direct_and_console_share_named_creation_and_resume() {
     let fixture = Fixture::new();
     let arguments = strings(&["console", "--home", fixture.home.to_str().unwrap()]);
@@ -520,6 +538,7 @@ fn input_io_failure_has_existing_io_exit_code_and_does_not_create_a_home() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn importing_existing_product_keeps_references_private_and_skips_repeated_questions() {
     let fixture = Fixture::new();
     let sources = prepare_sources(&fixture);
@@ -559,6 +578,7 @@ fn importing_existing_product_keeps_references_private_and_skips_repeated_questi
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn public_network_selection_updates_product_and_retains_selected_policy_on_resume() {
     let fixture = Fixture::new();
     let sources = prepare_sources(&fixture);
@@ -605,6 +625,7 @@ fn public_network_selection_updates_product_and_retains_selected_policy_on_resum
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn accepted_network_policy_is_checkpointed_before_a_later_cancel() {
     let fixture = Fixture::new();
     let sources = prepare_sources(&fixture);
@@ -666,6 +687,7 @@ fn accepted_network_policy_is_checkpointed_before_a_later_cancel() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn file_preparation_requires_confirmation_and_leaves_a_saved_draft_without_approval() {
     let fixture = Fixture::new();
     let sources = prepare_sources(&fixture);
@@ -706,6 +728,7 @@ fn file_preparation_requires_confirmation_and_leaves_a_saved_draft_without_appro
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn imported_data_path_overlapping_management_writes_is_rejected_before_home_creation() {
     let fixture = Fixture::new();
     let sources = prepare_sources(&fixture);
@@ -722,6 +745,7 @@ fn imported_data_path_overlapping_management_writes_is_rejected_before_home_crea
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn back_at_first_question_saves_and_back_at_later_question_revisits_previous_answer() {
     let fixture = Fixture::new();
     let sources = prepare_sources(&fixture);
@@ -741,6 +765,7 @@ fn back_at_first_question_saves_and_back_at_later_question_revisits_previous_ans
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn switching_to_existing_native_keeps_sources_and_clears_public_network_policy() {
     let fixture = Fixture::new();
     let sources = prepare_sources(&fixture);
@@ -785,6 +810,7 @@ fn switching_to_existing_native_keeps_sources_and_clears_public_network_policy()
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn a_single_existing_field_can_be_edited_while_other_required_fields_are_missing() {
     let fixture = Fixture::new();
     let sources = prepare_sources(&fixture);
@@ -824,6 +850,7 @@ fn a_single_existing_field_can_be_edited_while_other_required_fields_are_missing
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn initial_draft_does_not_warn_about_an_invalid_saved_preparation() {
     let fixture = Fixture::new();
     let result = fixture.run("new", "new-draft", "y\n:cancel\n");
@@ -842,6 +869,7 @@ fn initial_draft_does_not_warn_about_an_invalid_saved_preparation() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn new_draft_selects_network_before_only_missing_product_questions() {
     let fixture = Fixture::new();
     let sources = prepare_sources(&fixture);
@@ -901,6 +929,7 @@ fn new_draft_selects_network_before_only_missing_product_questions() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn review_edits_one_field_and_publishes_a_new_revision_without_overwriting_previous_files() {
     let fixture = Fixture::new();
     let sources = prepare_sources(&fixture);
@@ -945,6 +974,7 @@ fn review_edits_one_field_and_publishes_a_new_revision_without_overwriting_previ
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn a_failed_preparation_is_not_retried_or_published_after_eof() {
     let fixture = Fixture::new();
     let sources = prepare_sources(&fixture);
@@ -980,6 +1010,7 @@ fn a_failed_preparation_is_not_retried_or_published_after_eof() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn read_only_queries_revalidate_prepared_inputs_and_edit_preserves_published_files() {
     let fixture = Fixture::new();
     let sources = prepare_sources(&fixture);
@@ -1064,6 +1095,7 @@ fn read_only_queries_revalidate_prepared_inputs_and_edit_preserves_published_fil
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn replacing_a_checkpoint_while_answering_cannot_complete_using_stale_state() {
     struct ReplacingInput {
         input: Cursor<Vec<u8>>,
@@ -1147,6 +1179,7 @@ fn replacing_a_checkpoint_while_answering_cannot_complete_using_stale_state() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn query_next_input_follows_network_dependencies_before_product_and_policy_fields() {
     let fixture = Fixture::new();
     let sources = prepare_sources(&fixture);
