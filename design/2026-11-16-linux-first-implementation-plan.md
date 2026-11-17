@@ -1,5 +1,14 @@
 # 실제 Linux 우선 구현·인수 계획
 
+## 2026-11-17 비공개 시험 범위 조정
+
+- 빌드·후보 archive 제작은 사전 준비로 둔다. 실제 Ubuntu 24.04 x86_64/systemd 장비에서 같은 전달본으로 노드 설치·초기화·서비스 운용까지 시험한다. 기술 검증과 사용성 평가는 결과를 분리하며 둘 중 하나의 성공으로 나머지를 대신하지 않는다.
+- `prepare-linux-operations.py`가 고정 build-plan/receipt와 로컬에서 직접 빌드한 verifier를 사용해 archive·전체 inventory를 확인하고 새 일반 사용자 폴더에 공급물을 추출한다. helper의 고정 root 경로 배치는 관리자 명령으로 명시하며 기존 파일은 덮지 않는다. generic `bxdl install`의 Linux signed profile 지원을 추가한 것으로 표현하지 않는다.
+- `prepare-linux-test-inputs.py`는 선정 JRE/RC.4와 helper resource를 대조하고 시험 장비에서 fresh validator/TLS 자료를 생성한다. loopback의 manual peerless 단일 노드와 `/var/lib/bxdl/instances/<이름>/data`를 사용한다. 노드/DB/init/systemd는 실행하지 않는다.
+- 본 과업은 setup 문답·중단/재개·조회 → apply → 명시 init → start/READY → logs/diagnose → SSH 연결 종료 후 같은 시도 유지 → stop → 같은 DB 재시작/정상 종료다. helper/설치 경로·계정은 기존 것과 충돌하면 보존하고 중단한다. 실패한 init을 지우거나 DB 초기화를 반복하지 않는다.
+- `UAT` 폴더는 삭제한다. 안내서·빈 양식·개별 시험 결과·전달 archive는 Git 밖의 비공개 패키지로만 관리한다. 제품 source commit·지원 도구 hash·JRE/JAR pin과 실행 미완료 범위를 `HANDOFF.json`에 고정한다. 테스트 결과의 공개나 NIGO 전달은 별도 요청 때 정제해 다룬다.
+- 네트워크 정족수·거래·재부팅/자동재시작·별도 버전 관리 CLI 전환·WSL2는 후속이다. 최초 시험의 A/C bytes가 같다는 사실을 CLI 버전 전환 인수로 계산하지 않는다. 실제 Linux 관측 전에는 서비스 인수 PASS/exact profile 승인을 기록하지 않는다.
+
 - 결정일: 2026-11-16. 반복 검토자가 실제 Linux 머신을 사용할 수 있으므로 **실제 Linux → Linux 사용자 과업·서버 인수 → WSL2 추가 검증** 순서로 변경한다.
 - 갱신: 2026-11-17. 상태: **LNX-01 기반·LNX-02 공급물 고정·LNX-03 개발용 systemd backend와 LNX-04 설치·운용 UX 연결을 구현했다. LNX-04 `ba4d5af` commit 기준 native build kit·제작·수신 검증 도구는 PREPARED다. 실제 Linux build/link·runtime archive 제작·JRE/native·설치·systemd는 NOT_RUN이며 exact executor profile은 NOT_ADMITTED다.** [LNX-01 결과](../results/2026-11-16-linux-foundation.md)에 Mac 회귀·Linux target 타입 검사와 실물 지원 여부를 별도로 기록한다.
 - 연결: [전체 구현 계획](./2026-09-16-implementation-plan.md), [인수·릴리스 기준](./2026-09-16-acceptance-and-release.md), [CLI 과업](./2026-10-22-integrated-operations-ux-implementation-plan.md), [지원 범위](../docs/support-matrix.md).
@@ -35,11 +44,11 @@ Rust, 직접 CLI, 순차 설치 문답, 노드 이름 기반 운용, 관리 CLI�
 | LNX-02 Linux 고정 공급물 | 선정 Linux JRE 전체 inventory·provenance, 고정 RC.4 JAR의 engine-info/native/RocksDB 사전 실행, Linux runtime R-L·내부 실행기 A-L·관리 CLI C-L의 분리 identity | 실제 Linux에서 JRE/JAR·전체 engine identity·inventory 대조, 고정 package 검증. clean source·archive/manifest/JAR/Java/CLI hash를 기록 | SUPPLY_PINNED / OFFLINE_VERIFIED — 실제 Java/native·Linux CLI build·runtime package NOT_RUN |
 | LNX-03 systemd 서비스·권한 | system service adapter, instance별 전용 UID, root 제어 기록, 서비스 시작 gate·시도별 identity, 정상 종료 판정과 정제 로그 | OS 증거와 engine 보고서 결속, 서비스 직접 실행도 gate 적용, 미완료/불명 init 거부, 다른 instance/UID 무영향 및 엔진의 제어 기록 변조 거부 | DEVELOPMENT_BACKEND_AUTO_CHECKED — [검사 결과](../results/2026-11-16-linux-systemd-development.md), 실제 Linux NOT_RUN |
 | LNX-04 설치·운용 UX와 실제 단일 노드 인수 | Linux package 조립·고정, 고정 실행기 위임, 전용 계정 생성/설치 승인·이름 연결 UX와 전체 bounded 진단 수집 통합, 설치→명시 init→start/status/logs/diagnose/stop, 같은 DB 재시작, SSH 연결 종료 뒤 관측, 실행 중 관리 CLI 전환 | 같은 고정 Linux 조합의 원자료·정제 결과, 정상 정리·payload/worker 불변·DB identity 유지. 단일 노드 로컬 readiness와 전역 합의 구분 | DEVELOPMENT_UX_IMPLEMENTED / HOST_ACCEPTANCE_NOT_RUN — 사용자 준비·root 설치 승인·이름/최초 worker 위임·진단 연결. 고정 source native build kit·제작/수신 도구 PREPARED. 실제 build·archive 생성은 NOT_RUN, profile NOT_ADMITTED |
-| LNX-05 Linux 사용자 과업 | 전달용 package·신뢰 공개키/lock·전용 시험 입력·짧은 안내서·기록 양식. 작성자가 아닌 테스터의 직접 실행 | 처음 설치·준비 수정·중단 후 재개·새 터미널 운용·실패 진단을 관찰. 완료/도움/막힘·시간·문구·실제 명령 기록 | PLAN / NOT_RUN |
+| LNX-05 Linux 사용자 과업 | 비공개 package·외부 checksum/lock·장비에서 생성한 시험 입력·안내서·결과/개선 양식. 작성자가 아닌 테스터의 직접 실행 | 빌드를 사전 준비로 두고 설치·중단/재개·init·서비스·진단·SSH 재접속·정상 종료·같은 DB 재시작. 기술 결과와 편의성 별도 기록 | PRIVATE_HANDOFF_PREPARED / NOT_RUN |
 | LNX-06 Linux 서버·네트워크 인수 | 동종 4-validator 거래·두 정족수 복구·wrong-pin, systemd lifecycle·재부팅 정책·전용 UID 격리·다중 host | G1-L의 해당 gate별 실제 근거. 로컬4노드와4-host를 구분하고 로그아웃/SSH 단절·재부팅·장애 범위 명시 | PLAN / NOT_RUN |
 | LNX-07 WSL2 추가 검증 | 지원 Linux 배포본을 WSL2에서 설치·운용, shell/PATH·filesystem·network·WSL 종료 조건 확인 | Windows/WSL/kernel/배포판/CPU/systemd 조합을 고정한 별도 결과. Linux 서버 PASS를 자동 승계하지 않음 | DEFERRED / NOT_RUN |
 
-LNX-04의 실제 단일노드 기술 인수가 끝나면 LNX-05를 시작할 수 있다. UX 코드·합성 테스트만으로 테스터의 운영 과업 준비를 완료했다고 보지 않는다. 모든 G1-L 장기·다중 host 검증을 기다린 뒤에만 UX 피드백을 받도록 묶지 않는다. 반대로 초기 사용자 과업 PASS를 LNX-06 완료나 정식 고객 배포로 해석하지 않는다. 각 단계는 실제 구현·자동 검사·host 실행·공급 확인을 별도 상태로 남긴다.
+LNX-04 실물 기술 검증과 LNX-05 사용성 관측은 같은 비공개 전달본에서 단계별로 수행한다. 선행 기술 단계가 실패하면 의존 단계는 중단하고, 이미 경험한 준비·설치 UX의 막힘과 의견은 그대로 회수한다. UX 코드·합성 테스트만으로 실제 운영 과업 PASS를 기록하지 않는다. 모든 G1-L 장기·다중 host 검증을 기다린 뒤에만 UX 피드백을 받도록 묶지 않는다. 반대로 초기 사용자 과업 PASS를 LNX-06 완료나 정식 고객 배포로 해석하지 않는다. 각 단계는 실제 구현·자동 검사·host 실행·공급 확인을 별도 상태로 남긴다.
 
 ## 4. 재사용할 CLI와 새 플랫폼 경계
 
@@ -112,7 +121,7 @@ Linux 서버 profile은 **systemd system service + instance별 비root 실행 UI
 
 [Linux 운용 안내](../docs/linux-operations.md)에 현재 명령·경로·bootstrap 전제를 기록한다. Mac의 합성 user-journal 9사례와 target/catalog 집중 회귀는 실제 Linux 인수가 아니다. 전체 자동 검사와 Linux 타입 검사 결과도 native linking/서비스 실행과 별도로 기록한다.
 
-LNX-04의 남은 순서는 (1) 준비한 고정 kit를 실제 Linux에서 빌드해 unsigned 개발 CLI/runtime archive·receipt를 제작하고 독립 수신 검증, (2) 선정 JRE/RC.4 cold/native 조합 확인, (3) 정확한 조합에서 설치·계정 격리·명시 init·서비스·정상 종료·같은 DB 재시작·SSH 단절·관리 CLI 전환 인수와 Linux runtime R-L/A-L 실행기 profile 승인 근거 확정이다. 개발 archive 제작과 hash 고정만으로 설치·서비스 profile을 승인하지 않는다. 이 근거가 준비되면 LNX-05의 테스터 과업과 전달물을 확정한다. 현재 새 NIGO JAR나 API 구현을 선행 요청하지 않으며 실제 결함·계약 불일치가 관측될 때 별도 근거로 협의한다.
+LNX-04의 남은 순서는 (1) 준비한 고정 kit를 실제 Linux에서 빌드해 unsigned 개발 CLI/runtime archive·receipt를 제작하고 독립 수신 검증, (2) 선정 JRE/RC.4 cold/native 조합 확인, (3) 정확한 조합에서 설치·계정 격리·명시 init·서비스·정상 종료·같은 DB 재시작·SSH 단절·관리 CLI 전환 인수와 Linux runtime R-L/A-L 실행기 profile 승인 근거 확정이다. 개발 archive 제작과 hash 고정만으로 설치·서비스 profile을 승인하지 않는다. LNX-05 전달본은 빌드를 사전 단계로 두고 설치·초기화·단일노드 운용까지 실행할 수 있게 준비하며, 실제 인수 결과는 테스터 관측 뒤에 확정한다. 현재 새 NIGO JAR나 API 구현을 선행 요청하지 않으며 실제 결함·계약 불일치가 관측될 때 별도 근거로 협의한다.
 
 ## 6. JRE·엔진 공급과 패키지 고정
 

@@ -1,6 +1,10 @@
 # BXDL
 
-테스터에게 전달하는 Linux 빌드 검증 과업과 결과·개선 의견 양식은 [UAT 안내](./UAT/README.md)를 따른다. 최신 전달본의 정확한 source commit과 해시는 머지 후 생성하는 `UAT/deliveries/<commit>/HANDOFF.json`에 기록한다.
+**Linux 비공개 설치·운용 시험 지원 — 2026-11-17:** 빌드를 사전 준비로 분리하고, 검증한 Linux 후보 archive를 설치 입력으로 연결하는 `tools/prepare-linux-operations.py`와 시험 장비에서 새 키·설정을 만드는 `tools/prepare-linux-test-inputs.py`를 추가했다. 전자는 후보 receipt·archive·전체 JRE inventory·실행기 pin을 대조한 뒤 새 사용자 폴더에만 추출하고, 후자는 고정 RC.4 helper를 일반 사용자로 실행해 단일 노드의 manual peerless 입력을 준비한다. 설치·init·start/stop은 기존 BXDL 명령과 명시 관리자 승인으로 따로 수행한다. 비공개 전달본의 본 과업은 설치·초기화·로컬 READY·진단·SSH 단절 유지·정상 종료·같은 DB 재시작이다. 실제 Linux 실행과 사용자 관측은 **NOT_RUN**, 정식 runtime/executor profile은 **NOT_ADMITTED**다.
+
+안내서·결과/개선 의견 양식과 전달물은 Git에 보관하지 않는다. 기존 `UAT` 폴더는 삭제했다. 저장소에는 재사용 가능한 준비 도구·회귀 검사·제품 설계만 남기며, 실행 기록은 비공개로 반환한다. 빌드/공급물 확인·설치 기술 결과·사용 편의성 평가는 별도로 기록한다. 현재 단일 노드 시험은 합의·거래 확정과 재부팅 자동 복구를 포함하지 않는다.
+
+테스터 검증은 Git 저장소와 분리한 비공개 전달 패키지로 진행한다. 안내서·빈 결과/개선 의견 양식·개별 실행 기록은 저장소에 보관하지 않는다. 전달본의 `HANDOFF.json`에 제품 source commit과 지원 도구·공급물 해시를 기록하며, 빌드는 사전 준비이고 본 과업은 노드 설치·초기화·서비스 운용 검증이다.
 
 
 **Linux 네이티브 빌드 준비 — 2026-11-17:** LNX-04를 `ba4d5af6b505ea880be034b73094ac8c92018d57`로 커밋하고, 이 source와 Linux JRE·RC.4 공급물의 빌드 kit 및 제작·수신 검증 도구를 **PREPARED** 상태로 준비했다. [네이티브 빌드 안내](./docs/linux-native-build.md)에서 source pin과 별도로 고정한 도구, 외부 checksum, 실제 Linux 제작·결과 회수 절차를 확인한다. 실제 Linux host가 아직 없어 native compile/link와 Linux CLI·runtime archive의 byte identity는 미생성이다. 설치·native/RocksDB·systemd는 **NOT_RUN**, executor profile은 **NOT_ADMITTED**다. 향후 unsigned 개발 archive 제작 성공도 설치·실행 인수를 뜻하지 않는다. 기존 LNX-02 전달본은 변경하지 않는다.
