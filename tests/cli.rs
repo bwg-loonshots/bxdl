@@ -443,7 +443,7 @@ fn service_commands_require_explicit_instance_and_bounded_wait() {
     }
     for command in ["start", "status", "stop"] {
         let (value, exit) = run(&[command, "--instance", "/missing-bxdl-service-test"]);
-        assert_eq!(exit, 3);
+        assert_missing_service_failure(&value, exit);
         assert_ne!(value["reasonCode"], "CAPABILITY_NOT_IMPLEMENTED");
     }
 }
@@ -454,8 +454,24 @@ fn status_wait_keeps_json_failure_as_a_single_document_without_notices() {
         let mut args = vec!["status", "--instance", "/missing-bxdl-service-wait-test"];
         args.extend(extra);
         let (value, exit) = run(&args);
-        assert_eq!(exit, 3);
+        assert_missing_service_failure(&value, exit);
         assert_ne!(value["reasonCode"], "INVALID_ARGUMENTS");
+    }
+}
+
+// Missing Linux authority cannot establish service state. The shared command
+// and single-JSON checks retain each adapter's existing observation contract.
+fn assert_missing_service_failure(value: &serde_json::Value, exit: i32) {
+    if cfg!(all(
+        target_os = "linux",
+        target_arch = "x86_64",
+        target_env = "gnu"
+    )) {
+        assert_eq!(exit, 6, "{value}");
+        assert_eq!(value["outcome"], "UNKNOWN");
+        assert_eq!(value["reasonCode"], "LINUX_SERVICE_UNKNOWN");
+    } else {
+        assert_eq!(exit, 3, "{value}");
     }
 }
 

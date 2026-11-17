@@ -8,14 +8,14 @@ fmt:
 	$(CARGO) fmt --all -- --check
 
 test:
-	$(CARGO) test --locked
+	$(CARGO) test --locked --no-fail-fast
 
 test-acceptance:
 	$(PYTHON) -B -m unittest discover -s tests/acceptance -p 'test_*.py'
 
 check: fmt test-acceptance
 	$(CARGO) clippy --locked --all-targets -- -D warnings
-	$(CARGO) test --locked
+	$(CARGO) test --locked --no-fail-fast
 
 build:
 	$(CARGO) build --locked --release
