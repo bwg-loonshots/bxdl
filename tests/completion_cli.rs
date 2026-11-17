@@ -775,3 +775,27 @@ fn host_check_completion_only_proposes_syntax() {
         vec!["--timeout-seconds"]
     );
 }
+
+#[test]
+fn linux_edit_completion_offers_sources_and_omits_fixed_identity_fields() {
+    let output = complete(5, &["setup", "edit", "local", "--linux", "--field", ""]);
+    let candidates = output.candidates("values");
+    for field in [
+        "runtimeRoot",
+        "engineJar",
+        "nativeConfig",
+        "nodeId",
+        "httpPort",
+    ] {
+        assert!(candidates.contains(&field), "{}", output.stdout);
+    }
+    assert!(!candidates.contains(&"instanceId"));
+    assert!(!candidates.contains(&"dataDirectory"));
+    if !cfg!(target_os = "linux") {
+        let output = complete(4, &["setup", "edit", "local", "--field", ""]);
+        let candidates = output.candidates("values");
+        assert!(candidates.contains(&"instanceId"));
+        assert!(candidates.contains(&"dataDirectory"));
+        assert!(!candidates.contains(&"runtimeRoot"));
+    }
+}

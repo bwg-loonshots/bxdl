@@ -1,6 +1,12 @@
 # Linux 개발용 systemd 서비스
 
-LNX-03은 **관리자가 명시적으로 등록하는 개발용 경로**다. 기존 Mac 등록 형식과 권한 규칙은 유지한다. Linux 순차 설치·계정 준비·이름 기반 운용 UX, signed runtime archive와 고정 내부 실행기 profile은 LNX-04에서 연결한다. 이 문서는 고객 설치 안내가 아니다.
+아래는 **LNX-03 당시 관리자가 명시적으로 등록하는 개발용 경로**와 권한 설계 이력이다. 기존 Mac 등록 형식과 권한 규칙은 유지한다. 2026-11-17 LNX-04에서 Linux 순차 설치·계정 준비·이름 기반 운용 UX를 연결했으며 현재 시작점은 [Linux 설치·운용 안내](./linux-operations.md)다. signed runtime archive·exact executor profile과 실제 Linux 인수는 남아 있다. 이 문서는 고객 설치 안내가 아니다.
+
+## LNX-04와 이전 개발 등록의 호환 경계
+
+현재 버전으로 새 `linux-service register`를 완료하면 root 공개 `management.json`을 발행한다. 현재 관리 CLI는 이 descriptor의 control identity·protocol·최초 worker pin을 대조하고 등록된 worker에만 정해진 운용 요청을 위임한다. 사용자 순차 setup은 별도 고정 설치 helper와 사용자 catalog를 사용하며 아래 수동 spec/사전 계정 절차와 구분한다.
+
+LNX-03에서 이미 만든 control에 descriptor가 없으면 현재 관리 CLI는 `LINUX_EXECUTOR_DESCRIPTOR_REQUIRED`로 거부한다. 이전 worker를 새 프로토콜 실행기로 인증하거나 descriptor를 임의 보충하지 않는다. 이전 개발 기록은 당시의 원래 LNX-03 실행기로 다루고 자료를 보존한다. 기존 등록 migration은 후속이며 새 UX를 검증할 때는 새 시험 이름·새 control을 사용한다. 아래의 당시 직접 운용 명령과 미구현 서술은 이 이력과 현재 버전의 차이를 감안해 읽는다.
 
 실제 Linux 실행 결과는 **NOT_RUN**이다. Mac의 회귀 검사와 Linux target 타입 검사를 실제 계정 생성·권한 격리·systemd·RocksDB 검증으로 계산하지 않는다. SSH 접속 정보를 개발자에게 제공할 필요는 없다. 관리자가 아래 준비와 별도 실물 시험을 수행하고 정제한 결과를 반환할 수 있다.
 
@@ -79,14 +85,19 @@ root gate는 unit/InvocationID/PID/cgroup과 root 기록을 결속한다. 고정
 
 ## 제한된 저장 기록·진단
 
+현재 LNX-04 descriptor가 있는 등록은 일반 사용자 터미널에서 다음처럼 수집한다. 진단 출력은 시스템 제어 영역 밖의 사용자 소유 디렉터리에 새로 만든다.
+
 ```sh
-sudo /opt/bxdl/development/bxdl logs --instance /var/lib/bxdl/instances/linux-dev-1 --json
-sudo /opt/bxdl/development/bxdl diagnose --instance /var/lib/bxdl/instances/linux-dev-1 --output /var/lib/bxdl/linux-dev-1-diagnostic.json --json
+sudo -v
+/opt/bxdl/development/bxdl logs --instance /var/lib/bxdl/instances/linux-dev-1 --json
+/opt/bxdl/development/bxdl diagnose --instance /var/lib/bxdl/instances/linux-dev-1 --output ./linux-dev-1-diagnostic.json --json
 ```
 
-LNX-03은 root 제어 상태와 검증 가능한 최종 엔진 report의 요약만 반환한다. HTTP·systemctl·Java를 실행하지 않으며 runtime 상태는 `NOT_CHECKED`다. 전체 사건 이력·system journal·raw stdout/stderr를 수집하지 않으므로 항상 `partial=true`, `INCOMPLETE`(exit 5)로 표시한다. `--tail`은 현재 전체 사건 수집을 켜지 않는다. 비밀·제어 경로·원문을 출력하지 않으며 누락 report를 수집 완료로 표시하지 않는다.
+현재 고정 worker가 최신 init/run 사건과 저장 상태를 정제해 반환한다. HTTP·systemctl·Java를 새로 실행하지 않으며 실시간 상태는 미관측이다. 누락·한도·불완전 사건은 `partial=true`, `INCOMPLETE`(exit 5)로 표시한다. raw stdout/stderr·system journal·과거 모든 시도의 전체 이력을 내보내지는 않는다.
 
-`diagnose`는 제어/data 영역 밖의 새 파일에만 root0600으로 저장한다. root가 보호하는 상위 디렉터리를 사용하며 기존 파일을 덮거나 symlink를 따라가지 않는다. 이 보고서는 저장 자료 수집 결과이고 노드 안전·정상 운용 판정이 아니다. 전체 bounded event collector와 일반 사용자 접근 UX는 LNX-04에 연결한다.
+`diagnose`는 일반 사용자 프로세스가 제어/data 영역 밖의 기존에 없는 파일을 사용자 `0600`으로 저장한다. 전체 명령을 sudo로 실행하지 않는다. 기존 파일을 덮거나 symlink를 따라가지 않는다. 자세한 권한·명령은 [Linux 운용 안내](./linux-operations.md)를 따른다.
+
+LNX-03 당시 구현은 최종 보고서 요약만 반환해 항상 partial이었고 root `0600` 내보내기를 사용했다. 당시 결과를 현재의 확장된 수집 성공 근거로 소급하지 않는다.
 
 ## 실물 인수에서 확인할 항목
 

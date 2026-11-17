@@ -228,7 +228,7 @@ impl Console<'_> {
             let entries: Vec<Entry> = catalog
                 .entries()
                 .iter()
-                .filter(|e| (e.target.kind == Kind::Instance) == nodes)
+                .filter(|e| e.target.kind.is_instance() == nodes)
                 .cloned()
                 .collect();
             self.say(if nodes {
@@ -419,6 +419,7 @@ fn fallback(snapshot: &Snapshot) -> String {
     );
     match snapshot.kind {
         Kind::Instance => format!("bxdl instance show --instance {path}"),
+        Kind::LinuxInstance => format!("bxdl status --instance {path}"),
         Kind::InstallSession => format!("bxdl setup --install --workspace {path} --resume"),
         Kind::DraftSession => format!("bxdl setup --workspace {path} --resume"),
         Kind::NetworkSession => format!("bxdl setup --network --workspace {path} --resume"),

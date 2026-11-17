@@ -2,7 +2,7 @@
 //! observes live service status. Catalog names remain advisory.
 use super::{
     catalog::{self, Catalog},
-    target::{self, Kind, RecordState},
+    target::{self, RecordState},
 };
 use crate::error::{BxdlError, Result};
 use serde::Serialize;
@@ -46,7 +46,7 @@ pub(crate) fn list(home: &Path) -> Result<Listing> {
             catalog
                 .entries()
                 .iter()
-                .filter(|entry| entry.target.kind == Kind::Instance)
+                .filter(|entry| entry.target.kind.is_instance())
                 .map(Node::from)
                 .collect::<Vec<_>>()
         })

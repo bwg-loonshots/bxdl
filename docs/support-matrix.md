@@ -1,6 +1,8 @@
 # 지원 후보·검증 범위
 
-**LNX-03 개발용 systemd 경로 — 2026-11-16:** root 제어 기록·전용 계정·일회성 시작 gate를 갖는 Linux 개발용 서비스 backend를 구현했다. `linux-service register`와 명시 `--instance` 운용을 사용한다. 순차 설치·이름 기반 Linux 연결, 고정 Linux runtime archive/실행기 profile 및 실제 Linux 인수는 후속이다. [관리자 개발 경로](./linux-service-development.md)에서 권한·명령·미검증 범위를 확인한다. [자동 검사 결과](../results/2026-11-16-linux-systemd-development.md)는 Rust659 PASS·Python205 PASS/2 SKIP·Linux 타입 검사 PASS이며, 기본 병렬 실행의 기존 시간 민감 실패2건과 재검증 이력을 포함한다.
+**LNX-04 개발용 설치·운용 UX — 2026-11-17:** 일반 사용자 순차 준비·명시 관리자 설치·노드 이름 연결과 최초 고정 worker 운용·정제 진단을 구현했다. [Linux 운용 안내](./linux-operations.md)를 따른다. 실제 Linux native build/link·서비스 실행·SSH 단절·독립 CLI 전환 인수와 정식 runtime archive/profile은 NOT_RUN이다.
+
+**LNX-03 당시 개발용 systemd 경로 — 2026-11-16:** root 제어 기록·전용 계정·일회성 시작 gate를 갖는 Linux 개발용 서비스 backend를 구현했다. `linux-service register`와 명시 `--instance` 운용을 사용한다. 당시 순차 설치·이름 기반 연결은 후속이었고 현재 LNX-04에서 개발 경로를 연결했다. 고정 Linux runtime archive/실행기 profile 및 실제 Linux 인수는 여전히 후속이다. [관리자 개발 경로](./linux-service-development.md)에서 권한·명령·미검증 범위를 확인한다. [자동 검사 결과](../results/2026-11-16-linux-systemd-development.md)는 Rust659 PASS·Python205 PASS/2 SKIP·Linux 타입 검사 PASS이며, 기본 병렬 실행의 기존 시간 민감 실패2건과 재검증 이력을 포함한다.
 
 **LNX-02 수신·도구 준비 — 2026-11-16:** Linux Temurin21.0.13+9 full JRE와 RC.4 JAR의 별도 조합을 고정하고257파일의 오프라인 준비·Rust staging을 검증했다. 실제 Linux Java/native/RocksDB·서비스 인수는 NOT_RUN이다. [결과](../results/2026-11-16-linux-rc4-supply.md)와 [테스터 실행 안내](../docs/linux-validation.md)를 따른다. SSH 정보 공유 없이 테스터가 직접 실행한 정제 JSON을 회수할 수 있다.
 
@@ -12,7 +14,7 @@
 | macOS arm64 + Java 21 + RocksDB + 사용자 LaunchAgent | macOS 26.6.2의 지정 RC.2·Temurin에서 4-validator 거래/catch-up·두 복구 경로·pin 거부 PASS. 새 V2 보관본·시작 진단은 별도 RC.2 package의 로컬13사례 PASS. OS 최소 버전·전체 G1-M 미확정 |
 | RC.3 + 선정 Temurin / macOS arm64 | 전용 lock/spec 명시 선택 후 동일 서명 archive의 4-validator·두 정족수 복구·wrong-pin과 원본 공급 경로 부재 setup13사례·독립 정리 PASS. A7 NOT_RUN·전체 G1-M 미완료 |
 | RC.4 + 선정 Temurin / macOS arm64 | RC4-01~07 완료. 기술 인수01~06의 Mac 단일노드21사례, fresh 동종4-validator·두 복구·wrong-pin·선정 RPC21/52read와 실행 중 B/C 전환3회 PASS. 전체 G1-M/J5·사람 과업은 별도 |
-| Linux amd64/glibc + Java 21 + RocksDB + systemd | 현재 개발 우선. Ubuntu 24.04 LTS·sudo/SSH 가능은 사용자 허용 기준이며 실제 host 관측 전. [LNX-01 기반 코드·자동 검사](../results/2026-11-16-linux-foundation.md) 완료. Mac 회귀·Linux 타입 검사 범위. LNX-03 개발용 systemd backend 구현. Linux JRE/RC.4 고정 package·일반 설치 UX·실제 머신 서비스 인수 NOT_RUN |
+| Linux amd64/glibc + Java 21 + RocksDB + systemd | 현재 개발 우선. Ubuntu 24.04 LTS·sudo/SSH 가능은 사용자 허용 기준이며 실제 host 관측 전. [LNX-01 기반 코드·자동 검사](../results/2026-11-16-linux-foundation.md) 완료. Mac 회귀·Linux 타입 검사 범위. LNX-03 개발용 systemd backend와 LNX-04 일반 설치·이름 기반 운용 UX 구현. Linux JRE/RC.4 고정 runtime package·native build·실제 머신 서비스 인수 NOT_RUN |
 | Windows의 WSL2 + 선정 Linux 배포판 | 후속 LNX-07, 현재 NOT_RUN. Windows native와 별도이며 Linux 서버 인수를 대체하지 않음 |
 | Docker/Compose | 후속 이미지·volume·network·종료/재생성 인수 필요 |
 | Intel Mac·Linux ARM64·Windows·Alpine/musl·H2 제품 지원 | 별도 구현·인수 전 미지원 |

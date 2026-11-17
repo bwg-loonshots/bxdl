@@ -1,7 +1,7 @@
 # 실제 Linux 우선 구현·인수 계획
 
 - 결정일: 2026-11-16. 반복 검토자가 실제 Linux 머신을 사용할 수 있으므로 **실제 Linux → Linux 사용자 과업·서버 인수 → WSL2 추가 검증** 순서로 변경한다.
-- 상태: **LNX-01 기반 코드 구현·자동 검사 완료. Linux 노드의 일반 설치 UX·실제 머신 인수는 NOT_RUN. LNX-03은 별도 root 승인 spec을 받는 개발용 systemd backend를 구현하며 실제 실행과 구분한다.** [LNX-01 결과](../results/2026-11-16-linux-foundation.md)에 Mac 회귀·Linux target 타입 검사와 실물 지원 여부를 별도로 기록한다.
+- 갱신: 2026-11-17. 상태: **LNX-01 기반·LNX-02 공급물 고정·LNX-03 개발용 systemd backend와 LNX-04 설치·운용 UX 연결을 구현했다. 실제 Linux build/link·JRE/native·설치·systemd 인수와 signed runtime/exact profile은 NOT_RUN/후속이다.** [LNX-01 결과](../results/2026-11-16-linux-foundation.md)에 Mac 회귀·Linux target 타입 검사와 실물 지원 여부를 별도로 기록한다.
 - 연결: [전체 구현 계획](./2026-09-16-implementation-plan.md), [인수·릴리스 기준](./2026-09-16-acceptance-and-release.md), [CLI 과업](./2026-10-22-integrated-operations-ux-implementation-plan.md), [지원 범위](../docs/support-matrix.md).
 
 ## 1. 방향 변경과 보존할 결과
@@ -34,12 +34,12 @@ Rust, 직접 CLI, 순차 설치 문답, 노드 이름 기반 운용, 관리 CLI�
 | LNX-01 환경·플랫폼 기반 | Linux runtime inventory staging, Linux 관리 CLI bundle 제작/검증/설치·업데이트 경계, 읽기 전용 host/systemd 준비 상태 검사, 플랫폼별 실패 안내 | Linux와 Mac의 OS/CPU·신뢰·경로 계약 회귀, Linux target 타입 검사, host 검사 무변경·부분 결과 검증. 실제 Linux 실행은 별도 표기 | IMPLEMENTED / AUTO_CHECKED — 실제 Linux 실행 NOT_RUN·노드/서비스 미지원 |
 | LNX-02 Linux 고정 공급물 | 선정 Linux JRE 전체 inventory·provenance, 고정 RC.4 JAR의 engine-info/native/RocksDB 사전 실행, Linux runtime R-L·내부 실행기 A-L·관리 CLI C-L의 분리 identity | 실제 Linux에서 JRE/JAR·전체 engine identity·inventory 대조, 고정 package 검증. clean source·archive/manifest/JAR/Java/CLI hash를 기록 | SUPPLY_PINNED / OFFLINE_VERIFIED — 실제 Java/native·Linux CLI build·runtime package NOT_RUN |
 | LNX-03 systemd 서비스·권한 | system service adapter, instance별 전용 UID, root 제어 기록, 서비스 시작 gate·시도별 identity, 정상 종료 판정과 정제 로그 | OS 증거와 engine 보고서 결속, 서비스 직접 실행도 gate 적용, 미완료/불명 init 거부, 다른 instance/UID 무영향 및 엔진의 제어 기록 변조 거부 | DEVELOPMENT_BACKEND_AUTO_CHECKED — [검사 결과](../results/2026-11-16-linux-systemd-development.md), 실제 Linux NOT_RUN |
-| LNX-04 실제 단일 노드 인수 | Linux package 조립·고정, 고정 실행기 위임, 전용 계정 생성/설치 승인·이름 연결 UX와 전체 bounded 진단 수집 통합, 설치→명시 init→start/status/logs/diagnose/stop, 같은 DB 재시작, SSH 연결 종료 뒤 관측, 실행 중 관리 CLI 전환 | 같은 고정 Linux 조합의 원자료·정제 결과, 정상 정리·payload/worker 불변·DB identity 유지. 단일 노드 로컬 readiness와 전역 합의 구분 | PLAN / NOT_RUN |
+| LNX-04 설치·운용 UX와 실제 단일 노드 인수 | Linux package 조립·고정, 고정 실행기 위임, 전용 계정 생성/설치 승인·이름 연결 UX와 전체 bounded 진단 수집 통합, 설치→명시 init→start/status/logs/diagnose/stop, 같은 DB 재시작, SSH 연결 종료 뒤 관측, 실행 중 관리 CLI 전환 | 같은 고정 Linux 조합의 원자료·정제 결과, 정상 정리·payload/worker 불변·DB identity 유지. 단일 노드 로컬 readiness와 전역 합의 구분 | DEVELOPMENT_UX_IMPLEMENTED / HOST_ACCEPTANCE_NOT_RUN — 사용자 준비·root 설치 승인·이름/최초 worker 위임·진단 연결. native build·signed runtime/profile·실제 인수는 남음 |
 | LNX-05 Linux 사용자 과업 | 전달용 package·신뢰 공개키/lock·전용 시험 입력·짧은 안내서·기록 양식. 작성자가 아닌 테스터의 직접 실행 | 처음 설치·준비 수정·중단 후 재개·새 터미널 운용·실패 진단을 관찰. 완료/도움/막힘·시간·문구·실제 명령 기록 | PLAN / NOT_RUN |
 | LNX-06 Linux 서버·네트워크 인수 | 동종 4-validator 거래·두 정족수 복구·wrong-pin, systemd lifecycle·재부팅 정책·전용 UID 격리·다중 host | G1-L의 해당 gate별 실제 근거. 로컬4노드와4-host를 구분하고 로그아웃/SSH 단절·재부팅·장애 범위 명시 | PLAN / NOT_RUN |
 | LNX-07 WSL2 추가 검증 | 지원 Linux 배포본을 WSL2에서 설치·운용, shell/PATH·filesystem·network·WSL 종료 조건 확인 | Windows/WSL/kernel/배포판/CPU/systemd 조합을 고정한 별도 결과. Linux 서버 PASS를 자동 승계하지 않음 | DEFERRED / NOT_RUN |
 
-LNX-04가 끝나면 LNX-05를 시작할 수 있다. 모든 G1-L 장기·다중 host 검증을 기다린 뒤에만 UX 피드백을 받도록 묶지 않는다. 반대로 초기 사용자 과업 PASS를 LNX-06 완료나 정식 고객 배포로 해석하지 않는다. 각 단계는 실제 구현·자동 검사·host 실행·공급 확인을 별도 상태로 남긴다.
+LNX-04의 실제 단일노드 기술 인수가 끝나면 LNX-05를 시작할 수 있다. UX 코드·합성 테스트만으로 테스터의 운영 과업 준비를 완료했다고 보지 않는다. 모든 G1-L 장기·다중 host 검증을 기다린 뒤에만 UX 피드백을 받도록 묶지 않는다. 반대로 초기 사용자 과업 PASS를 LNX-06 완료나 정식 고객 배포로 해석하지 않는다. 각 단계는 실제 구현·자동 검사·host 실행·공급 확인을 별도 상태로 남긴다.
 
 ## 4. 재사용할 CLI와 새 플랫폼 경계
 
@@ -74,7 +74,7 @@ Linux 관리 CLI의 초기 target은 `linux-amd64`(Rust `x86_64-unknown-linux-gn
 
 공통 노드 목록·준비/실행 기록의 Linux 기본 관리 home은 `$HOME/.local/share/BXDL`이며 `--home`으로 지정할 수 있다. `nodes`·이름 기반 명령·순차 준비가 같은 사용자 catalog를 사용하도록 한다. CLI 배포 저장소인 `BXDL-CLI`와 분리하고 XDG 환경변수를 자동 채택하지 않는다. 이 catalog 기본 경로의 추가는 시스템 노드의 privileged control/data를 사용자 home에 배치한다는 뜻이 아니며, LNX-03에서 설치·운용 권한과 경로를 별도로 인수한다.
 
-Linux 기본 home 적용은 이름 기반 `setup new/resume/list/show/edit`·`nodes` 등의 catalog 경로다. 기존 `bxdl setup`의 생략 `--workspace` 기본값은 아직 Mac 전용이므로 Linux에서는 `--workspace`를 명시한다. Linux 초안의 `dataDirectory` 제안은 입력 기준 디렉터리의 `bxdl-instances/<id>/data`이며 system service의 실제 설치·권한 layout을 확정한 것이 아니다. Linux 서버 control/data 경계는 LNX-03에서 별도로 구현·인수한다.
+LNX-04의 Linux `setup new/resume/list/show/edit/apply`는 사용자 home의 `sessions/<이름>`을 사용하고 시스템 control/data는 `/var/lib/bxdl/instances/<이름>` 아래에 둔다. 아래의 기존 `setup --workspace`는 이 새 Linux 설치 문답과 별도인 설정 초안 기능이다. Linux 기본 home 적용은 이름 기반 `setup`·`nodes` 등의 catalog 경로다. 기존 `bxdl setup`의 생략 `--workspace` 기본값은 아직 Mac 전용이므로 Linux에서는 `--workspace`를 명시한다. Linux 초안의 `dataDirectory` 제안은 입력 기준 디렉터리의 `bxdl-instances/<id>/data`이며 system service의 실제 설치·권한 layout을 확정한 것이 아니다. Linux 서버 control/data 경계는 LNX-03에서 별도로 구현·인수한다.
 
 제작 명령은 `python3 tools/build-management-cli.py --target linux-amd64 --output <새-archive> --signing-key <private-key>`다. target을 생략하면 현재 native host의 기본 target을 선택하며 Mac 기본은 기존 `darwin-arm64`다. Linux target 제작·후보 probe는 native Linux GNU/x86_64 host에서 수행하고 Mac에서 cross-built ELF를 실행하지 않는다. 서명 없는 개발 제작은 기존 명시 개발 정책을 따른다.
 
@@ -96,11 +96,23 @@ Linux 서버 profile은 **systemd system service + instance별 비root 실행 UI
 
 기존 Mac control은 같은 UID를 전제로 하므로 owner 검사를 확장하지 않는다. 별도 Linux control은 새 root0755 디렉터리에 root0600 binding·private journal, root 소유 runtime/JAR/worker/config, 서비스 UID0700 data/output을 둔다. Linux 전용 UID/GID는 경로에서 계산한 `bxdl-<digest>` 계정으로 한정하고, 관리자가 미리 생성한 nologin 계정·전용 그룹을 검증한다. 계정을 암묵 생성하거나 sudoers를 수정하지 않는다.
 
-개발 명령 `linux-service register --instance <새 경로> --spec <json> --allow-development`가 고정 Linux lock·공급 inventory·설정을 검증·보관하고 서비스 UID로 cold 검사를 한다. 이후 `init/resume-init/start/status/stop --instance`와 offline 기록 경로를 연결한다. LNX-03의 명시적인 관리자 경로이며 기존 `setup apply`/`nodes add`를 Linux 시스템 설치 UX로 확장한 것은 아니다. LNX-04에서 package 조립·trust/계정/경로 검토·설치 승인·이름 기반 위임을 연결하고 인수한다.
+개발 명령 `linux-service register --instance <새 경로> --spec <json> --allow-development`가 고정 Linux lock·공급 inventory·설정을 검증·보관하고 서비스 UID로 cold 검사를 한다. 이후 `init/resume-init/start/status/stop --instance`와 offline 기록 경로를 연결한다. LNX-03의 명시적인 관리자 경로이며 기존 `setup apply`/`nodes add`를 Linux 시스템 설치 UX로 확장한 것은 아니다. LNX-04에서 계정/경로 검토·설치 승인·이름 기반 위임을 연결했다. signed package 조립·exact profile과 실제 Linux 인수는 남아 있다.
 
 새 root 소유 gate binary를 시도별 unit이 실행한다. `Type=exec`는 gate 실행 관측이며 Java READY가 아니다. gate는 root 기록을 소비하고 unit/InvocationID/PID/cgroup을 결속한 뒤 고정 `/usr/bin/setpriv`로 보조 그룹·capability를 제거하고 전용 UID/GID로 Java를 exec한다. cold/init도 같은 권한 하향 경계를 사용한다. root journal의 쓰기 descriptor를 엔진에 전달하지 않으며 읽기 전용 operation lock만 stdin으로 상속한다. 자동 restart/enable·범용 shell·임의 Java 옵션은 제공하지 않는다.
 
 종료 직후 `ExecStopPost`가 root 소유 OS 종료 기록을 남겨 systemd GC 이후에도 InvocationID·PID·정상 exit를 검증한다. STOPPED 판정은 이 기록과 engine 보고서의 storage/consensus closure와 root가 결속한 시도의 process/cgroup 부재·DB lock 획득을 함께 요구한다. 종료 불명·gate 중단·권한/자료 불일치를 과거 정상 상태로 덮지 않는다. 실제 Linux에서 계정 격리·잠금·직접 systemctl 재실행·SSH 단절을 확인하기 전에는 systemd 인수 PASS를 기록하지 않는다. [개발 경로와 실제 시험 목록](../docs/linux-service-development.md)을 따른다.
+
+### LNX-04 구현한 준비·권한·위임 계약 — 2026-11-17
+
+- `setup new/resume/list/show/edit/apply`와 이름 기반 `init/start/status/stop/logs/diagnose`를 연결한다. 변경 문답·apply는 실제 Linux의 일반 사용자 TTY에서 실행하며 Mac의 `--linux`는 읽기 전용 list/show와 도움말에 한정한다. `--runtime`은 선정 JRE를 symlink 없이 준비한 flat 폴더, `--jar`는 고정 RC.4, `--native-config`는 기존 설정이다. signed runtime archive 설치로 표현하지 않는다.
+- 사용자 `sessions/<이름>`에는 부분 문답·검토 revision·생성 제품 설정/설치 요청·apply 시도와 완료 요약을 보관한다. root는 사용자 catalog를 열거나 쓰지 않는다. 처음 이름/데이터 위치를 하나의 draft checkpoint에 함께 넣고 재개 시 대조한다. 선택 항목의 `None`은 생략해 strict JSON 재개가 가능하도록 했다. 같은 값·잘못된 입력은 검토를 유지하고 실제 수정은 이전 검토를 해제한다. apply 시도 뒤 입력은 동결한다.
+- 관리자 사전 준비는 고정 `/usr/local/libexec/bxdl/bxdl` 실행기다. root 소유·보호된 조상 경로와 실행 파일을 검증하며 사용자 CLI를 임의 root 실행하지 않는다. apply 승인 이후 sudo 인증과 immutable 요청/hash 대조를 거쳐 전용 계정·root 공급물 사본·cold 검사·등록을 수행한다. 계정 생성/부분 실패 기록은 보존하고 자동 삭제·덮어쓰기하지 않는다.
+- 등록의 `management.json`은 공개 root descriptor다. control의 device/inode, protocol과 최초 worker의 hash/size를 포함하며 사용자 catalog가 descriptor digest를 고정한다. 일반 사용자는 이 공개 자료만 읽고 private binding/journal은 읽지 않는다. 새 관리 CLI가 지원하는 고정 프로토콜로 최초 root worker에 위임하며 임의 shell/Java/다른 worker 경로를 전달하지 않는다. 이는 개발용 root 신뢰 경계이며 정식 signed runtime exact profile 승인이 아니다.
+- init/start는 apply에 포함하지 않는다. 목록의 `SYSTEM_REGISTERED`는 저장 당시 등록 의미이며 초기화·READY를 주장하지 않는다. 제한된 정제 logs/diagnose는 초기화·실행 보고서와 root 기록을 수집하고 한도·누락은 partial로 보존한다. HTTP·systemctl·JVM을 새로 실행하는 health 검사로 표현하지 않는다. diagnose의 정제 파일은 호출 사용자 소유 새 파일로 생성한다.
+
+[Linux 운용 안내](../docs/linux-operations.md)에 현재 명령·경로·bootstrap 전제를 기록한다. Mac의 합성 user-journal 9사례와 target/catalog 집중 회귀는 실제 Linux 인수가 아니다. 전체 자동 검사와 Linux 타입 검사 결과도 native linking/서비스 실행과 별도로 기록한다.
+
+LNX-04의 남은 순서는 (1) 실제 Linux native CLI 빌드와 LNX-02 cold/native 조합 확인, (2) Linux runtime R-L/A-L의 archive·실행기 profile 고정, (3) 정확한 조합에서 설치·계정 격리·명시 init·서비스·정상 종료·같은 DB 재시작·SSH 단절·관리 CLI 전환 인수다. 이 근거가 준비되면 LNX-05의 테스터 과업과 전달물을 확정한다. 현재 새 NIGO JAR나 API 구현을 선행 요청하지 않으며 실제 결함·계약 불일치가 관측될 때 별도 근거로 협의한다.
 
 ## 6. JRE·엔진 공급과 패키지 고정
 

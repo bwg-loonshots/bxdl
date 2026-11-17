@@ -81,7 +81,8 @@ pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
   bxdl version [--json]                    CLI 식별 정보
 
 Linux amd64/glibc의 관리 CLI 설치·환경 확인과 macOS arm64를 지원합니다.
-노드 start/status/stop은 현재 Mac 사용자 LaunchAgent만 지원하며 Linux systemd 연결은 후속입니다.
+Linux는 setup new/apply 뒤 이름으로 init/start/status/stop을 사용합니다. 최초 root 설치기 준비가 필요합니다.
+Linux systemd는 개발용이며 실제 머신 인수 전입니다. Mac은 사용자 LaunchAgent를 사용합니다.
 console은 기존 구현을 보존하며 추가 개발은 중단했습니다. bxdl console --help로 확인할 수 있습니다.
 "#;
 
@@ -176,6 +177,9 @@ pub fn run_with_input<'a>(
     stderr: &'a mut dyn Write,
 ) -> i32 {
     let (json_mode, args) = take_json(args);
+    if args.first().is_some_and(|arg| arg == "linux-execute") {
+        return linux_service::execute_internal(&args[1..], json_mode, input, stdout);
+    }
     let help = operator::help::for_args(&args);
     if !json_mode && help.is_none() {
         if let Some(notice) = service_wait_notice(&args) {
@@ -262,6 +266,13 @@ pub fn run_with_input<'a>(
         }
     }
     if let Some(data) = response.data {
+        if response.command.starts_with("setup ") && data["platform"] == "linux-amd64" {
+            return if linux_service::print_setup(out, &data).is_ok() {
+                exit
+            } else {
+                7
+            };
+        }
         if matches!(
             response.command.as_str(),
             "cli install" | "cli update" | "cli info" | "cli rollback"
@@ -623,6 +634,7 @@ fn print_nodes_summary(out: &mut dyn Write, data: &Value, added: bool) -> std::i
         let text = |key: &str| entry[key].as_str().unwrap_or("—");
         let state = match entry["recordedState"].as_str() {
             Some("REGISTERED") => "초기화 전",
+            Some("SYSTEM_REGISTERED") => "시스템 등록 확인 · 초기화/실행 상태 별도 조회",
             Some("INITIALIZED") => "초기화 기록 있음",
             _ => "작업 결과 불명",
         };
@@ -1317,6 +1329,16 @@ fn dispatch_setup(
     input: &mut dyn BufRead,
     prompts: &mut dyn Write,
 ) -> (ResultEnvelope, i32) {
+    if (cfg!(target_os = "linux") || args.iter().any(|a| a == "--linux"))
+        && args.first().is_some_and(|a| {
+            matches!(
+                a.as_str(),
+                "new" | "resume" | "list" | "show" | "edit" | "apply"
+            )
+        })
+    {
+        return linux_service::setup(args, json_mode, interactive, input, prompts);
+    }
     if args.first().is_some_and(|arg| arg == "apply") {
         return dispatch_application(args, json_mode, interactive, input, prompts);
     }
@@ -1703,6 +1725,8 @@ fn capabilities_for(target: Option<&str>) -> Vec<&'static str> {
             "management.update.linux",
             "management.rollback.linux",
             "linux-service.development.register",
+            "linux-setup.development",
+            "linux-executor.development.v1",
             "linux-service.development.init",
             "linux-service.development.start",
             "linux-service.development.status",
@@ -1944,6 +1968,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
         command @ ("start" | "stop" | "status") => dispatch_service(command, &args[1..]),
         "service-run" => dispatch_service_gate(&args[1..]),
         "linux-service" => linux_service::dispatch(&args[1..]),
+        "linux-install" => linux_service::install(&args[1..]),
         "systemd-run" => linux_service::gate(&args[1..]),
         "systemd-exit" => linux_service::exit_hook(&args[1..]),
         command @ ("logs" | "diagnose") => dispatch_diagnostics(command, &args[1..]),
@@ -1964,6 +1989,13 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
 }
 
 fn dispatch_preflight(args: &[String]) -> (ResultEnvelope, i32) {
+    if cfg!(target_os = "linux")
+        && !args
+            .iter()
+            .any(|a| a == "--config" || a.starts_with("--config="))
+    {
+        return linux_service::read_command("preflight", args);
+    }
     if args
         .iter()
         .any(|arg| arg == "--instance" || arg.starts_with("--instance="))
@@ -2509,6 +2541,9 @@ impl NodeTarget {
 fn dispatch_instance(args: &[String]) -> (ResultEnvelope, i32) {
     match args.first().map(String::as_str) {
         Some("show") => {
+            if cfg!(target_os = "linux") {
+                return linux_service::read_command("instance show", &args[1..]);
+            }
             let Some((flags, pos)) = parse(&args[1..], &[("instance", true)]) else {
                 return invalid("instance show");
             };
@@ -2661,13 +2696,14 @@ fn dispatch_initialization(command: &str, args: &[String]) -> (ResultEnvelope, i
         target_arch = "x86_64",
         target_env = "gnu"
     )) {
-        let instance = match linux_service::explicit(&target) {
-            Ok(path) => path,
-            Err(error) => return service_failure(command, error),
-        };
-        return linux_service::response(
+        return linux_service::managed(
             command,
-            engine::linux_service::initialize(instance, resume, timeout),
+            target,
+            &engine::linux_service::management::Request::Initialize {
+                resume,
+                timeout_seconds: timeout.as_secs(),
+            },
+            None,
         );
     }
     let target = match target.resolve() {
@@ -2772,15 +2808,15 @@ fn dispatch_diagnostics(command: &str, args: &[String]) -> (ResultEnvelope, i32)
         target_arch = "x86_64",
         target_env = "gnu"
     )) {
-        let instance = match linux_service::explicit(&target) {
-            Ok(path) => path,
-            Err(error) => return service_failure(command, error),
-        };
-        return linux_service::diagnostics(
+        return linux_service::managed(
             command,
-            instance,
+            target,
+            &engine::linux_service::management::Request::Logs {
+                tail,
+                max_bytes,
+                timeout_seconds: timeout.as_secs(),
+            },
             flags.get("output").map(PathBuf::from).as_deref(),
-            max_bytes,
         );
     }
     let target = match target.resolve() {
@@ -2896,17 +2932,22 @@ fn dispatch_service(command: &str, args: &[String]) -> (ResultEnvelope, i32) {
         target_arch = "x86_64",
         target_env = "gnu"
     )) {
-        let instance = match linux_service::explicit(&options.target) {
-            Ok(path) => path,
-            Err(error) => return service_failure(command, error),
+        use engine::linux_service::management::{Request, ServiceAction};
+        let service_action = match command {
+            "start" => ServiceAction::Start,
+            "stop" => ServiceAction::Stop,
+            _ => ServiceAction::Status,
         };
-        let value = match command {
-            "start" => engine::linux_service::start(instance, options.timeout),
-            "stop" => engine::linux_service::stop(instance, options.timeout),
-            _ if options.wait => engine::linux_service::wait_ready(instance, options.timeout),
-            _ => engine::linux_service::status(instance, options.timeout),
-        };
-        return linux_service::response(command, value);
+        return linux_service::managed(
+            command,
+            options.target,
+            &Request::Service {
+                service_action,
+                wait: options.wait,
+                timeout_seconds: options.timeout.as_secs(),
+            },
+            None,
+        );
     }
     let target = match options.target.resolve() {
         Ok(target) => target,

@@ -1,6 +1,12 @@
-# 구현 상태 — 2026-11-16
+# 구현 상태 — 2026-11-17
 
-**LNX-03 개발용 systemd 경로 — 2026-11-16:** root 제어 기록·전용 계정·일회성 시작 gate를 갖는 Linux 개발용 서비스 backend를 구현했다. `linux-service register`와 명시 `--instance` 운용을 사용한다. 순차 설치·이름 기반 Linux 연결, 고정 Linux runtime archive/실행기 profile 및 실제 Linux 인수는 후속이다. [관리자 개발 경로](./linux-service-development.md)에서 권한·명령·미검증 범위를 확인한다. [자동 검사 결과](../results/2026-11-16-linux-systemd-development.md)는 Rust659 PASS·Python205 PASS/2 SKIP·Linux 타입 검사 PASS이며, 기본 병렬 실행의 기존 시간 민감 실패2건과 재검증 이력을 포함한다.
+**LNX-04 개발용 설치·운용 UX 연결 — 2026-11-17:** Linux 순차 문답·준비 조회/수정·명시 apply, 전용 계정 준비와 root 설치, 사용자 노드 이름 연결, 최초 고정 worker의 운용 위임과 제한된 정제 진단을 연결했다. [운용 안내](./linux-operations.md)에 일반 사용자 준비와 관리자 승인 경계를 기록한다. 실제 Linux build/link·JRE/native/RocksDB·설치·systemd·독립 CLI 전환 인수와 signed runtime/exact profile은 아직 NOT_RUN/후속이다.
+
+사용자 준비 기록의 선택 항목을 `null`로 저장하면 엄격 JSON 파서가 재개를 거부하는 문제를 합성 검증에서 발견해, 없는 항목을 생략하도록 수정했다. 고정 인스턴스 이름·데이터 위치를 최초 checkpoint에 함께 저장하고 재개 시 대조한다. 잘못된 입력과 같은 값 재입력은 기존 검토·파일을 유지하며 실제 변경은 검토를 해제한다. Mac의 테스트 전용 임시 control 경로로 중단·재개·조회·수정·미확정 apply 동결·symlink 거부를 검증했다. production control은 `/var/lib/bxdl/instances/<이름>`으로 유지한다. Linux 실행 증거를 생성한 것은 아니다.
+
+[LNX-04 자동 검증 결과](../results/2026-11-17-linux-operations-ux.md): `make check` Rust708 PASS·Python205 PASS/2 SKIP·fmt/Clippy PASS. 마지막 상태 표시·자동완성 수정은 Linux 관련80·자동완성17 집중 검사와 fmt/Clippy·Linux all-targets 타입 검사로 확인했다. 최종 Mac CLI 직접 실행7사례도 통과했다. 전체 검사와 마지막 집중 검사의 시점, 최초 실패·수정 이력은 결과 문서에 구분했다. 실제 Linux 실행은 NOT_RUN이다.
+
+**LNX-03 당시 개발용 systemd 경로 — 2026-11-16:** root 제어 기록·전용 계정·일회성 시작 gate를 갖는 Linux 개발용 서비스 backend를 구현했다. `linux-service register`와 명시 `--instance` 운용을 사용한다. 당시 순차 설치·이름 기반 연결은 후속이었으며 현재 LNX-04에서 개발 경로를 연결했다. 고정 Linux runtime archive/실행기 profile 및 실제 Linux 인수는 여전히 후속이다. [관리자 개발 경로](./linux-service-development.md)에서 권한·명령·미검증 범위를 확인한다. [자동 검사 결과](../results/2026-11-16-linux-systemd-development.md)는 Rust659 PASS·Python205 PASS/2 SKIP·Linux 타입 검사 PASS이며, 기본 병렬 실행의 기존 시간 민감 실패2건과 재검증 이력을 포함한다.
 
 LNX-02 자동 검사: `make check` Rust623 PASS, Python205 PASS·2 SKIP, fmt·Clippy PASS. 실제 Linux 실행은 NOT_RUN이다. 개발용 전달 archive는 생성·전체 checksum 검증했으며 Git에는 포함하지 않는다.
 
@@ -8,16 +14,16 @@ LNX-02 자동 검사: `make check` Rust623 PASS, Python205 PASS·2 SKIP, fmt·Cl
 
 2026-11-16 사용자 결정으로 **실제 Linux 머신 우선 개발·검증**으로 전환했다. [Linux 구현 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 현재 실행 기준으로 삼고 Mac 기능·인수 이력은 보존한다. WSL2는 Linux 실물 인수 후속이다. 아래 R1~R3는 Mac 구현 이력이다. R1 설정 초안 이후 **R2의 Mac 새 폴더 패키지 설치**와 **R3의 NIGO 개발 후보 정보·cold 사전검사**를 추가했다. clean NIGO 후보를 별도로 수신하고 제품 설정과 명시 native QBFT 설정을 연결하는 preflight를 추가했다. 이후 설치본·설정을 등록해 `--instance`로 preflight와 명시 init/resume-init을 호출하고, Mac 사용자 LaunchAgent의 start/status/stop을 연결했다. 이번에는 `setup --install`에서 이 단계를 선택하고 재개하는 A~C 흐름을 구현했다. 기존 package의 단일 validator 서비스 근거와 새 setup의 exact package·TTY 인수, 전체 G1-M을 구분한다.
 
-## 현재 Linux 단계 — LNX-03 개발용 systemd 구현
+## 현재 Linux 단계 — LNX-04 UX 구현·실물 인수 대기
 
-사용자가 Ubuntu 24.04 LTS·x86_64/glibc·systemd와 sudo/SSH 가능을 기준으로 진행하도록 허용했다. 실제 호스트의 배포판·버전/접속은 아직 관측하지 않아 Linux 실행은 NOT_RUN이다. Linux runtime staging·독립 관리 CLI 배포·읽기 전용 `host check` 기반 코드를 추가했다. Linux 기본 사용자 경로는 CLI 배포 `$HOME/.local/share/BXDL-CLI`, 노드 목록·준비 기록 `$HOME/.local/share/BXDL`로 분리한다. LNX-01 당시 전체 자동 검사와 Linux target 타입 검사를 통과했으며 당시에는 Linux 노드 서비스 capability를 선언하지 않았다. LNX-03은 `linux-service.development.*` capability와 명시 관리자 경로만 추가한다. **일반 Linux 노드 설치 UX·고정 runtime profile·실제 Linux init/systemd 인수는 NOT_RUN**이다. [LNX-01 결과](../results/2026-11-16-linux-foundation.md)의 `make check`는 Rust 623 PASS, Python 168개 중 166 PASS·기존 opt-in 2 SKIP, fmt·Clippy PASS다. `make check-linux`의 GNU/x86_64 all-targets 타입 검사와 현재 Mac CLI의 version/host check/자동완성 직접 실행도 통과했다. Mac host 검사의 정상적인 미지원 INCOMPLETE(exit 3)는 Linux 실행 성공이 아니며 기존 Mac PASS도 Linux로 승계하지 않는다.
+사용자가 Ubuntu 24.04 LTS·x86_64/glibc·systemd와 sudo/SSH 가능을 기준으로 진행하도록 허용했다. 실제 호스트의 배포판·버전/접속은 아직 관측하지 않아 Linux 실행은 NOT_RUN이다. Linux runtime staging·독립 관리 CLI 배포·읽기 전용 `host check` 기반 코드를 추가했다. Linux 기본 사용자 경로는 CLI 배포 `$HOME/.local/share/BXDL-CLI`, 노드 목록·준비 기록 `$HOME/.local/share/BXDL`로 분리한다. LNX-01 당시 전체 자동 검사와 Linux target 타입 검사를 통과했으며 당시에는 Linux 노드 서비스 capability를 선언하지 않았다. LNX-03은 명시 관리자 backend를 추가했고, LNX-04는 일반 사용자 setup·이름 연결과 root 공개 descriptor/최초 worker 위임을 구현했다. **고정 runtime profile·실제 Linux init/systemd 인수는 NOT_RUN**이다. [LNX-01 결과](../results/2026-11-16-linux-foundation.md)의 `make check`는 Rust 623 PASS, Python 168개 중 166 PASS·기존 opt-in 2 SKIP, fmt·Clippy PASS다. `make check-linux`의 GNU/x86_64 all-targets 타입 검사와 현재 Mac CLI의 version/host check/자동완성 직접 실행도 통과했다. Mac host 검사의 정상적인 미지원 INCOMPLETE(exit 3)는 Linux 실행 성공이 아니며 기존 Mac PASS도 Linux로 승계하지 않는다.
 
 | 단계 | 현재 상태 |
 | --- | --- |
 | LNX-01 환경·플랫폼 기반 | IMPLEMENTED / AUTO_CHECKED — Linux runtime/관리 CLI·읽기 전용 host 검사, 실제 머신 실행 NOT_RUN |
 | LNX-02 Linux JRE·RC.4 고정 공급물 | SUPPLY_PINNED / OFFLINE_VERIFIED — `fe84ca6` 커밋. 실제 Linux cold/native·package 조립 NOT_RUN |
-| LNX-03 systemd 시스템 서비스·권한 | 개발용 관리자 backend 구현 — root 기록·전용 UID·일회성 gate·종료 기록·정제 요약. 실제 Linux NOT_RUN |
-| LNX-04 실제 Linux 단일노드 | PLAN / NOT_RUN — 설치·init·운용·SSH 단절·동일 DB 재시작·CLI 전환 |
+| LNX-03 systemd 시스템 서비스·권한 | `b9ee89a` 커밋. 개발용 관리자 backend 구현·당시 자동 검사 PASS. 실제 Linux NOT_RUN |
+| LNX-04 설치·운용 UX / 실제 Linux 단일노드 | DEVELOPMENT_UX_IMPLEMENTED / HOST_ACCEPTANCE_NOT_RUN — 문답·계정/설치 승인·이름·고정 worker·진단 연결. Linux native build·조합 고정·설치/init/운용/SSH 단절·동일 DB 재시작·CLI 전환 인수는 남음 |
 | LNX-05 Linux 사람 과업 | PLAN / NOT_RUN — 기술 인수한 배포본으로 친구의 직접 사용성 평가 |
 | LNX-06 서버·네트워크 | PLAN / NOT_RUN — 재부팅·동종망·다중 host와 G1-L 개별 gate |
 | LNX-07 WSL2 | DEFERRED / NOT_RUN — Linux 기준 조합 이후 |

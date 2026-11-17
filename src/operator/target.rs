@@ -1,7 +1,7 @@
 //! Read-only projections of explicitly selected targets. A catalog snapshot is
 //! a remembered record, never proof of current service health or action consent.
 use crate::{
-    engine::instance,
+    engine::{instance, linux_service::management},
     error::{BxdlError, Result},
     setup,
 };
@@ -16,15 +16,20 @@ use std::{
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub(crate) enum Kind {
     Instance,
+    LinuxInstance,
     InstallSession,
     DraftSession,
     NetworkSession,
     PreparationSession,
 }
 impl Kind {
+    pub(crate) fn is_instance(self) -> bool {
+        matches!(self, Self::Instance | Self::LinuxInstance)
+    }
     pub(crate) fn label(self) -> &'static str {
         match self {
             Self::Instance => "등록된 노드",
+            Self::LinuxInstance => "Linux 시스템 노드",
             Self::InstallSession => "설치 세션",
             Self::DraftSession => "제품 설정 초안",
             Self::NetworkSession => "네트워크 설정 초안",
@@ -44,6 +49,7 @@ pub(crate) struct Identity {
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub(crate) enum RecordState {
     Registered,
+    SystemRegistered,
     Initialized,
     Unknown,
     DraftIncomplete,
@@ -56,6 +62,7 @@ impl RecordState {
     pub(crate) fn label(self) -> &'static str {
         match self {
             Self::Registered => "등록 기록 있음 · 초기화 전",
+            Self::SystemRegistered => "시스템 등록 있음 · 초기화/운용 상태 미조회",
             Self::Initialized => "초기화 완료 기록 있음 · 운용 상태 미조회",
             Self::Unknown => "작업 결과 불명 · 기존 자료 보존 필요",
             Self::DraftIncomplete => "입력 중인 초안",
@@ -74,6 +81,7 @@ pub(crate) enum CliMatch {
     Mismatch,
     Unavailable,
     NotApplicable,
+    IndependentExecutor,
 }
 impl CliMatch {
     pub(crate) fn label(self) -> &'static str {
@@ -82,6 +90,7 @@ impl CliMatch {
             Self::Mismatch => "CLI 파일 내용 불일치 · 실행기 호환 검사 필요",
             Self::Unavailable => "CLI 파일 내용 비교 불가",
             Self::NotApplicable => "이 세션에는 CLI 비교를 적용하지 않음",
+            Self::IndependentExecutor => "root 고정 실행기 · 관리 CLI 독립",
         }
     }
 }
@@ -123,7 +132,15 @@ impl Snapshot {
                         self.state,
                         RecordState::Registered | RecordState::Initialized | RecordState::Unknown
                     )
-                    && self.cli != CliMatch::NotApplicable
+                    && matches!(
+                        self.cli,
+                        CliMatch::Match | CliMatch::Mismatch | CliMatch::Unavailable
+                    )
+            }
+            Kind::LinuxInstance => {
+                self.schema_version == 1
+                    && self.state == RecordState::SystemRegistered
+                    && self.cli == CliMatch::IndependentExecutor
             }
             Kind::InstallSession => {
                 self.schema_version == 1
@@ -154,8 +171,13 @@ impl Snapshot {
 
 pub(crate) fn inspect(kind: Kind, path: &Path) -> Result<Snapshot> {
     let path = setup::absolute(path).map_err(|_| invalid())?;
+    if kind == Kind::LinuxInstance {
+        let descriptor = management::inspect(&path)?;
+        return linux_snapshot(&path, &descriptor);
+    }
     let identity = root_identity(&path)?;
     let (schema_version, name, state, cli) = match kind {
+        Kind::LinuxInstance => return Err(invalid()), // handled by root authority above
         Kind::Instance => {
             let record = instance::catalog_record(&path).map_err(safe_error)?;
             let state = match record.initialization {
@@ -255,18 +277,40 @@ pub(crate) fn inspect(kind: Kind, path: &Path) -> Result<Snapshot> {
     Ok(snapshot)
 }
 
+/// The immutable public descriptor certifies registration/worker identity only.
+/// Its presence never observes initialization, a live process or readiness.
+fn linux_snapshot(path: &Path, descriptor: &management::Descriptor) -> Result<Snapshot> {
+    if descriptor.control_directory != path {
+        return Err(replaced());
+    }
+    let value = Snapshot {
+        kind: Kind::LinuxInstance,
+        path: path.into(),
+        identity: Identity {
+            device: descriptor.control_device,
+            inode: descriptor.control_inode,
+        },
+        schema_version: descriptor.schema_version,
+        name: descriptor.instance_id.clone(),
+        state: RecordState::SystemRegistered,
+        cli: CliMatch::IndependentExecutor,
+    };
+    value.validate()?;
+    Ok(value)
+}
+
 /// Re-observe public record state while refusing replacement or migration of
 /// the target remembered in the advisory catalog. This does not grant consent.
 pub(crate) fn recheck(expected: &Snapshot) -> Result<Snapshot> {
     expected.validate()?;
-    if root_identity(&expected.path)? != expected.identity {
+    if expected.kind != Kind::LinuxInstance && root_identity(&expected.path)? != expected.identity {
         return Err(replaced());
     }
     let current = inspect(expected.kind, &expected.path)?;
     if current.identity != expected.identity
         || current.schema_version != expected.schema_version
         || current.path != expected.path
-        || (current.kind == Kind::Instance && current.name != expected.name)
+        || (current.kind.is_instance() && current.name != expected.name)
     {
         return Err(replaced());
     }
@@ -310,7 +354,12 @@ pub(crate) fn resolve_instance(
 ) -> Result<ResolvedInstance> {
     let resolved = match (name, instance) {
         (None, Some(path)) => {
-            let snapshot = inspect(Kind::Instance, path)?;
+            let kind = if cfg!(target_os = "linux") {
+                Kind::LinuxInstance
+            } else {
+                Kind::Instance
+            };
+            let snapshot = inspect(kind, path)?;
             let binding_sha256 = binding_sha256(&snapshot)?;
             ResolvedInstance {
                 catalog: None,
@@ -360,6 +409,14 @@ pub(crate) fn resolve_instance(
 }
 
 pub(super) fn binding_sha256(expected: &Snapshot) -> Result<String> {
+    expected.validate()?;
+    if expected.kind == Kind::LinuxInstance {
+        let descriptor = management::inspect(&expected.path)?;
+        if linux_snapshot(&expected.path, &descriptor)? != *expected {
+            return Err(replaced());
+        }
+        return management::descriptor_sha256(&descriptor);
+    }
     if expected.kind != Kind::Instance {
         return Err(invalid());
     }
@@ -389,6 +446,14 @@ pub(crate) fn check_catalog_writes(expected: &Snapshot, home: &Path) -> Result<(
     }
     let checked = (|| -> Result<()> {
         match current.kind {
+            Kind::LinuxInstance => {
+                // The public descriptor has no external data or key references:
+                // all Linux service assets are below the protected control root.
+                // User catalog files must never overlap that entire root.
+                if paths_overlap(&current.path, &home)? {
+                    return Err(write_conflict());
+                }
+            }
             Kind::Instance => {
                 for candidate in &candidates {
                     instance::check_catalog_location(&current.path, candidate)?;
@@ -422,10 +487,18 @@ pub(crate) fn check_catalog_writes(expected: &Snapshot, home: &Path) -> Result<(
         Ok(())
     })();
     checked.map_err(|_| write_conflict())?;
-    if root_identity(&current.path)? != current.identity {
+    if current.kind == Kind::LinuxInstance {
+        if recheck(&current)? != current {
+            return Err(replaced());
+        }
+    } else if root_identity(&current.path)? != current.identity {
         return Err(replaced());
     }
     Ok(())
+}
+
+fn paths_overlap(left: &Path, right: &Path) -> Result<bool> {
+    setup::paths::overlaps(left, right).map_err(|_| write_conflict())
 }
 
 fn write_conflict() -> BxdlError {
@@ -505,6 +578,66 @@ mod tests {
         fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).unwrap();
         (temp, path)
     }
+    #[test]
+    fn linux_catalog_snapshot_does_not_claim_initialization_or_cli_equality() {
+        let snapshot = Snapshot {
+            kind: Kind::LinuxInstance,
+            path: PathBuf::from("/var/lib/bxdl/node-a"),
+            identity: Identity {
+                device: 7,
+                inode: 42,
+            },
+            schema_version: 1,
+            name: "node-a".into(),
+            state: RecordState::SystemRegistered,
+            cli: CliMatch::IndependentExecutor,
+        };
+        assert!(snapshot.validate().is_ok());
+        assert!(snapshot.kind.is_instance());
+        let raw = serde_json::to_vec(&snapshot).unwrap();
+        assert_eq!(serde_json::from_slice::<Snapshot>(&raw).unwrap(), snapshot);
+        for state in [
+            RecordState::Registered,
+            RecordState::Initialized,
+            RecordState::Unknown,
+        ] {
+            let mut invalid = snapshot.clone();
+            invalid.state = state;
+            assert!(invalid.validate().is_err());
+        }
+        for cli in [
+            CliMatch::Match,
+            CliMatch::Mismatch,
+            CliMatch::Unavailable,
+            CliMatch::NotApplicable,
+        ] {
+            let mut invalid = snapshot.clone();
+            invalid.cli = cli;
+            assert!(invalid.validate().is_err());
+        }
+        let mut invalid = snapshot.clone();
+        invalid.schema_version = 2;
+        assert!(invalid.validate().is_err());
+        let mut invalid = snapshot;
+        invalid.kind = Kind::Instance;
+        assert!(invalid.validate().is_err());
+        invalid.state = RecordState::Registered;
+        assert!(invalid.validate().is_err());
+        invalid.cli = CliMatch::Unavailable;
+        assert!(invalid.validate().is_ok());
+    }
+
+    #[test]
+    fn public_linux_kind_does_not_adopt_a_private_user_session() {
+        let (_temp, root) = root();
+        let path = root.join("draft");
+        setup::Session::create(&path, None).unwrap();
+        let before = recorded_files(&path);
+        assert!(inspect(Kind::LinuxInstance, &path).is_err());
+        assert_eq!(recorded_files(&path), before);
+        assert!(inspect(Kind::DraftSession, &path).is_ok());
+    }
+
     #[test]
     fn explicit_draft_inspection_is_read_only_and_rechecks_replacements() {
         let (_temp, root) = root();

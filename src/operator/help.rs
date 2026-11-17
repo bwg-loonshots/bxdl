@@ -8,6 +8,12 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
     } else {
         return None;
     };
+    if cfg!(target_os = "linux") || topic.contains(&"--linux") {
+        let linux_topic: Vec<_> = topic.iter().copied().filter(|s| *s != "--linux").collect();
+        if let Some(guide) = linux_guide(&linux_topic) {
+            return Some(guide);
+        }
+    }
     let (usage, note) = match topic {
         ["cli"] => (
             "bxdl cli install [옵션]\n  bxdl cli update --from <CLI-배포본> [옵션]\n  bxdl cli info [옵션]\n  bxdl cli rollback [옵션]\n  bxdl cli bundle --help  (배포본 제작·검증)",
@@ -176,4 +182,49 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
         _ => return None,
     };
     Some(format!("BXDL 명령 안내\n\n사용법:\n  {usage}\n\n{note}\n"))
+}
+
+fn linux_guide(topic: &[&str]) -> Option<String> {
+    let (usage, note) = match topic {
+        ["setup", "new"] => (
+            "bxdl setup new <이름> [--home <관리-루트>] [--from <instance.json>] [--runtime <Linux-JRE-runtime>] [--jar <RC.4.jar>] [--native-config <node.json>]",
+            "일반 사용자 터미널에서 자료 → 제품 설정 → 검토 순으로 준비합니다. 첫 y/yes 승인 전에는 기록을 만들지 않습니다. 답은 즉시 저장하며 :back, :cancel, EOF 뒤 setup resume으로 이어갑니다.\n고정 Temurin Linux JRE를 materialize한 폴더, RC.4 JAR, native 설정과 기존 chain/credential 파일을 사용합니다. 원본을 수정하지 않고 제품 답에 맞춘 native 사본을 만듭니다. 비밀번호 원문은 받지 않습니다.\n시스템 경로는 /var/lib/bxdl/instances/<이름>, 데이터는 그 아래 data로 고정합니다. 계정·DB·서비스는 이 단계에서 만들지 않습니다. 다음: bxdl setup apply <이름>.",
+        ),
+        ["setup", "resume"] => (
+            "bxdl setup resume <이름> [--home <관리-루트>]",
+            "저장한 답에서 순차 문답·검토를 이어갑니다. 입력을 바꾸면 이전 검토가 무효화됩니다. 동일 값은 유지합니다. 이미 설치를 시도한 준비는 수정하지 않고 동일 apply에서 보존된 결과를 확인합니다.",
+        ),
+        ["setup", "list"] => (
+            "bxdl setup list [--home <관리-루트>] [--json]",
+            "사용자 영역의 Linux 설치 준비 목록을 읽습니다. 없는 관리 위치는 빈 목록입니다. sudo·엔진·서비스 호출이나 설치를 하지 않습니다.",
+        ),
+        ["setup", "show"] => (
+            "bxdl setup show <이름> [--home <관리-루트>] [--json]",
+            "Linux 준비 상태·남은 입력·고정 설치 경로와 검토 자료의 현재 일치를 읽습니다. 준비 journal을 잠깐 잠가 일관된 상태를 읽지만 기록을 쓰지는 않습니다. 검토 후 공급물 변경은 CHANGED_OR_UNAVAILABLE로 표시합니다. 서비스의 현재 상태는 별도 status 명령입니다.",
+        ),
+        ["setup", "edit"] => (
+            "bxdl setup edit <이름> --field <항목> [--home <관리-루트>]",
+            "제품 항목 또는 runtimeRoot/engineJar/nativeConfig 하나를 질문합니다. 다른 답은 보존하며 변경하면 다시 검토해야 합니다. instanceId와 dataDirectory는 고정값이라 바꿀 수 없습니다. Enter/:back/:cancel/EOF는 기존 값을 보존합니다. 다음: bxdl setup resume <이름>.",
+        ),
+        ["setup", "apply"] => (
+            "bxdl setup apply <이름> [--home <관리-루트>]",
+            "일반 사용자 터미널에서 검토한 해시·설치 경로를 확인하고 y/yes로 승인합니다. sudo가 직접 관리자 인증을 받으며 BXDL은 비밀번호를 저장하지 않습니다. 사전에 관리자가 신뢰한 Linux 빌드를 /usr/local/libexec/bxdl/bxdl에 root 소유로 설치해야 합니다.\n고정 설치기는 승인한 자료만 시스템 transaction에 복사하고 전용 계정·control을 준비하여 cold 검사·등록을 수행합니다. root는 사용자 catalog를 쓰지 않습니다. 사용자 CLI가 등록 완료 descriptor를 확인해 이름을 연결합니다.\n부분 실패·불명에서는 기록을 보존하고 자동 재설치하지 않습니다. 완료한 같은 요청은 재등록 없이 이름 연결만 복구합니다. 초기화·시작은 별도: bxdl init <이름> --confirm-initialize, bxdl start <이름>.",
+        ),
+        ["start"] => (
+            "bxdl start <이름> [--home <관리-루트>] [--timeout-seconds <1..600>] [--json]\n  bxdl start --instance <control> [동일 옵션]",
+            "등록·초기화한 노드를 systemd 시스템 서비스로 시작합니다. 사용자 CLI는 최초 등록 때 고정한 root 실행기에만 위임합니다. SSH 종료와 무관하게 systemd가 관리하며, 부팅 자동 시작·자동 재시작은 설정하지 않습니다. 시간 만료는 종료 확정이 아니므로 status --wait로 확인하세요.",
+        ),
+        ["preflight"] => (
+            "bxdl preflight <이름> [--home <관리-루트>] [--timeout-seconds <1..120>] [--json]\n  bxdl preflight --instance <control> [동일 옵션]\n  bxdl preflight --config <instance.json> [--json]",
+            "등록 노드의 고정 실행기로 cold 검사를 하거나 --config로 제품 정적 검사만 합니다. DB 초기화·서비스 시작·전역 합의 인수는 하지 않습니다.",
+        ),
+        ["instance", "show"] => (
+            "bxdl instance show <이름> [--home <관리-루트>] [--json]\n  bxdl instance show --instance <control> [--json]",
+            "고정 실행기를 통해 저장 상태를 읽습니다. 사용자 catalog 목록만 읽는 nodes와 달리 sudo 권한이 필요합니다. 현재 runtime 상태는 status로 별도 관측하세요.",
+        ),
+        _ => return None,
+    };
+    Some(format!(
+        "BXDL Linux 명령 안내\n\n사용법:\n  {usage}\n\n{note}\n\n대상: 실제 Linux GNU x86_64·Ubuntu 24.04 systemd. 개발용 경로이며 실제 Linux 인수 전입니다. 비대화형 운용은 미리 sudo -v로 인증하세요. WSL2는 후속 검증입니다.\n"
+    ))
 }

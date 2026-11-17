@@ -164,11 +164,28 @@ fn spec(command: &str) -> Option<Spec> {
         "host check" => Spec::new(command, None, &[("--timeout-seconds", N)]),
         "nodes" => Spec::new(command, None, &[("--home", D)]),
         "nodes add" => Spec::new(command, NewName, &[("--home", D), ("--instance", D)]),
-        "setup new" => Spec::new(command, NewName, &[("--home", D), ("--from", F)]),
-        "setup resume" | "setup apply" => Spec::new(command, Session, &[("--home", D)]),
-        "setup edit" => Spec::new(command, Session, &[("--home", D), ("--field", Field)]),
-        "setup list" => Spec::new(command, None, &[("--home", D)]),
-        "setup show" => Spec::new(command, Preparation, &[("--home", D)]),
+        "setup new" => Spec::new(
+            command,
+            NewName,
+            &[
+                ("--home", D),
+                ("--from", F),
+                ("--linux", B),
+                ("--runtime", D),
+                ("--jar", F),
+                ("--native-config", F),
+            ],
+        ),
+        "setup resume" | "setup apply" => {
+            Spec::new(command, Session, &[("--home", D), ("--linux", B)])
+        }
+        "setup edit" => Spec::new(
+            command,
+            Session,
+            &[("--home", D), ("--linux", B), ("--field", Field)],
+        ),
+        "setup list" => Spec::new(command, None, &[("--home", D), ("--linux", B)]),
+        "setup show" => Spec::new(command, Preparation, &[("--home", D), ("--linux", B)]),
         "setup" => Spec::new(
             command,
             None,
@@ -585,7 +602,19 @@ fn arguments(
         Context::Value(kind, prefix) => Some(match kind {
             Value::File => "files\n".into(),
             Value::Directory => "directories\n".into(),
-            Value::Field => values(crate::setup::FIELDS.iter().map(|f| f.name), prefix),
+            Value::Field => {
+                let linux = cfg!(target_os = "linux") || used.contains_key("--linux");
+                let fields = crate::setup::FIELDS
+                    .iter()
+                    .map(|f| f.name)
+                    .filter(|name| !linux || !matches!(*name, "instanceId" | "dataDirectory"));
+                let sources = if linux {
+                    vec!["runtimeRoot", "engineJar", "nativeConfig"]
+                } else {
+                    vec![]
+                };
+                values(fields.chain(sources), prefix)
+            }
             _ => "none\n".into(),
         }),
         Context::Position(prefix) => Some(match spec.position {

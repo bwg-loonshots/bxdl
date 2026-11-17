@@ -1,6 +1,8 @@
 # BXDL
 
-**LNX-03 개발용 systemd 경로 — 2026-11-16:** root 제어 기록·전용 계정·일회성 시작 gate를 갖는 Linux 개발용 서비스 backend를 구현했다. `linux-service register`와 명시 `--instance` 운용을 사용한다. 순차 설치·이름 기반 Linux 연결, 고정 Linux runtime archive/실행기 profile 및 실제 Linux 인수는 후속이다. [관리자 개발 경로](./docs/linux-service-development.md)에서 권한·명령·미검증 범위를 확인한다. [자동 검사 결과](./results/2026-11-16-linux-systemd-development.md)는 Rust659 PASS·Python205 PASS/2 SKIP·Linux 타입 검사 PASS이며, 기본 병렬 실행의 기존 시간 민감 실패2건과 재검증 이력을 포함한다.
+**LNX-04 Linux 설치·운용 UX 연결 — 2026-11-17:** 일반 사용자 `setup new/resume/list/show/edit/apply`와 노드 이름 기반 운용을 개발용 systemd backend에 연결했다. 검토한 계획만 고정 root helper에 전달하며, 사용자 catalog는 일반 사용자 소유로 유지한다. 등록 후에는 root 공개 descriptor와 최초 worker hash를 대조해 고정 실행기에 위임한다. [Linux 운용 안내](./docs/linux-operations.md)를 따른다. **실제 Linux native build·JRE/엔진·systemd 인수, signed Linux runtime archive·exact executor profile과 사용자 과업은 NOT_RUN/후속**이다. 이번 사용자 journal·catalog 합성 검증을 실제 Linux 실행 결과로 계산하지 않는다. [자동 검증 결과](./results/2026-11-17-linux-operations-ux.md)에 전체 회귀와 최종 집중 검사를 기록했다.
+
+**LNX-03 당시 개발용 systemd 경로 — 2026-11-16:** root 제어 기록·전용 계정·일회성 시작 gate를 갖는 Linux 개발용 서비스 backend를 구현했다. `linux-service register`와 명시 `--instance` 운용을 사용한다. 당시 순차 설치·이름 기반 Linux 연결은 후속이었고 현재 LNX-04에서 개발 경로를 연결했다. 고정 Linux runtime archive/실행기 profile 및 실제 Linux 인수는 여전히 후속이다. [관리자 개발 경로](./docs/linux-service-development.md)에서 권한·명령·미검증 범위를 확인한다. [자동 검사 결과](./results/2026-11-16-linux-systemd-development.md)는 Rust659 PASS·Python205 PASS/2 SKIP·Linux 타입 검사 PASS이며, 기본 병렬 실행의 기존 시간 민감 실패2건과 재검증 이력을 포함한다.
 
 **LNX-02 수신·도구 준비 — 2026-11-16:** Linux Temurin21.0.13+9 full JRE와 RC.4 JAR의 별도 조합을 고정하고257파일의 오프라인 준비·Rust staging을 검증했다. 실제 Linux Java/native/RocksDB·서비스 인수는 NOT_RUN이다. [결과](./results/2026-11-16-linux-rc4-supply.md)와 [테스터 실행 안내](./docs/linux-validation.md)를 따른다. SSH 정보 공유 없이 테스터가 직접 실행한 정제 JSON을 회수할 수 있다.
 
@@ -44,16 +46,16 @@ CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bx
 
 ## 구현한 명령
 
-이름 기반 설치·운용은 현재 Mac 경로다. Linux 개발 서비스는 관리자 권한의 `linux-service register`와 명시 `--instance`로 시작하며 [별도 안내](./docs/linux-service-development.md)의 범위를 따른다.
+이름 기반 설치·운용은 Mac 경로와 Linux 개발 경로를 제공한다. Linux는 실제 대상 머신의 일반 사용자 터미널에서 진행하며 [설치·운용 안내](./docs/linux-operations.md)의 root helper·선정 JRE/RC.4 입력 조건을 따른다. `setup list/show --linux`는 Mac에서도 읽기 전용 조회 형식을 선택한다. Mac package archive와 Linux의 flat JRE/JAR/native 입력을 서로 바꾸어 쓰지 않는다.
 
 | 명령 | 실제 동작 |
 | --- | --- |
 | `bxdl nodes [--home <dir>] [--json]` | 저장한 노드 목록·이름·저장 당시 상태/시각 조회. 현재 실행 상태는 미조회 ([가이드](./docs/nodes.md)) |
 | `bxdl nodes add <이름> --instance <control> [--home <dir>] [--json]` | 기존 등록에 고유 이름 연결. 추가 문답 없이 목록만 저장하며 노드·DB·서비스는 변경하지 않음 |
 | `bxdl status/start/stop/logs <이름>`, `bxdl diagnose <이름> --output <새.json>` | 같은 관리 목록의 이름을 해석해 노드 운용. `--home` 지원, 기존 `--instance` 경로도 유지 |
-| `bxdl setup new <이름>` / `bxdl setup resume <이름>` | 공급 자료 → 내 노드 → 누락 제품·정책 → 검토의 순차 준비·재개. 명시 승인으로 immutable 설정 파일만 준비 ([가이드](./docs/preparation.md)) |
+| `bxdl setup new <이름>` / `bxdl setup resume <이름>` | 플랫폼별 순차 준비·재개. Mac은 archive/trust, Linux는 `--runtime <flat JRE> --jar <RC.4 JAR> --native-config <JSON>` 또는 문답 입력. 검토한 불변 계획만 저장 ([Mac](./docs/preparation.md), [Linux](./docs/linux-operations.md)) |
 | `bxdl setup list [--home <dir>] [--json]` / `bxdl setup show <이름> [--home <dir>] [--json]` | 준비 기록과 별도 설치 실행 기록을 읽기 전용 조회. show는 현재 자료·완료 근거 대조를 기록 상태와 분리하며 엔진은 실행하지 않음 |
-| `bxdl setup edit <이름> --field <제품필드> [--home <dir>]` | 제품 항목 하나만 문답·저장 후 종료. 다른 답과 기존 출력 보존, 새 준비 검토는 별도 |
+| `bxdl setup edit <이름> --field <필드> [--home <dir>]` | 한 항목 수정. Linux는 제품 필드와 `runtimeRoot/engineJar/nativeConfig`를 지원하며 이름·데이터 위치는 고정. 실제 변경은 이전 검토를 해제하고 새 검토를 요구 |
 | `bxdl setup apply <이름> [--home <dir>]` | TTY에서 y/yes로 설치·cold 검사·등록·이름 연결 승인. 완료 재호출은 검증·이름 복구만, init/start는 별도 |
 | `bxdl completion zsh` | zsh 자동완성 스크립트 출력. 셸 설정 자동 수정 없음. CLI05-01 구현·검증 완료 ([가이드](./docs/completion.md)) |
 | `bxdl cli install [--from <배포본>] ...` | Mac arm64·Linux x86_64/glibc 관리 CLI의 별도 사용자 root 설치·실행 링크 연결. Linux 코드 경로는 추가했으며 실제 Linux 배포·설치 인수는 NOT_RUN. 최초 공개키 또는 명시 개발 정책 필요 ([가이드](./docs/management-cli.md)) |
@@ -63,7 +65,7 @@ CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bx
 | `bxdl console [--home <dir>] [--instance <control>]` | **추가 개발 중단·기존 구현 보존.** 홈·내 목록·기존 등록/세션의 저장 기록 조회. 승인한 목록 저장/갱신/숨기기와 새 설치 자료 준비 ([가이드](./docs/console.md)) |
 | `bxdl version --json` | Rust CLI identity·실행 target·구현 capability·엔진/서비스 미인수 상태 |
 | `bxdl host check [--timeout-seconds <초>] [--json]` | 실제 Linux 기준의 OS/배포판·PID1/systemd 준비 상태를 읽기 전용 조회. WSL은 후속으로 구분하며 서비스 변경·엔진 실행 없음. host 성공은 Linux 노드 지원/인수 성공이 아님 |
-| `bxdl linux-service account/register ...` | Linux 개발용 전용 계정 이름 계산 또는 root 제어 영역 신규 등록. 초기화·시작 별도, 일반 설치 UX·실제 Linux 인수는 후속 |
+| `bxdl linux-service account/register ...` | Linux 개발용 전용 계정 이름 계산 또는 root 제어 영역 신규 등록. 초기화·시작 별도. LNX-03 저수준 개발 인터페이스이며 일반 Linux UX는 `setup` 경로, 실제 Linux 인수는 후속 |
 | `bxdl package build ...` | expected hash에 고정한 stage를 결정적인 development archive로 조립·선택 서명·자체 검증 |
 | `bxdl package verify <archive> ...` | 외부 신뢰 key의 Ed25519 서명, 모든 payload hash/size/mode, 경로·형식·한도 검증 |
 | `bxdl install <archive> --destination <new-dir> ...` | macOS arm64에서 검증한 payload를 새 폴더에 설치하고 완료 receipt 기록 |

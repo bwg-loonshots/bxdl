@@ -1,10 +1,12 @@
 # BXDL 제품 구현 설계
 
+**LNX-04 설치·운용 UX 연결 — 2026-11-17:** 일반 사용자 순차 setup과 root 설치 helper, 사용자 노드 이름과 공개 descriptor/최초 worker 위임을 연결했다. [Linux 운용 안내](../docs/linux-operations.md)는 현재 개발 경로를, [Linux 구현 계획](./2026-11-16-linux-first-implementation-plan.md)은 UX 구현과 실물 인수의 남은 단계를 구분한다. 실제 Linux native build·JRE/native/systemd·단일노드 인수, signed runtime archive·exact profile과 사람 과업은 후속이다.
+
 **LNX-02 수신·도구 준비 — 2026-11-16:** Linux Temurin21.0.13+9 full JRE와 RC.4 JAR의 별도 조합을 고정하고257파일의 오프라인 준비·Rust staging을 검증했다. 실제 Linux Java/native/RocksDB·서비스 인수는 NOT_RUN이다. [결과](../results/2026-11-16-linux-rc4-supply.md)와 [테스터 실행 안내](../docs/linux-validation.md)를 따른다. SSH 정보 공유 없이 테스터가 직접 실행한 정제 JSON을 회수할 수 있다.
 
-- 작성일: 2026-09-16 / 갱신: 2026-11-16
+- 작성일: 2026-09-16 / 갱신: 2026-11-17
 - 상태: Rust 기반의 package·제품 설정·setup, Mac 새 폴더 installer·NIGO cold, instance 등록·명시 init/resume-init과 수동 LaunchAgent start/status/stop과 오프라인 logs/diagnose를 구현했다. 단일 validator의 실제 서비스 수명주기를 확인했으며 setup 설치 연결도 구현했다. RC.1/RC.2의 고정 package 결과와 V2 자료 보관·시작 진단의 실제 인수를 보존하고, RC.3를 명시 선택해 같은 archive의 Mac 4-validator·원본 공급 경로 부재 setup13사례와 후속 전체 설치 UX21사례·독립 검사8항목을 통과했다. RC4-01~07을 완료했다. 기술 인수 RC4-01~06에서 고정 R의 Mac 단일노드·동종망·두 복구·선정 RPC와 독립 관리 CLI B/C 전환을 인수했다. 전체 G1-M/G1-L·J5와 사람 과업은 미완료다.
-- 최신 사용자 확정(2026-11-16): **실제 Linux 머신을 다음 개발·검증의 우선 대상으로 전환**한다. Mac 기능과 당시 인수 결과는 유지하며 WSL2는 Linux 실물 인수 뒤에 검증한다. [Linux 우선 구현 계획](./2026-11-16-linux-first-implementation-plan.md)의 LNX-01 기반 코드·자동 검사를 완료했고 [검증 결과](../results/2026-11-16-linux-foundation.md)를 기록했다. Linux JRE·고정 공급물은 선정했고 다음은 실제 Linux 실행 검증과 systemd 구현이다. Linux 서비스 지원·실제 인수는 아직 완료되지 않았다.
+- 최신 사용자 확정(2026-11-16): **실제 Linux 머신을 다음 개발·검증의 우선 대상으로 전환**한다. Mac 기능과 당시 인수 결과는 유지하며 WSL2는 Linux 실물 인수 뒤에 검증한다. [Linux 우선 구현 계획](./2026-11-16-linux-first-implementation-plan.md)의 LNX-01 기반 코드·자동 검사를 완료했고 [검증 결과](../results/2026-11-16-linux-foundation.md)를 기록했다. Linux JRE·공급물 고정과 systemd 개발 backend·설치/운용 UX 연결을 구현했다. 다음은 실제 Linux native build·공급물 실행·고정 runtime 조립·단일노드 인수이며 서비스 지원·실제 인수는 아직 완료되지 않았다.
 - 현재 구현 범위와 근거: [구현 상태](../docs/implementation-status.md). NIGO가 `REQ-0002`의 방향·범위를 수용했고 BXDL은 피드백의 안전·인수 의미와 교환 절차에 동의했다. [소비자 회신](./2026-09-17-nigo-feedback-response.md)에 기록하며 PROPOSED API·fixture·dirty 개발 JAR는 수신해 제한된 cold 소비를 진행했다. 이후 #119의 clean 후보를 별도 수신·검증했고 전체 제품 인수는 남아 있다. REQ-0003 정책을 수용하고 RC1을 별도로 수신했다. 요청 전체는 `OPEN`이며 소비자 회신은 전용 NIGO worktree에서 준비한다.
 
 2026-10-20 RC.1의 정족수 복구 INCOMPLETE는 [당시 결과](../results/2026-10-20-macos-qbft-package.md)로 보존한다. 이후 [RC.2의 두 복구 경로](../results/2026-10-21-macos-rc2-package.md)와 [V2 자료 보관·시작 진단의13사례](../results/2026-10-22-macos-managed-supply.md)는 각각 지정 조합에서 PASS했다. [RC.2 전체 설치 UX](../results/2026-10-21-macos-rc2-setup.md)의 원본 A/B INCOMPLETE와 접근 경로 문제는 별도로 남아 있다.
@@ -53,7 +55,8 @@ Mac에서 반복 사용할 수 있는 설치·운용 UX를 먼저 구현한다. 
 | [RC4-04 구현·CLI-only 검증 결과](../results/2026-11-15-rc4-cli-harness.md) | 전체 검사·독립 B 배포·전환 정책·실물 입력 준비 PASS, 노드/DB/서비스/RPC 미실행 |
 | [RC4-05 Mac 서비스 결과](../results/2026-11-15-rc4-macos-service.md) | 수동 단일노드 서비스21사례·독립 종료 감사 PASS, 당시 네트워크/RPC 미실행 |
 | [RC4-06 Mac 네트워크 결과](../results/2026-11-16-rc4-macos-network.md) | 동종4-validator·두 복구·wrong-pin·선정 RPC21/52read·실행 중 CLI 전환3회 인수 |
-| [실제 Linux 우선 구현·인수](./2026-11-16-linux-first-implementation-plan.md) | LNX-01 기반→Linux 고정 공급물·systemd→실물 단일노드·친구 UX→서버 인수, WSL2 후속 |
+| [실제 Linux 우선 구현·인수](./2026-11-16-linux-first-implementation-plan.md) | LNX-01~03 기반·공급·systemd, LNX-04 개발 UX 구현과 실물 인수 대기, LNX-05 사람 과업·WSL2 후속 |
+| [Linux 설치·운용 안내](../docs/linux-operations.md) | 일반 사용자 setup·root helper 승인·이름 운용, 초기화/시작 분리·진단과 미검증 범위 |
 | [RC.4 도입·Mac 재인수 계획](./2026-11-15-rc4-adoption-plan.md) | RC4-01~07 완료, 기술 인수01~06·정식 회신07과 Mac RC4-08 NOT_RUN·이연, 기존 RC.3 보존 |
 | [직접 CLI 간소화 설계](./2026-10-22-cli-simplification.md) | 순차 준비·재개·조회·제품 항목 수정, 설치 실행·이름 연결, 노드 별칭과 기존 CLI 호환 |
 | [관리 CLI/노드 실행기 분리](./2026-10-23-independent-management-cli.md) | 기존 RC.3 유지, 관리 CLI 독립 업데이트와 실행기 검증·위임 |

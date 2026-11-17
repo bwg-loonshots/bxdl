@@ -462,3 +462,79 @@ fn command_names_and_versioned_binding_pairs_are_strict() {
     record.entries[1].target.cli = target::CliMatch::NotApplicable;
     assert!(record.validate().is_err());
 }
+
+#[test]
+fn linux_names_pin_the_public_descriptor_without_using_private_binding_state() {
+    let mut record = Record::empty();
+    record.schema_version = 2;
+    record.entries.push(Entry {
+        id: "a".repeat(32),
+        label: "Linux node".into(),
+        target: Snapshot {
+            kind: Kind::LinuxInstance,
+            path: PathBuf::from("/var/lib/bxdl/node-a"),
+            identity: target::Identity {
+                device: 7,
+                inode: 42,
+            },
+            schema_version: 1,
+            name: "node-a".into(),
+            state: target::RecordState::SystemRegistered,
+            cli: target::CliMatch::IndependentExecutor,
+        },
+        recorded_at: now().unwrap(),
+        alias: Some("local".into()),
+        binding_sha256: Some("b".repeat(64)),
+    });
+    let encoded = encode(&record).unwrap();
+    let decoded = decode(&encoded).unwrap();
+    assert_eq!(decoded.entries[0].target.kind, Kind::LinuxInstance);
+    assert_eq!(
+        decoded.entries[0].binding_sha256.as_deref(),
+        Some("b".repeat(64).as_str())
+    );
+    let (_temporary, root) = fixture();
+    let home = root.join("home");
+    Catalog::create(&home)
+        .unwrap()
+        .save(record.clone())
+        .unwrap();
+    let before = latest(&home);
+    let listing = serde_json::to_value(crate::operator::nodes::list(&home).unwrap()).unwrap();
+    assert_eq!(listing["entries"].as_array().unwrap().len(), 1);
+    assert_eq!(listing["entries"][0]["name"], "local");
+    assert_eq!(listing["entries"][0]["recordedState"], "SYSTEM_REGISTERED");
+    assert_eq!(listing["entries"][0]["currentStatus"], "NOT_OBSERVED");
+    assert_eq!(latest(&home), before);
+    record.entries[0].binding_sha256 = None;
+    assert!(record.validate().is_err());
+    record.entries[0].binding_sha256 = Some("b".repeat(64));
+    record.entries[0].target.kind = Kind::Instance;
+    assert!(record.validate().is_err());
+}
+
+#[test]
+fn linux_control_roots_cannot_overlap_user_home_namespaces() {
+    let (_temporary, root) = fixture();
+    let home = root.join("home");
+    Catalog::create(&home).unwrap();
+    for path in [home.clone(), home.join("instances/node-a"), root.clone()] {
+        let snapshot = Snapshot {
+            kind: Kind::LinuxInstance,
+            path,
+            identity: target::Identity {
+                device: 7,
+                inode: 42,
+            },
+            schema_version: 1,
+            name: "node-a".into(),
+            state: target::RecordState::SystemRegistered,
+            cli: target::CliMatch::IndependentExecutor,
+        };
+        assert_eq!(
+            check_target_location(&home, &snapshot).unwrap_err().code,
+            "CONSOLE_TARGET_OVERLAP"
+        );
+    }
+    assert!(!home.join("instances").exists());
+}

@@ -1,8 +1,12 @@
 //! Explicit development Linux service backend. Root protects authority; every
 //! JVM executes as an instance-specific non-login UID. This is not admission of
-//! a frozen Linux runtime package or integration with the setup catalog.
+//! a frozen Linux runtime package. Setup/catalog delegation uses the separate
+//! root-admitted development installer and executor modules.
 mod boundary;
+pub mod diagnostics;
 mod exit;
+pub mod install;
+pub mod management;
 pub use exit::record_exit;
 pub(crate) mod runner;
 use super::{
@@ -118,9 +122,13 @@ enum RunPhase {
 struct Run {
     attempt: String,
     phase: RunPhase,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pid: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     invocation_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     control_group: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     start_ticks: Option<u64>,
     reason: String,
 }
@@ -131,9 +139,13 @@ struct State {
     binding_sha256: String,
     phase: Phase,
     reason: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     init_attempt: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     genesis_hash: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     data_identity: Option<(u64, u64)>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     run: Option<Run>,
 }
 #[derive(Serialize)]
@@ -447,6 +459,16 @@ fn cold(
 }
 
 pub fn register(instance: &Path, spec: &Path, timeout: Duration) -> Result<Summary> {
+    register_owned(instance, spec, timeout, |_| Ok(()))
+}
+
+/// Record exclusive ownership before any persistent payload is written.
+pub(crate) fn register_owned(
+    instance: &Path,
+    spec: &Path,
+    timeout: Duration,
+    mut on_reserved: impl FnMut(crate::install::RootIdentity) -> Result<()>,
+) -> Result<Summary> {
     boundary::root()?;
     duration(timeout)?;
     boundary::safe_absolute(instance)?;
@@ -483,6 +505,11 @@ pub fn register(instance: &Path, spec: &Path, timeout: Duration) -> Result<Summa
     boundary::trusted(&current)?;
     let worker = Input::read(&current, MAX_WORKER, true)?;
     boundary::mkdir(instance, 0, 0, 0o755)?;
+    let reserved = fs::symlink_metadata(instance).map_err(|_| unknown())?;
+    on_reserved(crate::install::RootIdentity {
+        device: reserved.dev(),
+        inode: reserved.ino(),
+    })?;
     boundary::write_new(&instance.join("operation.lock"), b"", 0, 0o600)?;
     let guard = boundary::operation_lock(instance)?;
     boundary::mkdir(&instance.join("config"), 0, request.service_gid, 0o750)?;
@@ -739,6 +766,7 @@ pub fn initialize(instance: &Path, resume: bool, timeout: Duration) -> Result<Su
         return Err(error("LINUX_SERVICE_PATH_EXISTS"));
     }
     store.require_capacity(3)?;
+    diagnostics::record_init_command(&b, &attempt, if resume { "resume-init" } else { "init" })?;
     state.phase = Phase::InitIntent;
     state.init_attempt = Some(attempt.clone());
     state.reason = "LINUX_SERVICE_INIT_UNRESOLVED".into();
@@ -1438,6 +1466,25 @@ mod tests {
             data_identity: None,
             run: None,
         }
+    }
+    #[test]
+    fn private_state_roundtrips_through_strict_decoder_without_nulls() {
+        let mut value = state();
+        let raw = encoded(&value).unwrap();
+        assert!(!String::from_utf8(raw.clone()).unwrap().contains("null"));
+        assert!(json::decode::<State>(&raw).is_ok());
+        value.run = Some(Run {
+            attempt: "lnx-test".into(),
+            phase: RunPhase::Prepared,
+            pid: None,
+            invocation_id: None,
+            control_group: None,
+            start_ticks: None,
+            reason: "LINUX_SERVICE_START_PREPARED".into(),
+        });
+        let raw = encoded(&value).unwrap();
+        assert!(!String::from_utf8(raw.clone()).unwrap().contains("null"));
+        assert!(json::decode::<State>(&raw).is_ok());
     }
     #[test]
     fn account_is_per_control_and_stable() {
