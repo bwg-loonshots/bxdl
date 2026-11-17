@@ -1,6 +1,6 @@
-# Mac development 패키지 설치
+# Mac runtime 패키지 설치
 
-`install`은 macOS Apple Silicon에서 검증된 패키지 파일을 **새 폴더**에 설치한다. 폴더는 사용자 범위로 명시하고 부모는 미리 존재해야 한다. 기본 `setup`의 설정 초안과 독립된 명령이며, 터미널에서 단계별 안내를 받으려면 [설치 도우미](./setup.md)의 `setup --install`을 사용한다. `bxdl install --help`와 `bxdl setup --install --help`로 각 진입점의 사용법을 확인한다.
+Linux 노드 설치는 [Linux 설치·운용](./linux-operations.md)을 따른다. 이 문서의 `install`은 macOS Apple Silicon에서 검증된 패키지 파일을 **새 폴더**에 설치한다. 폴더는 사용자 범위로 명시하고 부모는 미리 존재해야 한다. 기본 `setup`의 설정 초안과 독립된 명령이며, 터미널에서 단계별 안내를 받으려면 [설치 도우미](./setup.md)의 `setup --install`을 사용한다. `bxdl install --help`와 `bxdl setup --install --help`로 각 진입점의 사용법을 확인한다.
 
 ```bash
 bxdl install ./bxdl-development.tar.gz \
@@ -8,7 +8,7 @@ bxdl install ./bxdl-development.tar.gz \
   --public-key ./trusted-release-public.pem --json
 ```
 
-서명 없는 개발 시험 자료에만 `--public-key` 대신 `--allow-unsigned-development`를 쓴다. 서명 자료에는 외부 신뢰 key가 반드시 필요하다. root/sudo를 요구하지 않는다. 설치 대상의 OS/CPU와 실제 host가 Mac arm64여야 하며 Linux 파일 설치는 후속이다.
+서명 없는 개발 시험 자료에만 `--public-key` 대신 `--allow-unsigned-development`를 쓴다. 서명 자료에는 외부 신뢰 key가 반드시 필요하다. root/sudo를 요구하지 않는다. 설치 대상의 OS/CPU와 실제 host가 Mac arm64여야 하며 이 archive 설치 명령의 Linux 지원은 후속이다. Linux 개발용 노드 설치는 별도 `setup apply`로 제공한다.
 
 설치 전에 manifest·서명·platform·Mac 경로 별칭/파일-디렉터리 충돌을 검사한다. 새 대상 폴더를 0700으로 독점 생성하고, 기존 verifier가 읽는 동일 payload bytes를 파일에 쓴다. 파일은 검사 중 0600이며 전체 hash·inventory·tar EOF·gzip CRC/trailing 검증이 끝난 뒤 manifest mode를 적용한다. 원본 manifest.json과 존재하는 manifest.sig도 설치 폴더에 남긴다.
 
@@ -16,8 +16,8 @@ bxdl install ./bxdl-development.tar.gz \
 
 payload 검증 실패나 기록 전 강제 중단은 receipt가 없는 부분 폴더를 남긴다. 마지막 receipt 공개·동기화 경계에서 I/O가 실패하면 INSTALL_COMMIT_UNCERTAIN/UNKNOWN/exit 6이며 receipt가 남았는지 확인해야 한다. 결과 출력 실패(exit 7)도 파일 설치 자체가 이미 끝났을 수 있다. 명령을 반복해 덮어쓰거나 자동 resume·삭제하지 않는다. 남은 폴더를 직접 확인하고 다른 새 경로를 지정한다. 파일이 보이거나 실행 권한이 있다는 사실만으로 설치 완료를 판단하지 않는다. 기존 대상은 빈 폴더여도 거부한다. symlink 경로를 사용하지 않으며 같은 UID의 악의적인 동시 변경에 대한 강한 보안 격리를 제공하지 않는다.
 
-현재 수신·재인수 기준은 [NIGO RC.3](../contracts/nigo/engine-rc3-2026-10-22/README.md)이며 자동으로 다운로드하거나 기존 설치를 교체하지 않는다. [RC.3 package 인수](../results/2026-10-22-macos-rc3-package.md)와 [전체 설치 UX 결과](../results/2026-10-22-macos-rc3-full-setup.md)는 당시 고정 CLI/archive의 근거다. 실행기·NIGO/JRE가 변경되면 새 package로 다시 인수한다. 관리 CLI만 변경하는 경우 지원하는 기존 RC.3 package와의 [호환 조합](./management-cli.md)을 검증하며 package를 재조립하지 않는다.
+현재 Mac의 고정 runtime profile은 RC.3과 RC.4를 지원한다. 새 시험 후보는 RC.4이며 선택한 archive·실행기·JAR/JRE identity를 대조한다. 자동 다운로드나 기존 설치 교체는 하지 않는다. 실행기·NIGO/JRE가 변경되면 새 package로 다시 인수하고, 관리 CLI만 변경하면 기존 runtime과의 [호환 조합](./management-cli.md)을 검증한다. 플랫폼별 실제 근거는 [지원 범위](./support-matrix.md)에서 확인한다.
 
 등록 완료 전까지 원본 archive·외부 신뢰 key·engine lock을 보존한다. 새 V2 등록은 이 세 자료를 관리 보관하고, 기존 V1은 원본 참조를 유지한다. 제품/native·chain·credential과 완료된 설치 세션의 생성 제품 JSON은 두 경우 모두 필요한 운용 입력이다. [등록과 자료 보존 규칙](./instance.md)을 따른다.
 
-이후 `engine inspect`로 선택한 JAR/JRE와 외부 lock을 확인하고, 별도 NIGO node.json을 준비해 `engine preflight`를 실행할 수 있다. 설치된 launcher의 실행 가능성, 정식 JRE 공급·NOTICE/SBOM, Apple signing/notarization, launchd와 G1-M 전체 인수는 별도다. [엔진 검사 가이드](./engine.md)를 따른다.
+이후 `engine inspect`로 선택한 JAR/JRE와 외부 lock을 확인하고, 별도 NIGO node.json을 준비해 `engine preflight`를 실행할 수 있다. 파일 설치 성공은 launcher·엔진·서비스 실행 인수와 별개다. 고정 Mac 조합의 실행 근거와 정식 배포·Apple signing/notarization·전체 운용 인수의 남은 범위는 [현재 상태](./implementation-status.md)에서 확인한다. [엔진 검사 가이드](./engine.md)를 따른다.

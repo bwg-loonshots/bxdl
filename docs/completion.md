@@ -2,7 +2,7 @@
 
 이 문서의 `design/`·`results/`·다른 문서 상대 링크는 BXDL 저장소 기준이다. CLI-only 배포본의 문서는 `management-cli.md`와 `completion.md`이며, 설치·업데이트·자동완성 명령은 동봉 문서만으로 따라 할 수 있다.
 
-CLI05-01에서 zsh 자동완성을 구현·검증했다. 전체 검사와 최종 release의 실제 zsh 결과는 [검증 기록](../results/2026-10-23-cli05-zsh-completion.md)을 따른다. 현재는 zsh를 지원하며 bash/fish는 지원하지 않는다.
+Mac·Linux 관리 CLI에서 zsh 자동완성을 제공한다. bash/fish 자동완성은 지원하지 않는다. 플랫폼별 구현·실제 검증 범위는 [지원 범위](./support-matrix.md)를 따른다.
 
 `bxdl completion zsh`는 자동완성 스크립트를 표준출력으로 내보낸다. 셸 설정이나 파일을 자동으로 바꾸지 않으며 비TTY에서도 사용할 수 있다. 이 명령에는 `--json`을 붙이지 않는다. 함께 요청하면 사용법 오류와 JSON 오류 envelope를 반환한다.
 
@@ -55,11 +55,19 @@ bxdl status --home "/path/to/team home" lo[Tab]
 
 `cli install`로 설치했다면 선택한 CLI와 함께 전환되는 고정 경로를 사용한다. 자신의 zsh 설정에서 기존 `compinit` 호출 **앞**에 PATH/fpath를 추가한다. 이미 초기화하는 설정이 있다면 `compinit`을 중복 추가하지 않는다.
 
+Mac 기본 CLI root를 사용하는 예시다.
+
 ```zsh
 export PATH="$HOME/.local/bin:$PATH"
 fpath=("$HOME/Library/Application Support/BXDL-CLI/current/share/zsh/site-functions" $fpath)
 autoload -Uz compinit
 compinit
+```
+
+Linux의 기본 CLI root에서는 fpath를 다음처럼 지정한다.
+
+```zsh
+fpath=("$HOME/.local/share/BXDL-CLI/current/share/zsh/site-functions" $fpath)
 ```
 
 별도 CLI root를 사용했다면 `cli info --root <경로>`가 출력한 fpath를 사용한다. 예전에 다른 디렉터리에 복사한 `_bxdl`이 우선되지 않도록 fpath 순서를 확인한다. 현재 셸에서 이미 로드한 함수는 `source <(bxdl completion zsh)`로 다시 읽는다.
@@ -89,4 +97,4 @@ Tab 조회는 관리 폴더·잠금·기록을 만들거나 수정하지 않으�
 
 후보가 나타나지 않으면 `command -v bxdl`과 `bxdl completion zsh --help`로 새 관리 CLI를 선택했는지 확인한다. 별도 관리 위치의 이름은 같은 명령줄에 `--home`을 입력한 뒤 완성한다. 잘못된 명령/옵션 조합이나 후보 조회 실패는 후보 없이 끝나며, 자동으로 다른 관리 위치를 찾아보거나 설정을 복구하지 않는다.
 
-자동완성은 관리 CLI의 입력 편의 기능이다. 기존 RC.3 runtime package를 다시 만들지 않으며 NIGO/JRE·노드 DB·LaunchAgent 동작은 바꾸지 않는다. 독립 관리 CLI 배포·업데이트는 [사용 가이드](./management-cli.md)를 따른다. 새 CLI와 기존 runtime 조합의 서비스/네트워크 인수, 작성자가 아닌 사용자의 과업 검증은 [CLI-05 후속 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)에 따로 남긴다.
+자동완성은 관리 CLI의 입력 편의 기능이다. 노드 runtime을 다시 만들지 않으며 NIGO/JRE·노드 DB·서비스 동작은 바꾸지 않는다. 독립 관리 CLI 배포·업데이트는 [사용 가이드](./management-cli.md)를 따른다. CLI/runtime 조합의 서비스·네트워크 인수와 실제 사용자 과업은 [현재 구현 상태](./implementation-status.md)에서 구분한다.

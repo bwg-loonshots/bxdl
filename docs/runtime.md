@@ -1,8 +1,13 @@
 # 선정 JRE 준비
 
-첫 개발 후보는 **Eclipse Temurin21.0.12.1+1-LTS, macOS arm64 전체 JRE**다.
-[선정 이유·책임 분담](../design/2026-10-19-jre-selection.md), [공급 snapshot](../contracts/runtime/temurin-21.0.12.1-macos-arm64/README.md)을 따른다.
-사용자 설치 흐름에는 JRE 다운로드/선택 단계를 추가하지 않는다. 아래는 패키지 제작자용이다.
+패키지 제작자는 대상 OS별로 고정한 전체 JRE를 준비한다. 운영자는 전달받은 패키지의 조합을 사용하며 설치 문답에서 임의 Java 버전을 선택하지 않는다.
+
+| 대상 | 선정 JRE | 고정 입력 |
+| --- | --- | --- |
+| macOS arm64 | Eclipse Temurin21.0.12.1+1-LTS | [runtime lock](../packaging/runtime-lock.temurin-21-macos-arm64.json), [공급 snapshot](../contracts/runtime/temurin-21.0.12.1-macos-arm64/README.md) |
+| Linux amd64/glibc | Eclipse Temurin21.0.13+9-LTS | [runtime lock](../packaging/runtime-lock.temurin-21-linux-amd64.json), [공급 snapshot](../contracts/runtime/temurin-21.0.13-linux-amd64/README.md) |
+
+아래 1~3절과 RC.4 조립 절차는 **Mac용**이다. Linux 후보의 archive 준비·native 제작·설치 입력 연결은 [Linux 빌드 가이드](./linux-native-build.md)를 따른다. staging의 파일 검증과 실제 JRE/node 실행 인수는 구분한다.
 
 ## 1. 공급 입력 준비
 
@@ -31,10 +36,10 @@ JRE의 공급 서명, 엔진 호환성, source archive 수신 또는 완성 제�
 ## 3. 패키지 조립
 
 같은 stage에 Rust CLI `bin/bxdl`, 선택한 고정 엔진 `engine/nigo-node.jar`를 준비한다.
-이미 운용 인수한 RC.3 개발 후보에는 [package spec](../packaging/package-spec.rc3-temurin.example.json)과
-[engine lock](../packaging/engine-lock.rc3-temurin-development.json)을 사용한다.
-[RC.3 수신 기록](../contracts/nigo/engine-rc3-2026-10-22/README.md)의 정확한 source/JAR를 대조하고,
-수신 이후의 [명시 선택과 Mac 재인수 설계](../design/2026-10-22-rc3-package-reacceptance.md)를 따른다.
+현재 Mac RC.4 후보에는 [package spec](../packaging/package-spec.rc4-temurin.example.json)과
+[engine lock](../packaging/engine-lock.rc4-temurin-development.json)을 사용한다.
+[RC.4 수신 기록](../contracts/nigo/engine-rc4-2026-11-15/README.md)의 정확한 source/JAR를 대조한다.
+기존 지원 RC.3에는 RC.3 전용 spec/lock을 사용한다.
 기존 RC.1/RC.2 spec/lock은 당시 후보의 재현용으로 보존하며 서로 혼용하지 않는다.
 engine lock은 실제 JAR/Java hash를 채운 development lock이다. 별도 제품 revision은 빌드할 CLI에 맞게 설정한다.
 
@@ -57,12 +62,12 @@ RC.4는 별도의 [engine lock](../packaging/engine-lock.rc4-temurin-development
 [package spec](../packaging/package-spec.rc4-temurin.example.json)을 명시 선택한다.
 선정 JRE는 동일하며 [수신 기록](../contracts/nigo/engine-rc4-2026-11-15/README.md)의 JAR를 재빌드하지 않는다.
 [RC4-03 결과](../results/2026-11-15-rc4-runtime-assembly.md)는 새 서명 런타임 조립과 engine-info까지 PASS다.
-RC.4 외부 관리 CLI profile·설치·서비스·네트워크 인수는 후속이므로 RC.3의 운용 인수 상태와 구분한다.
+현재 외부 관리 CLI는 고정 RC.3·RC.4 profile을 지원한다. RC.4의 [Mac 서비스](../results/2026-11-15-rc4-macos-service.md)·[네트워크와 실행 중 CLI 전환](../results/2026-11-16-rc4-macos-network.md)을 인수했으며 새로 조립한 다른 바이트로 그 결과를 승계하지 않는다.
 
 내부 실행기 A는 clean commit `d38027a474f1e8d4fb7b1d38ea17972ba88d93af`에서
 `BXDL_REVISION`을 같은 full commit으로 지정해 `cargo build --offline --locked --release --target aarch64-apple-darwin`으로 빌드했다.
 빌드 전후 source 청결도와 실제 `version --json`을 확인한다. `package build` 자체가 이 source 검사를 수행하지는 않는다.
-이번 A는 `umask 077` 정책을 포함하며 실제 초기화 보고서 권한은 RC4-05에서 인수한다.
+고정 A는 `umask 077` 정책을 포함하며 RC4-05에서 새 초기화 보고서의0600 생성·수집을 확인했다. 아래는 해당 Mac 조합의 제작 기준이며 관리 CLI만 업데이트하려고 A/JRE/JAR를 교체하지 않는다.
 
 1. 위 `runtime stage` 절차로 선정 lock의 전체 259파일을 새 stage에 준비한다.
 2. `bin/bxdl`에는 고정 A, `engine/nigo-node.jar`에는 RC.4 수신 JAR를 복사한다.
@@ -78,15 +83,15 @@ RC.3의 archive hash나 270파일 수를 재사용하지 않는다. 이후 외�
 ## 검증 경계
 
 full JRE에 필요한 알려진 모듈이 포함되어도 NIGO 전체 호환성 확인을 대신하지 않는다.
-RC.1의 기존 lifecycle 기록과 RC.2의 [Mac package 재인수 이력](../results/2026-10-21-macos-rc2-package.md)을 보존한다. 현재 선택한 RC.3의 같은 새 서명 archive에서 [4-validator·두 복구·wrong-pin](../results/2026-10-22-macos-rc3-package.md)과 [원본 공급 경로 부재 setup13사례](../results/2026-10-22-macos-rc3-setup.md)가 PASS다. setup은 제품 설정을 가져온 범위이며 전체14문답·cancel/hangup은 이번에 재실행하지 않았다. offline Storage A7은 NOT_RUN이고 기존 설치 upgrade·전체 G1-M은 후속이다. 각 후보의 JAR를 재빌드하지 않고 소비자 lifecycle·합의/복구와 공급자 engine/crypto/QBFT 검증을 각각 기록한다.
+Mac RC.3·RC.4 지정 조합의 실제 서비스·네트워크 결과는 [지원 범위](./support-matrix.md)에 연결한다. 같은 RC.3 archive의 [전체 설치 UX](../results/2026-10-22-macos-rc3-full-setup.md)와 RC.4의 [단일노드 설치·서비스](../results/2026-11-15-rc4-macos-service.md) 결과를 구분한다. offline Storage A7, 기존 설치 upgrade, 정식 제품 전체 인수는 남아 있다.
 JRE를 교체하면 같은 JAR여도 새 제품 패키지의 영향 범위를 다시 시험한다.
 원본 macOS bundle 서명, Apple notarization, 지원 최소 OS, Linux/Docker 지원은 여기서 확정하지 않는다.
 
 
-## Linux 기반 준비 — 2026-11-16
+## Linux runtime 검증
 
 실제 Linux 우선 개발의 첫 대상은 Ubuntu 24.04 LTS·x86_64·glibc다.
-`runtime stage`는 기존 `darwin/arm64` lock과 신규 `linux/amd64` lock을 구분해 검증한다.
+`runtime stage`는 기존 `darwin/arm64` lock과 `linux/amd64` lock을 구분해 검증한다.
 Linux lock의 `platform`에는 `os: "linux"`, `arch: "amd64"`, `javaMajor: 21`,
 `libc: "glibc"`가 모두 필요하다. Mac lock에는 `libc`를 추가하지 않는다.
 Linux ARM64·musl·Windows와 libc 미지정 Linux 입력은 출력 디렉터리를 만들기 전에 거절한다.
@@ -99,7 +104,7 @@ staging은 실행 호스트와 다른 대상의 inventory도 오프라인으로 
 현재 저장소의 Linux package spec은 예시이며 Linux JRE/실행기/관리 CLI 조합의 실물 인수는 NOT_RUN이다.
 세부 순서는 [Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따른다.
 
-## LNX-02 Linux 선정 공급물
+## Linux 선정 공급물
 
 Linux는 Temurin21.0.13+9-LTS full JRE를 [별도 공급 기록](../contracts/runtime/temurin-21.0.13-linux-amd64/README.md)과 [runtime lock](../packaging/runtime-lock.temurin-21-linux-amd64.json)으로 고정했다. RC.4 JAR는 그대로이며 Linux Java hash만 [별도 engine lock](../packaging/engine-lock.rc4-temurin-linux-development.json)에 결합한다.
 

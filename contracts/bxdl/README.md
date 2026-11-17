@@ -1,17 +1,22 @@
-# BXDL 개발 계약 v1
+# BXDL 데이터 계약
 
-- `cli-result.schema.json`: CLI 공통 JSON envelope.
-- `package-spec.schema.json`: builder가 받는 expected identity metadata. inventory는 builder가 생성한다.
-- `package-manifest.schema.json`: 서명되는 package inventory·제품·엔진·runtime 설명.
-- `engine-lock.schema.json`: 명시적인 개발 후보 cold 실행의 외부 신뢰 JAR/Java hash 및 expected engine-info.
-- `instance.schema.json`: 제품 JSON 설정. NIGO canonical schema가 아니다.
+BXDL이 소유한 개발용 JSON schema다. NIGO의 엔진 계약과 별개이며 채널은 `development`, 엔진 계약 상태는 `proposed`다. schema는 구조를 표현하고 실제 CLI는 중복 key·경로·권한·정확한 inventory/hash·한도 등 추가 조건을 검사한다.
 
-모두 development 단계의 BXDL 소비/표현 계약이다. JSON Schema는 구조를 표현하고 실행 코드는 경로·중복 key·정확한 inventory·hash·합계·권한 등 추가 조건을 검증한다. schema 파일만 검사한 결과를 runtime verifier 결과로 대신하지 않는다.
+| Schema | 용도 |
+| --- | --- |
+| [cli-result](./cli-result.schema.json) | CLI 공통 JSON 결과 envelope |
+| [instance](./instance.schema.json) | BXDL 제품 설정. NIGO native 설정과 별도 |
+| [network](./network.schema.json) | 공통 체인과 validator/peer 공개 입력 |
+| [setup-draft](./setup-draft.schema.json) | 중간 입력을 저장하는 내부 설정 초안 |
+| [package-spec](./package-spec.schema.json) | 제작자가 지정한 expected identity. inventory는 builder가 생성 |
+| [package-manifest](./package-manifest.schema.json) | 서명 대상 package inventory·제품/엔진/runtime 설명 |
+| [runtime-lock](./runtime-lock.schema.json) | 대상 OS/CPU·Java identity·전체 JRE inventory와 공급 정보 |
+| [engine-lock](./engine-lock.schema.json) | 신뢰한 JAR/Java hash와 전체 expected engine-info |
 
-2026-09-17 Rust 전환에서 기존 Linux v1 구조와 CLI envelope를 유지하고 development `darwin/arm64` profile을 추가했다. platform의 oneOf는 Mac none/none과 Linux glibc/2.34 조합을 분리한다. version data의 Rust 구현·Mac 우선 식별은 추가 정보이며 실제 service 인수 결과는 NOT_CHECKED다.
+package platform은 Mac `darwin/arm64`와 Linux `linux/amd64/glibc`를 구분한다. 형식 허용은 해당 OS의 엔진·서비스 인수와 다르며 현재 범위는 [지원 환경](../../docs/support-matrix.md)을 따른다. 구체적인 준비와 검증은 [패키지 형식](../../docs/package-format.md), [JRE 준비](../../docs/runtime.md), [엔진 검사](../../docs/engine.md)를 참고한다.
 
-NIGO의 PROPOSED 계약·개발 후보 manifest/fixture를 `contracts/nigo/development-2026-09-17/`에 원문 snapshot으로 수신했다. 정식 release 승인이나 모든 운영 API 인수 완료를 뜻하지 않는다. engine contractStatus는 `proposed`만 허용하고 향후 공급자 manifest와 mapping을 검증한 뒤 공식 소비 형식으로 확장한다.
+setup 초안의 입력이 완성되어도 설치·초기화·엔진 실행 완료를 뜻하지 않는다. 완성 제품 설정은 `instance` schema를 사용하며 `setup` 명령으로 수정·재개한다. 초안·등록 기록을 직접 편집해 상태를 변경하지 않는다.
 
-`setup-draft.schema.json`은 중간 입력을 저장하는 BXDL 내부 초안 계약이다. 필수 입력이 모두 채워져도 설치·초기화·엔진 검사 완료를 뜻하지 않는다. 완성된 설정 출력은 기존 `instance.schema.json`을 따르며 참조 경로는 절대 경로로 고정한다. 초안 파일을 직접 편집하지 않고 `setup --resume`으로 수정한다.
+Mac의 binding/journal과 Linux의 root 제어 기록·공개 `management.json`은 실행기가 소유한 내부 프로토콜이다. 임의 생성·변환·복원하는 interchange 계약이 아니며 Linux descriptor가 공개되어도 private 기록의 쓰기 권한을 주지 않는다. 운영 절차는 [Mac 인스턴스](../../docs/instance.md)와 [Linux 설치·운용](../../docs/linux-operations.md)을 따른다.
 
-등록 인스턴스의 `binding.json`·상태 journal은 [인스턴스 초기화 설계](../../design/2026-09-18-instance-initialization.md)에 정의한 private 내부 v1 기록이다. 외부에서 생성/편집/복원하는 interchange 계약이 아니다. 기존 제품 `instance.schema.json`·setup 초안 형식은 유지하며 CLI는 `instance register/show`, 등록형 preflight, 명시 init/resume-init을 추가한다. 공개 결과는 기존 CLI envelope를 사용한다.
+`contracts/nigo/`와 `contracts/runtime/`의 날짜·버전별 파일은 수신 당시 원문 snapshot이다. 최신 선정 조합과 실제 검증 범위는 [구현 상태](../../docs/implementation-status.md)에 연결한다. 수신 원문을 현행 제품 안내에 맞추어 소급 수정하지 않는다.

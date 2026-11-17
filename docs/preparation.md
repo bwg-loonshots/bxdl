@@ -1,4 +1,6 @@
-# 이름으로 시작하는 순차 설치 준비와 실행
+# Mac 순차 설치 준비와 실행
+
+이 문서는 **Mac runtime archive 기반의 준비·설치 경로**를 설명한다. Linux는 같은 `setup new/resume/list/show/edit/apply` 명령을 제공하지만 입력·저장 구조·권한 경계가 다르므로 [Linux 설치·운용](./linux-operations.md)을 따른다.
 
 직접 `setup new/resume`은 필요한 자료와 누락된 설정을 순서대로 묻는다. `setup list/show`로 저장 상태를 조회하고 `setup edit`으로 제품 항목 하나를 수정할 수 있다. console의 추가 개발은 중단했으며 기존 번호 메뉴는 보존한다.
 
@@ -18,7 +20,7 @@ bxdl setup new local --home '/absolute/BXDL-lab' --from '/absolute/instance.json
 bxdl setup resume local --home '/absolute/BXDL-lab'
 ```
 
-개발 checkout에서 실제 설치를 시험할 때는 `make build` 뒤 `bin/bxdl`을 실행한다. release 빌드는 대용량 package의 반복 무결성 검사 비용을 줄인다. 기존 RC.3 archive의 CLI에는 새 명령이 없으며 바이너리만 덮어쓰지 않는다. [독립 관리 CLI](./management-cli.md)를 패키지 밖에서 업데이트하고 기존 RC.3 실행기를 사용한다. Mac 기본 관리 위치는 `$HOME/Library/Application Support/BXDL`이다. 기존 `setup`만 들어 있는 unmarked 폴더는 자동 채택하지 않으므로 새 `--home`을 지정한다. 다른 OS는 `--home`을 명시하며 Linux 서비스 제공을 뜻하지 않는다.
+개발 checkout에서 실제 설치를 시험할 때는 `make build` 뒤 `bin/bxdl`을 실행한다. release 빌드는 대용량 package의 반복 무결성 검사 비용을 줄인다. 기존 RC.3 archive의 CLI에는 새 명령이 없으며 바이너리만 덮어쓰지 않는다. [독립 관리 CLI](./management-cli.md)를 패키지 밖에서 업데이트하고 기존 RC.3 실행기를 사용한다. Mac 기본 관리 위치는 `$HOME/Library/Application Support/BXDL`이다. 기존 `setup`만 들어 있는 unmarked 폴더는 자동 채택하지 않으므로 새 `--home`을 지정한다. Linux의 기본 관리 위치는 `~/.local/share/BXDL`이며 여기서 설명하는 Mac archive·생성 위치·JSON과 구분한다.
 
 이름은 `^[a-z][a-z0-9-]{0,31}$`다. 같은 관리 위치에서 고유한 준비 세션 이름이며 엔진 instanceId와 운용 별칭은 별개다. 기존 이름은 `resume`으로 열고 새 세션으로 덮어쓰지 않는다. 기존 제품/network/install 세션은 해당 기존 `--resume` 명령을 사용한다.
 
@@ -122,7 +124,7 @@ bxdl setup edit local --field chainDescription --home '/absolute/BXDL-lab'
 
 실패 시 일부 새 revision 파일이 남을 수 있다. 이를 성공으로 채택하거나 덮어쓰지 않고 다음 명시 승인에서 새로운 revision을 사용한다. 설정 준비 실패를 자동 재시도하지 않는다. 생성된 설정과 세션은 계속 보존한다.
 
-관리 CLI와 package 실행기의 바이트가 다를 수 있다. 지원하는 RC.3 profile은 실제 설치·운용 시 기존 실행기로 위임하며, CLI UX 변경만으로 노드 package를 다시 만들 필요는 없다. 준비 성공은 engine cold 검사·DB 생성·서비스 READY·네트워크 합의 성공이 아니다. NIGO RC.3/JRE pin은 유지한다.
+관리 CLI와 package 실행기의 바이트가 다를 수 있다. 지원하는 Mac RC.3·RC.4 profile은 실제 설치·운용 시 각 고정 실행기로 위임하며, CLI UX 변경만으로 노드 package를 다시 만들 필요는 없다. 준비 성공은 engine cold 검사·DB 생성·서비스 READY·네트워크 합의 성공이 아니다. 선택한 runtime의 NIGO/JRE pin은 유지한다.
 
 | exit | 이름 있는 설치 준비 명령에서의 의미 |
 | --- | --- |
@@ -149,7 +151,7 @@ JSON 조회는 기존 공통 envelope 안에 `data.schemaVersion=1`인 준비 �
 
 ## 기존 console과 운용 명령
 
-console의 추가 개발은 중단했으며 **기존 번호 메뉴는 보존**한다. 직접 CLI와 console은 같은 Preparation 저장 형식을 사용하므로 서로 만든 준비 세션을 재개할 수 있다. console의 홈 1번은 기존 메뉴형 자료 준비를 연다. 목록 조회만으로 준비나 설치를 재시도하지 않는다.
+console의 추가 개발은 중단했으며 **기존 번호 메뉴는 보존**한다. Mac의 직접 CLI와 console은 같은 Preparation 저장 형식을 사용하므로 서로 만든 Mac 준비 세션을 재개할 수 있다. Linux 준비는 별도 저장 구조이며 console에서 재개하지 않는다. console의 홈 1번은 기존 메뉴형 자료 준비를 연다. 목록 조회만으로 준비나 설치를 재시도하지 않는다.
 
 준비만으로 노드 카탈로그에 추가하지 않는다. `setup apply`의 명시 승인 범위에 설치·등록 완료 후 같은 이름 연결을 포함한다. 이미 설치·등록된 노드는 `bxdl nodes add local --instance <control>`로 이름을 연결하고 `bxdl status/start/stop/logs local`로 운용한다. [노드 이름 가이드](./nodes.md), [CLI 간소화 설계](../design/2026-10-22-cli-simplification.md), [전체 구현 계획](../design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따른다.
 

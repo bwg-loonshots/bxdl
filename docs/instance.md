@@ -1,4 +1,6 @@
-# 개발 인스턴스 등록·초기화와 Mac 서비스
+# Mac 인스턴스 등록·초기화와 서비스
+
+이 문서는 **macOS arm64의 등록·LaunchAgent 운용**을 설명한다. Linux는 [Linux 설치·운용](./linux-operations.md)의 `setup apply`와 root 보호 시스템 등록을 사용하며, 아래 Mac V1/V2·사용자 LaunchAgent 계약을 Linux에 적용하지 않는다.
 
 macOS arm64에서 설치한 개발 package와 제품/native 설정을 한 인스턴스로 등록한다. 이후에는 기존 `--instance` 경로로 검사하고 등록한 이름 또는 경로로 초기화를 호출하므로 JAR·Java·설정 경로를 매번 입력하지 않는다. **초기화는 데이터 저장소를 만들고 닫는 한 번의 작업**이며 노드나 OS 서비스를 시작하지 않는다.
 
@@ -39,7 +41,7 @@ bxdl preflight --instance "/absolute/bxdl/instances/validator-a" --json
 
 ## 새 데이터의 명시 초기화
 
-`setup apply local`은 설치·cold 검사·등록 뒤 이름을 연결한다. 기존 등록은 `nodes add local --instance <control>`로 연결할 수 있다. 다음과 같이 이름으로 초기화해도 기존 확인 조건과 고정 RC.3 실행기 검증을 유지한다.
+`setup apply local`은 설치·cold 검사·등록 뒤 이름을 연결한다. 기존 등록은 `nodes add local --instance <control>`로 연결할 수 있다. 다음과 같이 이름으로 초기화해도 기존 확인 조건과 선택한 고정 RC.3·RC.4 실행기 검증을 유지한다.
 
 ```bash
 bxdl init local --confirm-initialize
@@ -77,7 +79,7 @@ bxdl resume-init --instance "/absolute/bxdl/instances/validator-a" \
 
 ## 초기화 후 시작·조회·종료
 
-현재 사용자가 GUI 세션에 로그인한 macOS arm64에서 명시적으로 LaunchAgent를 시작한다. **지원하는 기존 RC.3 profile은 독립 관리 CLI가 인증한 package의 `bin/bxdl`에 작업을 위임한다.** 그 외 package의 native start는 같은 바이트 조건을 유지한다. [관리 CLI 가이드](./management-cli.md)를 따른다. 아래 경로는 서비스 명령을 포함한 package로 새로 설치·등록·초기화한 경로로 바꾼다. 기존 초기화용 package에 새 CLI만 덮어쓰거나 기존 DB를 새 등록에 채택하는 업데이트는 지원하지 않는다.
+현재 사용자가 GUI 세션에 로그인한 macOS arm64에서 명시적으로 LaunchAgent를 시작한다. **지원하는 Mac RC.3·RC.4 profile은 독립 관리 CLI가 인증한 package의 `bin/bxdl`에 작업을 위임한다.** 그 외 package의 native start는 같은 바이트 조건을 유지한다. [관리 CLI 가이드](./management-cli.md)를 따른다. 아래 경로는 서비스 명령을 포함한 package로 새로 설치·등록·초기화한 경로로 바꾼다. 기존 초기화용 package에 새 CLI만 덮어쓰거나 기존 DB를 새 등록에 채택하는 업데이트는 지원하지 않는다.
 
 ```bash
 BXDL_PACKAGE="/absolute/bxdl/releases/candidate-02"
@@ -115,7 +117,7 @@ status는 해당 attempt의 launchd·report·로컬 bootstrap/health를 대조�
 | 정상 종료 검증됨 | 별도 명시 start를 선택할 수 있음. 실행 직전 기존 조건 재검사 |
 | GUI 세션 없음 | 해당 사용자 GUI 세션과 상태 확인. SSH 접속만으로 GUI 세션이 생기지 않음 |
 | 실패·UNKNOWN·시도/보고서 불일치 | 정제 로그·진단과 상태 확인. init/start를 반복해 자동 복구하지 않음 |
-| 실행 CLI 불일치 | 지원하는 RC.3는 독립 관리 CLI가 고정 실행기에 위임. 다른 package는 검증된 동일 bytes CLI 사용. 설치 바이너리를 덮어쓰지 않음 |
+| 실행 CLI 불일치 | 지원하는 RC.3·RC.4는 독립 관리 CLI가 고정 실행기에 위임. 다른 package는 검증된 동일 bytes CLI 사용. 설치 바이너리를 덮어쓰지 않음 |
 
 다음 start는 이전 시도가 `STOPPED_VERIFIED`여야 한다. stop이 **동일 시도의 정상 STOPPED report + launchd의 살아 있는 프로세스 부재 + control 잠금 획득**을 함께 확인해 이를 먼저 게시한다. 이후 프로세스 부재를 재확인하고 job 등록을 정리한다. status만으로는 이 기록을 게시하지 않는다. 검증 뒤 등록 정리만 실패했다면 종료 근거는 보존하며, 명시 stop 재호출로 정리를 다시 확인한다. 다음 start도 이전 job의 비활성과 등록 정리를 확인한 뒤 새 시도를 준비한다.
 
@@ -151,4 +153,8 @@ Mac 사용자 자료는 `$HOME/Library/Application Support/BXDL` 아래에서 pa
 
 CLI와 Java는 같은 Mac 사용자 UID로 실행한다. 파일 권한·hash·advisory 잠금은 실수와 일반 동시 실행을 차단하지만 같은 UID에 대한 강한 격리나 암호학적으로 보호된 상태 로그가 아니다. 잠금 상속은 선택한 Java/NIGO가 작업 중 stdin을 닫거나 바꾸지 않는 실행 조건에 의존한다.
 
-현재 범위는 고정 RC1·선정 Temurin development package의 등록·단발 초기화, 수동 LaunchAgent start/status/stop과 오프라인 logs/diagnose다. `setup --install`의 package 선택·명시 설치/등록/init/start 및 `setup --network`의 별도 native 설정 준비도 제공한다. 실제 package의 단일 validator 시작·정상 stop·같은 DB 재시작과 같은 시도 대기는 확인했으며, 같은 package의 [4-validator 거래/catch-up·pin 거부](../results/2026-10-20-macos-qbft-package.md)도 확인했다. 정족수 복구는 INCOMPLETE이며 로그아웃/sleep 인수도 남아 있다. 설정/키 변경과 재등록 migration, 안전한 제거·전체 JRE/제품 공급망은 후속이다. [초기화 설계](../design/2026-09-18-instance-initialization.md)와 [그 검증 기록](../results/2026-09-18-instance-initialization.md), [LaunchAgent 설계](../design/2026-09-18-macos-launchagent.md)와 [서비스 검증 기록](../results/2026-09-18-macos-launchagent.md)은 각각의 범위를 구분한다.
+현재 Mac 운용 경로는 지정한 RC.3·RC.4 runtime profile과 선정 Temurin JRE의 등록·명시 초기화, 수동 LaunchAgent start/status/stop, 저장 기록 기반 logs/diagnose다. 이름 기반 `setup new/apply`와 번호형 `setup --install`의 설치·등록 흐름, `setup --network`의 native 설정 준비를 제공한다. 초기화와 시작은 설치와 별도로 승인한다.
+
+지정 RC.4 조합은 [단일노드 서비스 인수](../results/2026-11-15-rc4-macos-service.md)와 [4-validator 네트워크 인수](../results/2026-11-16-rc4-macos-network.md)에서 시작·정상 종료·같은 DB 재시작, 거래·catch-up·두 정족수 복구·wrong-pin 거부와 실행 중 관리 CLI 전환을 확인했다. 이는 고정한 Mac 개발 조합의 결과이며 임의 재빌드·Linux·혼합 엔진 버전이나 기존 DB migration으로 확대하지 않는다. RC.3의 유지 지원과 해당 조합의 근거는 [지원 범위](./support-matrix.md)를 따른다.
+
+로그아웃·sleep/wake·crash/power-loss·장기 운용, 설정/키 변경과 재등록·DB migration, 안전한 제거·이동·복구, 자동 GC와 정식 제품 공급 인수는 별도 작업이다. Mac LaunchDaemon·로그인/부팅 자동 시작·자동 재시작은 제공하지 않는다. 구현과 검증의 남은 범위는 [현재 상태](./implementation-status.md)에서 확인한다.
