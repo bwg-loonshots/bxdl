@@ -1,0 +1,3 @@
+# Generated delivery archives and filled tester records are not source files.
+/deliveries/
+/runs/
