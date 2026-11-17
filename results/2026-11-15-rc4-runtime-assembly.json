@@ -1,0 +1,527 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-15",
+  "stage": "RC4-03",
+  "outcome": "PASS",
+  "scope": "SIGNED_DEVELOPMENT_RUNTIME_ASSEMBLY_AND_EXPLICIT_SELECTION",
+  "source": {
+    "internalExecutorRevision": "d38027a474f1e8d4fb7b1d38ea17972ba88d93af",
+    "internalExecutorTree": "cf97bc426e2ab997cb72b6e301aa8c057e0e214d",
+    "buildSource": "SEPARATE_LOCAL_CLONE_OF_COMMITTED_SOURCE",
+    "cleanBeforeAndAfter": true,
+    "rustSourceChangedForRc4Assembly": false,
+    "revisionEmbeddedAndObserved": true,
+    "packagingInputsState": "UNCOMMITTED_SEPARATE_LOCK_AND_SPEC_PINNED_BY_SHA256",
+    "externalManagementRc4Profile": "NOT_IMPLEMENTED",
+    "selfReferentialArchivePin": "NOT_EMBEDDED_IN_EXECUTOR_A"
+  },
+  "build": {
+    "exitCode": 0,
+    "durationSeconds": 15.225071583,
+    "rustc": "rustc 1.86.0 (05f9846f8 2025-03-31)",
+    "cargo": "cargo 1.86.0 (adf9b6ad1 2025-02-28)",
+    "host": {
+      "os": "Darwin",
+      "arch": "arm64",
+      "macos": "26.6.2"
+    },
+    "target": "aarch64-apple-darwin",
+    "offline": true,
+    "locked": true,
+    "profile": "release",
+    "automaticRetries": 0
+  },
+  "internalExecutor": {
+    "sha256": "d2d5c586bf2ab59ac3198cbcc0f89101fc18d31e6f4ec7812b428e481a63f647",
+    "sizeBytes": 4219840,
+    "version": "0.1.0-dev",
+    "revision": "d38027a474f1e8d4fb7b1d38ea17972ba88d93af",
+    "unixProcessUmask": "077",
+    "umaskEvidence": "COMMITTED_MAIN_RS_POLICY; ACTUAL_INITIALIZATION_REPORT_MODE_NOT_RUN",
+    "mainSourceSha256": "12fb9f98f3eabfcaca83d6368d3ff8b2caac3fea6f482103c3dba1ce98012662",
+    "rc3CapabilityPreserved": "executor.rc3-legacy-v1",
+    "rc4ExternalCapability": "NOT_IMPLEMENTED"
+  },
+  "engine": {
+    "candidate": "nigo-engine-v0.1.0-rc.4",
+    "source": "037c98c315d5322fa7da266ca0254d61f3863622",
+    "jarSha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+    "jarSizeBytes": 164133636,
+    "lockFile": "packaging/engine-lock.rc4-temurin-development.json",
+    "lockSha256": "d07b35ee5a630ef459bb26a492a1511547e47e483c40120b7474b67a90e1326d",
+    "expectedIdentitySource": "contracts/nigo/engine-rc4-2026-11-15/consumer-evidence/engine-info.json",
+    "expectedIdentitySha256": "d2f33037838b5248b276dcd791f333f09461911cf2ced47606c75adf1ae50370",
+    "fullStagedEngineInfo": "MATCHED",
+    "engineInfoInvocations": 1,
+    "rebuild": "NOT_PERFORMED"
+  },
+  "runtime": {
+    "vendor": "Eclipse Adoptium Temurin",
+    "version": "21.0.12.1+1-LTS",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "lockFile": "packaging/runtime-lock.temurin-21-macos-arm64.json",
+    "lockSha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+    "filesVerified": 259,
+    "bytesVerified": 157631121,
+    "fullInputInventoryBeforeAfter": "MATCHED",
+    "stagedInventoryBeforeAfter": "MATCHED",
+    "archiveDownloadDuringThisStage": "NOT_PERFORMED",
+    "provenanceScope": "PREVIOUSLY_SELECTED_RUNTIME_FULL_INVENTORY_RECHECK"
+  },
+  "selection": {
+    "engineLock": "SELECTED_FOR_RC4_DEVELOPMENT_ASSEMBLY",
+    "packageSpecFile": "packaging/package-spec.rc4-temurin.example.json",
+    "packageSpecTemplateSha256": "4288ffbb41bc8c19009c13dcb646a06cc8657523f35432f7e19c7d108a9b2b01",
+    "resolvedSpecSha256": "a5f098381bb3fd1be9e129ca0361ac62485105468f1cdc0c5058b4af8e4a2058",
+    "productRevision": "d38027a474f1e8d4fb7b1d38ea17972ba88d93af",
+    "channel": "development",
+    "officialRelease": false,
+    "contractStatus": "PROPOSED"
+  },
+  "package": {
+    "archiveSha256": "a9f67988e785260b35504bd79a19df4a4820e72eafbf537328ca2e31f7e16f60",
+    "archiveSizeBytes": 207705667,
+    "authenticity": "verified-external-ed25519",
+    "bytesVerified": 326373420,
+    "engineJarSha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+    "engineJarSizeBytes": 164133636,
+    "executorSha256": "d2d5c586bf2ab59ac3198cbcc0f89101fc18d31e6f4ec7812b428e481a63f647",
+    "executorSizeBytes": 4219840,
+    "externalPublicKeySha256": "330c6c6e19d0e353b1001b9a4c84266765e8d4defcf04317771ab8977f72e1ee",
+    "filesVerified": 269,
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "manifestSha256": "fe21e898f5ace8be57ad838620f14da1c3e07b3ffcfbcb969fd63a67854a142e",
+    "testOnlySigningKey": true,
+    "archiveName": "bxdl-rc4-temurin-darwin-arm64-development.tar.gz",
+    "inventorySource": "ACTUAL_NEW_MANIFEST_NOT_RC3_COUNTS",
+    "inventorySha256": "620e2156b2d5f6437bd1756a23cd3938d07f4a8b197f8e7df324f731559253b8",
+    "nonRuntimeFiles": [
+      {
+        "path": "bin/bxdl",
+        "size": 4219840,
+        "sha256": "d2d5c586bf2ab59ac3198cbcc0f89101fc18d31e6f4ec7812b428e481a63f647",
+        "mode": 493
+      },
+      {
+        "path": "docs/runtime-provenance.json",
+        "size": 48899,
+        "sha256": "fb779d849cdb9153b694b3ad368dc64b178af71a118d148dcd4d51a3e7853761",
+        "mode": 420
+      },
+      {
+        "path": "docs/runtime/README.md",
+        "size": 2069,
+        "sha256": "fec5b548f20ca724a663909b52c549750d778c411dc28193ca923f6afb2d9dd7",
+        "mode": 420
+      },
+      {
+        "path": "docs/runtime/observed-runtime.json",
+        "size": 3364,
+        "sha256": "09ce3bbb73238ca6744f392ccf98c838efecbf7a14ef6dccf87d02e2313c683e",
+        "mode": 420
+      },
+      {
+        "path": "docs/runtime/source-supply.json",
+        "size": 1396,
+        "sha256": "a6dbe9a9d6b03bed522852a2d9e4f6194dc3ceaee78eabd81e81a1f4b1ecec37",
+        "mode": 420
+      },
+      {
+        "path": "docs/runtime/supplier-metadata.json",
+        "size": 31086,
+        "sha256": "896513a2a6a7666367d6603d2a7b70c392a9383ecf18f3f115d561a3f125d418",
+        "mode": 420
+      },
+      {
+        "path": "engine/nigo-node.jar",
+        "size": 164133636,
+        "sha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+        "mode": 420
+      },
+      {
+        "path": "licenses/SBOM.json",
+        "size": 133416,
+        "sha256": "fa7463de7f9988eba3cae3a8602ca84f5bcd2d8b62c74cb6c63814632f30efbf",
+        "mode": 420
+      },
+      {
+        "path": "licenses/THIRD_PARTY_NOTICES",
+        "size": 1808,
+        "sha256": "ef4dea7190744169e99db4cf6ff2ca2f06e1166b4eb2025c630b617bd78dd502",
+        "mode": 420
+      },
+      {
+        "path": "licenses/temurin-supplier-sbom.json",
+        "size": 166785,
+        "sha256": "967727266657f95fff3cf0e40fb189d4efb4bcfeb6d10ecfe04dc0ecf718f1a4",
+        "mode": 420
+      }
+    ]
+  },
+  "checks": {
+    "databaseInitialized": false,
+    "independentArchiveInventory": "PASS",
+    "independentEd25519Signature": "PASS",
+    "managementProfile": "NOT_IMPLEMENTED",
+    "nodeStarted": false,
+    "payloadSourceFilesUnchanged": 9,
+    "runtimeFilesVerified": 259,
+    "servicesRegistered": false,
+    "sourceRuntimeUnchanged": true,
+    "stageUnchanged": true,
+    "stagedEngineIdentity": "MATCHED"
+  },
+  "execution": {
+    "directAssemblyChildren": 7,
+    "assemblyCliCommands": 4,
+    "opensslCommands": 3,
+    "nestedEngineInfoCalls": 1,
+    "events": [
+      {
+        "cleanupSignals": [],
+        "durationSeconds": 2.110680208,
+        "exitCode": 0,
+        "label": "runtime-stage",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSize": 0,
+        "stdoutSha256": "0e9bb0439d19be865dc3d50da3705c2141231bb393005dbe0c825e5ce586f703",
+        "timedOut": false,
+        "timeoutSeconds": 120
+      },
+      {
+        "cleanupSignals": [],
+        "durationSeconds": 2.726605542,
+        "exitCode": 0,
+        "label": "staged-engine-inspect",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSize": 0,
+        "stdoutSha256": "0a70665c86e1323e19fc8bc892275ddd2797eff5b09a6116efc01d2ca8945dc2",
+        "timedOut": false,
+        "timeoutSeconds": 120
+      },
+      {
+        "cleanupSignals": [],
+        "durationSeconds": 0.1417064579999998,
+        "exitCode": 0,
+        "label": "test-signing-key",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSize": 0,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timedOut": false,
+        "timeoutSeconds": 30
+      },
+      {
+        "cleanupSignals": [],
+        "durationSeconds": 0.012452292000000753,
+        "exitCode": 0,
+        "label": "test-verification-key",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSize": 0,
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timedOut": false,
+        "timeoutSeconds": 30
+      },
+      {
+        "cleanupSignals": [],
+        "durationSeconds": 11.770323542,
+        "exitCode": 0,
+        "label": "package-build",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSize": 0,
+        "stdoutSha256": "d0f7dbef72746ca4aadce5380d6f7c32cdcf71140c140124680658cd2f34f8f0",
+        "timedOut": false,
+        "timeoutSeconds": 240
+      },
+      {
+        "cleanupSignals": [],
+        "durationSeconds": 1.4864536669999993,
+        "exitCode": 0,
+        "label": "package-verify",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSize": 0,
+        "stdoutSha256": "473ba21a41f3b1c3a29ff78fd510cd2ead941a8085bc1e85cb95a35bae74dad6",
+        "timedOut": false,
+        "timeoutSeconds": 120
+      },
+      {
+        "cleanupSignals": [],
+        "durationSeconds": 0.005952458000002991,
+        "exitCode": 0,
+        "label": "independent-signature",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrSize": 0,
+        "stdoutSha256": "0fd23954193f64e60f5b4b5f381cd1ea9d580aece00a6bbbc98e664302ce6b79",
+        "timedOut": false,
+        "timeoutSeconds": 30
+      }
+    ],
+    "allDirectChildrenExitedZero": true,
+    "allOwnedGroupsGone": true,
+    "automaticRetries": 0,
+    "controllerSha256": "f1b0de6dcd319d133e0086de39d578ed1612b8232697d5762a279f0242f4b5c1"
+  },
+  "attemptHistory": [
+    {
+      "attempt": 1,
+      "outcome": "CONTROLLER_PRECHECK_FAILED",
+      "reason": "PATH_OBJECT_ORDER_DIFFERS_FROM_RELATIVE_STRING_ORDER",
+      "runtimeFiles": 259,
+      "runtimeMembershipHashSizeMode": "MATCHED",
+      "directAssemblyChildren": 0,
+      "stageCreated": false,
+      "correction": "SORT_NORMALIZED_RELATIVE_PATH_STRINGS_AND_USE_NEW_OUTPUT_DIRECTORY"
+    },
+    {
+      "attempt": 2,
+      "outcome": "PASS",
+      "freshAssemblyDirectory": true,
+      "packageBuilds": 1,
+      "engineInfoCalls": 1
+    }
+  ],
+  "automatedChecks": {
+    "makeCheck": "REUSED_RC4_02_RESULT_FOR_UNCHANGED_SOURCE_AND_TESTS_NOT_RERUN",
+    "sourceCommit": "d38027a474f1e8d4fb7b1d38ea17972ba88d93af",
+    "evidence": "results/2026-11-15-rc4-fixture-preparation.json",
+    "result": {
+      "command": "make check",
+      "exitCode": 0,
+      "fmt": "PASS",
+      "clippy": "PASS",
+      "python": {
+        "run": 114,
+        "passed": 112,
+        "skipped": 2,
+        "seconds": 47.853,
+        "skipScopes": [
+          "actual CLI management distribution (requires supplied bundles/binary)",
+          "actual binary ZLE completion (requires BXDL_COMPLETION_BINARY)"
+        ]
+      },
+      "rust": {
+        "passed": 592,
+        "failed": 0,
+        "ignored": 0,
+        "suites": [
+          {
+            "status": "ok",
+            "passed": 428,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 82.43
+          },
+          {
+            "status": "ok",
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 0
+          },
+          {
+            "status": "ok",
+            "passed": 16,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 0.5
+          },
+          {
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 0.13
+          },
+          {
+            "status": "ok",
+            "passed": 15,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 0.43
+          },
+          {
+            "status": "ok",
+            "passed": 17,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 0.68
+          },
+          {
+            "status": "ok",
+            "passed": 16,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 0.95
+          },
+          {
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 0.02
+          },
+          {
+            "status": "ok",
+            "passed": 13,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 0.34
+          },
+          {
+            "status": "ok",
+            "passed": 34,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 57.46
+          },
+          {
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 0.27
+          },
+          {
+            "status": "ok",
+            "passed": 8,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 0.48
+          },
+          {
+            "status": "ok",
+            "passed": 16,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 245.89
+          },
+          {
+            "status": "ok",
+            "passed": 8,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 0.33
+          },
+          {
+            "status": "ok",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 0.07
+          },
+          {
+            "status": "ok",
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "seconds": 0
+          }
+        ]
+      },
+      "targetedCandidateTests": {
+        "run": 46,
+        "passed": 46,
+        "includedInPythonSuite": true
+      }
+    },
+    "currentStage": "OFFLINE_LOCKED_RELEASE_BUILD_AND_ACTUAL_RUNTIME_STAGE_ENGINE_INSPECT_PACKAGE_BUILD_VERIFY_INDEPENDENT_INVENTORY_SIGNATURE"
+  },
+  "evidenceSha256": {
+    "assembly-result.json": "3162d5ded646700a1cf633e4a89b2feb5a7873bbbaf7b0d7cea45b45718515f9",
+    "assembly-events.json": "7322cb9977575e541946953ab95141b78539fea6c71cd9bb9ffc43daefdccb11",
+    "payload-source-pins.json": "40b117c7661a3883ee9e893972274fd0c10a50831ab28d398c664511698bdc37",
+    "runtime-before.json": "23a150d9038a256c6cb62201b5f219661402fdc662f393947856ebd4f2bbf82e",
+    "runtime-after.json": "23a150d9038a256c6cb62201b5f219661402fdc662f393947856ebd4f2bbf82e",
+    "stage-before.json": "620e2156b2d5f6437bd1756a23cd3938d07f4a8b197f8e7df324f731559253b8",
+    "stage-after.json": "620e2156b2d5f6437bd1756a23cd3938d07f4a8b197f8e7df324f731559253b8",
+    "runtime-stage.stdout": "0e9bb0439d19be865dc3d50da3705c2141231bb393005dbe0c825e5ce586f703",
+    "staged-engine-inspect.stdout": "0a70665c86e1323e19fc8bc892275ddd2797eff5b09a6116efc01d2ca8945dc2",
+    "package-build.stdout": "d0f7dbef72746ca4aadce5380d6f7c32cdcf71140c140124680658cd2f34f8f0",
+    "package-verify.stdout": "473ba21a41f3b1c3a29ff78fd510cd2ead941a8085bc1e85cb95a35bae74dad6",
+    "independent-signature.stdout": "0fd23954193f64e60f5b4b5f381cd1ea9d580aece00a6bbbc98e664302ce6b79",
+    "independent-signature.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "manifest.inventory.json": "620e2156b2d5f6437bd1756a23cd3938d07f4a8b197f8e7df324f731559253b8",
+    "manifest.raw.json": "fe21e898f5ace8be57ad838620f14da1c3e07b3ffcfbcb969fd63a67854a142e",
+    "package-spec.resolved.json": "a5f098381bb3fd1be9e129ca0361ac62485105468f1cdc0c5058b4af8e4a2058",
+    "build-source.json": "170e88b598fe6a4cd409870325875de9e140a0dcb6b1cef9b429c6cf9b76f4c4",
+    "build-result.json": "74c90f23a77c1ac1e7b94c1e5b102e9d3cb8c3d8deb0dd987b56555c650d20a8",
+    "build.log": "6470695a09a13a6db461c9dd1bb2e2ff8fa587cf83ec487db4eb626fead30eff",
+    "executor-version.json": "9ebfacee9ed629dbee43ac2a05094187a2b81364774cb985f034b8a61fdf6a4f",
+    "attempt-01-result.json": "a72364364190cda530f5c65bd8835156f3d73ec442080baa20ad732f188f1d2d",
+    "attempt-01-assemble.py": "d7e555a243f0c61c53f783b11d4b181d82abd480f149dd2fdf75cd34e6bba1ca",
+    "independent-audit.json": "1350ee7e8bce9682fc5ec0d777aae7aaeae96798dfdc5898cccaea3e25fa2b3a"
+  },
+  "remaining": {
+    "rc4ExternalManagementProfile": "RC4-04_NOT_IMPLEMENTED",
+    "rc4RuntimeAcceptanceHarness": "RC4-04_NOT_IMPLEMENTED",
+    "managementCliBDistribution": "RC4-04_NOT_BUILT",
+    "installationGenesisDatabaseService": "RC4-05_NOT_RUN",
+    "networkRecoveryChangedApiNative": "RC4-06_NOT_RUN",
+    "humanTasks": "RC4-08_NOT_RUN",
+    "rc3ToRc4Migration": "NOT_SUPPORTED",
+    "nigoNewPrerequisite": "NONE_IDENTIFIED"
+  },
+  "limitations": [
+    "Development-only local package signed by a newly generated external test key; no publishing or production signing.",
+    "Archive and manifest authentication is not Apple signing, notarization, full product SBOM/NOTICE or customer-release approval.",
+    "No RC.3 package, lock, installed node, control directory, credentials or database was changed.",
+    "Engine-info validates identity; no cold preflight, native runtime, genesis, node, service or network acceptance was performed.",
+    "Source and output were pinned for this build; reproducible Rust binary output across builders was not tested.",
+    "HOME/TMPDIR and cwd were private; no OS network isolation, full syscall audit or complete process-tree tracing is claimed.",
+    "Child counts refer to the assembly controller direct calls; the engine-info JVM is separately identified from the inspected code path.",
+    "Full make check is the prior RC4-02 execution against unchanged code/tests, not a new run for this data-only assembly stage."
+  ],
+  "independentReview": {
+    "outcome": "PASS",
+    "scope": "EXISTING_RUNTIME_ARCHIVE_AND_RECORDED_ASSEMBLY_EVIDENCE_ONLY",
+    "source": {
+      "checkoutCleanAtAudit": true,
+      "revision": "d38027a474f1e8d4fb7b1d38ea17972ba88d93af",
+      "tree": "cf97bc426e2ab997cb72b6e301aa8c057e0e214d",
+      "versionCommandReexecuted": false,
+      "versionRecordMatchesRevision": true
+    },
+    "checks": {
+      "archiveDuplicatesLinksSpecialFilesUnsafePaths": 0,
+      "archiveMembershipHashSizeMode": "PASS",
+      "controllerEventOutputDigestsMatched": 7,
+      "controllerEventsExitZeroNoTimeoutNoCleanupSignals": true,
+      "controllerRecordedOwnedGroupsGone": true,
+      "currentBxdlSourceAndTestDiff": "NONE",
+      "engineLockAndSpecInputPins": "MATCHED",
+      "nigoTrackedDiff": "NONE",
+      "payloadSourceFilesStillMatching": 9,
+      "rawManifestAndSignatureBytes": "MATCHED",
+      "resolvedSpecDigest": "MATCHED",
+      "runtimeBeforeAfterCurrentSourceAndStageVsLock": "MATCHED",
+      "runtimeFiles": 259,
+      "stageBeforeAfterAndCurrentInventory": "MATCHED",
+      "stagedInspectIdentityVsLock": "MATCHED"
+    },
+    "additionalSignatureVerification": {
+      "exitCode": 0,
+      "invocations": 1,
+      "observedOutput": "Signature Verified Successfully",
+      "operation": "VERIFY_ED25519_RAW_MANIFEST_WITH_PUBLIC_KEY",
+      "originalControllerCalls": 7,
+      "privateKeyRead": false,
+      "separateFromOriginalControllerCalls": true,
+      "tool": "OpenSSL pkeyutl"
+    },
+    "limitations": [
+      "Read-only audit of existing artifact and evidence; no rebuild, JVM, generator, node, DB initialization, service, or assembly controller was rerun.",
+      "Only a public-key signature verification command was added; it is separate from the seven recorded assembly controller invocations.",
+      "Version was checked against preserved build evidence and binary pins, not by launching the executor again.",
+      "The signature is a test-only development signature, not an official release or customer shipment authorization.",
+      "RC.4 external management profile, installation/service/network acceptance and Native catalog genesis initialization remain NOT_IMPLEMENTED/NOT_RUN.",
+      "Successful run evidence does not establish general interrupt/timeout recovery, production support, or full product supply-chain acceptance.",
+      "No new NIGO prerequisite implementation request was identified within this assembly audit scope."
+    ]
+  }
+}

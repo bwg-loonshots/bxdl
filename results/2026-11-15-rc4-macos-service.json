@@ -1,0 +1,559 @@
+{
+  "schemaVersion": 1,
+  "stage": "RC4-05",
+  "date": "2026-11-15",
+  "outcome": "PASS",
+  "scope": "INSTALLED_MANAGEMENT_CLI_RC4_MANUAL_SINGLE_NODE_LOCAL_READINESS",
+  "host": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "macVersion": "26.6.2"
+  },
+  "serviceManager": "MACOS_USER_LAUNCH_AGENT",
+  "previousResultsCommit": "4ccc32084d1ec83c0096899a3fcf123b8aa148e9",
+  "harnessSource": {
+    "base": "4ccc32084d1ec83c0096899a3fcf123b8aa148e9",
+    "state": "UNCOMMITTED_ACCEPTANCE_HARNESS_CHANGES_PINNED_BY_FILE_HASH",
+    "files": {
+      "run_management_service.py": "6d6d63b932f7521f6cee5fe99f742a9afeaf8859f1dd89fca3d501850e709796",
+      "support.py": "f7625dd79cf9827f3f14c4d8f9acea0278a089933fba80f553c70ea7e513f0b8",
+      "runtime_profiles.py": "3b271c36cd620881936ab5e391dba3d53e50127fca12ed709307bc37c1545477",
+      "prepare_management_fixture.py": "de4e0d913274e0b71a18396f2af81315212b4b1e766614f78bd639baf249d9c2",
+      "fixture_guard.py": "676edddc89cf2e1f54a2e7064f05b281227aa2a4b93135463bff0938e8f11625",
+      "candidates.py": "00e1af6449a89cab127c5306243134ef632f6bb7390fbf58c133d39dc5a96a42"
+    },
+    "frozenCopyExecuted": true,
+    "frozenAndRepositoryFilesUnchanged": true,
+    "rustProductCodeChanged": false,
+    "nigoRepositoryChanged": false
+  },
+  "execution": {
+    "startedUtc": "2026-11-15T11:35:33.587959+00:00",
+    "finishedUtc": "2026-11-15T11:38:14.976732+00:00",
+    "elapsedSeconds": 161.512627375,
+    "scenarioRuns": 1,
+    "automaticRetries": 0,
+    "caseCount": 21,
+    "controllerInvocations": 35,
+    "maximumConcurrentServiceNodes": 1,
+    "explicitInitializations": 1,
+    "serviceStarts": 2,
+    "normalStops": 2,
+    "cliEntry": "INSTALLED_STABLE_SYMLINK",
+    "fixtureSource": "RC4_02_FRESH_FIXTURE_VIA_RC4_04_PREPARED_MANUAL_SERVICE_INPUTS",
+    "copiedInputFiles": 9,
+    "copiedSupplyFiles": 3,
+    "newCredentialsIssued": false,
+    "freshControlAndData": true,
+    "rc3ControlOrDataUsed": false,
+    "manualPeerless": true,
+    "globalConsensus": "NOT_CHECKED"
+  },
+  "runtime": {
+    "candidate": "rc4",
+    "archiveSha256": "a9f67988e785260b35504bd79a19df4a4820e72eafbf537328ca2e31f7e16f60",
+    "manifestSha256": "fe21e898f5ace8be57ad838620f14da1c3e07b3ffcfbcb969fd63a67854a142e",
+    "executorRevision": "d38027a474f1e8d4fb7b1d38ea17972ba88d93af",
+    "executorSha256": "d2d5c586bf2ab59ac3198cbcc0f89101fc18d31e6f4ec7812b428e481a63f647",
+    "jarSha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "rebuild": "NOT_PERFORMED",
+    "internalExecutorReplacement": "NOT_PERFORMED",
+    "originalArchiveAndExecutorBeforeAfter": "UNCHANGED",
+    "archiveSizeBytes": 207705667,
+    "payload": {
+      "fileCount": 269,
+      "jreFileCount": 259,
+      "bytes": 326373420,
+      "pins": {
+        "archive": "a9f67988e785260b35504bd79a19df4a4820e72eafbf537328ca2e31f7e16f60",
+        "publicKey": "330c6c6e19d0e353b1001b9a4c84266765e8d4defcf04317771ab8977f72e1ee",
+        "engineLock": "d07b35ee5a630ef459bb26a492a1511547e47e483c40120b7474b67a90e1326d",
+        "manifest": "fe21e898f5ace8be57ad838620f14da1c3e07b3ffcfbcb969fd63a67854a142e",
+        "executor": "d2d5c586bf2ab59ac3198cbcc0f89101fc18d31e6f4ec7812b428e481a63f647",
+        "jar": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+        "java": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c"
+      },
+      "hashSizeModeMembership": "PASS"
+    },
+    "beforeAfterUnchanged": true,
+    "expectedEngineIdentity": {
+      "buildInfoStatus": "AVAILABLE",
+      "console": {
+        "node": "v24.21.0",
+        "npm": "11.19.0",
+        "sourceFingerprint": "a7c768df5d1ad8a09060cbab33b6fd3f0e3475d4ee0f90d7c76c445433ab33b6"
+      },
+      "contract": {
+        "definitionSha256": "988648d06b95d372cfc36a88fbf4a88ae7deb4a3477ad8629163daa03f902e49",
+        "documentationSha256": "a284e1502b298dd755704378e168811373b860665dfba14ed3069d0f6c8431d6",
+        "fingerprint": "c604b1d24097015b2839d97f2bc9d45e3fff91ed6984665d1aa827a155c7b6e8",
+        "revision": "037c98c315d5322fa7da266ca0254d61f3863622",
+        "runtimeDocumentationSha256": "ec52f844e9291f6a3cd17a4d93e58a71c2acd651e1706c9c7f9b53b6842cf43e",
+        "runtimeFixtureSha256": "c64d4003e8b7dba63845f17dfe1386546988640e1af61fba478206c83402c01e",
+        "status": "PROPOSED"
+      },
+      "distribution": {
+        "channel": "development",
+        "officialRelease": false
+      },
+      "engine": "NIGO",
+      "java": {
+        "requiredMajor": 21
+      },
+      "source": {
+        "commit": "037c98c315d5322fa7da266ca0254d61f3863622",
+        "dirty": false
+      },
+      "version": "0.0.1-SNAPSHOT"
+    }
+  },
+  "manager": {
+    "source": {
+      "cleanBeforeAndAfter": true,
+      "revision": "65fe83f0d569fcf2231474342fa0d60ca72555d5",
+      "tree": "547bf0be5c4a346fb1d08f540c9ece33405d9b39"
+    },
+    "binary": {
+      "sha256": "f08578809744d21313aad3c8cb39644107af67d5558661d2ecc9d81f2edb138c",
+      "sizeBytes": 4219952,
+      "version": "0.1.0-dev"
+    },
+    "bundleSha256": "0b03f7324c6b2b735aed9ab7793e65d151af1445f93e0506068289d19cb03a23",
+    "bundleSizeBytes": 1911951,
+    "publicKeySha256": "ba45e53545f414e5234f5bd2019338b9700c28d315f7d435c61851ce9f4f187a",
+    "testOnlySigningKey": true
+  },
+  "setup": {
+    "productImportedWithFrom": true,
+    "blankProductFourteenQuestionFlow": "NOT_RUN",
+    "recovery": {
+      "cancelled": {
+        "revision": 0,
+        "preparation": "DRAFT",
+        "verification": "NOT_PREPARED",
+        "nextInput": "trustPolicy"
+      },
+      "firstPrepared": {
+        "revision": 1,
+        "preparation": "PREPARED_RECORDED",
+        "verification": "VERIFIED",
+        "nextInput": null
+      },
+      "edited": {
+        "revision": 1,
+        "preparation": "DRAFT",
+        "verification": "NOT_PREPARED",
+        "nextInput": null
+      },
+      "finalPrepared": {
+        "revision": 2,
+        "preparation": "PREPARED_RECORDED",
+        "verification": "VERIFIED",
+        "nextInput": null
+      },
+      "oldFilesPreserved": true,
+      "changedField": "instanceId",
+      "finalRevision": 2,
+      "onlyInstanceIdChanged": true
+    },
+    "applyDeclinedWithoutChanges": true,
+    "applyInstalledRegisteredAndNamedWithoutDb": true,
+    "queryPairs": 7,
+    "querySnapshots": {
+      "cancelled-incomplete": {
+        "evidence": "cancelled-incomplete-query-snapshot.json",
+        "sha256": "afbd078b36329a10244e04c67db2d2e2b24aff3c5045a3835faa25b185ea4973",
+        "showOutcome": "SUCCEEDED",
+        "listOutcome": "SUCCEEDED"
+      },
+      "resumed-prepared": {
+        "evidence": "resumed-prepared-query-snapshot.json",
+        "sha256": "4e80a90ca0b7e26a605e099b0e1a42310eeafd27ef17cc255e763d2db5becb60",
+        "showOutcome": "SUCCEEDED",
+        "listOutcome": "SUCCEEDED"
+      },
+      "edited-unreviewed": {
+        "evidence": "edited-unreviewed-query-snapshot.json",
+        "sha256": "71bfbb699d56359c26b0f31e918944c740ed2430e753501f736f245f41cdb8fc",
+        "showOutcome": "SUCCEEDED",
+        "listOutcome": "SUCCEEDED"
+      },
+      "edited-reprepared": {
+        "evidence": "edited-reprepared-query-snapshot.json",
+        "sha256": "7ef3f6505a7cbdb84d660b02202d2471da70c8444491f48ae16b8e53e539e2a8",
+        "showOutcome": "SUCCEEDED",
+        "listOutcome": "SUCCEEDED"
+      },
+      "prepared": {
+        "evidence": "prepared-query-snapshot.json",
+        "sha256": "7ef3f6505a7cbdb84d660b02202d2471da70c8444491f48ae16b8e53e539e2a8",
+        "showOutcome": "SUCCEEDED",
+        "listOutcome": "SUCCEEDED"
+      },
+      "applied": {
+        "evidence": "applied-query-snapshot.json",
+        "sha256": "18c1717f2b3c7fb8e21fb43dfc1f47f0ae5e86a66563b26fa3df513916907650",
+        "showOutcome": "SUCCEEDED",
+        "listOutcome": "SUCCEEDED"
+      },
+      "stopped": {
+        "evidence": "stopped-query-snapshot.json",
+        "sha256": "1aa7a8c9f2635c0295f69e838dedd3f1e64d9b1e2182a5164bcd985ead4099a3",
+        "showOutcome": "SUCCEEDED",
+        "listOutcome": "SUCCEEDED"
+      }
+    },
+    "stoppedReapply": {
+      "packageControlDataBytesAndMetadataUnchanged": true,
+      "evidence": "stopped-reapply-snapshot.json",
+      "sha256": "33a0d13af8ee9981233aa2e61b046daa36af6b4986c64884e69ef9e62906c297"
+    }
+  },
+  "originalSupplyAbsence": {
+    "retainedBinding": {
+      "schemaVersion": 2,
+      "filesVerified": 3,
+      "ownedTrustCopies": "MATCHED"
+    },
+    "absence": {
+      "scope": "ONLY_CURRENT_RUN_SUPPLY",
+      "filesMoved": 3,
+      "originalFixtureSupplyMoved": false,
+      "outcome": "ABSENT_VERIFIED",
+      "lifecycleAndReapplyCompletedWhileAbsent": true
+    },
+    "restoration": {
+      "outcome": "PASS",
+      "filesRestored": 3,
+      "hashesAndFileIdentitiesPreserved": true
+    },
+    "operationalInputPathsKeptAvailable": true
+  },
+  "lifecycle": {
+    "readinessReasons": [
+      "MANUAL_START_INITIALIZED",
+      "MANUAL_START_INITIALIZED"
+    ],
+    "distinctAttempts": true,
+    "sameDataDirectoryAndEngineInstance": true,
+    "fullEngineIdentityInInitAndBothRunReports": "MATCHED",
+    "reports": [
+      {
+        "command": "init",
+        "events": 3,
+        "sha256": "ab7967647bcd54d9b0e2446c3172144d72d17157841b5bc4addcbc623f3c93be"
+      },
+      {
+        "command": "run",
+        "events": 5,
+        "sha256": "4b0e475b4314b85e48bc7fa2b56153b8d11bae5fcdc7024e2391811bc9e1d843"
+      },
+      {
+        "command": "run",
+        "events": 5,
+        "sha256": "5771ea516ca77439670f12c83c12e1f69dd5d7a9f223127d12adc30b7c580135"
+      }
+    ],
+    "workerSnapshots": {
+      "count": 2,
+      "sha256": "d2d5c586bf2ab59ac3198cbcc0f89101fc18d31e6f4ec7812b428e481a63f647",
+      "allMatchOriginalExecutor": true
+    },
+    "managerInstallationAndBinaryUnchanged": true,
+    "packageEngineJarJavaRebuiltOrReplaced": false
+  },
+  "diagnostics": {
+    "logsOutcome": "SUCCEEDED",
+    "logsCode": "LOGS_COLLECTED",
+    "diagnoseOutcome": "SUCCEEDED",
+    "diagnoseCode": "DIAGNOSTIC_WRITTEN",
+    "reportSha256": "4f17f82a802ba34c67598ed43ba051135784f2866a4fe42402f07655ae408ef9",
+    "requireCompleteDiagnostics": true,
+    "callerUmask": {
+      "requested": "022",
+      "inherited": "022",
+      "applied": "022",
+      "scope": "HARNESS_PROCESS_BEFORE_CLI_AND_PTY_SPAWN",
+      "cliMayOverrideInheritedMask": true
+    },
+    "initializationReport": {
+      "mode": "0600",
+      "bytes": 1856,
+      "sha256": "ab7967647bcd54d9b0e2446c3172144d72d17157841b5bc4addcbc623f3c93be",
+      "unchangedAcrossDiagnosticsAndLifecycle": true
+    },
+    "logsAndDiagnosePartial": false,
+    "initializationSourceResult": "COLLECTED",
+    "initializationSourceReason": "PRIVATE_SNAPSHOT",
+    "initializedEventCollectedInBoth": true,
+    "existingRc3Mode0644ReportsModified": false
+  },
+  "cleanup": {
+    "outcome": "PASS",
+    "runnerPidsChecked": 38,
+    "independentPidsChecked": 39,
+    "independentCountIncludesHarnessPid": true,
+    "remainingPids": 0,
+    "launchAgentsNotLoaded": 2,
+    "tcpListenPortsChecked": 2,
+    "remainingListeners": 0,
+    "remainingRunRootProductProcesses": 0,
+    "existingServiceBaseline": "MATCHED",
+    "forceKillPerformed": false
+  },
+  "independentAudit": {
+    "outcome": "PASS",
+    "observedAtUtc": "2026-11-15T11:40:17.491154+00:00",
+    "attemptHistory": [
+      {
+        "artifact": "final-independent-audit.json",
+        "location": "audit:345/run_readonly:76",
+        "outcome": "INCOMPLETE",
+        "reason": "SANDBOX_EXECUTION_OF_READ_ONLY_PS_DENIED",
+        "sha256": "094a07adc158a1f8b5c32619fb0aff9a84cff001e4602eac79fae1a383bf5fc2"
+      },
+      {
+        "artifact": "final-independent-audit-2.json",
+        "executionContext": "APPROVED_READ_ONLY_OS_OBSERVATION",
+        "productCliOrJvmInvoked": false,
+        "serviceRunRepeated": false
+      }
+    ],
+    "diagnosticReadProbe": {
+      "observedException": "PermissionError errno=1 at ps process observation",
+      "outputArtifactCreated": false,
+      "performed": true,
+      "purpose": "LOCATE_PERMISSION_ERROR_WITHOUT_PRINTING_PRIVATE_DATA"
+    },
+    "additionalBxdlJvmServiceMutations": 0,
+    "scriptSha256": "13ac68f5e9200cc20526e7d04eb7e0bb2ab7f9247ab206e565aab92486c8176e",
+    "extraScenarios": {
+      "finalStoppedSnapshotMatchesCurrentFiles": true,
+      "lifecycleCompletedBetweenRunnerAbsenceAndRestorationMarkers": true,
+      "oldRevisionAndOnlyInstanceIdEditIndependentlyMatched": true,
+      "querySnapshotPairsMatched": 7,
+      "reapplySnapshotPairAndCurrentFilesMatched": true,
+      "retainedSupplyRecorded": true,
+      "setupRecoveryRecorded": true,
+      "supplyAbsenceAndRestorationRecorded": true,
+      "temporalScope": "RUNNER_CAPTURED_BEFORE_AFTER_AND_ABSENCE_MARKERS; AUDITOR_RECHECKED_FINAL_STATE_ONLY"
+    },
+    "limitations": [
+      "Read-only evidence and OS audit; no product CLI/JVM or service command was rerun.",
+      "Query/reapply before-after snapshot pairs were rechecked and final files matched; the before/after capture timing and temporary supply absence were runner-observed, not independently observed live.",
+      "Credential contents were not read; source credential invariance relies on runner hash checks plus current mode600 metadata.",
+      "B-to-A execution is supported by pinned manager invocation records, exact installed executor/workers and engine reports; no syscall/process-tree trace is claimed.",
+      "This single manual peerless node does not establish quorum, transaction/RPC acceptance, live manager update, logout/sleep/crash handling or production readiness."
+    ]
+  },
+  "validation": {
+    "makeCheck": "PASS",
+    "fmt": "PASS",
+    "clippy": "PASS",
+    "rustPassed": 596,
+    "rustFailed": 0,
+    "pythonRun": 165,
+    "pythonPassed": 163,
+    "pythonSkipped": 2,
+    "pythonSkippedScope": "EXISTING_OPT_IN_SIGNED_CLI_PAIR_DISTRIBUTION_AND_ZLE_ACTUAL_BINARY_TESTS",
+    "serviceHarnessOfflineTestsPassed": 27,
+    "elapsedSeconds": 446.929888167,
+    "sourceFileCount": 136,
+    "sourceUnchanged": true,
+    "linuxTypeCheck": "NOT_RERUN_RUST_UNCHANGED_PRIOR_RC4_04_PASS",
+    "linuxRuntime": "NOT_RUN"
+  },
+  "cases": [
+    {
+      "case": "INSTALLED_STABLE_ENTRY_AND_CURRENT_CLI_IDENTITY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "ARCHIVE_SAVED_TRUST_CANCEL_INCOMPLETE_QUERIES_READ_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "ONE_FIELD_EDIT_INVALIDATES_REVIEW_AND_PRESERVES_PRIOR_FILES",
+      "outcome": "PASS"
+    },
+    {
+      "case": "RESUME_APPROVAL_PUBLISHES_NEW_REVISION_WITH_FINAL_INSTANCE_ID",
+      "outcome": "PASS"
+    },
+    {
+      "case": "SEQUENTIAL_PREPARATION_CREATES_CONFIGURATION_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "PREPARED_LIST_SHOW_READ_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "APPLY_DECLINE_PRESERVES_PREPARATION_AND_CREATES_NO_NODE",
+      "outcome": "PASS"
+    },
+    {
+      "case": "APPROVED_APPLY_INSTALLS_AND_REGISTERS_WITHOUT_INITIALIZING",
+      "outcome": "PASS"
+    },
+    {
+      "case": "OWN_RUN_SUPPLY_ABSENT_RETAINED_V2_COPIES_VERIFIED",
+      "outcome": "PASS"
+    },
+    {
+      "case": "APPLIED_LIST_SHOW_READ_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "NAMED_EXPLICIT_INIT_CREATES_FRESH_DB",
+      "outcome": "PASS"
+    },
+    {
+      "case": "NAMED_START_LOCAL_READY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "NAMED_LOGS_AND_DIAGNOSE_COLLECT_INITIALIZATION_REPORT",
+      "outcome": "PASS"
+    },
+    {
+      "case": "NAMED_NORMAL_STOP",
+      "outcome": "PASS"
+    },
+    {
+      "case": "SAME_DATA_RESTART_LOCAL_READY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "RESTARTED_NODE_NORMAL_STOP",
+      "outcome": "PASS"
+    },
+    {
+      "case": "STOPPED_REAPPLY_PRESERVES_PACKAGE_CONTROL_DB_INODE_AND_CONTENT",
+      "outcome": "PASS"
+    },
+    {
+      "case": "OWN_RUN_SUPPLY_RESTORED_AFTER_LIFECYCLE_AND_REAPPLY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "STOPPED_LIST_SHOW_READ_ONLY",
+      "outcome": "PASS"
+    },
+    {
+      "case": "ORIGINAL_SUPPLY_PAYLOAD_JRE_EXECUTOR_AND_FIXTURE_UNCHANGED",
+      "outcome": "PASS"
+    },
+    {
+      "case": "NO_RECORDED_PID_LAUNCHD_JOB_OR_TCP_LISTENER_REMAINS",
+      "outcome": "PASS"
+    }
+  ],
+  "evidence": {
+    "privateEvidenceRetained": true,
+    "rawCredentialsSignedTransactionsDatabasesArchivesOrAbsolutePrivatePathsCommitted": false,
+    "inventoryFileCount": 90,
+    "artifacts": [
+      {
+        "artifact": "execution-plan.json",
+        "sha256": "72ba39d6de9d886a3ee038721bd555bb821de194193eef7d3eed9834438e94d2",
+        "sizeBytes": 1355
+      },
+      {
+        "artifact": "preflight-audit.json",
+        "sha256": "6cb5783b56d71169dc295a60e594c0ea8d3d2ecbc2b30077b7734a34087707c2",
+        "sizeBytes": 3913
+      },
+      {
+        "artifact": "invocation.json",
+        "sha256": "794ed608226f48f09e370bc2054ebf5880141f62d575be76f933f98f8bc59046",
+        "sizeBytes": 1729
+      },
+      {
+        "artifact": "execution-result.json",
+        "sha256": "f5d5e4eeab77b43c5196cac4596a717414d187a1866fe63a9d616b0428e94a4b",
+        "sizeBytes": 219
+      },
+      {
+        "artifact": "run.log",
+        "sha256": "a769e3f9d22e6b8b46d68744ac585c67524fbc803ae90755b1f15ad072b79e74",
+        "sizeBytes": 954
+      },
+      {
+        "artifact": "run/result.json",
+        "sha256": "5fd6830a78553e6e1e2e59c9740a1f38a6e039a2b2d0d029bda1e03fb0315bdb",
+        "sizeBytes": 27805
+      },
+      {
+        "artifact": "run/preparation.json",
+        "sha256": "c9562474b22233544aa2081c2233dd06f967b7d96a0d2c2459d751de63043890",
+        "sizeBytes": 7384
+      },
+      {
+        "artifact": "check-source.json",
+        "sha256": "ccf3140c5ebb65ae69f90721a928d9e4cc336cd2440890bb843bc1f345743ff0",
+        "sizeBytes": 14040
+      },
+      {
+        "artifact": "make-check.log",
+        "sha256": "59131a9ecfc28b83387bddc2a7935df4357c69eec5539c972298c81d2a75e1b8",
+        "sizeBytes": 63112
+      },
+      {
+        "artifact": "make-check-result.json",
+        "sha256": "99c8aa34a04e1c88496be9921a28add7e662c4285530d2f0447ed152e141d0d0",
+        "sizeBytes": 244
+      },
+      {
+        "artifact": "final-independent-audit.json",
+        "sha256": "094a07adc158a1f8b5c32619fb0aff9a84cff001e4602eac79fae1a383bf5fc2",
+        "sizeBytes": 185
+      },
+      {
+        "artifact": "final-independent-audit-2.json",
+        "sha256": "c0bc946bab39871c6156f9d27cf00964728e2dc798b0f036349cbc0a1616ea62",
+        "sizeBytes": 4083
+      },
+      {
+        "artifact": "evidence-inventory.json",
+        "sha256": "1002779a21d8a51e64f0f4d09212f1134479c8be7a0e1f18e9fb4dd60279062e",
+        "sizeBytes": 15964
+      }
+    ]
+  },
+  "notTested": [
+    "GLOBAL_QUORUM",
+    "TRANSACTION_FINALITY",
+    "LIVE_CLI_UPDATE",
+    "LOGOUT_SLEEP",
+    "CRASH_RECOVERY",
+    "LINUX_SYSTEMD",
+    "CLI05_04_HUMAN_TASKS",
+    "BLANK_PRODUCT_FOURTEEN_QUESTION_FLOW",
+    "EOF_HUP_PREPARATION",
+    "FOUR_VALIDATOR_NETWORK",
+    "RPC_21_CASE_SUBSET",
+    "SIGNED_TYPE4_EXECUTION",
+    "KZG_PROVIDER_FAULT",
+    "NATIVE_FULL_RECIPES",
+    "CONSOLE_FUNCTIONS",
+    "EXISTING_DB_MIGRATION",
+    "RC3_RC4_MIXED_NETWORK",
+    "SAFE_UNINSTALL",
+    "OFFLINE_STORAGE_A7",
+    "DOCKER_LAUNCHDAEMON",
+    "LONG_RUNNING_OR_PERFORMANCE",
+    "J5_CUSTOMER_PRODUCTION_RELEASE"
+  ],
+  "nextStage": "RC4-06",
+  "newNigoImplementationPrerequisite": "NONE_IDENTIFIED",
+  "releaseStatus": {
+    "channel": "development",
+    "officialRelease": false,
+    "contract": "PROPOSED",
+    "REQ_0002": "OPEN",
+    "REQ_0003": "OPEN",
+    "customerDelivery": "NOT_GRANTED"
+  }
+}

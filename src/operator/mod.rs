@@ -17,3 +17,5 @@ pub(crate) mod preparation_commands;
 pub(crate) mod application;
 
 pub(crate) mod completion;
+
+pub(crate) mod linux_setup;

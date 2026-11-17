@@ -31,7 +31,7 @@ JRE의 공급 서명, 엔진 호환성, source archive 수신 또는 완성 제�
 ## 3. 패키지 조립
 
 같은 stage에 Rust CLI `bin/bxdl`, 선택한 고정 엔진 `engine/nigo-node.jar`를 준비한다.
-현재 RC.3 개발 후보에는 [package spec](../packaging/package-spec.rc3-temurin.example.json)과
+이미 운용 인수한 RC.3 개발 후보에는 [package spec](../packaging/package-spec.rc3-temurin.example.json)과
 [engine lock](../packaging/engine-lock.rc3-temurin-development.json)을 사용한다.
 [RC.3 수신 기록](../contracts/nigo/engine-rc3-2026-10-22/README.md)의 정확한 source/JAR를 대조하고,
 수신 이후의 [명시 선택과 Mac 재인수 설계](../design/2026-10-22-rc3-package-reacceptance.md)를 따른다.
@@ -50,9 +50,59 @@ source-supply.json의 고정 입력과 함께 별도 배포 kit에 포함하거�
 이후 기존 `package build/verify`로 외부 Ed25519 key 서명과 전체 파일 검증을 수행한다.
 서명 key는 stage 밖에 둔다. `setup --install`의 패키지·lock 입력과 일반 설치·초기화·기동 흐름은 그대로다.
 
+
+## RC.4 개발용 런타임 조립
+
+RC.4는 별도의 [engine lock](../packaging/engine-lock.rc4-temurin-development.json)과
+[package spec](../packaging/package-spec.rc4-temurin.example.json)을 명시 선택한다.
+선정 JRE는 동일하며 [수신 기록](../contracts/nigo/engine-rc4-2026-11-15/README.md)의 JAR를 재빌드하지 않는다.
+[RC4-03 결과](../results/2026-11-15-rc4-runtime-assembly.md)는 새 서명 런타임 조립과 engine-info까지 PASS다.
+RC.4 외부 관리 CLI profile·설치·서비스·네트워크 인수는 후속이므로 RC.3의 운용 인수 상태와 구분한다.
+
+내부 실행기 A는 clean commit `d38027a474f1e8d4fb7b1d38ea17972ba88d93af`에서
+`BXDL_REVISION`을 같은 full commit으로 지정해 `cargo build --offline --locked --release --target aarch64-apple-darwin`으로 빌드했다.
+빌드 전후 source 청결도와 실제 `version --json`을 확인한다. `package build` 자체가 이 source 검사를 수행하지는 않는다.
+이번 A는 `umask 077` 정책을 포함하며 실제 초기화 보고서 권한은 RC4-05에서 인수한다.
+
+1. 위 `runtime stage` 절차로 선정 lock의 전체 259파일을 새 stage에 준비한다.
+2. `bin/bxdl`에는 고정 A, `engine/nigo-node.jar`에는 RC.4 수신 JAR를 복사한다.
+3. 위 NOTICE·runtime SBOM·공급 SBOM과 runtime snapshot의 `README.md`, `supplier-metadata.json`, `observed-runtime.json`, `source-supply.json`을 명시적으로 복사한다. 실행기는0755, 일반 문서는0644로 지정한다.
+4. RC.4 spec의 조립용 사본에서 `product.revision`을 A의 full commit으로 채운다. `engine.contractRevision`은 source commit이 아닌 계약 fingerprint다.
+5. stage의 A·JAR·Java로 RC.4 lock에 대한 `engine inspect --allow-development`를 수행하고 전체 identity를 대조한다. 이는 DB 초기화나 native 실행 검사가 아니다.
+6. stage 밖의 개발용 Ed25519 key로 `package build`를 수행하고 외부 공개키로 `package verify`한다. 실제 manifest 기준 전체 파일·크기·mode·hash와 archive/manifest/A identity를 고정한다.
+
+이번 R은 **269 payload / 326,373,420 bytes**다. 결과 JSON에 전체 runtime lock과 나머지 10파일 inventory를 연결했다.
+RC.3의 archive hash나 270파일 수를 재사용하지 않는다. 이후 외부 관리 CLI B에 R의 정확한 pin을 등록하며 A를 B로 덮어쓰거나 그 이유로 R을 재조립하지 않는다.
+서명 key가 다른 재조립물은 새로운 archive다. 기존 승인 profile의 pin을 새로 계산한 hash로 임의 교체하는 절차가 아니다.
+
 ## 검증 경계
 
 full JRE에 필요한 알려진 모듈이 포함되어도 NIGO 전체 호환성 확인을 대신하지 않는다.
 RC.1의 기존 lifecycle 기록과 RC.2의 [Mac package 재인수 이력](../results/2026-10-21-macos-rc2-package.md)을 보존한다. 현재 선택한 RC.3의 같은 새 서명 archive에서 [4-validator·두 복구·wrong-pin](../results/2026-10-22-macos-rc3-package.md)과 [원본 공급 경로 부재 setup13사례](../results/2026-10-22-macos-rc3-setup.md)가 PASS다. setup은 제품 설정을 가져온 범위이며 전체14문답·cancel/hangup은 이번에 재실행하지 않았다. offline Storage A7은 NOT_RUN이고 기존 설치 upgrade·전체 G1-M은 후속이다. 각 후보의 JAR를 재빌드하지 않고 소비자 lifecycle·합의/복구와 공급자 engine/crypto/QBFT 검증을 각각 기록한다.
 JRE를 교체하면 같은 JAR여도 새 제품 패키지의 영향 범위를 다시 시험한다.
 원본 macOS bundle 서명, Apple notarization, 지원 최소 OS, Linux/Docker 지원은 여기서 확정하지 않는다.
+
+
+## Linux 기반 준비 — 2026-11-16
+
+실제 Linux 우선 개발의 첫 대상은 Ubuntu 24.04 LTS·x86_64·glibc다.
+`runtime stage`는 기존 `darwin/arm64` lock과 신규 `linux/amd64` lock을 구분해 검증한다.
+Linux lock의 `platform`에는 `os: "linux"`, `arch: "amd64"`, `javaMajor: 21`,
+`libc: "glibc"`가 모두 필요하다. Mac lock에는 `libc`를 추가하지 않는다.
+Linux ARM64·musl·Windows와 libc 미지정 Linux 입력은 출력 디렉터리를 만들기 전에 거절한다.
+
+staging은 실행 호스트와 다른 대상의 inventory도 오프라인으로 검증할 수 있으며 JVM을 실행하지 않는다.
+보고서 `platform`에 대상 조합을 남긴다. 이 결과는 바이너리의 Linux 호환성이나 glibc 최소 버전을 실행 검증한 결과가 아니다.
+선정 Linux JRE의 공급 archive·전체 inventory·출처·대응 source를 별도로 고정하고,
+같은 RC.4 JAR의 Linux engine-info·native/RocksDB 실행을 실제 Linux 머신에서 확인한 뒤 제품 조합을 인수한다.
+기존 Mac runtime lock·RC.4 archive와 과거 PASS를 Linux용으로 수정하거나 승계하지 않는다.
+현재 저장소의 Linux package spec은 예시이며 Linux JRE/실행기/관리 CLI 조합의 실물 인수는 NOT_RUN이다.
+세부 순서는 [Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따른다.
+
+## LNX-02 Linux 선정 공급물
+
+Linux는 Temurin21.0.13+9-LTS full JRE를 [별도 공급 기록](../contracts/runtime/temurin-21.0.13-linux-amd64/README.md)과 [runtime lock](../packaging/runtime-lock.temurin-21-linux-amd64.json)으로 고정했다. RC.4 JAR는 그대로이며 Linux Java hash만 [별도 engine lock](../packaging/engine-lock.rc4-temurin-linux-development.json)에 결합한다.
+
+`tools/prepare-linux-runtime.py`는 명시 archive·신뢰한 runtime lock/hash와 새 output을 받아 전체 tar 검증 뒤145개 내부 legal symlink를 정규파일로 준비한다. 이후 `bxdl runtime stage`에 output/runtime을 입력하면257파일 inventory를 독립 검사한다. 두 명령 모두 JVM을 실행하지 않는다. 실제 공급 archive로 이 교차 검증을 통과했다.
+
+[실행 안내](./linux-validation.md)는 별도 Linux 호스트에서 CLI를 native build하고 Java·engine-info의 cold identity를 확인한다. 원격 SSH는 선택 사항이며 테스터의 직접 실행과 정제 결과 회수로 대체할 수 있다. Linux runtime package 조립·native/RocksDB·systemd 인수는 아직 완료하지 않았다.

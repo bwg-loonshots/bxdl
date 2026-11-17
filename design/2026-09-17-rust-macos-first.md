@@ -2,7 +2,8 @@
 
 - 결정일: 2026-09-17
 - 사용자 확정: Go 기반을 Rust로 전환하고 macOS에서 설치·운용 UX를 먼저 구현한다.
-- 우선순위: macOS Apple Silicon 로컬 운영 → Linux 서버/systemd → Docker/Compose. Linux는 후속 서버 배포 목표로 유지한다.
+- 당시 우선순위: macOS Apple Silicon 로컬 운영 → Linux 서버/systemd → Docker/Compose.
+- 2026-11-16 후속 사용자 결정: [실제 Linux 우선 구현·인수](./2026-11-16-linux-first-implementation-plan.md)로 다음 작업 순서를 변경했다. Mac 구현·인수 이력은 유지하고 실제 Linux 단일노드와 사용자 과업을 우선한다. WSL2는 Linux 실물 검증 후속이며 아래 Mac 선택 이유·profile은 당시 결정 이력이다.
 - 갱신: Rust 기반 이후 R1 setup 입력·수정·checkpoint/재개·새 제품 설정 출력, R2 새 폴더 installer, R3 engine-info/cold·등록·명시 init/resume-init·수동 LaunchAgent start/status/stop을 구현했다. setup의 package 선택·자동 연결과 전체 G1-M은 후속이다.
 - 2026-09-18 추가: clean 후보 수신과 제품/native 결합 cold 검사를 구현했다. [후속 설계](./2026-09-18-product-engine-preflight.md)가 후보 공급·종료/동기화 대기에 관한 이 문서의 이전 상태보다 최신이다.
 - 최신 상태: [구현 상태](../docs/implementation-status.md), [setup 가이드](../docs/setup.md), [CLI](../docs/cli.md). 코드 존재와 실제 검증·운영 설치 완료를 구분한다.
@@ -84,7 +85,7 @@ Mac 첫 profile은 사용자 LaunchAgent로 구현한다. 사용자가 로그인
 
 NIGO-01~04/06의 공급 계약은 Mac에서도 필요하다. 기존 source 기반 Mac 실행 근거를 공식 artifact 인수로 승격하지 않는다. Mac UX는 fixture로 병행 개발할 수 있으나 미구현 초기화/검사를 성공 처리하지 않는다.
 
-## 7. Linux와 Docker 후속 유지
+## 7. 당시 Linux·Docker 후속 설계와 현재 승계
 
 Linux는 시스템 설치·service UID 격리·systemd의 별도 profile을 유지한다. Mac의 성공은 Linux native·권한·서비스 인수를 대신하지 않는다. 기존 linux/amd64 development manifest도 Rust verifier에서 계속 받는다.
 

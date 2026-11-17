@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "BXDL pinned runtime lock v1",
-  "description": "Trusted maintainer input for offline runtime stage on the darwin/arm64 Java 21 profile. files pins the entire extracted Java Home after permitted internal file symlinks are materialized. Archive/sourceArchive fields preserve upstream provenance and are not authenticated or downloaded by runtime stage. Runtime validation additionally checks unique paths, exact full inventory, path restrictions, file/directory conflicts, a 4 GiB total, and bin/java SHA-256 equality with javaSha256. A matching lock does not certify JVM execution, engine compatibility, license completeness, or product release readiness.",
+  "description": "Trusted maintainer input for offline runtime stage on the darwin/arm64 or linux/amd64/glibc Java 21 profiles. files pins the entire extracted Java Home after permitted internal file symlinks are materialized. Archive/sourceArchive fields preserve upstream provenance and are not authenticated or downloaded by runtime stage. Runtime validation additionally checks unique paths, exact full inventory, path restrictions, file/directory conflicts, a 4 GiB total, and bin/java SHA-256 equality with javaSha256. A matching lock does not certify JVM execution, engine compatibility, license completeness, or product release readiness.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -24,23 +24,51 @@
       "description": "Nonempty trimmed label without control characters; runtime validator also enforces a 256-byte UTF-8 limit."
     },
     "platform": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "os": {
-          "const": "darwin"
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "os": {
+              "const": "darwin"
+            },
+            "arch": {
+              "const": "arm64"
+            },
+            "javaMajor": {
+              "const": 21
+            }
+          },
+          "required": [
+            "os",
+            "arch",
+            "javaMajor"
+          ]
         },
-        "arch": {
-          "const": "arm64"
-        },
-        "javaMajor": {
-          "const": 21
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "os": {
+              "const": "linux"
+            },
+            "arch": {
+              "const": "amd64"
+            },
+            "javaMajor": {
+              "const": 21
+            },
+            "libc": {
+              "const": "glibc"
+            }
+          },
+          "required": [
+            "os",
+            "arch",
+            "javaMajor",
+            "libc"
+          ]
         }
-      },
-      "required": [
-        "os",
-        "arch",
-        "javaMajor"
       ]
     },
     "archive": {

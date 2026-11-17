@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-16",
+  "stage": "LNX-02",
+  "status": "SUPPLY_PINNED_OFFLINE_VERIFIED_NATIVE_PENDING",
+  "sourceBaseCommit": "9a8593638c7cb66f4793b9ae831b515a6060957d",
+  "sourceState": "UNCOMMITTED_LNX02_TOOLING_AND_RECORDS",
+  "executionHost": {
+    "os": "macOS",
+    "architecture": "arm64"
+  },
+  "linuxExecution": "NOT_RUN",
+  "sshRequired": false,
+  "executionHandoff": "Tester runs locally and returns sanitized JSON; direct SSH is optional.",
+  "runtimeLockSha256": "23eec871655dea8af8f79cb69f21c4add762226a9314df003edce1233e898f47",
+  "engineLockSha256": "9817d950f19832c725bfd373829023d44a437ad93e9f6291feef6c3185e94675",
+  "candidateSha256": "a2e23d3575d1f7f178b9fb71f8f4ac86310b0b9685dfb24990bd6d8faab89b71",
+  "supplyReceiptSha256": "968830e30d88b169a1d7f906de6cc582d9fed826270cb163e9899a4ecb6243b0",
+  "offlinePreparation": {
+    "archiveRoot": "jdk-21.0.13+9-jre",
+    "archiveSha256": "a535a1df9c6284d9618872984e026ae0352d1f7e9e0605425c0e6114f47351dd",
+    "archiveSizeBytes": 52181297,
+    "engineAcceptance": "NOT_RUN",
+    "fileBytes": 166678666,
+    "fileCount": 257,
+    "outcome": "SUCCEEDED",
+    "platform": {
+      "arch": "amd64",
+      "javaMajor": 21,
+      "libc": "glibc",
+      "os": "linux"
+    },
+    "runtimeExecution": "NOT_RUN",
+    "runtimeLockSha256": "23eec871655dea8af8f79cb69f21c4add762226a9314df003edce1233e898f47",
+    "schemaVersion": 1,
+    "scope": "LINUX_RUNTIME_SUPPLY_OFFLINE",
+    "serviceAcceptance": "NOT_RUN",
+    "symlinksMaterialized": 145
+  },
+  "rustStageCrossCheck": {
+    "schemaVersion": 1,
+    "command": "runtime stage",
+    "outcome": "SUCCEEDED",
+    "reasonCode": "RUNTIME_STAGED",
+    "message": "신뢰 lock의 전체 runtime 파일을 검증해 새 폴더에 준비했습니다. archive 인증·JVM 실행·제품 호환성 검증은 포함하지 않습니다.",
+    "observedAt": "2026-11-16T06:13:04.757603Z",
+    "data": {
+      "archiveVerification": "NOT_PERFORMED",
+      "bytesVerified": 166678666,
+      "filesVerified": 257,
+      "javaSha256": "7afc28801f744050aeba646b20e7314265279f76f9d0273b21a2b66411e1bf6d",
+      "lockSha256": "23eec871655dea8af8f79cb69f21c4add762226a9314df003edce1233e898f47",
+      "platform": {
+        "arch": "amd64",
+        "javaMajor": 21,
+        "libc": "glibc",
+        "os": "linux"
+      },
+      "runtimeExecution": "NOT_PERFORMED",
+      "symlinksMaterialized": 0,
+      "vendor": "Eclipse Adoptium Temurin",
+      "version": "21.0.13+9-LTS"
+    }
+  },
+  "offlineVerifier": {
+    "sourceCommit": "9a8593638c7cb66f4793b9ae831b515a6060957d",
+    "sourceCleanBeforeAfter": true,
+    "target": "aarch64-apple-darwin",
+    "binarySha256": "1fd8785ab9ae16f7138711dc9dd49252cf022de2d4e92ce486a826f186e79716",
+    "notLinuxExecutor": true
+  },
+  "rc4Jar": {
+    "sha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+    "sizeBytes": 164133636,
+    "localBytesReverified": true,
+    "expectedIdentityPreservedAcrossJavaChange": true,
+    "staticResourcesRecordSha256": "50d0e76a932351938883ea0b2683a71e04bf899c2fca51bdc3882f7967c7c1dd",
+    "nativeLoad": "NOT_RUN"
+  },
+  "checks": {
+    "makeCheck": "PASS",
+    "jsonSchema": "PASS_RUNTIME_AND_ENGINE_LOCK",
+    "independentInventoryComparison": "PASS_257_FILES",
+    "linuxTypecheck": "NOT_REPEATED_NO_RUST_CHANGE_SINCE_LNX01",
+    "nativeProbeOnMac": {
+      "status": "PASS_EXPECTED_REJECTION",
+      "reasonCode": "NATIVE_LINUX_X64_REQUIRED",
+      "exitCode": 3,
+      "outputDirectoryCreated": false
+    },
+    "format": "PASS",
+    "clippy": "PASS",
+    "rust": {
+      "passed": 623,
+      "failed": 0,
+      "ignored": 0
+    },
+    "python": {
+      "tests": 207,
+      "passed": 205,
+      "skipped": 2,
+      "failed": 0
+    },
+    "handoffArchiveInventory": "PASS_28_FILES",
+    "handbookBashSyntax": "PASS_7_BLOCKS_NOT_EXECUTED",
+    "independentCodeReview": "FINDINGS_FIXED_AND_22_PROBE_TESTS_PASSED"
+  },
+  "linuxPackage": {
+    "archive": "NOT_ASSEMBLED",
+    "internalExecutor": "NOT_BUILT",
+    "managementCli": "NOT_BUILT",
+    "admittedExecutorProfile": "NONE"
+  },
+  "unperformed": [
+    "Linux Java version/modules and engine-info execution",
+    "Linux native provider and RocksDB exact-JAR tests",
+    "Linux CLI linking/build and operational runtime assembly",
+    "systemd service lifecycle, node initialization and human UX",
+    "vendor detached signature verification and customer source delivery"
+  ],
+  "handoffArchive": {
+    "sha256": "eecbaf5c513b38e80e2d9114f5f931460da744aca399bd1ff14b95700d46cbc9",
+    "sizeBytes": 323996959,
+    "filesPinned": 28,
+    "nativeLinuxExecution": "NOT_RUN",
+    "purpose": "Development technical verification handoff; no customer installer or operational runtime.",
+    "archiveInventoryVerification": "PASS",
+    "sourceArchiveSha256": "fc2031f4d22fa50b7766a9f2aaab2b30a565ac2575a190c75186f0d44f347a21",
+    "toolingSha256": {
+      "tools/prepare-linux-runtime.py": "20ac9713adf918172e2ce36f88569f2c9c90777c1f07d61d6466840dd0a6b59e",
+      "tests/acceptance/linux_runtime_probe.py": "8b785af27144c106a086fc6398acf5083178bda389157e068550d56488f75896"
+    },
+    "file": "bxdl-linux-rc4-validation-kit-20261116.tar.gz"
+  },
+  "toolingSource": [
+    {
+      "path": "tools/prepare-linux-runtime.py",
+      "sha256": "20ac9713adf918172e2ce36f88569f2c9c90777c1f07d61d6466840dd0a6b59e"
+    },
+    {
+      "path": "tests/acceptance/linux_runtime_probe.py",
+      "sha256": "8b785af27144c106a086fc6398acf5083178bda389157e068550d56488f75896"
+    },
+    {
+      "path": "tests/acceptance/test_linux_runtime_supply.py",
+      "sha256": "9f180dd4a6ff10444f4e607c9abe0a170df03752d34f4d8005ab8154f9b9b251"
+    },
+    {
+      "path": "tests/acceptance/test_linux_runtime_probe.py",
+      "sha256": "96deea5a27a9968ba25c6cbb6b938c024fd318f744c57a502e754658088dc8a0"
+    },
+    {
+      "path": "tests/acceptance/test_linux_candidate_pins.py",
+      "sha256": "6eb141c104b2644591d1a253c63c45ec618c7125afdfb4f6c2242606d03bd6b2"
+    }
+  ],
+  "rawEvidence": [
+    {
+      "file": "bxdl-lnx02-make-check.log",
+      "sha256": "ea60cbb7f179b0528b522fd2ac1ba6dad07c549217f6e843590297a0d342c549"
+    },
+    {
+      "file": "bxdl-lnx02-prepare-result.json",
+      "sha256": "ec85b101c634e2762011ecee4e624af626226ba05d115482e83036fb8969016f"
+    },
+    {
+      "file": "bxdl-lnx02-rust-stage-result.json",
+      "sha256": "01392a60fcf3d9afa84cc13e66df4c8db8ecfeda977b0ff73743b2e62395d6f4"
+    },
+    {
+      "file": "bxdl-lnx02-foreign-host-result.json",
+      "sha256": "ccd59f8aa1fa287c4673036da280176e656ec3096d470d79cb81cccb5da3e7e1"
+    },
+    {
+      "file": "bxdl-lnx02-bootstrap-build.log",
+      "sha256": "59e408922ef231d1571eec11c4d2794b66f57082753d333e38e9220d6c83f61f"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 //! Operator interface. Mutations require a registered instance and explicit intent.
+mod linux_service;
 use crate::{
     artifact, config, engine, error::BxdlError, install, management, operator, runtime, setup,
 };
@@ -57,6 +58,10 @@ pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
   bxdl package build --help               패키지 조립
   bxdl package verify --help              서명·파일 검증
   bxdl runtime stage --help               고정 JRE 준비
+  bxdl host check                         Linux 호스트 환경 확인
+  bxdl linux-service account --instance <경로>
+  bxdl linux-service register --instance <새 경로> --spec <json> --allow-development
+                                         Linux 개발용 관리자 등록 (설치 UX 별도)
   bxdl engine inspect --help              엔진 identity 검사
   bxdl engine preflight --help            native 설정 cold 검사
 
@@ -75,7 +80,9 @@ pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
   bxdl help <명령>                         같은 명령별 안내
   bxdl version [--json]                    CLI 식별 정보
 
-macOS arm64 우선입니다. start/status/stop은 Mac 사용자 LaunchAgent를 사용합니다.
+Linux amd64/glibc의 관리 CLI 설치·환경 확인과 macOS arm64를 지원합니다.
+Linux는 setup new/apply 뒤 이름으로 init/start/status/stop을 사용합니다. 최초 root 설치기 준비가 필요합니다.
+Linux systemd는 개발용이며 실제 머신 인수 전입니다. Mac은 사용자 LaunchAgent를 사용합니다.
 console은 기존 구현을 보존하며 추가 개발은 중단했습니다. bxdl console --help로 확인할 수 있습니다.
 "#;
 
@@ -170,6 +177,9 @@ pub fn run_with_input<'a>(
     stderr: &'a mut dyn Write,
 ) -> i32 {
     let (json_mode, args) = take_json(args);
+    if args.first().is_some_and(|arg| arg == "linux-execute") {
+        return linux_service::execute_internal(&args[1..], json_mode, input, stdout);
+    }
     let help = operator::help::for_args(&args);
     if !json_mode && help.is_none() {
         if let Some(notice) = service_wait_notice(&args) {
@@ -256,11 +266,25 @@ pub fn run_with_input<'a>(
         }
     }
     if let Some(data) = response.data {
+        if response.command.starts_with("setup ") && data["platform"] == "linux-amd64" {
+            return if linux_service::print_setup(out, &data).is_ok() {
+                exit
+            } else {
+                7
+            };
+        }
         if matches!(
             response.command.as_str(),
             "cli install" | "cli update" | "cli info" | "cli rollback"
         ) {
             return if print_management_summary(out, &data).is_ok() {
+                exit
+            } else {
+                7
+            };
+        }
+        if response.command == "host check" {
+            return if print_host_summary(out, &data).is_ok() {
                 exit
             } else {
                 7
@@ -316,6 +340,42 @@ pub fn run_with_input<'a>(
         }
     }
     exit
+}
+
+fn print_host_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
+    let text = |key: &str| data[key].as_str().unwrap_or("NOT_CHECKED");
+    writeln!(out, "  호스트: {} / {}", text("os"), text("arch"))?;
+    if let Some(distribution) = data.get("distribution").filter(|v| v.is_object()) {
+        writeln!(
+            out,
+            "  배포판: {} {}",
+            distribution["id"].as_str().unwrap_or("UNKNOWN"),
+            distribution["versionId"].as_str().unwrap_or("UNKNOWN")
+        )?;
+    }
+    writeln!(out, "  관측 결과: {}", text("reasonCode"))?;
+    if let Some(manager) = data.get("manager").filter(|v| v.is_object()) {
+        writeln!(
+            out,
+            "  systemd: {} / {}",
+            manager["version"].as_str().unwrap_or("UNKNOWN"),
+            manager["systemState"].as_str().unwrap_or("UNKNOWN")
+        )?;
+    }
+    if data["wsl"].as_bool() == Some(true) {
+        writeln!(
+            out,
+            "  WSL2는 후속 검증 환경입니다. 실제 Linux 서버 인수와 구분합니다."
+        )?;
+    }
+    writeln!(
+        out,
+        "  Linux 서비스: 개발용 관리자 경로 구현 / 일반 설치 UX: 후속 / 엔진 실물 인수: 미수행"
+    )?;
+    writeln!(
+        out,
+        "  기준: Ubuntu 24.04 LTS·x86_64·glibc·systemd. 서비스 설정은 변경하지 않았습니다."
+    )
 }
 
 fn print_management_guidance(
@@ -574,6 +634,7 @@ fn print_nodes_summary(out: &mut dyn Write, data: &Value, added: bool) -> std::i
         let text = |key: &str| entry[key].as_str().unwrap_or("—");
         let state = match entry["recordedState"].as_str() {
             Some("REGISTERED") => "초기화 전",
+            Some("SYSTEM_REGISTERED") => "시스템 등록 확인 · 초기화/실행 상태 별도 조회",
             Some("INITIALIZED") => "초기화 기록 있음",
             _ => "작업 결과 불명",
         };
@@ -715,6 +776,9 @@ pub(crate) fn print_service_summary(out: &mut dyn Write, data: &Value) -> std::i
             Some("READY") => ("준비됨", "READY"),
             Some("NOT_READY") => ("아직 준비되지 않음", "NOT_READY"),
             Some("STOPPED") => ("정지됨", "STOPPED"),
+            Some("INACTIVE") => ("비활성 상태", "INACTIVE"),
+            Some("STOPPING") => ("종료 중", "STOPPING"),
+            Some("INITIALIZED") => ("초기화 기록 있음", "INITIALIZED"),
             Some("EXITED") => ("프로세스 종료됨", "EXITED"),
             Some("FAILED") => ("실패 확인됨", "FAILED"),
             Some("NOT_LOADED") => ("서비스에 등록되지 않음", "NOT_LOADED"),
@@ -750,7 +814,24 @@ pub(crate) fn print_service_summary(out: &mut dyn Write, data: &Value) -> std::i
         writeln!(out, "마지막 관측 사유: {last}")?;
     }
     print_startup_summary(out, data)?;
-    print_guidance(out, &operator::view::service(data))?;
+    if data["serviceProfile"] == "LINUX_DEVELOPMENT_SYSTEM_SERVICE" {
+        writeln!(
+            out,
+            "운용 대상: Linux systemd 개발 경로 (관리자 권한과 --instance 경로 사용)"
+        )?;
+        let next = if data["reason"] == "LINUX_SERVICE_STOPPED_VERIFIED"
+            && data["outcome"] == "SUCCEEDED"
+        {
+            "다시 시작하려면 bxdl start --instance <등록 경로>를 실행하세요."
+        } else if data["outcome"] == "SUCCEEDED" && data["runtimeReadiness"] == "READY" {
+            "종료하려면 bxdl stop --instance <등록 경로>를 실행하세요."
+        } else {
+            "status --instance <등록 경로>로 다시 관측하고, 불명 기록과 데이터를 보존하세요."
+        };
+        writeln!(out, "다음 조치: {next}")?;
+    } else {
+        print_guidance(out, &operator::view::service(data))?;
+    }
     writeln!(
         out,
         "네트워크 합의: 미검사 (로컬 READY만으로 quorum·거래 확정을 보장하지 않음)"
@@ -1248,6 +1329,16 @@ fn dispatch_setup(
     input: &mut dyn BufRead,
     prompts: &mut dyn Write,
 ) -> (ResultEnvelope, i32) {
+    if (cfg!(target_os = "linux") || args.iter().any(|a| a == "--linux"))
+        && args.first().is_some_and(|a| {
+            matches!(
+                a.as_str(),
+                "new" | "resume" | "list" | "show" | "edit" | "apply"
+            )
+        })
+    {
+        return linux_service::setup(args, json_mode, interactive, input, prompts);
+    }
     if args.first().is_some_and(|arg| arg == "apply") {
         return dispatch_application(args, json_mode, interactive, input, prompts);
     }
@@ -1580,6 +1671,101 @@ fn take_json(args: &[String]) -> (bool, Vec<String>) {
     (json_mode, remaining)
 }
 
+// Capabilities describe this executable's command support, not accepted packages.
+fn capabilities_for(target: Option<&str>) -> Vec<&'static str> {
+    let mut capabilities = vec![
+        "management-cli.v1",
+        "management.bundle.build",
+        "management.bundle.verify",
+        "management.info",
+        "completion.zsh",
+        "nodes.list",
+        "nodes.add",
+        "runtime.stage",
+        "package.build",
+        "package.verify",
+        "config.validate",
+        "config.fingerprint",
+        "preflight.local",
+        "setup.draft",
+        "setup.network",
+        "setup.preparation.sequential",
+        "setup.preparation.list",
+        "setup.preparation.show",
+        "setup.preparation.edit",
+        "engine.inspect",
+        "engine.preflight.cold",
+        "preflight.product-engine",
+        "logs.sanitized",
+        "diagnose.offline",
+        "host.check",
+    ];
+    match target {
+        Some("darwin-arm64") => capabilities.extend([
+            "management.install.macos",
+            "management.update.macos",
+            "management.rollback.macos",
+            "nodes.named-operations",
+            "executor.rc3-legacy-v1",
+            "executor.rc4-v1",
+            "setup.apply",
+            "nodes.named-initialization",
+            "install.macos",
+            "instance.register",
+            "instance.show",
+            "init",
+            "resume-init",
+            "start.macos-launchagent",
+            "status",
+            "status.wait",
+            "stop.macos-launchagent",
+        ]),
+        Some("linux-amd64") => capabilities.extend([
+            "management.install.linux",
+            "management.update.linux",
+            "management.rollback.linux",
+            "linux-service.development.register",
+            "linux-setup.development",
+            "linux-executor.development.v1",
+            "linux-service.development.init",
+            "linux-service.development.start",
+            "linux-service.development.status",
+            "linux-service.development.stop",
+        ]),
+        _ => (),
+    }
+    capabilities
+}
+
+fn dispatch_host(args: &[String]) -> (ResultEnvelope, i32) {
+    if args.first().map(String::as_str) != Some("check") {
+        return invalid("host");
+    }
+    let Some((flags, positions)) = parse(&args[1..], &[("timeout-seconds", true)]) else {
+        return invalid("host check");
+    };
+    let Some(timeout) = timeout_flag(&flags, 5, 30) else {
+        return invalid("host check");
+    };
+    if !positions.is_empty() {
+        return invalid("host check");
+    }
+    match engine::systemd::inspect_host(timeout) {
+        Ok(value) => {
+            let exit = if value.outcome == "SUCCEEDED" { 0 } else { 3 };
+            report(
+                "host check",
+                value.outcome,
+                value.reason_code,
+                "Linux 기준 환경을 읽기 전용으로 확인했습니다. 노드 설치·서비스 시작·엔진 인수는 수행하지 않았습니다.",
+                &value,
+                exit,
+            )
+        }
+        Err(error) => failure("host check", error, 3),
+    }
+}
+
 fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
     if args.is_empty() || (args.len() == 1 && matches!(args[0].as_str(), "help" | "--help" | "-h"))
     {
@@ -1596,6 +1782,7 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
     }
     match args[0].as_str() {
         "cli" => dispatch_management(&args[1..]),
+        "host" => dispatch_host(&args[1..]),
         "nodes" => dispatch_nodes(&args[1..]),
         "version" => {
             if args.len() != 1 {
@@ -1610,8 +1797,8 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
                     Some(json!({
                         "product": "BXDL", "version": VERSION, "revision": REVISION, "implementation": "rust",
                         "stage": "development-engine-integration", "bundleInspection": "NOT_PERFORMED",
-                        "capabilities": ["management-cli.v1", "management.bundle.build", "management.bundle.verify", "management.install.macos", "management.update.macos", "management.info", "management.rollback.macos", "completion.zsh", "nodes.list", "nodes.add", "nodes.named-operations", "executor.rc3-legacy-v1", "runtime.stage", "package.build", "package.verify", "config.validate", "config.fingerprint", "preflight.local", "setup.draft", "setup.network", "setup.preparation.sequential", "setup.preparation.list", "setup.preparation.show", "setup.preparation.edit", "setup.apply", "nodes.named-initialization", "install.macos", "engine.inspect", "engine.preflight.cold", "preflight.product-engine", "instance.register", "instance.show", "init", "resume-init", "start.macos-launchagent", "status", "status.wait", "stop.macos-launchagent", "logs.sanitized", "diagnose.offline"],
-                        "primaryTarget": "darwin-arm64", "engineContractStatus": "PROPOSED_DEVELOPMENT",
+                        "capabilities": capabilities_for(management::host_target()),
+                        "primaryTarget": management::host_target().unwrap_or("unsupported"), "engineContractStatus": "PROPOSED_DEVELOPMENT",
                         "macosServiceAcceptance": "NOT_CHECKED", "linuxServiceAcceptance": "NOT_CHECKED"
                     })),
                 ),
@@ -1780,6 +1967,10 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
         command @ ("init" | "resume-init") => dispatch_initialization(command, &args[1..]),
         command @ ("start" | "stop" | "status") => dispatch_service(command, &args[1..]),
         "service-run" => dispatch_service_gate(&args[1..]),
+        "linux-service" => linux_service::dispatch(&args[1..]),
+        "linux-install" => linux_service::install(&args[1..]),
+        "systemd-run" => linux_service::gate(&args[1..]),
+        "systemd-exit" => linux_service::exit_hook(&args[1..]),
         command @ ("logs" | "diagnose") => dispatch_diagnostics(command, &args[1..]),
         command @ ("upgrade" | "uninstall") => (
             result(
@@ -1798,6 +1989,13 @@ fn dispatch(args: &[String]) -> (ResultEnvelope, i32) {
 }
 
 fn dispatch_preflight(args: &[String]) -> (ResultEnvelope, i32) {
+    if cfg!(target_os = "linux")
+        && !args
+            .iter()
+            .any(|a| a == "--config" || a.starts_with("--config="))
+    {
+        return linux_service::read_command("preflight", args);
+    }
     if args
         .iter()
         .any(|arg| arg == "--instance" || arg.starts_with("--instance="))
@@ -2343,6 +2541,9 @@ impl NodeTarget {
 fn dispatch_instance(args: &[String]) -> (ResultEnvelope, i32) {
     match args.first().map(String::as_str) {
         Some("show") => {
+            if cfg!(target_os = "linux") {
+                return linux_service::read_command("instance show", &args[1..]);
+            }
             let Some((flags, pos)) = parse(&args[1..], &[("instance", true)]) else {
                 return invalid("instance show");
             };
@@ -2490,6 +2691,21 @@ fn dispatch_initialization(command: &str, args: &[String]) -> (ResultEnvelope, i
     let Some(timeout) = timeout_flag(&flags, 120, 600) else {
         return invalid(command);
     };
+    if cfg!(all(
+        target_os = "linux",
+        target_arch = "x86_64",
+        target_env = "gnu"
+    )) {
+        return linux_service::managed(
+            command,
+            target,
+            &engine::linux_service::management::Request::Initialize {
+                resume,
+                timeout_seconds: timeout.as_secs(),
+            },
+            None,
+        );
+    }
     let target = match target.resolve() {
         Ok(target) => target,
         Err(error) => return instance_failure(command, error),
@@ -2587,6 +2803,22 @@ fn dispatch_diagnostics(command: &str, args: &[String]) -> (ResultEnvelope, i32)
         max_bytes,
         timeout,
     };
+    if cfg!(all(
+        target_os = "linux",
+        target_arch = "x86_64",
+        target_env = "gnu"
+    )) {
+        return linux_service::managed(
+            command,
+            target,
+            &engine::linux_service::management::Request::Logs {
+                tail,
+                max_bytes,
+                timeout_seconds: timeout.as_secs(),
+            },
+            flags.get("output").map(PathBuf::from).as_deref(),
+        );
+    }
     let target = match target.resolve() {
         Ok(target) => target,
         Err(error) => return failure(command, error, 3),
@@ -2695,6 +2927,28 @@ fn dispatch_service(command: &str, args: &[String]) -> (ResultEnvelope, i32) {
     let Some(options) = service_options(command, args) else {
         return invalid(command);
     };
+    if cfg!(all(
+        target_os = "linux",
+        target_arch = "x86_64",
+        target_env = "gnu"
+    )) {
+        use engine::linux_service::management::{Request, ServiceAction};
+        let service_action = match command {
+            "start" => ServiceAction::Start,
+            "stop" => ServiceAction::Stop,
+            _ => ServiceAction::Status,
+        };
+        return linux_service::managed(
+            command,
+            options.target,
+            &Request::Service {
+                service_action,
+                wait: options.wait,
+                timeout_seconds: options.timeout.as_secs(),
+            },
+            None,
+        );
+    }
     let target = match options.target.resolve() {
         Ok(target) => target,
         Err(error) => return service_failure(command, error),
@@ -3019,5 +3273,53 @@ mod management_ux_tests {
         );
         assert_eq!(exit, 4);
         assert_eq!(unsupported.outcome, "UNSUPPORTED");
+    }
+}
+
+#[cfg(test)]
+mod platform_capability_tests {
+    use super::capabilities_for;
+
+    #[test]
+    fn linux_management_does_not_advertise_mac_executor_or_service_support() {
+        let linux = capabilities_for(Some("linux-amd64"));
+        for supported in [
+            "management.install.linux",
+            "management.update.linux",
+            "management.rollback.linux",
+            "linux-service.development.register",
+            "linux-service.development.init",
+            "linux-service.development.start",
+            "linux-service.development.status",
+            "linux-service.development.stop",
+            "host.check",
+            "runtime.stage",
+        ] {
+            assert!(linux.contains(&supported));
+        }
+        for unavailable in [
+            "management.install.macos",
+            "executor.rc3-legacy-v1",
+            "executor.rc4-v1",
+            "start.macos-launchagent",
+            "install.macos",
+            "setup.apply",
+            "init",
+            "start.systemd",
+        ] {
+            assert!(!linux.contains(&unavailable));
+        }
+        let mac = capabilities_for(Some("darwin-arm64"));
+        for preserved in [
+            "management.install.macos",
+            "executor.rc3-legacy-v1",
+            "executor.rc4-v1",
+            "start.macos-launchagent",
+            "install.macos",
+            "setup.apply",
+        ] {
+            assert!(mac.contains(&preserved));
+        }
+        assert!(!mac.contains(&"management.install.linux"));
     }
 }

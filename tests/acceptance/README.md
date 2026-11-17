@@ -6,16 +6,25 @@
 
 첫 대상은 로그인된 GUI 세션이 있는 macOS arm64, RocksDB, 사용자 LaunchAgent다. HTTP와 P2P를 모두 `127.0.0.1`에 두고 노드별 포트를 분리한다. 같은 사용자 UID의 네 인스턴스이며, 서로 다른 호스트나 강한 보안 격리를 검증하는 구성이 아니다.
 
+2026-11-15 [RC4-02](../../results/2026-11-15-rc4-fixture-preparation.md)에서 새 RC.4 fixture를 준비하고, [RC4-03](../../results/2026-11-15-rc4-runtime-assembly.md)에서 전용 lock/spec과 서명 runtime R을 고정했다. RC4-04는 이 **고정 R을 재조립하지 않고** 일반·독립 관리 CLI 인수 하네스에서 선택하도록 확장한다. 구현·오프라인 검증 기록은 [RC4-04 결과](../../results/2026-11-15-rc4-cli-harness.md)와 [JSON](../../results/2026-11-15-rc4-cli-harness.json)을 따른다.
+
+RC4-04 시점의 RC.4 설치·genesis·서비스·네트워크·RPC 실물 인수는 **NOT_RUN**이며 RC4-05/06 후속 작업이다. 후보 지원이나 오프라인 회귀를 실물 PASS로 해석하지 않는다. RC1~3의 기존 재현 경로는 유지하며 RC.3 DB 이전·혼합 후보 네트워크는 지원하지 않는다.
+
+후속 [RC4-05 실제 Mac 인수](../../results/2026-11-15-rc4-macos-service.md)는 고정 R+B의 수동 단일노드21사례·독립 사후 감사 PASS다. 아래 서비스 명령에 `--exercise-setup-recovery --caller-umask 022 --expect-complete-diagnostics`를 적용했다. 후속 [RC4-06 실제 Mac 네트워크 인수](../../results/2026-11-16-rc4-macos-network.md)에서 고정 R에 외부 B/C를 조합한 동종4-validator·두 복구·wrong-pin·선정 RPC21사례/읽기52요청·live CLI 전환3회와 독립 종료 감사를 PASS했다. RPC probe의 제출0과 전체 합의 시험의 거래8개/제출9회를 구분한다.
+
 ## 도구와 실행 경계
 
 | 파일 | 역할 | 실행하지 않는 것 |
 | --- | --- | --- |
-| `prepare_fixture.py` | 명시 선택한 고정 RC1/RC2/RC3 JAR의 `QbftDevnetGenerator`로 새 시험용 NGVK·개별 mTLS·신뢰 자료 생성, 공개 목록과 제품 설정 작성, 새 거래 지갑과 미리 서명한 Type-2 거래 준비 | BXDL 설치·등록·초기화·노드 기동·거래 제출 |
-| `run_acceptance.py` | 새 시험 서명키로 실제 archive 조립·검증, 같은 archive의 네 설치본 준비, 네트워크 설정 도우미·등록·초기화·LaunchAgent·거래/합의 관측 | 고객 인스턴스 인수, 기존 설치본 덮어쓰기, 운영 키 발급 |
-| `candidates.py` | RC1/RC2/RC3의 source·JAR hash/크기·거래 개수 고정 | 움직이는 branch HEAD나 재빌드 JAR 채택 |
+| `prepare_fixture.py` | 명시 선택한 고정 RC1/RC2/RC3/RC4 JAR의 `QbftDevnetGenerator`로 새 시험용 NGVK·개별 mTLS·신뢰 자료 생성, 공개 목록과 제품 설정 작성, 새 거래 지갑과 미리 서명한 Type-2 거래 준비 | BXDL 설치·등록·초기화·노드 기동·거래 제출 |
+| `run_acceptance.py` | RC1~3은 기존 archive 조립, RC4는 고정 R 검증·복사 후 네 설치본 준비, 설정·초기화·LaunchAgent·거래/합의 관측 | RC4 재조립·재서명, 고객 인스턴스 인수·덮어쓰기 |
+| `candidates.py` | 명시 후보 RC1~RC4의 source·JAR hash/크기·거래 개수 고정 | 움직이는 branch HEAD나 재빌드 JAR 채택 |
+| `runtime_profiles.py` | 고정 RC3/RC4 archive·manifest·실행기·공개키·lock과 전체 설치 payload 검증, 관리 CLI capability 확인 | 계약 fingerprint만으로 새 runtime·DB 호환 추정 |
+| `rc4_rpc_probe.py` | RC4 기동 후 21개 제한 사례와 전후 상태를 최대 52회 읽기로 관측 | 거래 제출, signed Type-4 성공·KZG fault 주입·Native Console 인수 |
+| `prepare_management_fixture.py` | RC4-02 fixture를 새 단일 노드 서비스 시험 입력으로 복사·변환하고 provenance 기록 | CLI/JVM/keygen·DB 초기화·노드 기동 |
 | `test_candidates.py` | 후보/lock 혼합, 거래 입력 변경, 자동 재시도, 동일 DB 복구의 거짓 성공 방지 회귀 | 실제 엔진·서비스 실행 |
 | `test_oracles.py` | 잘못된 receipt/block의 거짓 성공, historical receipt 제한, init 불명 cleanup의 오프라인 회귀 | 실제 엔진·서비스 실행 |
-| `fixture_guard.py` | 선택 후보 시험 fixture의 identity·loopback·파일 범위·입력 hash와 legacy B 재개 allowlist 검사 | credential 내용 읽기·암호학적 거래 재검증 |
+| `fixture_guard.py` | 준비 전용 identity·fresh 입력 검사와 별도 제품 lock을 요구하는 실행 입력 검사, legacy B 재개 allowlist | credential 내용 읽기·암호학적 거래 재검증 |
 | `support.py` | 새 파일 저장·복사, 실제 PTY 문답, CLI JSON 수집, 제한된 상태 검증과 비공개 근거 기록 | 독자적인 복구·서비스 제어 정책, import 시 실행 |
 | `run_pin_only.py` | 보존한 서명 archive와 새 fixture에서 잘못된 pin 거부·정상 3-node 합의를 독립 확인 | 앞선 catch-up·정족수 복구 실패의 성공 전환 |
 | `run_recovery_probe.py` | 보존한 B/C 실행의 정지 근거를 확인하고, 같은 DB에서 거래 명시 재제출과 합의 라운드 관측 | 범용 복구·DB 초기화·자동 재전송 |
@@ -26,7 +35,7 @@ Node와 ethers는 준비 단계의 오프라인 거래 서명에만 필요하다
 
 ## 고정 공급물과 사전 조건
 
-`prepare_fixture.py`와 `run_acceptance.py`는 `--candidate rc1|rc2|rc3`를 필수로 받는다. 후보를 파일명·움직이는 branch HEAD에서 추정하지 않는다. RC1의 기존 이력·lock·legacy 진단 allowlist는 보존하며, 서로 다른 후보의 fixture/lock과 섞어 실행할 수 없다. hash가 다른 JAR/Java를 최신 버전이라는 이유로 대신 넣지 않는다.
+`prepare_fixture.py`와 `run_acceptance.py`는 `--candidate rc1|rc2|rc3|rc4`를 필수로 받는다. RC4 실행에는 별도 고정 runtime 공급 검사를 적용한다. 후보를 파일명·움직이는 branch HEAD에서 추정하지 않는다. RC1의 기존 이력·lock·legacy 진단 allowlist는 보존하며, 서로 다른 후보의 fixture/lock과 섞어 실행할 수 없다. hash가 다른 JAR/Java를 최신 버전이라는 이유로 대신 넣지 않는다.
 
 | 대상 | 고정 값 |
 | --- | --- |
@@ -39,12 +48,15 @@ Node와 ethers는 준비 단계의 오프라인 거래 서명에만 필요하다
 | RC3 NIGO source | `7ec5abd8c98e1cf070763a16f815e9281b74a5c1` |
 | RC3 JAR SHA-256 | `05a38bd1de45d16f0529a8689c113d6a359989ff0cd95e4c507bfc49843ee46f` |
 | RC3 JAR 크기 | `164088530` bytes |
+| RC4 NIGO source | `037c98c315d5322fa7da266ca0254d61f3863622` |
+| RC4 JAR SHA-256 | `56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a` |
+| RC4 JAR 크기 | `164133636` bytes |
 | Temurin Java launcher SHA-256 | `9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c` |
 | 선택 runtime | Temurin `21.0.12.1+1-LTS`, macOS arm64 full JRE |
 | 준비용 ethers | `6.17.0` |
 | 시험 chain/profile | `11578` / `DEV_QBFT`, ZERO fee |
 
-Python 3와 준비용 Node/ethers는 미리 확보한다. 실행에는 macOS arm64용 BXDL CLI, 검증한 `engine`·`runtime`·`docs`·`licenses` payload, 대응 engine lock과 package spec, Ed25519를 지원하는 OpenSSL이 필요하다. `docs/runtime-provenance.json`의 전체 runtime 경로·크기·mode·hash를 실행 도구가 대조한다. CLI bytes와 `--revision`으로 지정한 전체 40자리 commit의 대응 관계는 실행자가 먼저 확인한다.
+Python 3와 준비용 Node/ethers는 미리 확보한다. RC1~3 일반 실행에는 macOS arm64용 BXDL CLI, 검증한 `engine`·`runtime`·`docs`·`licenses` payload, 대응 engine lock과 package spec, Ed25519를 지원하는 OpenSSL이 필요하다. RC4 일반 실행은 아래의 고정 R·내부 실행기 A·외부 공개키·전용 lock만 받는다. `docs/runtime-provenance.json`의 전체 runtime 경로·크기·mode·hash를 실행 도구가 대조한다. CLI bytes와 `--revision`으로 지정한 전체 40자리 commit의 대응 관계는 실행자가 먼저 확인한다.
 
 새 시험은 기존에 없는 fixture와 실행 출력 폴더를 사용하고 부모 폴더는 미리 준비한다. 네 HTTP 포트와 네 P2P 포트가 서로 겹치지 않고 비어 있는지 확인한다. 고객 키·고객 control/data·사용 중인 서비스 경로를 입력하지 않는다. 아래의 제한된 `--continue-from`만 완전히 정지한 이전 시험의 control/data를 이어 사용한다. LaunchAgent에서 접근 가능한 시험 위치를 선택하며, macOS 접근 정책을 우회하기 위해 기존 사용자 설정을 바꾸지 않는다.
 
@@ -66,15 +78,37 @@ python3 ./prepare_fixture.py \
   --p2p-base-port 29090
 ```
 
-준비기는 새 validator 네 개의 시험 자료, `chain.json`, `network.json`, `products/n1.json`부터 `n4.json`, 새 지갑, RC2/RC3에서는 nonce 0~11, RC1에서는 기존대로 nonce 0~7의 미리 서명한 거래를 만든다. 자료는 새 private 폴더에 보관한다. 생성된 `application.yml`은 공급자 생성기 근거로 남기며, 실행 설정으로 자동 채택하지 않는다.
+준비기는 새 validator 네 개의 시험 자료, `chain.json`, `network.json`, `products/n1.json`부터 `n4.json`, 새 지갑, RC2/RC3/RC4에서는 nonce 0~11, RC1에서는 기존대로 nonce 0~7의 미리 서명한 거래를 만든다. 자료는 새 private 폴더에 보관한다. 생성된 `application.yml`은 공급자 생성기 근거로 남기며, 실행 설정으로 자동 채택하지 않는다.
 
-고정 keytool이 있으면 공개 leaf 인증서를 내보내 NIGO domain hash와 manifest pin을 대조한다. 없으면 `certificateExport=NOT_AVAILABLE`로 기록한다. 실패한 준비 폴더는 덮어쓰거나 재사용하지 않고 보존한다. 성공 여부와 생성 범위는 `fixture-summary.json`으로 확인한다.
+RC1~3은 고정 keytool이 있으면 공개 leaf 인증서를 내보내 NIGO domain hash와 manifest pin을 대조하며 없으면 `certificateExport=NOT_AVAILABLE`로 기록한다. RC4는 고정 keytool을 필수로 요구하고 출력 생성 전에 확인한다. 네 leaf의 `EXPORTED_PIN_MATCHED`가 준비 완료 조건이다. 실패한 준비 폴더는 덮어쓰거나 재사용하지 않고 보존한다. 성공 여부와 생성 범위는 `fixture-summary.json`으로 확인한다.
 
 시험 원장에는 새 거래 지갑만을 명시적으로 funding한다. 공개 devnet 고정 지갑이나 고객 자산을 사용하지 않는다. `ALLOWLISTED` 등록 정책의 빈 허용목록을 유지하며 이 시험에서 Native 모듈 게시를 수행하지 않는다.
 
+### RC.4 준비 범위와 실행 입력 검증
+
+위 준비 명령에서 `--candidate rc4`와 별도 새 출력 경로를 사용한다. JAR 전체 hash/크기, helper·PropertiesLauncher class와 Native catalog lock의 고정 bytes·요약을 출력 생성/child 실행 전에 검사한다. `artifactPreparation.nativeCatalog.verification=LOCK_BYTES_AND_SUMMARY_ONLY`이며 실제 Native 초기화 검증이 아니다.
+
+RC4-02 준비 summary는 `genesisStatus=FRESH_INPUTS_ONLY_NOT_INITIALIZED`, `runtimeCandidateSupport=NOT_IMPLEMENTED`를 기록한다. 이는 준비 당시의 미실행 증거이므로 RC4-04에서도 원문을 바꾸지 않는다. 새 RocksDB data 경로의 존재·dangling symlink를 거절하며 genesis DB를 만들지 않는다. 준비용 API는 제품 lock 없이 다음처럼 호출할 수 있다(`tests/acceptance`에서 실행, 경로·revision은 실제 값으로 대체).
+
+```python
+from pathlib import Path
+from types import SimpleNamespace
+import fixture_guard
+
+args = SimpleNamespace(
+    candidate="rc4",
+    fixture=Path("/path/to/new-rc4-fixture"),
+    revision="FULL_40_HEX_BXDL_COMMIT",
+)
+pins = fixture_guard.validate_preparation(args)
+fixture_guard.assert_preparation_unchanged(args, pins)
+```
+
+RC4는 명시적인 40자리 작업 기준 revision을 요구한다. 미커밋 변경으로 시험한다면 실제 소스 파일 hash·diff와 dirty 상태도 실행 기록에 구분한다. 준비 pins의 `engineLockSha256`은 null이며 제품 선택을 뜻하지 않는다. 실행용 `validate_inputs`는 RC4 전용 lock 전체 bytes의 hash까지 요구하고, 공개 funded address와 chain funding·각 거래의 sender가 일치하는지 확인한다. 일반 runner는 여기에 고정 R/A 공급 검사까지 적용한다. 거래 guard는 metadata/hex·현재 hash를 대조하고 암호학적 decode는 오프라인 준비기의 별도 근거다.
+
 ## 2. 실제 패키지 설치·실행
 
-`--run`을 생략하면 실행하지 않는다. 아래 명령은 package 생성·설치·초기화·서비스 시작과 거래 제출을 실제 수행한다.
+`--run`을 생략하면 실행하지 않는다. 아래 RC1~3 경로는 package 생성·설치·초기화·서비스 시작과 거래 제출을 실제 수행한다.
 
 ```sh
 python3 ./run_acceptance.py \
@@ -93,6 +127,29 @@ python3 ./run_acceptance.py \
 
 실행 도구는 CLI와 payload를 새 경로로 복사하고, 고정 JAR/Java와 runtime inventory를 확인한 뒤 하나의 서명 archive를 만든다. 네 정상 노드와 별도 부정 시험 노드는 모두 그 archive를 설치한다. 설치본의 CLI가 입력 CLI와 같은 bytes인지도 대조한다.
 
+### RC.4 고정 runtime R과 내부 실행기 A
+
+다음은 RC4-05/06에서 사용한 명령 형태다. `/path/to`는 검증한 공급물과 새 시험 경로로 바꾸며, RC4-03에서 만든 R과 그 안의 A bytes를 그대로 사용한다.
+
+```sh
+python3 ./run_acceptance.py \
+  --run --candidate rc4 --scenario full \
+  --cli /path/to/rc4-runtime/bin/bxdl \
+  --revision d38027a474f1e8d4fb7b1d38ea17972ba88d93af \
+  --fixture /path/to/new-rc4-fixture \
+  --runtime-package /path/to/bxdl-rc4-temurin-darwin-arm64-development.tar.gz \
+  --runtime-public-key /path/to/rc4-test-public.pem \
+  --lock /path/to/engine-lock.rc4-temurin-development.json \
+  --output /path/to/new-rc4-acceptance-run
+```
+
+RC4에서 `--payload-source`, `--spec`, `--openssl`을 주면 거절한다. 새 signing key나 archive를 만들지 않고, 입력 R·공개키를 private 출력으로 복사해 서명을 검증한다. `runtime_profiles.py`는 R hash/크기, raw manifest, 공개키, lock, A hash/크기와 source revision을 고정한다. 설치 시 **269파일 / 326,373,420 bytes**, 그중 JRE 259파일의 membership·hash·크기·mode를 대조하고 종료 시 입력 공급물과 설치 payload의 불변성을 다시 확인한다. RC.3의 270파일 수를 승계하지 않는다. profile의 정확한 hash와 spec template/resolved spec 출처는 RC4-03 기록에 연결된다.
+
+여기서 `--revision`은 **runtime 내부 실행기 A의 source commit**이다. Python 하네스의 현재 source는 별도 `harnessSources` hash와 실행 기준 commit으로 기록한다. 독립 관리 CLI B를 시험하는 아래 `run_management_acceptance.py --revision`은 **다음 관리 CLI B의 source commit**이므로 A의 commit과 바꾸어 쓸 수 없다. B를 업데이트해도 R과 A는 유지한다.
+
+### 공통 설치·기동 순서
+
+
 정상 네 노드의 `setup --network`는 실제 PTY에서 `PKCS12` / `PKCS12`, `join-network`, 합의 자동 시작 `yes`, archive `yes`를 선택하고 새 native JSON을 게시한다. 제품/native 입력을 등록한 뒤 명시 init을 호출한다. 등록 단계에서 data가 생성되지 않았는지, init 뒤 네 노드의 genesis가 같은지 확인한다.
 
 처음 네 노드는 **모두 join-network와 archive를 켠 상태로 함께 시작**한다. 이후 같은 DB에서 뒤처진 노드를 재시작할 때 기존 입력을 수정하지 않고 archive 기반 catch-up을 사용하기 위한 시험 구성이다. 이는 고객 네트워크의 초기 배치 정책 전체를 대신하지 않는다.
@@ -104,16 +161,16 @@ python3 ./run_acceptance.py \
 1. 네 validator가 같은 archive로 실행된 상태에서 Type-2 거래를 한 ingress에 한 번 제출한다. 각 노드의 성공 receipt, 확정 높이, 해당 높이의 block hash/state root를 RPC와 monitor에서 대조한다.
 2. 네 번째 노드를 정상 종료하고 나머지 셋에서 다음 거래를 확정한다. 같은 DB/key로 네 번째 노드를 재시작해 새 attempt·nodeInstanceId, 동일 genesis와 놓친 높이의 canonical block hash/state root를 확인한다. 과거 receipt 존재 여부는 별도로 기록한다. 재합류 후 새 거래는 네 노드 모두의 성공 receipt와 같은 높이/hash/root를 요구한다.
 3. 두 노드를 정상 종료한 뒤 두 생존 노드의 peer 수와 공통 확정 높이를 기준으로 삼는다. 새 유효 거래를 한 번 제출하고 45초 동안 receipt가 없고 latest/finalized 높이가 그대로인지, 같은 view height에서 round가 증가하는지 관측한다. 세 번째 노드를 복구해 원래 거래 hash의 성공 receipt와 확정을 확인한다. 네 번째 노드는 그 높이의 canonical hash/root로 catch-up을 확인하고, 다시 새 거래를 제출해 네 노드 모두의 성공 receipt를 요구한다. 유한 관측 구간의 no-finality 시험이다.
-4. RC2/RC3에서는 새로운 별도 2/4 구간에서 미확정 거래를 한 번 제출하고 45초 round skew를 형성한다. active 두 노드의 round가 정지한 두 노드의 같은 view height에서 관측한 round보다 실제로 높아야 한다. 네 노드 모두의 정상 종료를 확인한 뒤 같은 설치본·control·DB로 동시에 재시작한다. 새 attempt/nodeInstanceId, data 디렉터리 identity·엔진 초기화 journal·product/native 설정 보존을 확인하고, 원래 signed transaction의 같은 bytes를 정확히 한 번 명시 재제출한다. 네 노드 모두의 성공 receipt/확정과 후속 새 거래의 확정을 요구한다. 이 단계는 DB/WAL 삭제·재등록·재초기화·엔진 JAR 교체를 하지 않는다.
+4. RC2/RC3/RC4에서는 새로운 별도 2/4 구간에서 미확정 거래를 한 번 제출하고 45초 round skew를 형성한다. active 두 노드의 round가 정지한 두 노드의 같은 view height에서 관측한 round보다 실제로 높아야 한다. 네 노드 모두의 정상 종료를 확인한 뒤 같은 설치본·control·DB로 동시에 재시작한다. 새 attempt/nodeInstanceId, data 디렉터리 identity·엔진 초기화 journal·product/native 설정 보존을 확인하고, 원래 signed transaction의 같은 bytes를 정확히 한 번 명시 재제출한다. 네 노드 모두의 성공 receipt/확정과 후속 새 거래의 확정을 요구한다. 이 단계는 DB/WAL 삭제·재등록·재초기화·엔진 JAR 교체를 하지 않는다.
 5. node ID가 가장 작은 정상 노드를 먼저 정상 종료한다. 같은 시험 identity를 별도 설치·control·새 data에서 사용하되 세 peer의 expected pin을 모두 틀리게 만든다. 이 부정 노드만 `new-network`로 설정해 sync를 끄고 archive는 켠다. catch-up 대기로 인증 거부 관측이 가려지지 않도록 한 별도 시험이며 정상 네 노드의 all-join 설정은 바꾸지 않는다. 해당 노드의 `OUTBOUND / CREDENTIAL_PIN / WRONG_PIN` audit와 peer 0, 정상 세 노드의 새 거래 확정을 확인한다. 동일 signer의 두 프로세스를 함께 시작하지 않는다.
 
 현재 부정 시험은 잘못된 expected pin에 따른 격리다. 잘못된 role/validator, 만료·폐기 인증서, unknown CA 전체 행렬이나 부정 시험 뒤 원래 네 노드의 full-mesh 복원까지 완료했다고 표시하지 않는다.
 
-거래는 준비 단계에서 서명한 원 bytes를 사용한다. live 2/4→3/4 복구에서는 첫 제출 이후 재제출하지 않는다. RC2/RC3 전체 동일 DB 재시작 시나리오만 원 거래의 두 번째 제출을 명시적으로 허용하고, 세 번째 제출이나 타 nonce의 무단 재시도를 거부한다. 제출 응답 유실은 `UNKNOWN_OBSERVE_ORIGINAL_HASH`로 남기고 원 hash를 조회한다. 하네스가 다시 서명하거나 자동 재전송하지 않는다. 각 제출의 nonce·hash·포트·차수와 명시 재제출 여부를 별도 evidence에 기록한다. legacy 복구 probe의 재제출은 아래에 명시한 진단 단계다. 서로 다른 노드의 finality certificate hash는 quorum seal 구성에 따라 다를 수 있으므로 동일성 조건에 넣지 않는다.
+거래는 준비 단계에서 서명한 원 bytes를 사용한다. live 2/4→3/4 복구에서는 첫 제출 이후 재제출하지 않는다. RC2/RC3/RC4 전체 동일 DB 재시작 시나리오만 원 거래의 두 번째 제출을 명시적으로 허용하고, 세 번째 제출이나 타 nonce의 무단 재시도를 거부한다. 제출 응답 유실은 `UNKNOWN_OBSERVE_ORIGINAL_HASH`로 남기고 원 hash를 조회한다. 하네스가 다시 서명하거나 자동 재전송하지 않는다. 각 제출의 nonce·hash·포트·차수와 명시 재제출 여부를 별도 evidence에 기록한다. legacy 복구 probe의 재제출은 아래에 명시한 진단 단계다. 서로 다른 노드의 finality certificate hash는 quorum seal 구성에 따라 다를 수 있으므로 동일성 조건에 넣지 않는다.
 
 **시나리오 3은 RC1 당시 공급자 시험보다 긴 정족수 부족과 재제출 없는 복구를 관측한다.** 공급자 `04-qbft-multiprocess.spec.ts`는 첫 round 증가를 최대 45초 기다린 뒤 바로 세 번째 노드를 복구하고, 그 노드에 같은 signed transaction을 명시적으로 재제출한다. `QBFT_DEVNET_RUNBOOK.md`는 reconnect 이전 pending backfill을 보장하지 않는다. RC1 당시 기본 실행의 복구 timeout 하나만으로 결함을 확정하지 않았으며, 별도 재시작·재제출 probe와 공급자 재현으로 원인을 구분했다. RC2/RC3의 live 복구와 전체 동일 DB 재시작은 각각 새 관측으로 판정하고, 이전 실패를 새 후보의 성공으로 덮어쓰지 않는다.
 
-| 거래 nonce | RC2/RC3 `full` | RC1 `full` |
+| 거래 nonce | RC2/RC3/RC4 `full` | RC1 `full` |
 | --- | --- | --- |
 | 0 | 최초 네 노드의 거래 확정 | 동일 |
 | 1 | 네 번째 노드 정지 중 거래와 catch-up 기준 | 동일 |
@@ -125,13 +182,28 @@ python3 ./run_acceptance.py \
 | 7 | wrong-pin 중 정상 세 노드 거래 | 미제출 예비 |
 | 8~11 | 미제출 예비 | 생성하지 않음 |
 
-### RC2/RC3 동일 DB 복구만 독립 실행
+### RC2/RC3/RC4 동일 DB 복구만 독립 실행
 
-`--candidate rc2|rc3 --scenario same-db-recovery`는 후보 하나를 명시해 새 fixture·출력·control·data를 만드는 별도 실행이다. 최초 네 노드의 nonce 0 확정을 확인하고 nonce 1로 45초 skew·전체 정상 정지·같은 네 DB 재시작·원 거래 1회 재제출을 수행한 뒤 nonce 2 새 거래를 확인한다. 앞선 live 복구 시험이 실패했더라도 그 결과를 보존하고 새 경로에서 이 시나리오를 별도로 수행할 수 있다. `--continue-from`이나 기존 실패 DB 재활용 옵션이 아니다.
+`--candidate rc2|rc3|rc4 --scenario same-db-recovery`는 후보 하나를 명시해 새 fixture·출력·control·data를 만드는 별도 실행이다. 최초 네 노드의 nonce 0 확정을 확인하고 nonce 1로 45초 skew·전체 정상 정지·같은 네 DB 재시작·원 거래 1회 재제출을 수행한 뒤 nonce 2 새 거래를 확인한다. 앞선 live 복구 시험이 실패했더라도 그 결과를 보존하고 새 경로에서 이 시나리오를 별도로 수행할 수 있다. `--continue-from`이나 기존 실패 DB 재활용 옵션이 아니다.
 
-RC2/RC3의 `full`과 `same-db-recovery`는 처음부터 선택한 후보로 초기화한 DB의 복구를 시험한다. 이전 후보의 DB를 새 후보 패키지로 이전하거나 기존 설치의 JAR를 교체하는 BXDL 업그레이드 인수가 아니다. `engineUpgradeTested=false`를 기록하며 기존 `rc1ToRc2UpgradeTested=false` 필드도 이력 호환을 위해 유지한다. 새 실행을 반복하면 새 fixture/출력 경로를 준비하고, 앞선 실행의 정상 cleanup과 포트 해제를 확인한다.
+RC2/RC3/RC4의 `full`과 `same-db-recovery`는 처음부터 선택한 후보로 초기화한 DB의 복구를 시험한다. 이전 후보의 DB를 새 후보 패키지로 이전하거나 기존 설치의 JAR를 교체하는 BXDL 업그레이드 인수가 아니다. `engineUpgradeTested=false`를 기록하며 기존 `rc1ToRc2UpgradeTested=false` 필드도 이력 호환을 위해 유지한다. 새 실행을 반복하면 새 fixture/출력 경로를 준비하고, 앞선 실행의 정상 cleanup과 포트 해제를 확인한다.
 
 전체 재시작 전후에는 data 폴더의 device/inode와 `engine-instance.json`, product/native 파일 hash를 대조한다. 정상 기동 중 변경되는 실제 ledger/WAL 파일 전체의 hash 불변을 요구하지 않는다. 엔진 DB 내용 보존과 복구는 같은 genesis·원 거래·후속 거래의 확정 관측으로 추가 확인한다.
+
+### RC4의 제한된 RPC 관측
+
+RC4 `full`과 `same-db-recovery`는 처음 네 노드를 시작한 뒤 nonce 0 제출 전에 `rc4_rpc_probe.py`를 실행한다. 관리 CLI 네트워크 runner도 같은 연결을 사용한다. 정상 완료 기준은 다음 21사례와 chain ID 1회·전후 account 상태 30회의 **총 52회 읽기**다.
+
+| 사례 | 횟수 | 관측 범위 |
+| --- | --- | --- |
+| KZG | 5 | 정상 proof call/estimate, 잘못된 proof call/estimate, 잘못된 길이 estimate |
+| Public host 주소 `0x105`~`0x107` | 12 | 빈/host-read 형태 calldata를 public EVM call/estimate로 요청 |
+| SHA-256 control | 2 | 알려진 입력의 call/estimate |
+| Type-4 잘못된 요청 | 2 | 빈 `authorizationList`의 call/estimate 거절 |
+
+요청마다 5초 transport timeout·2MiB 응답 한도를 적용하고, 각 호출 전후에 전체 120초 예산을 확인한다. 자동 재시도·거래 제출은 없다. funded account와 대상 주소의 balance/nonce/code를 전후 비교한다. **실물 RPC 결과는 RC4-04에서 NOT_RUN**이다. 성공한 Type-4 authorization의 시뮬레이션 격리, signed Type-4 거래·receipt, KZG provider 오류 주입/전파, Native recipe와 Console 전체 인수는 이 21사례에 포함하지 않는다.
+
+실패해도 `results.rc4RpcProbe`에 완료/실패한 사례·요청 수·마지막 요청/응답 digest·사유를 남긴다. 읽은 원응답 envelope는 즉시 private `evidence/rc4-rpc-NNN.json`에 요청과 함께 보존한다. 공개 기록에는 정제한 판정과 hash만 옮기며, 부분 실행을 전체 PASS로 바꾸지 않는다.
 
 ## Snapshot catch-up의 과거 receipt와 제한된 이어 실행
 
@@ -189,7 +261,7 @@ CLI 관측 timeout은 실행 취소가 아니다. 지원 코드는 timeout에 �
 
 ## 도구 자체 검사
 
-이 디렉터리에서 `python3 -B -m unittest -v test_oracles test_candidates test_listeners`로 판정·불명 cleanup 회귀를 검사한다. 엔진이나 노드를 시작하지 않는다. Rust 제품 검사는 저장소 루트의 `make check`를 사용한다. 이 두 검사는 위 실제 패키지 인수와 별개다.
+이 디렉터리에서 `python3 -B -m unittest -v test_oracles test_candidates test_listeners test_rc4_rpc_probe`로 판정·불명 cleanup 회귀를 검사한다. 엔진이나 노드를 시작하지 않는다. Rust 제품 검사는 저장소 루트의 `make check`를 사용한다. 이 두 검사는 위 실제 패키지 인수와 별개다.
 
 
 ## CLI05-03: 독립 관리 CLI와 기존 RC.3 조합
@@ -260,3 +332,41 @@ python3 -B tests/acceptance/run_management_acceptance.py \
 두 도구의 `result.json`, CLI stdout/PTY 원문, fixture와 정리 관측은 private 출력에 보존한다. 공유 결과에는
 버전·hash·시험 범위와 정제한 판정만 남긴다. 실제 인수 실행과 기본 Python 오프라인 회귀를 구분하며,
 로그아웃/sleep/crash·엔진/DB upgrade·다중 호스트·Linux·J5·CLI05-04 사람 과업까지 확대하지 않는다.
+
+
+## RC4-04: 독립 관리 CLI B와 고정 RC.4 runtime R
+
+두 management runner는 `--candidate rc4`로 RC.4를 명시하며 생략 시 기존 RC.3를 유지한다. archive·공개키·lock·실행기·manifest와 실제 payload를 RC4 profile에 맞춰 검증한다. 최초/다음 관리 CLI 모두 `executor.rc4-v1` capability가 필요하며, RC3 전용 CLI로의 전환/복귀는 RC4 인수 경로에서 거절한다. 두 관리 CLI 사이의 전환에서도 runtime A와 R은 교체하지 않는다.
+
+서비스 시험 입력은 다음처럼 **새 RC4-02 fixture**에서 별도로 만든다. 네 validator chain bytes와 n1의 시험 credential을 복사하고, peer 없는 수동 기동·sync/archive 비활성 설정과 새 data 경로를 만든다. chain을 단일 validator genesis로 다시 쓰거나 키를 재발급하지 않는다. 이 단계에는 CLI·JVM·keygen 실행, DB 생성과 서비스 시작이 없다.
+
+```sh
+python3 -B tests/acceptance/prepare_management_fixture.py \
+  --candidate rc4 --fixture /test/new-rc4-fixture \
+  --archive /test/frozen-rc4.tar.gz --public-key /trusted/rc4-public.pem \
+  --lock /test/engine-lock.rc4.json --revision FULL_HARNESS_GIT_COMMIT \
+  --output /test/new-rc4-service-fixture --instance-id rc4-service-input \
+  --http-port 29680 --p2p-port 30680
+```
+
+출력은 `supply/{package.tar.gz,public-key.pem,engine-lock.json}`, `operational inputs/`의 제품/native/chain·시험 credential 사본, `service-fixture.json` provenance다. 변환 전후 pin·원본 불변성·fresh data 조건을 기록한다. 서비스 runner는 RC4 provenance를 필수로 확인한다. 아래는 RC4-05에서 사용한 서비스 실행 형태다. 다시 실행할 때도 변환 입력과 다른 새 instance ID와 비어 있는 포트를 쓴다.
+
+```sh
+python3 -B tests/acceptance/run_management_service.py \
+  --run --candidate rc4 \
+  --manager-entry /test/service-bin/bxdl --cli-root /test/service-cli \
+  --manager-sha256 EXPECTED_RC4_MANAGER_BINARY_SHA256 \
+  --exercise-setup-recovery \
+  --fixture /test/new-rc4-service-fixture \
+  --output /test/new-rc4-service-run --instance-id rc4-service-run \
+  --http-port 29780 --p2p-port 30780 \
+  --caller-umask 022 --expect-complete-diagnostics
+```
+
+`--exercise-setup-recovery`는 추가 설치 UX 검증을 명시적으로 켠다. 기본값은 꺼짐이므로 기존 RC.3 서비스 범위는 유지한다. 새 준비 세션에서 archive까지 승인·저장한 뒤 trust 문답에서 `:cancel`(exit5), 미완성 `list/show`, trust부터 `resume`, `instanceId` 한 항목 `edit`, 다시 검토·승인하여 revision2 생성을 수행한다. 처음에는 별도 임시 ID를 쓰며 최종 ID는 `--instance-id`다. 취소 상태는 revision0/DRAFT, 첫 준비는 revision1, 수정 직후는 revision1/DRAFT, 재승인은 revision2이며 이전 generated 파일의 bytes·inode·metadata를 보존해야 한다.
+
+최초 설치·등록 후 binding V2가 `control/trust`의 archive·공개키·lock 사본을 가리키고 provenance가 이번 실행의 `supply` 세 파일과 일치하는지 확인한다. 이어 **이번 실행 폴더의 세 공급 사본만** 별도 보관 폴더로 이동한 상태에서 init/start/status/logs/diagnose/stop, 같은 DB 재시작, 완료된 준비의 reapply와 list/show를 수행한다. 원본 fixture, 고정 R 공급 경로, chain·credential·generated 입력은 옮기지 않는다. 완료된 show의 `inspection.verification=NOT_CHECKED`는 application의 저장본 검사(`PASSED`, 설치·등록 `CONFIRMED`)와 구분하며 실행 중 건강 상태로 해석하지 않는다.
+
+종료 전 공급 사본을 복원하고 입력 hash를 다시 대조한다. 실패 시에도 자신이 이동한 공급 사본만 복원하며, 경로 충돌·파일 변경·복원 불명은 기존 실패를 보존한 `INCOMPLETE`다. 충돌 파일을 덮어쓰거나 서비스 자동 재시도·강제 종료하지 않는다. `result.json`의 `setupRecovery`, `retainedSupply`, `supplyAbsence`, `supplyRestoration`과 각 단계의 `cases`가 해당 범위를 기록한다. 모든 list/show 전후 및 정지 후 reapply 전후 snapshot은 private evidence JSON의 `before`/`after`/`equal`로 보관하고 `querySnapshots`/`stoppedReapplySnapshot`에서 파일명·SHA-256을 연결한다. 이 옵션의 구현·오프라인 회귀가 실제 RC4-05 성공을 뜻하지는 않는다.
+
+네트워크 시험은 변환한 서비스 입력 대신 원래의 새 네 validator fixture를 사용한다. 위 CLI05-03 `run_management_acceptance.py` 명령에 `--candidate rc4`를 추가하고 archive·공개키·lock·fixture를 모두 RC.4로 바꾼다. `--bundle-next`와 `--revision`은 RC4 profile을 지원하는 다음 관리 CLI C 배포본·실제 source commit이며, 처음 설치한 B와 다른 identity를 요구한다. 서비스·네트워크 실물 인수와 업데이트/복귀 결과는 RC4-05/06에서 별도 기록했다. RC4-06의 B/C는 Rust 제품 구현이 같고 실제 source revision·배포 문서/identity가 다르다. 다른 코드 변경의 CLI까지 호환을 보증하지 않는다. 새 재실행은 기존 결과/DB를 덮어쓰지 않는 별도 시험이다.

@@ -1,0 +1,449 @@
+{
+  "schemaVersion": 1,
+  "stage": "RC4-04",
+  "date": "2026-11-15",
+  "outcome": "PASS",
+  "scope": "IMPLEMENTATION_AND_SIGNED_MANAGEMENT_CLI_ONLY_ACCEPTANCE",
+  "priorStageCommit": "a7a3cf142191bf69d61f9ce48a61b29b687cbf87",
+  "implementation": {
+    "cleanBeforeAndAfter": true,
+    "revision": "65fe83f0d569fcf2231474342fa0d60ca72555d5",
+    "tree": "547bf0be5c4a346fb1d08f540c9ece33405d9b39",
+    "commitPurpose": "CLEAN_SOURCE_REQUIRED_FOR_SIGNED_INDEPENDENT_MANAGER_BUILD",
+    "testedBeforeCommit": true,
+    "testedFileHashesMatchCommit": true,
+    "testedFileCount": 21,
+    "engineProfiles": [
+      "BXDL_RC3_EXECUTOR_V1",
+      "BXDL_RC4_EXECUTOR_V1"
+    ],
+    "capabilities": [
+      "executor.rc3-legacy-v1",
+      "executor.rc4-v1"
+    ],
+    "candidateAdmission": "B_REQUIRES_BOTH_CAPABILITIES_FOR_INSTALL_UPDATE_ROLLBACK",
+    "oldBootstrapPolicyRetroactivelyChanged": false
+  },
+  "runtime": {
+    "candidate": "rc4",
+    "archiveSha256": "a9f67988e785260b35504bd79a19df4a4820e72eafbf537328ca2e31f7e16f60",
+    "manifestSha256": "fe21e898f5ace8be57ad838620f14da1c3e07b3ffcfbcb969fd63a67854a142e",
+    "executorRevision": "d38027a474f1e8d4fb7b1d38ea17972ba88d93af",
+    "executorSha256": "d2d5c586bf2ab59ac3198cbcc0f89101fc18d31e6f4ec7812b428e481a63f647",
+    "jarSha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+    "javaSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+    "rebuild": "NOT_PERFORMED",
+    "internalExecutorReplacement": "NOT_PERFORMED",
+    "originalArchiveAndExecutorBeforeAfter": "UNCHANGED"
+  },
+  "manager": {
+    "source": {
+      "cleanBeforeAndAfter": true,
+      "revision": "65fe83f0d569fcf2231474342fa0d60ca72555d5",
+      "tree": "547bf0be5c4a346fb1d08f540c9ece33405d9b39"
+    },
+    "binary": {
+      "sha256": "f08578809744d21313aad3c8cb39644107af67d5558661d2ecc9d81f2edb138c",
+      "sizeBytes": 4219952,
+      "version": "0.1.0-dev"
+    },
+    "bundleSha256": "0b03f7324c6b2b735aed9ab7793e65d151af1445f93e0506068289d19cb03a23",
+    "bundleSizeBytes": 1911951,
+    "bundleName": "bxdl-management-rc4-darwin-arm64.tar.gz",
+    "publicKeySha256": "ba45e53545f414e5234f5bd2019338b9700c28d315f7d435c61851ce9f4f187a",
+    "testOnlySigningKey": true,
+    "verification": {
+      "authenticity": "verified-external-ed25519",
+      "bytesVerified": 4248429,
+      "filesVerified": 4,
+      "manifest": {
+        "files": [
+          {
+            "mode": 493,
+            "path": "bin/bxdl",
+            "sha256": "f08578809744d21313aad3c8cb39644107af67d5558661d2ecc9d81f2edb138c",
+            "size": 4219952
+          },
+          {
+            "mode": 420,
+            "path": "docs/completion.md",
+            "sha256": "9c70784a7c4b36e87a180eb6bef4648fac7104ee8123b2047264ee5d2af1f4d2",
+            "size": 7794
+          },
+          {
+            "mode": 420,
+            "path": "docs/management-cli.md",
+            "sha256": "88ba6d78ddf53499d31ded7a7f32d8b707e92cde431d59a3efdaca2d1a1b043e",
+            "size": 18614
+          },
+          {
+            "mode": 420,
+            "path": "share/zsh/site-functions/_bxdl",
+            "sha256": "3e6c3092b6fde9bf3257a40e4765912a426326b97ea1321bcb247c0a0ea38d3d",
+            "size": 2069
+          }
+        ],
+        "kind": "bxdl-management-cli",
+        "revision": "65fe83f0d569fcf2231474342fa0d60ca72555d5",
+        "schemaVersion": 1,
+        "target": "darwin-arm64",
+        "version": "0.1.0-dev"
+      },
+      "manifestSha256": "8f5fb8301f043396087bb09023c3b48ccecc8d650cec7616cd9f54b76b6c4d29"
+    },
+    "runtimeAndManagerSigningKeysAreSeparate": true
+  },
+  "cliOnlyAcceptance": {
+    "cliOnlyPrivateRoots": 2,
+    "fixedRuntimeAndExecutorUnchanged": true,
+    "freshSignedCliInstall": "PASS",
+    "jvmInvoked": false,
+    "liveUpdateBetweenTwoRc4Managers": "NOT_RUN",
+    "nodeStarted": false,
+    "oldBootstrapUpgradeToB": "PASS",
+    "rc3OnlyRollbackRejected": "PASS",
+    "rc3OnlyUpdateRejected": "PASS",
+    "selectionPreservedOnRejection": true,
+    "versionCapabilities": [
+      "executor.rc3-legacy-v1",
+      "executor.rc4-v1"
+    ]
+  },
+  "serviceFixturePreparation": {
+    "outcome": "PASS",
+    "sourceBase": "a7a3cf142191bf69d61f9ce48a61b29b687cbf87",
+    "sourceState": "UNCOMMITTED_IMPLEMENTATION_PINNED_BY_FILE_HASH",
+    "sourceFiles": {
+      "prepare_management_fixture.py": "de4e0d913274e0b71a18396f2af81315212b4b1e766614f78bd639baf249d9c2",
+      "fixture_guard.py": "676edddc89cf2e1f54a2e7064f05b281227aa2a4b93135463bff0938e8f11625",
+      "runtime_profiles.py": "3b271c36cd620881936ab5e391dba3d53e50127fca12ed709307bc37c1545477",
+      "candidates.py": "00e1af6449a89cab127c5306243134ef632f6bb7390fbf58c133d39dc5a96a42",
+      "support.py": "f7625dd79cf9827f3f14c4d8f9acea0278a089933fba80f553c70ea7e513f0b8"
+    },
+    "durationSeconds": 0.710289583,
+    "childProcesses": 0,
+    "candidate": "rc4",
+    "inputFiles": 9,
+    "supplyFiles": 3,
+    "credentialFiles": 6,
+    "sourceSelectedFilesUnchanged": true,
+    "genesisMembershipChanged": false,
+    "nodeDataCreated": false,
+    "nodeStarted": false,
+    "newCredentialsIssued": false,
+    "localReadinessTarget": "MANUAL_START_INITIALIZED",
+    "actualLocalReadiness": "NOT_RUN",
+    "provenanceSha256": "50369265661eb0fd54d8cfc740820574b9642b882ec4171a72dae6f8af71f89b",
+    "sourceFilesMatchImplementationCommit": true
+  },
+  "rpcAcceptance": {
+    "implementation": "READY",
+    "actualExecution": "NOT_RUN",
+    "caseCount": 21,
+    "requestCountPerRun": 52,
+    "automaticRetries": 0,
+    "submittedTransactions": 0,
+    "maximumSecondsCheckedBeforeAndAfterRequests": 120,
+    "perRequestTransportTimeoutSeconds": 5,
+    "responseLimitBytes": 2097152,
+    "partialEvidenceOnFailure": "PRESERVED",
+    "scope": [
+      "KZG_VALID_AND_INVALID_PROOF_DIRECT_CALL_ESTIMATE",
+      "PUBLIC_HOST_DIRECT_CALL_ESTIMATE",
+      "SHA256_CONTROL",
+      "TYPE4_EMPTY_AUTHORIZATION_LIST_REJECTION"
+    ],
+    "excluded": [
+      "SIGNED_TYPE4_EXECUTION",
+      "SUCCESSFUL_AUTHORIZATION_SIMULATION_ISOLATION",
+      "KZG_PROVIDER_FAULT",
+      "NESTED_HOST_EXECUTION",
+      "NATIVE_RECIPE_EXECUTION",
+      "CONSOLE_UI"
+    ],
+    "design": "design/2026-11-15-rc4-cli-harness-implementation.md"
+  },
+  "automaticChecks": {
+    "command": "make check",
+    "exitCode": 0,
+    "durationSeconds": 453.461982667,
+    "sourceUnchanged": true,
+    "logSha256": "a03925bd3a2f1928dbac4a03a0c45d61cc11637739ce47bf2c82ac70b6f4b43b",
+    "rustTestsPassed": 596,
+    "pythonTestsRun": 153,
+    "pythonSkipped": 2,
+    "pythonPassed": 151,
+    "fmt": "PASS",
+    "clippy": "PASS",
+    "linuxTypeCheck": {
+      "command": "make check-linux",
+      "target": "x86_64-unknown-linux-gnu",
+      "outcome": "PASS",
+      "runtimeAcceptance": "NOT_RUN"
+    }
+  },
+  "execution": {
+    "directControllerProcesses": 19,
+    "expectedCapabilityRejections": 2,
+    "expectedRejectionExitCode": 3,
+    "unexpectedFailures": 0,
+    "automaticRetries": 0,
+    "allOwnedGroupsGone": true,
+    "events": [
+      {
+        "durationSeconds": 0.04101662500000003,
+        "exitCode": 0,
+        "label": "management-test-key",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timeoutSeconds": 30
+      },
+      {
+        "durationSeconds": 0.009671125000000003,
+        "exitCode": 0,
+        "label": "management-test-public",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "timeoutSeconds": 30
+      },
+      {
+        "durationSeconds": 16.524871166,
+        "exitCode": 0,
+        "label": "management-build",
+        "ownedGroupGone": true,
+        "stderrSha256": "cacfdbe053f9af3ad15a16cea2dbf112ed7bb54351151cc4cffd19d267da7126",
+        "stdoutSha256": "1ffb042dddd22832435e43ed0438b7287d3398f2e44d9e3f8c03913128847c9b",
+        "timeoutSeconds": 600
+      },
+      {
+        "durationSeconds": 0.005114999999999981,
+        "exitCode": 0,
+        "label": "manager-version",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "1a998344daec17719ef7a8516d133da912cdae006c79709e05d1652dc7dd42ba",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.03930229199999857,
+        "exitCode": 0,
+        "label": "manager-bundle-verify",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "3959667bf1795f714cb133a03946b449856d340ffec9e2025190a7f288784a3e",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.48742470799999893,
+        "exitCode": 0,
+        "label": "manager-install",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "f6d4d6f85769d9c836c555220c87fb4fc35191706778673eae87fc7269021fa7",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.005622250000001827,
+        "exitCode": 0,
+        "label": "installed-version",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "8008826de28d6ef655c04560c3b5ddad337586446b1fe3eef125d0fbf47d3570",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.04062366699999842,
+        "exitCode": 0,
+        "label": "installed-info",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "37c504f064adfeba9160897f451af436b89447a8dd3c849768f9e6d0f2cbe05e",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.18470195900000164,
+        "exitCode": 0,
+        "label": "legacy-candidate-bundle",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "e7c00de3d0aea57f30a6a97125e31b29841afc31da2757d69c633ef2d4b587a6",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.5023715840000023,
+        "exitCode": 3,
+        "label": "reject-rc3-only-update",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "85e9db143466f0843ead8ef8230c2cb24d0096bcfdf287717362a96c713bbf0e",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.013527332999998976,
+        "exitCode": 0,
+        "label": "after-rejected-update-version",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "cdd1b8dfbc66117b3e1e2d6ff8b6111f315886b09963b6d87914b09bb9d2b4fa",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.04203012500000014,
+        "exitCode": 0,
+        "label": "after-rejected-update-info",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "35fad7e42095fe33fea876eb2b207dea3f9c228df97894494149d84044c28d28",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.45519170800000097,
+        "exitCode": 0,
+        "label": "legacy-bootstrap-install",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "0ee6ac3d1014fe18e9a198d8d1888cf92babe966d245747be66f2bf5df85ab61",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.4031453330000012,
+        "exitCode": 0,
+        "label": "legacy-bootstrap-update-to-b",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "426451d3659d5b03db1d149c3349e8b4241019f9dfc3822dc22b7ddfba5aeef7",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.006001874999999046,
+        "exitCode": 0,
+        "label": "upgraded-version",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "481b0305af6cd79824fc76277b45e0b1746ca858f0ea1667266c46edfb34a186",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.02001795800000039,
+        "exitCode": 0,
+        "label": "upgraded-info",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "438c4f0cb7811bfb88e619c33016055e466147e92b27cb3c8bcae0fa2217d8b2",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.03939254200000164,
+        "exitCode": 3,
+        "label": "reject-rc3-only-rollback",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "0b44d6e70b9f9d88b544190c4fd0cc346ccbf2c25ddf39d36f5af143f34ca6a2",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.0048461250000002565,
+        "exitCode": 0,
+        "label": "after-rejected-rollback-version",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "f7d414fb12aa9924f0da0c86d736fe5b9d4ab6307ab6d3934af643c1d9e49a27",
+        "timeoutSeconds": 120
+      },
+      {
+        "durationSeconds": 0.01989608299999901,
+        "exitCode": 0,
+        "label": "after-rejected-rollback-info",
+        "ownedGroupGone": true,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdoutSha256": "2f0a2ebea75f98991301a83d06c835bafb4b69f50fc5ec78e46f9dc7c59a1657",
+        "timeoutSeconds": 120
+      }
+    ],
+    "controllerSha256": "45ae5b4035d8a8600a25028f78d7b407b0b31577580f4885b8b306c1c93050f5",
+    "serviceFixtureChildProcesses": 0,
+    "jvmInvocations": 0,
+    "nodeStarts": 0,
+    "serviceStarts": 0
+  },
+  "evidenceSha256": {
+    "make-check.log": "a03925bd3a2f1928dbac4a03a0c45d61cc11637739ce47bf2c82ac70b6f4b43b",
+    "make-check-result.json": "e35612ab079673b63fff8762b93560d3bfb7d9219290e0211e568e0450c6ee49",
+    "check-summary.json": "25d664ee4df18af9dd2aed0ccc388aee29404c8f26b495dd210d9fb6752ec94a",
+    "test-source.json": "dd0fccda230f4329b86e07db1f4ed87d1a36a84305461a32395bffcbed461534",
+    "service-preparation-result.json": "cc0677ebcab8328702519421954a2410d36ffc6e20ee877f2f26eb1f4a7a705e",
+    "management-build-acceptance.json": "55819ac1c37611cd70862e717b6b6b2633721edab09043792d413c6b3127d64e",
+    "management-events.json": "c3530d980091f7c05084bb30e908b8dca275feb6ca5fcdf5c8384472f3aa474d",
+    "management-build.stdout": "1ffb042dddd22832435e43ed0438b7287d3398f2e44d9e3f8c03913128847c9b",
+    "management-build.stderr": "cacfdbe053f9af3ad15a16cea2dbf112ed7bb54351151cc4cffd19d267da7126",
+    "manager-bundle-verify.stdout": "3959667bf1795f714cb133a03946b449856d340ffec9e2025190a7f288784a3e",
+    "installed-version.stdout": "8008826de28d6ef655c04560c3b5ddad337586446b1fe3eef125d0fbf47d3570",
+    "installed-info.stdout": "37c504f064adfeba9160897f451af436b89447a8dd3c849768f9e6d0f2cbe05e",
+    "reject-rc3-only-update.stdout": "85e9db143466f0843ead8ef8230c2cb24d0096bcfdf287717362a96c713bbf0e",
+    "after-rejected-update-version.stdout": "cdd1b8dfbc66117b3e1e2d6ff8b6111f315886b09963b6d87914b09bb9d2b4fa",
+    "after-rejected-update-info.stdout": "35fad7e42095fe33fea876eb2b207dea3f9c228df97894494149d84044c28d28",
+    "legacy-bootstrap-update-to-b.stdout": "426451d3659d5b03db1d149c3349e8b4241019f9dfc3822dc22b7ddfba5aeef7",
+    "upgraded-version.stdout": "481b0305af6cd79824fc76277b45e0b1746ca858f0ea1667266c46edfb34a186",
+    "upgraded-info.stdout": "438c4f0cb7811bfb88e619c33016055e466147e92b27cb3c8bcae0fa2217d8b2",
+    "reject-rc3-only-rollback.stdout": "0b44d6e70b9f9d88b544190c4fd0cc346ccbf2c25ddf39d36f5af143f34ca6a2",
+    "after-rejected-rollback-version.stdout": "f7d414fb12aa9924f0da0c86d736fe5b9d4ab6307ab6d3934af643c1d9e49a27",
+    "after-rejected-rollback-info.stdout": "2f0a2ebea75f98991301a83d06c835bafb4b69f50fc5ec78e46f9dc7c59a1657",
+    "service-fixture-provenance": "50369265661eb0fd54d8cfc740820574b9642b882ec4171a72dae6f8af71f89b",
+    "independent-audit.json": "ece16bf31143ec042ce6702ed9b11116704e817624c04105e6db02c8bf952f1b"
+  },
+  "remaining": {
+    "runtimeInstallationRegistrationInit": "RC4-05_NOT_RUN",
+    "actualBDelegationToAAndServiceWorker": "RC4-05_NOT_RUN",
+    "newInitializationReport0600CompleteCollection": "RC4-05_NOT_RUN",
+    "sameRc4DatabaseRestart": "RC4-05_NOT_RUN",
+    "networkQuorumRecoveryRpc": "RC4-06_NOT_RUN",
+    "liveUpdateRollbackTwoRc4Managers": "RC4-06_NOT_RUN_SECOND_MANAGER_BUILD_REQUIRED",
+    "nigoFormalReply": "RC4-07_PENDING",
+    "humanTasks": "RC4-08_NOT_RUN",
+    "rc3ToRc4DatabaseMigration": "NOT_SUPPORTED",
+    "newNigoPrerequisite": "NONE_IDENTIFIED"
+  },
+  "limitations": [
+    "The two private installation roots contain management CLIs only; no runtime node was installed or initialized.",
+    "The actual positive update is an old RC3-only bootstrap upgrading to B; two RC4-capable CLI versions on running nodes were not tested.",
+    "RC3 compatibility is covered by fixed-profile and existing automated regressions; the prior actual RC3 service/network result was not rerun.",
+    "New capability describes implementation support, not completed RC4 service/network acceptance.",
+    "Service preparation copies validated n1 inputs and preserves four-validator chain membership; MANUAL_START_INITIALIZED still requires RC4-05.",
+    "RPC regression inputs exercise mock transport only; no actual RPC case was executed in RC4-04.",
+    "The two existing opt-in Python tests remain skipped; separate CLI-only checks here do not mark those exact tests as executed.",
+    "Local development signature does not imply publication, Apple signing/notarization, full product SBOM/NOTICE or customer-release approval.",
+    "Counts are direct controller calls and documented command paths; no full OS process-tree or syscall/network-isolation audit is claimed."
+  ],
+  "independentReview": {
+    "outcome": "PASS",
+    "scope": "EXISTING_MANAGEMENT_BUNDLE_INSTALLATIONS_AND_PREPARATION_EVIDENCE_READ_ONLY_AUDIT",
+    "checks": {
+      "expectedExitCodesAndRecordedGroupsGone": true,
+      "fixedRuntimeRAndExecutorAStillMatching": true,
+      "oldBootstrapUpgradeToBRecordMatched": true,
+      "rc3AndRc4CapabilitiesInFiveVersionRecords": true,
+      "recordedDirectEventsOutputHashesMatched": 19,
+      "selectionPreservedAfterRc3OnlyUpdateAndRollbackRejection": true,
+      "testLogDigestAndTotalsMatched": true
+    },
+    "additionalSignatureVerification": {
+      "exitCode": 0,
+      "invocations": 1,
+      "observedOutput": "Signature Verified Successfully",
+      "originalControllerCalls": 19,
+      "privateKeyRead": false,
+      "publicKeyOnly": true,
+      "separateFromOriginalControllerCalls": true,
+      "tool": "OpenSSL pkeyutl"
+    },
+    "limitations": [
+      "Existing artifact/evidence audit only; no rebuild, CLI/JVM/node/service execution or test rerun.",
+      "Credential contents and private signing keys were not read; credential identity comparison uses preserved hashes plus current file type/mode, not independently recomputed secret hashes.",
+      "Recorded successful CLI installation and rejected capability downgrades do not establish live update between two RC4 managers, service/genesis/network/RPC acceptance, or production readiness.",
+      "The manifest signature is an external development test signature, not official publishing or Apple signing/notarization.",
+      "Runtime R and internal A were rehashed; full JRE/engine runtime execution was not repeated."
+    ]
+  }
+}

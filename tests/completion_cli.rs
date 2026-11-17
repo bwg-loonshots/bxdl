@@ -497,6 +497,9 @@ fn preparation_candidates_are_named_private_directories_without_loading_or_locki
     private_directory(&operations);
     private_directory(&operations.join("orphan"));
     private_directory(&operations.join("alpha"));
+    #[cfg(target_os = "linux")]
+    let held = bxdl::setup::linux::Preparation::open(&sessions.join("alpha")).unwrap();
+    #[cfg(not(target_os = "linux"))]
     let held = bxdl::setup::preparation::Preparation::resume(&sessions.join("alpha")).unwrap();
     let before = snapshot(&f.root);
     for action in ["resume", "edit", "apply"] {
@@ -761,5 +764,41 @@ fn help_options_are_offered_only_for_exact_supported_help_forms() {
         let candidates = result.candidates("values");
         assert!(!candidates.contains(&"--help"), "{}", result.stdout);
         assert!(!candidates.contains(&"-h"), "{}", result.stdout);
+    }
+}
+
+#[test]
+fn host_check_completion_only_proposes_syntax() {
+    assert_eq!(
+        complete(1, &["host", ""]).candidates("values"),
+        vec!["check"]
+    );
+    assert_eq!(
+        complete(2, &["host", "check", "--time"]).candidates("values"),
+        vec!["--timeout-seconds"]
+    );
+}
+
+#[test]
+fn linux_edit_completion_offers_sources_and_omits_fixed_identity_fields() {
+    let output = complete(5, &["setup", "edit", "local", "--linux", "--field", ""]);
+    let candidates = output.candidates("values");
+    for field in [
+        "runtimeRoot",
+        "engineJar",
+        "nativeConfig",
+        "nodeId",
+        "httpPort",
+    ] {
+        assert!(candidates.contains(&field), "{}", output.stdout);
+    }
+    assert!(!candidates.contains(&"instanceId"));
+    assert!(!candidates.contains(&"dataDirectory"));
+    if !cfg!(target_os = "linux") {
+        let output = complete(4, &["setup", "edit", "local", "--field", ""]);
+        let candidates = output.candidates("values");
+        assert!(candidates.contains(&"instanceId"));
+        assert!(candidates.contains(&"dataDirectory"));
+        assert!(!candidates.contains(&"runtimeRoot"));
     }
 }

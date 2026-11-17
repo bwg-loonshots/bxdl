@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "kind": "bxdl-linux-rc4-supply-candidate",
+  "status": "SUPPLY_PINNED_NATIVE_NOT_RUN",
+  "candidateId": "rc4-temurin-21.0.13+9-linux-amd64",
+  "platform": {
+    "os": "linux",
+    "arch": "amd64",
+    "javaMajor": 21,
+    "libc": "glibc"
+  },
+  "validationBaseline": {
+    "distribution": "ubuntu",
+    "version": "24.04",
+    "serviceManager": "systemd",
+    "wsl": "DEFERRED"
+  },
+  "runtimeLock": {
+    "path": "packaging/runtime-lock.temurin-21-linux-amd64.json",
+    "sha256": "23eec871655dea8af8f79cb69f21c4add762226a9314df003edce1233e898f47"
+  },
+  "engineLock": {
+    "path": "packaging/engine-lock.rc4-temurin-linux-development.json",
+    "sha256": "9817d950f19832c725bfd373829023d44a437ad93e9f6291feef6c3185e94675"
+  },
+  "supplyReceipt": {
+    "path": "contracts/runtime/temurin-21.0.13-linux-amd64/received-supply.json",
+    "sha256": "968830e30d88b169a1d7f906de6cc582d9fed826270cb163e9899a4ecb6243b0"
+  },
+  "engine": {
+    "candidate": "nigo-engine-v0.1.0-rc.4",
+    "sourceCommit": "037c98c315d5322fa7da266ca0254d61f3863622",
+    "jarFile": "nigo-node-0.0.1-SNAPSHOT.jar",
+    "jarSha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+    "jarSizeBytes": 164133636,
+    "contractFingerprint": "c604b1d24097015b2839d97f2bc9d45e3fff91ed6984665d1aa827a155c7b6e8"
+  },
+  "bootstrapCli": {
+    "sourceCommit": "9a8593638c7cb66f4793b9ae831b515a6060957d",
+    "target": "linux-amd64",
+    "binarySha256": null,
+    "nativeBuild": "NOT_RUN"
+  },
+  "execution": {
+    "java": "NOT_RUN",
+    "engineInfo": "NOT_RUN",
+    "nativeRocksdb": "NOT_RUN",
+    "runtimePackage": "NOT_ASSEMBLED",
+    "systemdService": "NOT_IMPLEMENTED"
+  },
+  "scope": "Trusted supply selection, not an admitted executor profile or operational runtime package."
+}

@@ -1,4 +1,6 @@
 //! Direct name linking is a catalog operation, never registration or runtime work.
+//! Successful current-user0700 control linking is Mac-specific. Linux requires
+//! a root descriptor and has refusal/record-only cases in linux_setup_cli.rs.
 #![cfg(unix)]
 
 use bxdl::{cli, setup::Session};
@@ -116,6 +118,7 @@ impl Fixture {
         }
         invoke(&args, &mut NoInput, false)
     }
+    #[cfg(target_os = "macos")]
     fn save_legacy(&self, label: &str) -> Value {
         let args = words(&[
             "console",
@@ -202,8 +205,18 @@ fn instance_at(control: &Path, references: &Path) {
         &mut NoInput,
         false,
     );
-    result.assert_code(0);
-    assert_eq!(result.json()["data"]["initialization"], "NOT_STARTED");
+    if cfg!(target_os = "linux") {
+        // This is deliberately a Mac control fixture. Linux must reject its
+        // user-owned authority before any managed operation can be admitted.
+        result.assert_code(3);
+        assert_eq!(
+            result.json()["reasonCode"],
+            "LINUX_SERVICE_AUTHORITY_UNSAFE"
+        );
+    } else {
+        result.assert_code(0);
+        assert_eq!(result.json()["data"]["initialization"], "NOT_STARTED");
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -256,6 +269,7 @@ fn latest_catalog(home: &Path) -> PathBuf {
     files.sort();
     files.pop().unwrap()
 }
+#[cfg(target_os = "macos")]
 fn catalog(home: &Path) -> Value {
     serde_json::from_slice(&fs::read(latest_catalog(home)).unwrap()).unwrap()
 }
@@ -342,6 +356,7 @@ fn invalid_names_report_a_specific_error_without_echoing_input_or_writing() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn add_links_existing_node_without_a_menu_or_modifying_registered_state() {
     let fixture = Fixture::new();
     let before = snapshot(&fixture.control);
@@ -379,6 +394,7 @@ fn add_links_existing_node_without_a_menu_or_modifying_registered_state() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn same_name_and_target_is_idempotent_and_does_not_append_a_revision() {
     let fixture = Fixture::new();
     let first = fixture.add("local");
@@ -391,6 +407,7 @@ fn same_name_and_target_is_idempotent_and_does_not_append_a_revision() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn names_are_unique_and_existing_target_is_not_implicitly_renamed() {
     let fixture = Fixture::new();
     fixture.add("local").assert_code(0);
@@ -415,6 +432,7 @@ fn names_are_unique_and_existing_target_is_not_implicitly_renamed() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn legacy_catalog_reads_do_not_migrate_and_linking_preserves_id_and_label() {
     let fixture = Fixture::new();
     let legacy = fixture.save_legacy("기존 표시 이름");
@@ -441,6 +459,7 @@ fn legacy_catalog_reads_do_not_migrate_and_linking_preserves_id_and_label() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn listing_cached_nodes_does_not_reopen_missing_or_replaced_targets() {
     let fixture = Fixture::new();
     fixture.add("local").assert_code(0);
@@ -460,6 +479,7 @@ fn listing_cached_nodes_does_not_reopen_missing_or_replaced_targets() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn node_list_excludes_preparation_entries_without_opening_them() {
     let fixture = Fixture::new();
     let draft = fixture.root.join("draft");
@@ -507,6 +527,7 @@ fn unsupported_missing_and_symlink_targets_do_not_create_management_home() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn corrupt_catalog_is_preserved_and_explicit_instance_show_still_works() {
     let fixture = Fixture::new();
     fixture.add("local").assert_code(0);
@@ -560,4 +581,96 @@ fn overlapping_management_location_is_rejected_before_any_write() {
         assert!(!result.text().contains(CANARY));
     }
     assert_eq!(snapshot(&fixture.root), before);
+}
+
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+#[test]
+fn native_default_catalog_is_read_only_and_ignores_xdg_override() {
+    let mut fixture = Fixture::new();
+    fixture.home = fixture.root.join(if cfg!(target_os = "macos") {
+        "Library/Application Support/BXDL"
+    } else {
+        ".local/share/BXDL"
+    });
+    let run = |args: &[&str]| {
+        let output = std::process::Command::new(env!("CARGO_BIN_EXE_bxdl"))
+            .args(args)
+            .env("HOME", &fixture.root)
+            .env("XDG_DATA_HOME", fixture.root.join("ignored-xdg"))
+            .stdin(std::process::Stdio::null())
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+        assert!(output.stderr.is_empty());
+        String::from_utf8(output.stdout).unwrap()
+    };
+    let before = snapshot(&fixture.root);
+    let absent: Value = serde_json::from_str(&run(&["nodes", "--json"])).unwrap();
+    assert!(absent["data"]["entries"].as_array().unwrap().is_empty());
+    assert_eq!(snapshot(&fixture.root), before);
+
+    #[cfg(target_os = "macos")]
+    fixture.add("local").assert_code(0);
+    #[cfg(target_os = "linux")]
+    {
+        // Advisory data only: no Linux registration/root ownership is faked.
+        // Listing/completion must not inspect this intentionally absent target.
+        invoke(
+            &words(&[
+                "setup",
+                "new",
+                "draft",
+                "--home",
+                fixture.home.to_str().unwrap(),
+            ]),
+            &mut Cursor::new("y\n:cancel\n"),
+            true,
+        )
+        .assert_code(5);
+        let record = json!({
+            "schemaVersion": 2,
+            "kind": "BXDL_CONSOLE_CATALOG",
+            "entries": [{
+                "id": "00000000000000000000000000000001",
+                "label": "saved Linux node",
+                "target": {
+                    "kind": "LINUX_INSTANCE",
+                    "path": fixture.root.join("absent-linux-control"),
+                    "identity": {"device": 1, "inode": 1},
+                    "schemaVersion": 1,
+                    "name": "local",
+                    "state": "SYSTEM_REGISTERED",
+                    "cli": "INDEPENDENT_EXECUTOR",
+                },
+                "recordedAt": "2026-11-17T00:00:00Z",
+                "alias": "local",
+                "bindingSha256": "a".repeat(64),
+            }],
+        });
+        write(
+            &latest_catalog(&fixture.home),
+            serde_json::to_vec(&record).unwrap(),
+        );
+    }
+    let before = snapshot(&fixture.root);
+    let listed: Value = serde_json::from_str(&run(&["nodes", "--json"])).unwrap();
+    assert_eq!(listed["data"]["entries"][0]["name"], "local");
+    assert_eq!(
+        run(&[
+            "completion",
+            "__complete",
+            "--cursor",
+            "1",
+            "--",
+            "status",
+            "loc"
+        ]),
+        "values\nlocal\n"
+    );
+    assert_eq!(snapshot(&fixture.root), before);
+    assert!(!fixture.root.join("ignored-xdg").exists());
 }

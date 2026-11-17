@@ -433,7 +433,11 @@ fn runtime_answers_resume_individually_and_defaults_do_not_approve_remaining_pol
     );
 }
 
+// The archive/trust/network-policy answers below are the Mac CLI workflow.
+// Linux's source-folder/JAR/native-config dispatcher has its own integration
+// coverage in tests/linux_setup_cli.rs; direct Preparation API tests stay shared.
 #[test]
+#[cfg(target_os = "macos")]
 fn cli_prepares_verified_package_and_resume_edit_publishes_new_revision_only() {
     use std::io::Cursor;
     let f = Fixture::new();

@@ -18,6 +18,39 @@
 
 개발 checkout에서는 `make build`로 만든 `bin/bxdl`을 외부 관리 CLI로 사용한다. 배포 시에도 package 밖의 관리 CLI 실행 파일만 교체한다. `bxdl version --json`의 version/revision은 현재 관리 CLI의 식별 정보이며 NIGO 엔진 버전과 별도로 관리한다. 기존 이름 목록은 같은 사용자/관리 home에서 이어 읽는다.
 
+
+## Linux 관리 CLI 기반 — 2026-11-16
+
+독립 관리 CLI의 배포·설치·업데이트·복귀 코드를 Linux x86_64/glibc로 확장했다.
+실제 Linux 인수는 별도이며 Linux 노드 서비스·패키지 초기화 지원은 아직 완료되지 않았다.
+`version --json`의 `primaryTarget`은 실행 바이너리 대상(`darwin-arm64` 또는 `linux-amd64`)이며,
+Linux는 `management.install.linux`·`management.update.linux`·`management.rollback.linux`를 표시한다.
+Mac의 고정 RC.3/RC.4 실행기 capability를 Linux 지원 근거로 표시하지 않는다.
+
+Linux의 기본 CLI root는 `~/.local/share/BXDL-CLI`, 실행 진입점은 `~/.local/bin/bxdl`이다.
+이번 단계에서는 `XDG_DATA_HOME`을 자동 채택하지 않으며 다른 위치는 `--root`·`--bin-dir`로 명시한다.
+노드 이름·설치 준비를 저장하는 사용자 목록의 기본 위치는 `~/.local/share/BXDL`이며 `--home`으로 바꾼다. 관리 CLI root와 사용자 목록, node control·DB는 별개의 저장소다. Linux의 PATH 안내는 기본 셸에서 사용할 수 있는 다음 형태다.
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+hash -r
+command -v bxdl
+bxdl version --json
+bxdl cli info
+bxdl host check --json
+```
+
+CLI-only 설치와 `cli update/rollback` 문법·서명 신뢰·기존 선택 보존은 아래 Mac 안내와 같다.
+해당 OS의 배포본만 설치하며 다른 OS/CPU의 배포본은 실행·새 root 생성 전에 거절한다.
+Linux 배포본에는 ELF64/x86_64와 glibc interpreter가 필요하다. 같은 version/revision이라도 다른 target 배포본을 섞지 않는다.
+자동완성 배포물은 계속 zsh용이며 Bash 자동완성은 아직 제공하지 않는다. 셸 설정 파일은 자동으로 바꾸지 않는다.
+
+Linux 빌더에서 `tools/build-management-cli.py --target linux-amd64`를 사용한다.
+기본 target은 실행 중인 지원 호스트이며 빌더의 OS/CPU와 다른 target은 빌드 전에 거절한다.
+실제 clean source의 버전·revision·target을 확인한 배포본을 만들어야 하며, 개발 모드와 서명 정책은 기존과 같다.
+Mac 빌더의 Linux 타입 검사를 Linux 바이너리 링크·실행·인수로 기록하지 않는다.
+[Linux 우선 개발 계획](../design/2026-11-16-linux-first-implementation-plan.md)에 단계별 완료 범위를 기록한다.
+
 ## Mac 관리 CLI 설치
 
 CLI05-02는 Mac arm64용 CLI 전용 배포본과 사용자 권한의 `cli install/update/info/rollback`을 제공한다. 검증 범위와 현재 상태는 [구현 현황](./implementation-status.md)을 따른다. 관리 CLI 배포본에는 JRE나 NIGO 엔진이 없으므로 Rust/Cargo, Java 또는 노드 실행 없이 CLI를 설치할 수 있다. 기존 노드용 `bxdl install`은 유지한다.
@@ -134,7 +167,7 @@ python3 tools/build-management-cli.py --development --allow-unsigned-development
 bxdl cli bundle verify /downloads/bxdl-cli.tar.gz --public-key /trusted/bxdl-cli-public.pem --json
 ```
 
-이 형식의 Ed25519 manifest 서명과 SHA-256 검사는 Apple code signing·notarization이나 정식 고객 배포 인수를 대신하지 않는다. 이번 단계의 배포 대상은 Mac arm64이며 `.pkg`/Homebrew, 자동 온라인 업데이트, 설치 제거, Linux 실제 설치는 후속 범위다. 후속 CLI05-03의 지정 서비스·네트워크 조합 인수는 [별도 결과](../results/2026-10-23-cli05-runtime-acceptance.md)를 따른다. 후속 [초기화 보고서 권한 개선과 재검증](../results/2026-10-23-private-initialization-report.md)은 신규 보고서를 대상으로 완료했다. 기존 `0644` 보고서 복구와 작성자가 아닌 사용자의 CLI05-04 과업은 완료하지 않았으며 사람 과업은 NOT_RUN이다.
+이 형식의 Ed25519 manifest 서명과 SHA-256 검사는 Apple code signing·notarization이나 정식 고객 배포 인수를 대신하지 않는다. CLI05-02 당시 배포 대상은 Mac arm64였으며 Linux 관리 CLI 코드는 위 LNX-01 범위로 확장했다. `.pkg`/Homebrew, 자동 온라인 업데이트, 설치 제거와 Linux 실제 설치 인수는 아직 후속 범위다. 후속 CLI05-03의 지정 서비스·네트워크 조합 인수는 [별도 결과](../results/2026-10-23-cli05-runtime-acceptance.md)를 따른다. 후속 [초기화 보고서 권한 개선과 재검증](../results/2026-10-23-private-initialization-report.md)은 신규 보고서를 대상으로 완료했다. 기존 `0644` 보고서 복구와 작성자가 아닌 사용자의 CLI05-04 과업은 완료하지 않았으며 사람 과업은 NOT_RUN이다.
 
 ## 지원 범위
 
@@ -173,3 +206,28 @@ bxdl cli bundle verify /downloads/bxdl-cli.tar.gz --public-key /trusted/bxdl-cli
 - 기존 노드 DB·control 이동·upgrade/migration은 별도 작업이다. 관리 CLI 교체가 이를 수행하지 않는다.
 
 현재의 사용자 LaunchAgent 운영 범위는 그대로다. 별도 상주 관리 서버나 자동 재시작 기능을 추가하지 않는다.
+
+
+## RC.4 고정 런타임 지원과 CLI 전환 기준
+
+RC4-04 관리 CLI는 기존 `executor.rc3-legacy-v1`과 신규 `executor.rc4-v1` capability를 함께 제공한다.
+RC.3과 RC.4는 각 수신 기록의 전체 engine identity 및 별도의 archive·manifest·내부 실행기·JAR·Java pin으로 인증한다.
+RC.4는 [RC4-03에서 고정한 runtime](../results/2026-11-15-rc4-runtime-assembly.md)을 그대로 사용한다.
+관리 CLI를 빌드하면서 runtime을 다시 조립하거나 내부 실행기를 덮어쓰지 않는다.
+
+새 관리 CLI가 실행하는 `cli install`, `cli update`, `cli rollback`은 후보의 두 capability를 모두 요구한다.
+한쪽 지원이 없으면 `CLI_CANDIDATE_FAILED`로 거절하고 기존 CLI 선택을 유지한다.
+노드 목록은 선택적인 사용자별 저장소이므로, 해당 목록만 보고 다른 곳의 RC.4 노드가 없다고 추정하지 않는다.
+이 보수적인 관리 CLI 기준선은 기존 RC.3 노드 운용 지원을 유지하면서 RC.4 지원이 사라지는 전환을 막는다.
+RC.3 전용 구형 CLI는 RC.4 운용 중 정상 복귀 대상으로 사용하지 않는다.
+이미 배포된 구형 bootstrap 실행기의 검사 정책까지 소급 변경하는 기능은 아니다.
+
+패키지 인증 이후에만 해당 패키지의 고정 실행기에 작업을 위임하고, 선택한 profile과 다른 engine 응답은 거절한다.
+변경 작업이 실행된 뒤 결과를 확정하지 못한 경우에는 `UNKNOWN`을 유지하며 자동 재시도하지 않는다.
+알려지지 않은 패키지는 기존 same-CLI·worker 검사 경로를 따르며, 임의 패키지 실행기를 외부 CLI가 대신 실행하지 않는다.
+
+CLI capability는 구현 지원 식별자다. RC.4의 실제 설치·초기화·LaunchAgent·네트워크 인수 완료는
+[RC4-05/06 계획](../design/2026-11-15-rc4-adoption-plan.md)과 별도 결과로 확인한다.
+[RC4-05 결과](../results/2026-11-15-rc4-macos-service.md)는 고정 R+B의 Mac 수동 단일노드 설치·서비스21사례 PASS다.
+[RC4-06 결과](../results/2026-11-16-rc4-macos-network.md)는 동종4-validator·두 복구·wrong-pin·선정 RPC21사례와 live B→C→B→C 전환3회 및 독립 종료 감사 PASS다. B/C는 Rust 제품 구현이 같고 실제 source revision·배포 문서와 identity가 다르며 R/A/JAR/JRE는 유지했다. 성공 서명 Type-4·KZG provider fault·전체 Native/Console·다른 기능 변경 CLI의 호환은 이 결과에 포함하지 않는다.
+CLI update/rollback은 노드 엔진·JRE·DB를 업그레이드하거나 되돌리는 명령이 아니다.

@@ -12,7 +12,8 @@ import re
 import stat
 
 import support as h
-from candidates import candidate_for
+from candidates import CANDIDATES, RC4_PREPARATION_RESOURCES, candidate_for, preparation_candidate_for
+from runtime_profiles import runtime_profile
 
 ENGINE_SOURCE = "540a89f0814c01d2a4ec67da1087af35195882ca"
 JAR_SHA = "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45"
@@ -108,9 +109,11 @@ def _port(value):
     return type(value) is int and 1024 <= value <= 65535
 
 
-def _validate_inputs(args):
-    candidate = candidate_for(args)
+def _validate_inputs(args, preparation_only=False):
     candidate_name = getattr(args, "candidate", "rc1")
+    if not preparation_only:
+        _require(candidate_name in CANDIDATES, "RUNTIME_CANDIDATE_NOT_SUPPORTED")
+    candidate = preparation_candidate_for(args) if preparation_only else candidate_for(args)
     root = Path(args.fixture).expanduser().resolve(strict=True)
     _require(root.is_dir(), "ROOT")
     public = {}
@@ -128,9 +131,26 @@ def _validate_inputs(args):
              and summary.get("engineJarSha256") == candidate["jarSha256"]
              and summary.get("javaSha256") == JAVA_SHA, "PREPARATION_IDENTITY")
     _require(summary.get("candidate", "rc1") == candidate_name, "CANDIDATE_IDENTITY")
-    if candidate_name in ("rc2", "rc3"):
+    if candidate_name in ("rc2", "rc3", "rc4"):
         _require(summary.get("engineJarSizeBytes") == candidate["jarSizeBytes"], "JAR_SIZE")
+    if candidate_name == "rc4":
+        _require(summary.get("artifactPreparation") == RC4_PREPARATION_RESOURCES,
+                 "ARTIFACT_PREPARATION")
+        _require(summary.get("genesisStatus") == "FRESH_INPUTS_ONLY_NOT_INITIALIZED"
+                 and summary.get("runtimeCandidateSupport") == "NOT_IMPLEMENTED"
+                 and summary.get("nodeDataCreated") is False
+                 and summary.get("nodeStarted") is False
+                 and summary.get("networkTraffic") == "NOT_PERFORMED"
+                 and summary.get("runtimeAcceptance") == "NOT_CHECKED"
+                 and summary.get("certificateExport") == "EXPORTED_PIN_MATCHED",
+                 "PREPARATION_SCOPE")
+    # runtimeCandidateSupport records the offline preparation stage, not the
+    # current harness feature set; retain that original, unexecuted evidence.
     chain = public_json("chain.json")
+    if candidate_name == "rc4":
+        _require(_hex(summary.get("fundedAddress"), 40)
+                 and chain.get("nigo.protocol.devnet.genesis-funding[0].address")
+                 == summary["fundedAddress"], "FUNDED_ADDRESS")
     network = public_json("network.json")
     manifest = public_json("generated/devnet.json")
     _require(public["chain.json"] == summary.get("chainSha256")
@@ -177,6 +197,13 @@ def _validate_inputs(args):
         _require(product.get("http") == {"address": "127.0.0.1", "port": node["httpPort"]}
                  and product.get("p2p") == {"address": "127.0.0.1", "port": node["p2pPort"]},
                  "LOOPBACK_PRODUCT")
+        if candidate_name == "rc4":
+            data = root / "data" / f"n{index}"
+            _require(product.get("storage") == {"backend": "rocksdb", "dataDirectory": str(data)},
+                     "FRESH_STORAGE_PATH")
+            _require(data.parent.is_dir() and data.parent.resolve(strict=True) == data.parent,
+                     "FRESH_STORAGE_PATH")
+            _require(not os.path.lexists(data), "NODE_DATA_ALREADY_EXISTS")
         _reference(product.get("chainDescription"), root / "chain.json", root)
         secrets = product.get("secrets", {})
         _require(isinstance(secrets, dict) and set(secrets) == set(SECRET_FILES), "CREDENTIAL_FIELDS")
@@ -198,6 +225,8 @@ def _validate_inputs(args):
         _require(tx.get("schemaVersion") == 1 and type(tx.get("nonce")) is int
                  and tx["nonce"] == nonce and tx.get("chainId") == 11578
                  and tx.get("type") == 2 and _hex(tx.get("hash"), 64), "TRANSACTION_METADATA")
+        if candidate_name == "rc4":
+            _require(tx.get("from") == summary["fundedAddress"], "TRANSACTION_SENDER")
         raw = tx.get("rawTransaction")
         _require(isinstance(raw, str) and re.fullmatch(r"0x02(?:[0-9a-fA-F]{2})+", raw) is not None,
                  "TRANSACTION_HEX")
@@ -205,16 +234,23 @@ def _validate_inputs(args):
                  and tx["hash"] not in transaction_hashes, "TRANSACTION_IDENTITY")
         transaction_hashes.add(tx["hash"])
         transaction_files[relative] = digest
-    lock, lock_digest = _read_json(Path(args.lock).expanduser().resolve(strict=True))
-    _require(lock.get("jarSha256") == candidate["jarSha256"]
-             and lock.get("javaSha256") == JAVA_SHA
-             and lock.get("jarSizeBytes") == candidate["jarSizeBytes"]
-             and lock.get("expected", {}).get("source", {}).get("commit") == candidate["source"], "LOCK_ARTIFACT")
+    lock_digest = None
+    if not preparation_only:
+        lock, lock_digest = _read_json(Path(args.lock).expanduser().resolve(strict=True))
+        _require(lock.get("jarSha256") == candidate["jarSha256"]
+                 and lock.get("javaSha256") == JAVA_SHA
+                 and lock.get("jarSizeBytes") == candidate["jarSizeBytes"]
+                 and lock.get("expected", {}).get("source", {}).get("commit") == candidate["source"], "LOCK_ARTIFACT")
+        if candidate_name == "rc4":
+            _require(lock_digest == runtime_profile("rc4")["engineLockSha256"], "LOCK_IDENTITY")
     revision = getattr(args, "revision", TEST_REVISION)
+    if candidate_name == "rc4":
+        _require(hasattr(args, "revision"), "REVISION")
     _require(isinstance(revision, str) and re.fullmatch(r"[0-9a-f]{40}", revision) is not None,
              "REVISION")
     return {
-        "schemaVersion": 1, "scope": "PINNED_TEST_CANDIDATE_FIXTURE_ONLY",
+        "schemaVersion": 1, "scope": ("PINNED_TEST_CANDIDATE_PREPARATION_ONLY" if preparation_only
+                                       else "PINNED_TEST_CANDIDATE_FIXTURE_ONLY"),
         "candidate": candidate_name,
         "publicInputs": public, "transactionFiles": transaction_files,
         "transactionSetSha256": _set_digest(transaction_files),
@@ -233,6 +269,24 @@ def validate_inputs(args):
         raise
     except Exception:
         raise h.Failure("FIXTURE_GUARD_INVALID_INPUT") from None
+
+
+def validate_preparation(args):
+    """Read a fresh fixture without selecting or requiring a product engine lock.
+
+    This result cannot authorize a runtime runner: validate_inputs keeps its
+    separate supported-candidate allowlist and lock requirement.
+    """
+    try:
+        return _validate_inputs(args, preparation_only=True)
+    except h.Failure:
+        raise
+    except Exception:
+        raise h.Failure("FIXTURE_GUARD_INVALID_INPUT") from None
+
+
+def assert_preparation_unchanged(args, pins):
+    _require(validate_preparation(args) == pins, "INPUT_SET_CHANGED")
 
 
 def assert_inputs_unchanged(args, pins):

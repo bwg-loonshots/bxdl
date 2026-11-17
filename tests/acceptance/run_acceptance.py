@@ -17,6 +17,7 @@ import urllib.request
 import support as h
 import fixture_guard as fg
 from candidates import CANDIDATES, candidate_for
+import runtime_profiles as rp
 
 JAR_SHA = "f1ea80e25052221ed8a6e3108e020cb1b776833f4f86a29aae0885ad41703f45"
 JAVA_SHA = "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c"
@@ -53,8 +54,10 @@ class Acceptance:
         self.candidate = candidate_for(args)
         self.candidate_name = getattr(args, "candidate", "rc1")
         self.scenario = getattr(args, "scenario", "full")
-        h.require(self.scenario == "full" or self.candidate_name in ("rc2", "rc3"), "RC2_OR_RC3_RECOVERY_CASE_ONLY")
+        h.require(self.scenario == "full" or self.candidate_name in ("rc2", "rc3", "rc4"), "RC2_RC3_OR_RC4_RECOVERY_CASE_ONLY")
         self.input_pins = fg.validate_inputs(args)
+        if self.candidate_name == "rc4":
+            self.validate_fixed_runtime_inputs()
         self.root = args.output
         self.root.mkdir(mode=0o700)
         self.e = h.Evidence(self.root)
@@ -84,7 +87,9 @@ class Acceptance:
     def freeze_harness(self):
         source = Path(__file__).resolve().parent
         names = ("run_acceptance.py", "support.py", "fixture_guard.py",
-                 "prepare_fixture.py", "candidates.py")
+                 "prepare_fixture.py", "candidates.py", "runtime_profiles.py")
+        if self.candidate_name == "rc4":
+            names += ("rc4_rpc_probe.py",)
         self.harness_pins = {name: h.sha(source / name) for name in names}
         snapshot = self.e.logs / "harness-source"
         snapshot.mkdir(mode=0o700)
@@ -125,6 +130,9 @@ class Acceptance:
 
     def command(self, node, args, label, expected=(0,), timeout=700):
         cli = self.cli if node is None else node["cli"]
+        if getattr(self, "candidate_name", "rc1") == "rc4":
+            h.regular(cli)
+            h.require(h.sha(cli) == rp.runtime_profile("rc4")["executorSha256"], "RC4_EXECUTOR_PIN")
         return h.command(cli, args, self.e, label, expected, timeout)
 
     def crypto(self, args, label):
@@ -133,7 +141,56 @@ class Acceptance:
         self.e.capture(label + ".log", result.stdout + result.stderr)
         h.require(result.returncode == 0, "CRYPTO_" + label)
 
+    def validate_fixed_runtime_inputs(self):
+        profile = rp.runtime_profile("rc4")
+        h.require(getattr(self.a, "runtime_package", None) is not None
+                  and getattr(self.a, "runtime_public_key", None) is not None,
+                  "RC4_FIXED_RUNTIME_INPUTS_REQUIRED")
+        h.require(all(getattr(self.a, name, None) is None
+                      for name in ("payload_source", "spec", "openssl")),
+                  "RC4_REASSEMBLY_INPUTS_FORBIDDEN")
+        h.require(self.a.revision == profile["executorRevision"], "RC4_EXECUTOR_REVISION_PIN")
+        h.regular(self.a.cli)
+        h.require(h.sha(self.a.cli) == profile["executorSha256"]
+                  and self.a.cli.stat().st_size == profile["executorSizeBytes"], "RC4_EXECUTOR_PIN")
+        return rp.verify_runtime_supply(self.a.runtime_package, self.a.runtime_public_key,
+                                        self.a.lock, "rc4")
+
+    def fixed_runtime_unchanged(self):
+        self.validate_fixed_runtime_inputs()
+        rp.verify_runtime_supply(self.archive, self.public, self.lock, "rc4")
+        h.require(h.sha(self.cli) == rp.runtime_profile("rc4")["executorSha256"], "RC4_EXECUTOR_PIN")
+
+    def frozen_package(self):
+        self.validate_fixed_runtime_inputs()
+        profile = rp.runtime_profile("rc4")
+        h.copy_file(self.a.runtime_package, self.archive, 0o600)
+        h.copy_file(self.a.runtime_public_key, self.public, 0o600)
+        self.fixed_runtime_unchanged()
+        verified = self.command(None, ["package", "verify", self.archive, "--public-key", self.public],
+                                "fixed-runtime-verify")
+        data = verified.get("data", {})
+        h.require(data.get("authenticity") == "verified-external-ed25519"
+                  and data.get("manifestSha256") == profile["manifestSha256"]
+                  and data.get("filesVerified") == profile["payloadFiles"]
+                  and data.get("bytesVerified") == profile["payloadBytes"], "FIXED_RUNTIME_AUTHENTICATION")
+        self.results["package"] = {
+            "archiveSha256": profile["archiveSha256"], "archiveSizeBytes": profile["archiveSizeBytes"],
+            "manifestSha256": profile["manifestSha256"], "cliSha256": profile["executorSha256"],
+            "candidate": self.candidate_name, "engineSource": self.candidate["source"],
+            "engineJarSha256": self.candidate["jarSha256"], "engineJarSizeBytes": self.candidate["jarSizeBytes"],
+            "javaSha256": JAVA_SHA, "runtimeFilesVerified": profile["jreFiles"],
+            "revision": profile["executorRevision"], "testOnlySigningKey": True,
+            "runtimeRebuilt": False, "publicKeySha256": profile["publicKeySha256"],
+            "lockSha256": profile["engineLockSha256"], "assemblyEvidence": profile["assemblyEvidence"],
+            "specTemplateSha256": profile["specTemplateSha256"],
+            "resolvedSpecSha256": profile["resolvedSpecSha256"],
+        }
+        self.e.note("EXISTING_RC4_PACKAGE_AUTHENTICATED")
+
     def package(self):
+        if self.candidate_name == "rc4":
+            return self.frozen_package()
         payload = self.root / "payload"
         payload.mkdir(mode=0o700)
         for name in ("engine", "runtime", "docs", "licenses"):
@@ -185,6 +242,8 @@ class Acceptance:
 
     def prepare_node(self, index, bad=False):
         fg.assert_inputs_unchanged(self.a, self.input_pins)
+        if self.candidate_name == "rc4":
+            self.fixed_runtime_unchanged()
         label = "wrong-pin" if bad else f"n{index}"
         base = self.root / label
         base.mkdir(mode=0o700)
@@ -226,6 +285,8 @@ class Acceptance:
         h.require(installed["outcome"] == "SUCCEEDED", "INSTALL_" + label)
         cli = package / "bin/bxdl"
         h.require(h.sha(cli) == h.sha(self.cli), "INSTALLED_CLI_" + label)
+        if self.candidate_name == "rc4":
+            self.results.setdefault("runtimePayloads", {})[label] = rp.verify_installed_payload(package, "rc4")
         node = {"label": label, "index": index, "base": base, "cli": cli,
                 "control": base / "control", "port": product["http"]["port"],
                 "p2pPort": product["p2p"]["port"], "product": productpath, "native": native}
@@ -422,12 +483,31 @@ class Acceptance:
             time.sleep(0.5)
         raise h.Failure("CANONICAL_CATCHUP_TIMEOUT_" + label)
 
+    def rc4_rpc_probe(self, node):
+        from rc4_rpc_probe import run_probe
+        fg.assert_inputs_unchanged(self.a, self.input_pins)
+        evidence = self.results["rc4RpcProbe"] = {}
+        count = 0
+
+        def call(method, params):
+            nonlocal count
+            count += 1
+            response = http(node["port"], "/eth-rpc",
+                            {"jsonrpc": "2.0", "id": 1, "method": method, "params": params})
+            h.write_json(self.e.logs / f"rc4-rpc-{count:03d}.json",
+                         {"method": method, "params": params, "response": response})
+            return response
+
+        run_probe(call, self.fixture["fundedAddress"], record=evidence)
+
     def run(self):
         self.check_free_ports()
         self.package()
         good = [self.prepare_node(i) for i in range(1, 5)]
         h.require(len({n["genesisHash"] for n in good}) == 1, "GENESIS_DIVERGENCE")
         self.start_all(good, "first-start")
+        if self.candidate_name == "rc4":
+            self.rc4_rpc_probe(good[0])
         tx0 = self.submit(0, good[0]["port"])
         self.finality(good, tx0, "four-validator")
         if self.scenario == "same-db-recovery":
@@ -446,7 +526,7 @@ class Acceptance:
         tx2 = self.submit(2, good[0]["port"])
         self.finality(good, tx2, "after-rejoin")
         self.two_of_four(good)
-        if self.candidate_name in ("rc2", "rc3"):
+        if self.candidate_name in ("rc2", "rc3", "rc4"):
             self.same_db_recovery(good, 5, 6)
             self.wrong_pin(good, nonce=7)
         else:
@@ -577,7 +657,7 @@ class Acceptance:
         self.finality(good, tx4, "after-four-restored")
 
     def same_db_recovery(self, good, pending_nonce, followup_nonce):
-        h.require(self.candidate_name in ("rc2", "rc3"), "RC2_OR_RC3_RECOVERY_CASE_ONLY")
+        h.require(self.candidate_name in ("rc2", "rc3", "rc4"), "RC2_RC3_OR_RC4_RECOVERY_CASE_ONLY")
         # A new, independent skew period follows a fully confirmed 4-node tx.
         # There is no carry-over timeout adoption and no data/reset/re-register.
         original = {node["label"]: {"attemptId": node["lastAttempt"],
@@ -723,8 +803,10 @@ def main():
     p.add_argument("--run", action="store_true")
     p.add_argument("--candidate", choices=tuple(CANDIDATES), required=True)
     p.add_argument("--scenario", choices=("full", "same-db-recovery"), default="full")
-    for name in ("cli", "fixture", "payload-source", "lock", "spec", "openssl", "output"):
+    for name in ("cli", "fixture", "lock", "output"):
         p.add_argument("--" + name, type=Path, required=True)
+    for name in ("payload-source", "spec", "openssl", "runtime-package", "runtime-public-key"):
+        p.add_argument("--" + name, type=Path)
     p.add_argument("--revision", required=True)
     p.add_argument("--continue-from", type=Path)
     a = p.parse_args()
@@ -737,6 +819,11 @@ def main():
     h.require(a.output.is_absolute() and not a.output.exists(), "NEW_ABSOLUTE_OUTPUT_REQUIRED")
     h.require(not a.continue_from or (a.candidate == "rc1" and a.scenario == "full"),
               "LEGACY_CONTINUATION_RC1_FULL_ONLY")
+    if a.candidate != "rc4":
+        h.require(all(getattr(a, name) is not None for name in ("payload_source", "spec", "openssl")),
+                  "LEGACY_PACKAGE_BUILD_INPUTS_REQUIRED")
+        h.require(a.runtime_package is None and a.runtime_public_key is None,
+                  "FROZEN_RUNTIME_INPUTS_RC4_ONLY")
     acceptance = Acceptance(a)
     error = None
     try:
@@ -750,9 +837,15 @@ def main():
         cleaned = acceptance.cleanup()
     try:
         fg.assert_inputs_unchanged(acceptance.a, acceptance.input_pins)
-    except h.Failure as changed:
-        error = error or str(changed)
-        acceptance.results["inputGuardFinalError"] = str(changed)
+        if a.candidate == "rc4":
+            acceptance.fixed_runtime_unchanged()
+            for node in acceptance.nodes:
+                rp.verify_installed_payload(node["base"] / "package", "rc4")
+            acceptance.results["fixedRuntimeInputsAndPayloadsUnchanged"] = True
+    except Exception as changed:
+        reason = str(changed) if isinstance(changed, h.Failure) else "RUNTIME_INPUT_RECHECK_UNKNOWN"
+        error = error or reason
+        acceptance.results["inputGuardFinalError"] = reason
     preserved_harness = acceptance.harness_unchanged()
     acceptance.results["harnessSourcesUnchanged"] = preserved_harness
     if not preserved_harness:

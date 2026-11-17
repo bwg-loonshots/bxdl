@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "status": "LOCAL_SOURCE_MATERIAL_RETAINED_NOT_CUSTOMER_PUBLISHED",
+  "sourceArchive": {
+    "name": "OpenJDK21U-jdk-sources_21.0.13_9.tar.gz",
+    "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jdk-sources_21.0.13_9.tar.gz",
+    "sha256": "b5232c9980d8a0f0459676c084c41c6e2c771ed9e785890b03c6a438406ad1ca",
+    "sizeBytes": 115231532
+  },
+  "sourceCommit": "2ab10ca20c191701c3a9f3153bfc6e93d63714c1",
+  "buildScripts": {
+    "name": "temurin-build-1cf43d7a3e77886bfea7d550a902e151a87d724d.tar.gz",
+    "url": "https://api.github.com/repos/adoptium/temurin-build/tarball/1cf43d7a3e77886bfea7d550a902e151a87d724d",
+    "sizeBytes": 625119,
+    "sha256": "0288f24487b5981c13c6e4807928f6850f245bd02b667e9d047ba9b2620aaf76",
+    "hashOrigin": "OBSERVED_OVER_HTTPS_COMMIT_ADDRESSED_ARCHIVE_NOT_VENDOR_PUBLISHED_CHECKSUM"
+  },
+  "buildCommit": "1cf43d7a3e77886bfea7d550a902e151a87d724d",
+  "sourcePresenceObservations": [
+    {
+      "archive": "OpenJDK21U-jdk-sources_21.0.13_9.tar.gz",
+      "entryCount": 85533,
+      "readableFiles": [
+        {
+          "path": "jdk-21.0.13+9-src/LICENSE",
+          "sizeBytes": 19274,
+          "sha256": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726",
+          "utf8Readable": true
+        },
+        {
+          "path": "jdk-21.0.13+9-src/ASSEMBLY_EXCEPTION",
+          "sizeBytes": 1514,
+          "sha256": "75292f03bf23d3db7c985aecc191029b93883200721ed23ed34a2e601463df33",
+          "utf8Readable": true
+        },
+        {
+          "path": "jdk-21.0.13+9-src/ADDITIONAL_LICENSE_INFO",
+          "sizeBytes": 2114,
+          "sha256": "a69bce275ba7a3570af6579cb0f55682cd75fedfcd49e0e8e9022270c447c916",
+          "utf8Readable": true
+        },
+        {
+          "path": "jdk-21.0.13+9-src/README.md",
+          "sizeBytes": 1077,
+          "sha256": "c3b064f757c7ba0fc71401e2e9cd409f3f723167c74cae8b1d45f9783851dfba",
+          "utf8Readable": true
+        }
+      ],
+      "pathPresenceChecks": [
+        {
+          "pathFragment": "libfreetype",
+          "present": true
+        },
+        {
+          "pathFragment": "libpng",
+          "present": true
+        },
+        {
+          "pathFragment": "libjavajpeg",
+          "present": true
+        },
+        {
+          "pathFragment": "giflib",
+          "present": true
+        },
+        {
+          "pathFragment": "liblcms",
+          "present": true
+        },
+        {
+          "pathFragment": "libharfbuzz",
+          "present": true
+        },
+        {
+          "pathFragment": "zlib",
+          "present": true
+        },
+        {
+          "pathFragment": "src/java.base/share/data/cacerts",
+          "present": true
+        }
+      ],
+      "scope": "FILE_PRESENCE_AND_READABILITY_ONLY_NOT_LEGAL_COMPLETENESS"
+    },
+    {
+      "archive": "temurin-build-1cf43d7a3e77886bfea7d550a902e151a87d724d.tar.gz",
+      "entryCount": 203,
+      "readableFiles": [
+        {
+          "path": "adoptium-temurin-build-1cf43d7/LICENSE",
+          "sizeBytes": 11360,
+          "sha256": "6b9522191b8cb7126b2d214edd7f782d2ccd83c467e9c03b8af9e0bf903b49b4",
+          "utf8Readable": true
+        },
+        {
+          "path": "adoptium-temurin-build-1cf43d7/NOTICE",
+          "sizeBytes": 65,
+          "sha256": "af830a6ca6ad0a57f357dc0435f9d8b5770704bbe0cf99a9fd82c97bfb0b3ca9",
+          "utf8Readable": true
+        },
+        {
+          "path": "adoptium-temurin-build-1cf43d7/README.md",
+          "sizeBytes": 20021,
+          "sha256": "d2f5e0d6a3988f31f898d3ec4995ef8971b1dffad8c1eeff0592b46b51b88602",
+          "utf8Readable": true
+        },
+        {
+          "path": "adoptium-temurin-build-1cf43d7/security/certdata.txt",
+          "sizeBytes": 1356175,
+          "sha256": "3ec2b4d240dc12c747eaf450061db84af757c483bbda302f9e29ceb5d70be510",
+          "utf8Readable": true
+        },
+        {
+          "path": "adoptium-temurin-build-1cf43d7/security/mk-cacerts.sh",
+          "sizeBytes": 6028,
+          "sha256": "c97326aab9d0ddd89016c529e7e119b9b69e3ecc4fbe8f99e74d2c8d8028d70d",
+          "utf8Readable": true
+        }
+      ],
+      "pathPresenceChecks": [],
+      "scope": "FILE_PRESENCE_AND_READABILITY_ONLY_NOT_LEGAL_COMPLETENESS"
+    }
+  ],
+  "customerDelivery": "Matching OpenJDK source and build material are retained locally; customer source delivery and complete product notices remain separate release work."
+}

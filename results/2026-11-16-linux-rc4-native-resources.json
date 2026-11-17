@@ -1,0 +1,85 @@
+{
+  "scope": "STATIC_NESTED_ELF_X86_64_RESOURCES_NOT_NATIVE_LOAD",
+  "jarSha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+  "resources": [
+    {
+      "nestedJar": "BOOT-INF/lib/jc-kzg-4844-2.1.8.jar",
+      "resource": "ethereum/ckzg4844/lib/amd64/libckzg4844jni.so",
+      "sizeBytes": 294280,
+      "sha256": "f7adf7a61365a1bc0910aff23d98461c64a84aa616292eb370d5c09600a5dae7",
+      "elfMachine": "EM_X86_64"
+    },
+    {
+      "nestedJar": "BOOT-INF/lib/gnark-1.4.1.jar",
+      "resource": "lib/x86-64/libgnark_eip_2537.so",
+      "sizeBytes": 3814176,
+      "sha256": "1852f00317017a0a4495228bbb42ec82d42480691d4853b545c58f06a710d1df",
+      "elfMachine": "EM_X86_64"
+    },
+    {
+      "nestedJar": "BOOT-INF/lib/gnark-1.4.1.jar",
+      "resource": "lib/x86-64/libgnark_eip_196.so",
+      "sizeBytes": 3169448,
+      "sha256": "73d2cdf313eca6a369e615c11eca3f70347b8f615200351f11b8186f0bd20ec8",
+      "elfMachine": "EM_X86_64"
+    },
+    {
+      "nestedJar": "BOOT-INF/lib/gnark-1.4.1.jar",
+      "resource": "lib/x86-64/libgnark_jni.so",
+      "sizeBytes": 3119824,
+      "sha256": "6dfbcd63d6f035289462e5f88e82362be5ff15407bd86b45bd99d836c7d8f740",
+      "elfMachine": "EM_X86_64"
+    },
+    {
+      "nestedJar": "BOOT-INF/lib/jna-5.16.0.jar",
+      "resource": "com/sun/jna/linux-x86-64/libjnidispatch.so",
+      "sizeBytes": 134447,
+      "sha256": "ca07953d595210082339753d9e818a1fdb40509a17a41914d9a2cb0d2df6b6af",
+      "elfMachine": "EM_X86_64"
+    },
+    {
+      "nestedJar": "BOOT-INF/lib/jna-5.16.0.jar",
+      "resource": "com/sun/jna/sunos-x86-64/libjnidispatch.so",
+      "sizeBytes": 169992,
+      "sha256": "4a0b0b11369d4f88437700e8ee3557cb518ec017bfe2df3bd49faf82e60e8f8e",
+      "elfMachine": "EM_X86_64"
+    },
+    {
+      "nestedJar": "BOOT-INF/lib/jna-5.16.0.jar",
+      "resource": "com/sun/jna/dragonflybsd-x86-64/libjnidispatch.so",
+      "sizeBytes": 116880,
+      "sha256": "c0c6e64b476d726d86e996af1397491bbff9ccadcba1e0c4639a8f1ae5454062",
+      "elfMachine": "EM_X86_64"
+    },
+    {
+      "nestedJar": "BOOT-INF/lib/jna-5.16.0.jar",
+      "resource": "com/sun/jna/freebsd-x86-64/libjnidispatch.so",
+      "sizeBytes": 121040,
+      "sha256": "3c4d14c74bb6798c76b43cad4395b8bdaa9181a7991e160a376f87bb1ab13ced",
+      "elfMachine": "EM_X86_64"
+    },
+    {
+      "nestedJar": "BOOT-INF/lib/jna-5.16.0.jar",
+      "resource": "com/sun/jna/openbsd-x86-64/libjnidispatch.so",
+      "sizeBytes": 122942,
+      "sha256": "d0eda029037f25c4b3d63923a3875345ecd1922de1e6e5df4162cc5631dc0deb",
+      "elfMachine": "EM_X86_64"
+    },
+    {
+      "nestedJar": "BOOT-INF/lib/rocksdbjni-10.10.1.jar",
+      "resource": "librocksdbjni-linux64.so",
+      "sizeBytes": 15377032,
+      "sha256": "14750307fe12f75bd400ed8156dfb737a7a7229ffe4c8b8bbe218e754dbe14b2",
+      "elfMachine": "EM_X86_64"
+    },
+    {
+      "nestedJar": "BOOT-INF/lib/rocksdbjni-10.10.1.jar",
+      "resource": "librocksdbjni-linux64-musl.so",
+      "sizeBytes": 16300704,
+      "sha256": "122e77210727590235de0f9719475cb033ac15db9efee015c1730a9249af6873",
+      "elfMachine": "EM_X86_64"
+    }
+  ],
+  "nativeLoad": "NOT_RUN",
+  "interpretation": "Presence and ELF machine only; loadability, libc compatibility, provider algorithms and RocksDB execution remain NOT_RUN."
+}

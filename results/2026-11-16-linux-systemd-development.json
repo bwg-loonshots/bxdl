@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-16",
+  "stage": "LNX-03",
+  "outcome": "DEVELOPMENT_BACKEND_AUTO_CHECKED",
+  "baseCommit": "fe84ca6abde288e911dfd91cfef7753979fbcdce",
+  "workingTreeDirty": true,
+  "scope": "MACOS_REGRESSION_AND_LINUX_TYPE_CHECK_ONLY",
+  "automaticChecks": {
+    "command": "RUST_TEST_THREADS=4 make check",
+    "format": "PASS",
+    "clippy": "PASS",
+    "rust": {
+      "passed": 659,
+      "failed": 0,
+      "ignored": 0
+    },
+    "python": {
+      "total": 207,
+      "passed": 205,
+      "skipped": 2,
+      "failed": 0
+    },
+    "linuxAllTargetsTypeCheck": "PASS"
+  },
+  "macCliSmoke": {
+    "scope": "MACOS_READ_ONLY_AND_FOREIGN_HOST_GUARDS",
+    "cliSha256": "1939c71f376be09656ec7ba9636c1c0e46daf766bb276ea29bc562c43deee91a",
+    "cases": [
+      {
+        "command": "linux-service account",
+        "exit": 0,
+        "reasonCode": "LINUX_SERVICE_ACCOUNT_NAME"
+      },
+      {
+        "command": "linux-service register",
+        "exit": 3,
+        "reasonCode": "LINUX_SERVICE_PLATFORM_UNSUPPORTED"
+      },
+      {
+        "command": "systemd-run",
+        "exit": 3,
+        "reasonCode": "LINUX_SERVICE_PLATFORM_UNSUPPORTED"
+      },
+      {
+        "command": "systemd-exit",
+        "exit": 3,
+        "reasonCode": "LINUX_SERVICE_PLATFORM_UNSUPPORTED"
+      }
+    ],
+    "linuxExecution": "NOT_RUN",
+    "serviceMutations": 0
+  },
+  "implemented": [
+    "EXPLICIT_ROOT_DEVELOPMENT_REGISTRATION",
+    "LOCAL_DEDICATED_NOLOGIN_UID_GID_CHECK",
+    "ROOT_RECORDS_AND_IMMUTABLE_SUPPLY_SNAPSHOTS",
+    "NONROOT_COLD_INIT_RESUME_RUN",
+    "SINGLE_USE_SYSTEMD_GATE",
+    "PID_START_TICKS_INVOCATION_CGROUP_ENGINE_BINDING",
+    "NO_GROUPS_CAPABILITIES_NO_NEW_PRIVS_WITNESS",
+    "DURABLE_EXEC_STOP_POST_RECEIPT",
+    "ENGINE_STOPPED_PROCESS_CGROUP_DB_LOCK_CLOSURE",
+    "BOUNDED_OFFLINE_PARTIAL_DIAGNOSTIC_SUMMARY"
+  ],
+  "notRun": [
+    "NATIVE_LINUX_BUILD_AND_LINK",
+    "LINUX_JRE_ENGINE_EXECUTION",
+    "LINUX_NATIVE_ROCKSDB",
+    "SYSTEMD_SERVICE_LIFECYCLE",
+    "ACTUAL_SERVICE_UID_ISOLATION",
+    "SSH_DISCONNECT",
+    "REBOOT",
+    "LINUX_RUNTIME_ARCHIVE_ACCEPTANCE",
+    "LINUX_USER_TASKS",
+    "WSL2"
+  ],
+  "nextImplementation": [
+    "LINUX_RUNTIME_ASSEMBLY_AND_EXACT_EXECUTOR_PROFILE",
+    "PRIVILEGED_INSTALLATION_AND_ACCOUNT_REVIEW_UX",
+    "NAMED_CATALOG_AND_FULL_EXECUTOR_DELEGATION",
+    "FULL_BOUNDED_EVENT_COLLECTION"
+  ],
+  "linuxSystemdMutations": 0,
+  "automaticRestart": false,
+  "bootAutoStart": false,
+  "nigoChanges": false,
+  "sourceSha256": {
+    "src/cli.rs": "619d203f5e8a765bb0731701adaf8e13b74eb8b70d2bf1a83686ad5e6d6837f0",
+    "src/cli/linux_service.rs": "d905a48671f69dab809115c15fc64b9ce52aa2ee3895f71b2cfaf11012066eed",
+    "src/engine/mod.rs": "cd897a400ec86fa4c23fe60cce20ecdae54fe4623352ffe872292cfe1b43c6ed",
+    "src/engine/linux_service.rs": "d3b891c2fa79404d40eb9b7d5801be18a412a3779dba56d8859068787cb2ae40",
+    "src/engine/linux_service/boundary.rs": "e9b446f9d1d2fb068354a216b05dba45586083b0ebba14e9866b12abf6100eb2",
+    "src/engine/linux_service/runner.rs": "cc87f25f8743a12a65b191aac24291a5678ca7b87637d0b651564a0c54341d65",
+    "src/engine/linux_service/exit.rs": "90889aaa0e9b3b07dac5300f377a7289fe7241aec8eca5100164b8bf9ac117cf",
+    "src/engine/systemd.rs": "542698320876bfa0203147c65888438fffea43e05c8663f3a4aa107392bace2f",
+    "src/engine/systemd/control.rs": "72406f188b37d307951cdd9e784cca98ac46031213a629bac6aadec307f6a71d",
+    "tests/cli.rs": "465fc4b33f916c6c07a3763c2b6c1262b9e79baa3f5493f63c7760e35a48b390"
+  },
+  "evidenceLogSha256": {
+    "bxdl-lnx03-make-check.log": "d2ca125110c44e85cdd5bfc25375ed9766ce36529374707f41a56884f59ac52c",
+    "bxdl-lnx03-linux-check.log": "45dcfb52851f75b95f8256c8334f9c877955d4ef2989c643c1b17b995608ab2a",
+    "bxdl-lnx03-default-parallel-check.log": "1ca90931b84c5f98307a6c2db9cdba3ed9fffd0872d932c55f5db2c55ff96680",
+    "bxdl-lnx03-executor-recheck.log": "5e257d06bbeccd6f5984fda8600eb0771e43505534610ab00cd45f5049f21435"
+  },
+  "defaultParallelRustRegressionRun": {
+    "format": "PASS",
+    "python": "PASS_WITH_TWO_EXISTING_SKIPS",
+    "clippy": "PASS",
+    "rustLibrary": {
+      "passed": 488,
+      "failed": 2
+    },
+    "failedTests": [
+      "engine::instance::executor::tests::descendant_retaining_output_cannot_hold_manager_indefinitely",
+      "engine::instance::executor::tests::timeout_does_not_kill_or_replay_the_child_and_reaps_after_completion"
+    ],
+    "followup": "UNCHANGED_EXECUTOR_MODULE_21_PASS_SERIAL_THEN_FULL_SUITE_4_THREADS_PASS",
+    "testAssertionsRelaxed": false,
+    "cause": "TIMING_SENSITIVITY_UNDER_PARALLEL_LOAD_SUSPECTED_NOT_PROVEN"
+  }
+}

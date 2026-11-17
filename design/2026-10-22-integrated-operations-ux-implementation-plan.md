@@ -1,12 +1,12 @@
 # CLI 우선 설치·운용 UX 구현 계획
 
 - 작성일/방향 변경: 2026-10-22 / 상태: **console 개발 중단. 기존 UX-01~03 이력 보존. CLI-01~04는 2026-10-23 구현·검증 완료. CLI-05 중 CLI05-01/02 구현·검증과 CLI05-03 지정 Mac 조합 인수를 완료했다. 후속 신규 초기화 보고서 권한 개선·수집 재검증 완료. 기존 `0644` 보고서는 미복구 partial이며 CLI05-04 사람 과업은 NOT_RUN이다.**
-- 현재 우선순위 갱신: 2026-11-15. **RC.4 공급 완료 → 수신·새 runtime/외부 관리 CLI 조합 재인수 → RC.4 기준 CLI05-04 사람 과업**을 따른다. [RC.4 상세 계획](./2026-11-15-rc4-adoption-plan.md). RC4-01의 [실물 수신·engine-info 검증](../contracts/nigo/engine-rc4-2026-11-15/README.md)을 완료했고 다음은 RC4-02다. RC.3 지원과 아래 완료 이력은 그대로다.
+- 현재 우선순위 갱신: 2026-11-16. **RC4-01~07 이력 보존 → 실제 Linux 기반·단일노드 인수 → Linux 사람 과업 → 서버 인수 → WSL2 후속**을 따른다. [Linux 우선 계획](./2026-11-16-linux-first-implementation-plan.md). Mac RC4-08/CLI05-04는 NOT_RUN·우선순위 이연이다. [RC.4 상세 계획](./2026-11-15-rc4-adoption-plan.md). [RC4-05 단일 노드](../results/2026-11-15-rc4-macos-service.md)의21사례와 별도로 [RC4-06 동종망·RPC·실행 중 CLI 전환](../results/2026-11-16-rc4-macos-network.md)·[JSON](../results/2026-11-16-rc4-macos-network.json)을 실제 검증했다. R/A/JAR/JRE를 유지하고 독립 관리 CLI B/C를 전환했다. NIGO 정식 소비자 회신은 전용 worktree에서 작성해 [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257)로 게시·머지했다. 상대 작업자의 수신 확인·검토 동의는 별도이며 아직 완료로 기록하지 않는다. BXDL의 RC4-06 결과·이번 계획 갱신은 아직 미커밋이고 BXDL 근거 PR은 미게시다. 사람 과업은 NOT_RUN이며 기존 RC.3 지원·아래 완료 이력은 보존한다.
 - 기준: [직접 CLI 간소화](./2026-10-22-cli-simplification.md), [통합 설계](./2026-10-22-integrated-operations-ux.md), [화면 명세 S01~S11](./2026-10-22-integrated-operations-ux-screens.md), [화면 시안](./prototypes/integrated-operations-ux.html).
 - 기존 M/BX 작업 ID와 G1/G2를 대체하지 않는다. UX ID는 이번 개선을 나눠 구현·검토하기 위한 하위 추적이다.
 - 최초 설계 코드 기준은 PR #15의 `870ca72`, 설계 merge는 PR #16의 `a8fd55a`다. UX-01의 `operator/{prompt,help,view}.rs`와 UX-02의 `operator/{console,catalog,home,target}.rs`를 구현했다. UX-03의 `operator/install_flow.rs`와 `setup/preparation.rs`도 구현했다. node/support 모듈은 후속 제안이다.
 
-## 1. 현재 실행할 계획 — CLI 우선
+## 1. 현재 실행할 계획 — 실제 Linux와 직접 CLI 우선
 
 2026-10-23 추가 결정: [관리 CLI/노드 실행기 분리](./2026-10-23-independent-management-cli.md)를 CLI-02에 포함한다. 새 관리 CLI를 검증한 기존 RC.3 실행기와 조합해 운용한다. CLI UX 변경만으로 archive를 재조립하는 조건은 이 지원 profile에 적용하지 않는다. 실행기·NIGO/JRE가 바뀌는 경우 새 package 인수는 계속 필요하다.
 
@@ -24,15 +24,17 @@ CLI-03에서 직접 `setup new/resume`의 7개 번호 메뉴를 순차 문답으
 
 기존 CLI 개선의 착수 순서는 **CLI-01 → CLI-02 → CLI-03 → CLI-04 → CLI-05**였으며 CLI05-03까지 완료했다. CLI-02는 패키지 내부 바이너리를 덮어쓰지 않는다. 지원하는 기존 RC.3 profile을 인증한 뒤 내부 실행기로 위임한다. 실행기 동작은 기존 검사를 유지하며 실제 조합 인수를 이번 단계에서 수행한다. 이후 새 runtime package 인수와 전체 사용자 과업은 CLI-04/05와 연결한다. 이 구현·인수 당시에는 NIGO RC.3/JRE 고정을 유지했으며 새 NIGO 선행 구현이 없었다.
 
-### 현재 다음 순서 — RC.4 채택 후 사람 과업
+### RC4-01~07 완료 이력과 Linux 전환
 
-RC.4는 NIGO 공급 후 BXDL RC4-01의 실제 수신·전체 identity·선정 JRE engine-info 대조까지 PASS했다. lock은 NOT_SELECTED, 새 조합 인수는 NOT_RUN이다. 현재 실행 가능한 지원 조합은 기존 RC.3다.
+RC.4는 RC4-01~04 수신·준비·runtime/관리 CLI 구현과 RC4-05의 수동 단일 노드 서비스를 완료했다. RC4-05의 `MANUAL_START_INITIALIZED`와 후속 [RC4-06 동종망 실제 확정·복구](../results/2026-11-16-rc4-macos-network.md)를 별도 근거로 구분한다. 고정 R/A와 기존 RC.3 profile은 유지한다. RC4-06의 RPC subset·실행 중 B/C 전환 인수도 완료했으나 사람 과업·전체 Native/Console 기능 인수를 뜻하지 않는다.
 
-1. **RC4-01 DONE / RC4-02 다음:** archive·실제 engine-info·전체 inventory 수신 대조를 완료했다. 다음은 계약/Console/Native catalog 영향 확인과 RC.4 candidate pin·최소 fixture 준비 코드·회귀 연결이다.
-2. **RC4-03/04:** 내부 실행기를 먼저 고정해 RC.4 runtime을 조립하고, 확정한 package를 지원하는 외부 관리 CLI와 후보별 인수 도구를 별도로 구현한다. RC.3 profile을 보존한다.
-3. **RC4-05/06:** 새 DB·새 genesis에서 Mac 전체 설치/서비스와 동종 4-validator·복구·관리 CLI 업데이트/복귀를 재인수한다. RC.3 DB 교체·migration·혼합 버전 rolling은 포함하지 않는다.
-4. **RC4-07:** NIGO 별도 worktree에서 수신 사실과 실제 제품 결과를 구분해 정식 회신한다. 수신 사실은 RC4-01 뒤 먼저 전달할 수 있다.
-5. **RC4-08 / CLI05-04:** 기술 재인수한 고정 RC.4 조합으로 작성자가 아닌 사람이 과업을 수행한다. 안내서/기록 양식 준비와 기존 RC.3 사용자 피드백은 병행 가능하나 RC.4 결과로 승계하지 않는다.
+1. **RC4-01/02 DONE:** archive·engine-info·전체 inventory 수신 대조, 계약/Console/Native catalog 영향 확인과 RC.4 준비 candidate·fixture 코드·회귀 및 실제 준비를 완료했다. 이 준비 단계에서 새 genesis 입력만 만들었고 DB·서비스는 실행하지 않았다.
+2. **RC4-03 DONE:** native adapter 변경 없이 clean 내부 실행기 A를 고정해 RC.4 signed development runtime R을 조립·검증하고 별도 lock/spec을 선택했다. [조립 결과](../results/2026-11-15-rc4-runtime-assembly.md)·[JSON](../results/2026-11-15-rc4-runtime-assembly.json)에 A/R identity와 payload269파일·326,373,420bytes·JRE259파일을 기록했다. 기존 RC.3 자료·설치본은 보존했다.
+3. **RC4-04 DONE:** [구현 설계](./2026-11-15-rc4-cli-harness-implementation.md)에 따라 확정 R의 exact pin·전체 reply identity·capability와 후보별 실행/관리 하네스를 구현했다. clean `65fe83f0d569fcf2231474342fa0d60ca72555d5`의 B를 빌드해 signed CLI-only 설치·구형 bootstrap→B update·RC.3 전용 update/rollback 거절과 현재 선택 보존을 확인했다. `make check` Rust596/Python151 PASS·2 SKIP·fmt/Clippy 및 Linux 타입 검사 PASS. R/A를 보존했고 CLI-only 검증은 노드/JVM0, 실제 서비스 입력 복사는 child0이다.
+4. **RC4-05 DONE:** 같은 고정 R+B와 fresh 입력으로 imported `--from` 순차 문답의 취소/resume/edit·revision2, 조회7쌍 무쓰기, apply 거절/승인, 원래 supply3파일 경로 부재에서 V2 사본으로 명시 init1·start2/stop2·같은 DB 재시작을 확인했다. 보고서0600·logs/diagnose 완전수집·정지 재apply 불변·payload269/JRE259/worker2 보존과 정리를 확인했다. 독립 정리 감사와 `make check` Rust596·Python165개 중163 PASS/기존 opt-in2 SKIP·fmt/Clippy를 통과했다. 이번 Linux 타입 검사는 재실행하지 않았으며 RC4-04 이력과 구분한다. 이21사례는 수동 단일 노드 로컬 인수이며 빈 초안14필드 전체 문답·사람 과업이 아니다.
+5. **RC4-06 DONE:** [실제 결과](../results/2026-11-16-rc4-macos-network.md)의 새 동종 4-validator mTLS·4/4→3/4→catch-up·2/4 무정족수·두 복구·wrong-pin을 검증했다. init5/run12/정상 stop12, 거래8개/제출9회이며 nonce3 live 복구는 무재제출, nonce5 same-DB 전체 재시작만1회 명시 재제출이다. B(`65fe83f`)→C(`62f1389`)→B→C의3전환에서 attempt/PID·DB·설정·고정 worker를 보존했다. 첫 기동·첫 CLI 전환 뒤 첫 거래 전에 RPC21사례/52read를0.202초에 수행했고5계정의 balance/nonce/code 전후 일치와 독립 RPC 감사를 통과했다. 전체 독립 종료 감사도 PASS했으며 하네스를 포함한 기록 PID107개·LaunchAgent12개·시험8포트의 잔존 부재와 기존 서비스 기준선 불변을 확인했다. 설치본5개 각각의 payload269파일·JRE259파일도 일치했다. 실행 하네스9파일·원본 fixture67파일은 불변이다. Rust·하네스 코드 변경이나 `make check` 재실행은 없고, RC4-05 검사136파일을 C clean source와 대조했다. 정상 signed Type-4·성공 authorization simulation·KZG provider fault·Native recipe·Console 기능은 계속 NOT_RUN이며 RC.3 DB migration·혼합망 rolling은 포함하지 않는다.
+6. **RC4-07 DONE:** 별도 NIGO worktree에서 수신·선택과 RC4-05/06의 실제 결과·잔여를 정식 회신하고 [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257)로 게시·머지했다. 게시 완료와 상대 작업자의 수신 확인·검토 동의는 구분한다. BXDL의 RC4-06 결과·이번 계획 갱신은 아직 미커밋이고 BXDL 근거 PR은 미게시다. 새 엔진 구현이나 RC 공급의 선행 대기는 없다.
+7. **Mac RC4-08 / CLI05-04 PLAN · NOT_RUN·이연:** Mac의 기술 인수 결과는 유지한다. 현재 반복 테스터의 실제 Linux 환경을 우선하여 LNX-04 기술 인수 뒤 LNX-05에서 같은 사용자 과업의 Linux profile을 수행한다. Linux 결과를 Mac 사람 과업으로 승계하지 않는다. 안내서/기록 양식 준비는 병행할 수 있다.
 
 세부 완료 기준·고정 identity·NIGO 의존성은 [RC.4 채택 계획](./2026-11-15-rc4-adoption-plan.md)을 따른다. 기존 Temurin JRE를 유지하며 console 개발 중단 결정도 유지한다.
 
@@ -301,15 +303,15 @@ src/setup/preparation.rs      # UX-03 별도 준비 기록·자료 검증·immut
 
 | 항목 | 판단 |
 | --- | --- |
-| 직접 CLI 설치/운용 UX | RC.3 구현·지정 조합 인수 완료. RC.4 새 조합과 사람 과업은 위 순서로 진행; console 개발 중단 유지 |
-| RC.4 공급·시험 입력 | NIGO DELIVERED·BXDL RC4-01 수신 PASS. 새 엔진 기능 선행 대기는 없으며 계약·fixture 영향 확인이 다음. 실제 JAR의 시험용 helper/fixture 사용 가능 여부를 확인하고 필요한 경우에만 공급자 지원 요청 |
+| 직접 CLI 설치/운용 UX | RC.3 이력 보존. RC.4 단일 노드 설치·회복 UX와 동종망·RPC subset·실행 중 CLI 전환 실물 인수 완료. 정식 회신 게시 완료, 다음 사람 과업은 NOT_RUN; console 개발 중단 유지 |
+| RC.4 공급·시험 입력 | NIGO DELIVERED·BXDL RC4-01~07 DONE. [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257) 정식 회신 게시·머지 완료, 상대 검토 동의는 별도. Mac RC4-08 NOT_RUN·이연, 다음 Linux 기반·실물 인수·사용자 과업. Linux JRE/native 실행 조건 확인은 새 범위이며 새 JAR를 기본 선행 요청하지 않음 |
 | engine/JRE 후보 변경 | 별도 명시 선택과 package 재인수 필요. UX 편의를 이유로 자동 갱신하지 않음 |
 | CLI 호환/카탈로그/관리 경로 | BXDL 책임. NIGO가 UI나 새 registry를 구현할 필요 없음 |
 | UNKNOWN 수동 조정 | 이번 범위 밖. 실제 엔진 증거/계약 변경이 필요하면 재현 후 별도 요구·설계 |
 | J5·고객 배포 조건 | UX와 별도 공급망/허가 조건. 출처·SBOM·NOTICE·대응 소스·최소 OS 확정 필요 |
 | A7 Storage | 공식 도구는 수신했으나 BXDL wrapper/인수는 별도 G2 작업. 이번 UX 선행 아님 |
 
-현재 우선순위는 RC4-01 수신 완료 뒤 RC4-02~07의 영향 확인·조합 인수·회신, 이후 RC4-08/CLI05-04다. 기존 CLI-01~04와 CLI05-01/02/03 완료를 새 후보의 완료로 복사하지 않는다. 실패·중단과 Mac lifecycle 인수는 해당 UX 단계와 연결하고, **안전 제거 BX-034/REM-01은 별도 구현이어도 G1-M 전 필수**로 유지한다. A7·업데이트는 G2, Linux/systemd·Docker·장기 운영 LaunchDaemon은 후속이다. 이 설계만으로 REQ-0002/0003 OPEN·development·PROPOSED를 승격하지 않는다.
+현재 우선순위는 RC4-01~07 이력을 보존하고 [실제 Linux 우선 계획](./2026-11-16-linux-first-implementation-plan.md)의 LNX-01~06을 진행하는 것이다. Mac RC4-08/CLI05-04는 NOT_RUN·이연하며 Linux 사람 과업도 실제 수행 전까지 NOT_RUN이다. NIGO 정식 소비자 회신은 전용 worktree에서 작성해 [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257)로 게시·머지했다. 상대 작업자의 수신 확인·검토 동의는 별도이며 아직 완료로 기록하지 않는다. 기존 CLI-01~04와 CLI05-01/02/03의 이력은 새 결과와 구분한다. 실패·중단과 Mac lifecycle 인수는 해당 UX 단계와 연결하고, **안전 제거 BX-034/REM-01은 별도 구현이어도 G1-M 전 필수**로 유지한다. A7·엔진 업데이트는 G2, Docker·장기 운영 LaunchDaemon은 후속이다. Linux/systemd가 현재 개발 우선이며 WSL2는 Linux 실물 인수 뒤에 확인한다. 이 기술 인수만으로 REQ-0002/0003 OPEN·development·PROPOSED를 승격하지 않는다.
 
 ## 5. 각 PR에 남길 근거
 

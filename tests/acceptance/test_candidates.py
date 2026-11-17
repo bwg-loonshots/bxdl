@@ -1,16 +1,22 @@
 """Offline boundary and one-shot recovery regressions; no Java, node, or RPC I/O."""
 import copy
+import hashlib
+import io
 import json
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
+import warnings
 from unittest.mock import Mock, patch
+import zipfile
 
-from candidates import CANDIDATES, JAVA_SHA256
+from candidates import CANDIDATES, JAVA_SHA256, PREPARATION_CANDIDATES, RC4_PREPARATION_RESOURCES, candidate_for
 import fixture_guard as fg
+import prepare_fixture as pf
 import run_acceptance as runner
 import support as h
+import runtime_profiles as rp
 
 
 class CandidateBoundary(unittest.TestCase):
@@ -27,7 +33,9 @@ class CandidateBoundary(unittest.TestCase):
         return path
 
     def fixture(self, candidate, legacy=False):
-        identity = CANDIDATES[candidate]
+        identity = PREPARATION_CANDIDATES[candidate]
+        if candidate == "rc4":
+            (self.root / "data").mkdir(mode=0o700)
         nodes, generated, peers = [], [], []
         for index in range(1, 5):
             node = {"index": index, "nodeId": "0x" + str(index) * 64,
@@ -56,12 +64,15 @@ class CandidateBoundary(unittest.TestCase):
                 "http": {"address": "127.0.0.1", "port": node["httpPort"]},
                 "p2p": {"address": "127.0.0.1", "port": node["p2pPort"]},
                 "chainDescription": str(self.root / "chain.json"), "secrets": secrets,
+                "storage": {"backend": "rocksdb", "dataDirectory": str(self.root / "data" / f"n{index}")},
             })
         chain = {"nigo.protocol.chain-id": "11578",
                  "nigo.protocol.consensus.profile-id": "DEV_QBFT",
                  "nigo.protocol.consensus.protocol": "QBFT"}
         for index, node in enumerate(nodes):
             chain[f"nigo.protocol.consensus.qbft.validators[{index}]"] = node["validatorId"]
+        if candidate == "rc4":
+            chain["nigo.protocol.devnet.genesis-funding[0].address"] = "0x" + "a" * 40
         self.write("chain.json", chain)
         self.write("network.json", {"schemaVersion": 1, "kind": "BXDL_QBFT_NETWORK", "nodes": peers})
         self.write("generated/devnet.json", {"chainId": 11578, "profileId": "DEV_QBFT",
@@ -71,7 +82,7 @@ class CandidateBoundary(unittest.TestCase):
             relative = f"transactions/tx-{nonce}.json"
             txhash = "0x" + f"{nonce + 1:064x}"
             self.write(relative, {"schemaVersion": 1, "nonce": nonce, "chainId": 11578,
-                                  "type": 2, "hash": txhash, "rawTransaction": "0x02abcd"})
+                                  "type": 2, "hash": txhash, "rawTransaction": "0x02abcd", "from": "0x" + "a" * 40})
             transactions.append({"nonce": nonce, "hash": txhash, "file": relative})
         summary = {"schemaVersion": 1, "status": "PREPARED_NOT_EXECUTED",
                    "purpose": "EPHEMERAL_LOCAL_BXDL_PACKAGE_ACCEPTANCE_ONLY",
@@ -81,10 +92,21 @@ class CandidateBoundary(unittest.TestCase):
                    "networkSha256": h.sha(self.root / "network.json")}
         if not legacy:
             summary.update(candidate=candidate, engineJarSizeBytes=identity["jarSizeBytes"])
+        if candidate == "rc4":
+            summary.update(
+                fundedAddress="0x" + "a" * 40,
+                artifactPreparation=copy.deepcopy(RC4_PREPARATION_RESOURCES),
+                genesisStatus="FRESH_INPUTS_ONLY_NOT_INITIALIZED", runtimeCandidateSupport="NOT_IMPLEMENTED",
+                nodeDataCreated=False, nodeStarted=False, networkTraffic="NOT_PERFORMED",
+                runtimeAcceptance="NOT_CHECKED", certificateExport="EXPORTED_PIN_MATCHED",
+            )
         self.write("fixture-summary.json", summary)
         self.write("lock.json", {"jarSha256": identity["jarSha256"],
                                  "jarSizeBytes": identity["jarSizeBytes"], "javaSha256": JAVA_SHA256,
                                  "expected": {"source": {"commit": identity["source"]}}})
+        if candidate == "rc4":
+            source = Path(__file__).resolve().parents[2] / "packaging/engine-lock.rc4-temurin-development.json"
+            (self.root / "lock.json").write_bytes(source.read_bytes())
         args = SimpleNamespace(fixture=self.root, lock=self.root / "lock.json", revision="1" * 40)
         if not legacy:
             args.candidate = candidate
@@ -192,6 +214,199 @@ class CandidateBoundary(unittest.TestCase):
     def test_rc3_never_enters_legacy_continuation(self):
         with self.assertRaisesRegex(h.Failure, "LEGACY_RC1_ONLY"):
             fg.validate_legacy_continuation(SimpleNamespace(candidate="rc3"), {}, {})
+
+    def test_rc4_preparation_validates_without_reading_a_product_lock(self):
+        args = self.fixture("rc4")
+        del args.lock
+        pins = fg.validate_preparation(args)
+        self.assertEqual(pins["candidate"], "rc4")
+        self.assertEqual(pins["scope"], "PINNED_TEST_CANDIDATE_PREPARATION_ONLY")
+        self.assertIsNone(pins["engineLockSha256"])
+        self.assertEqual(len(pins["transactionFiles"]), 12)
+        fg.assert_preparation_unchanged(args, pins)
+
+    def test_rc4_runtime_requires_the_exact_assembled_lock(self):
+        args = self.fixture("rc4")
+        self.assertEqual(candidate_for(args), PREPARATION_CANDIDATES["rc4"])
+        pins = fg.validate_inputs(args)
+        self.assertEqual(pins["engineLockSha256"], rp.runtime_profile("rc4")["engineLockSha256"])
+        fg.assert_inputs_unchanged(args, pins)
+        lock = h.document(args.lock)
+        lock["expected"]["console"]["fingerprint"] = "0" * 64
+        self.write("lock.json", lock)
+        with self.assertRaisesRegex(h.Failure, "LOCK_IDENTITY"):
+            fg.validate_inputs(args)
+
+    def test_rc4_without_frozen_supply_fails_before_output_creation(self):
+        args = self.fixture("rc4")
+        args.output = self.root / "runtime-not-authorized"
+        with self.assertRaisesRegex(h.Failure, "RC4_FIXED_RUNTIME_INPUTS_REQUIRED"):
+            runner.Acceptance(args)
+        self.assertFalse(args.output.exists())
+
+    def test_rc4_sender_is_pinned_to_the_funded_public_address(self):
+        args = self.fixture("rc4")
+        tx = h.document(self.root / "transactions/tx-11.json")
+        tx["from"] = "0x" + "b" * 40
+        self.write("transactions/tx-11.json", tx)
+        with self.assertRaisesRegex(h.Failure, "TRANSACTION_SENDER"):
+            fg.validate_inputs(args)
+
+    def test_rc4_preparation_requires_exact_size_and_candidate_identity(self):
+        args = self.fixture("rc4")
+        summary = h.document(self.root / "fixture-summary.json")
+        summary["engineJarSizeBytes"] += 1
+        self.write("fixture-summary.json", summary)
+        with self.assertRaisesRegex(h.Failure, "JAR_SIZE"):
+            fg.validate_preparation(args)
+        summary["engineJarSizeBytes"] -= 1
+        self.write("fixture-summary.json", summary)
+        del args.candidate
+        with self.assertRaisesRegex(h.Failure, "PREPARATION_IDENTITY"):
+            fg.validate_preparation(args)
+
+    def test_rc3_fixture_cannot_be_relabelled_for_rc4_preparation(self):
+        args = self.fixture("rc3")
+        args.candidate = "rc4"
+        with self.assertRaisesRegex(h.Failure, "PREPARATION_IDENTITY"):
+            fg.validate_preparation(args)
+
+    def test_rc4_preparation_rejects_catalog_or_scope_claim_changes(self):
+        args = self.fixture("rc4")
+        original = h.document(self.root / "fixture-summary.json")
+        summary = copy.deepcopy(original)
+        summary["artifactPreparation"]["nativeCatalog"]["lockSha256"] = "0" * 64
+        self.write("fixture-summary.json", summary)
+        with self.assertRaisesRegex(h.Failure, "ARTIFACT_PREPARATION"):
+            fg.validate_preparation(args)
+        for field, value in (("nodeDataCreated", True), ("nodeStarted", True),
+                             ("genesisStatus", "INITIALIZED"), ("certificateExport", "NOT_AVAILABLE"),
+                             ("runtimeAcceptance", "PASS")):
+            with self.subTest(field=field):
+                summary = copy.deepcopy(original)
+                summary[field] = value
+                self.write("fixture-summary.json", summary)
+                with self.assertRaisesRegex(h.Failure, "PREPARATION_SCOPE"):
+                    fg.validate_preparation(args)
+
+    def test_rc4_preparation_rejects_external_storage_and_existing_data(self):
+        args = self.fixture("rc4")
+        product = h.document(self.root / "products/n1.json")
+        product["storage"]["dataDirectory"] = str(self.root / "other-data")
+        self.write("products/n1.json", product)
+        with self.assertRaisesRegex(h.Failure, "FRESH_STORAGE_PATH"):
+            fg.validate_preparation(args)
+        product["storage"]["dataDirectory"] = str(self.root / "data/n1")
+        self.write("products/n1.json", product)
+        (self.root / "data/n1").symlink_to(self.root / "missing")
+        with self.assertRaisesRegex(h.Failure, "NODE_DATA_ALREADY_EXISTS"):
+            fg.validate_preparation(args)
+
+    def test_rc4_preparation_checks_reserved_transaction_and_later_input_changes(self):
+        args = self.fixture("rc4")
+        pins = fg.validate_preparation(args)
+        changed = h.document(self.root / "transactions/tx-11.json")
+        changed["rawTransaction"] = "0x02ef12"
+        self.write("transactions/tx-11.json", changed)
+        with self.assertRaisesRegex(h.Failure, "INPUT_SET_CHANGED"):
+            fg.assert_preparation_unchanged(args, pins)
+        (self.root / "transactions/tx-11.json").unlink()
+        with self.assertRaisesRegex(h.Failure, "INVALID_INPUT"):
+            fg.validate_preparation(args)
+
+    def test_rc4_preparation_rejects_redirected_data_parent(self):
+        args = self.fixture("rc4")
+        (self.root / "data").rmdir()
+        outside = self.root / "other-data"
+        outside.mkdir()
+        (self.root / "data").symlink_to(outside, target_is_directory=True)
+        with self.assertRaisesRegex(h.Failure, "FRESH_STORAGE_PATH"):
+            fg.validate_preparation(args)
+
+    def test_rc4_preparation_does_not_inherit_the_legacy_diagnostic_revision(self):
+        args = self.fixture("rc4")
+        del args.revision
+        with self.assertRaisesRegex(h.Failure, "REVISION"):
+            fg.validate_preparation(args)
+
+    def test_rc4_never_enters_legacy_continuation(self):
+        with self.assertRaisesRegex(h.Failure, "LEGACY_RC1_ONLY"):
+            fg.validate_legacy_continuation(SimpleNamespace(candidate="rc4"), {}, {})
+
+
+class PreparationResources(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name).resolve()
+
+    def jar(self, *, omit=None, duplicate=None, corrupt_catalog=False, bad_checksum=False):
+        expected = copy.deepcopy(RC4_PREPARATION_RESOURCES)
+        catalog = expected["nativeCatalog"]
+        lock = {key: catalog[key] for key in ("schema", "chainId", "acceptance", "defaultActivated", "resources")}
+        raw = json.dumps(lock).encode()
+        catalog.update(lockSha256=hashlib.sha256(raw).hexdigest(), lockSizeBytes=len(raw))
+        nested = io.BytesIO()
+        with zipfile.ZipFile(nested, "w") as vm:
+            vm.writestr(catalog["lockPath"], raw + (b" " if corrupt_catalog else b""))
+            vm.writestr(catalog["lockPath"].replace(".json", ".sha256"),
+                        (("0" * 64 if bad_checksum else catalog["lockSha256"]) + "\n").encode())
+        entries = []
+        for kind in ("generator", "launcher"):
+            raw_class = (kind + "-offline-class-fixture").encode()
+            expected[kind]["sha256"] = hashlib.sha256(raw_class).hexdigest()
+            entries.append((expected[kind]["class"], raw_class))
+        entries.append((catalog["container"], nested.getvalue()))
+        path = self.root / "candidate.jar"
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            with zipfile.ZipFile(path, "w") as archive:
+                for name, raw_entry in entries:
+                    if name != omit:
+                        archive.writestr(name, raw_entry)
+                        if name == duplicate:
+                            archive.writestr(name, raw_entry)
+        return path, expected
+
+    def test_rc4_helper_and_catalog_lock_are_checked_without_loading_a_jvm(self):
+        path, expected = self.jar()
+        with patch.object(pf, "RC4_PREPARATION_RESOURCES", expected), patch.object(pf, "run_private") as child:
+            observed = pf.checked_jar_resources(path, "rc4")
+        self.assertEqual(observed, expected)
+        self.assertEqual(observed["nativeCatalog"]["verification"], "LOCK_BYTES_AND_SUMMARY_ONLY")
+        child.assert_not_called()
+
+    def test_missing_or_duplicate_helper_is_rejected(self):
+        helper = RC4_PREPARATION_RESOURCES["generator"]["class"]
+        for option in ("omit", "duplicate"):
+            with self.subTest(option=option):
+                path, expected = self.jar(**{option: helper})
+                with patch.object(pf, "RC4_PREPARATION_RESOURCES", expected):
+                    with self.assertRaisesRegex(ValueError, "missing, duplicated or oversized"):
+                        pf.checked_jar_resources(path, "rc4")
+
+    def test_catalog_bytes_and_checksum_sidecar_are_both_checked(self):
+        for option in ("corrupt_catalog", "bad_checksum"):
+            with self.subTest(option=option):
+                path, expected = self.jar(**{option: True})
+                with patch.object(pf, "RC4_PREPARATION_RESOURCES", expected):
+                    with self.assertRaisesRegex(ValueError, "catalog .*mismatch"):
+                        pf.checked_jar_resources(path, "rc4")
+
+    def test_resource_failure_prevents_output_creation_or_any_child(self):
+        jar = self.root / "invalid.jar"
+        jar.write_bytes(b"not-a-jar")
+        args = SimpleNamespace(candidate="rc4", java="java", jar=str(jar), output=self.root / "output")
+        with patch.object(pf, "preparation_candidate_for", return_value={"jarSha256": "unused", "jarSizeBytes": jar.stat().st_size}), \
+             patch.object(pf, "pinned_file", side_effect=[self.root / "java", jar]), \
+             patch.object(pf, "run_private") as child:
+            with self.assertRaises(zipfile.BadZipFile):
+                pf.prepare(args)
+        child.assert_not_called()
+        self.assertFalse(args.output.exists())
+
+    def test_legacy_candidate_does_not_require_the_rc4_catalog(self):
+        self.assertIsNone(pf.checked_jar_resources(self.root / "not-opened", "rc3"))
 
 
 class SubmissionBoundary(unittest.TestCase):
@@ -355,9 +570,15 @@ class SameDbRecoveryRC3Boundary(SameDbRecoveryBoundary):
         self.run.candidate_name = "rc3"
 
 
+class SameDbRecoveryRC4Boundary(SameDbRecoveryBoundary):
+    def setUp(self):
+        super().setUp()
+        self.run.candidate_name = "rc4"
+
+
 class ScenarioRouting(unittest.TestCase):
     def test_full_candidates_keep_their_required_recovery_and_wrong_pin_nonces(self):
-        for candidate in ("rc1", "rc2", "rc3"):
+        for candidate in ("rc1", "rc2", "rc3", "rc4"):
             with self.subTest(candidate=candidate):
                 run = runner.Acceptance.__new__(runner.Acceptance)
                 run.candidate_name, run.scenario = candidate, "full"
@@ -365,7 +586,7 @@ class ScenarioRouting(unittest.TestCase):
                           "lastAttempt": "first", "nodeInstanceId": "first"} for i in range(4)]
                 run.check_free_ports, run.package = Mock(), Mock()
                 run.prepare_node = Mock(side_effect=nodes)
-                run.start_all, run.stop = Mock(), Mock()
+                run.start_all, run.stop, run.rc4_rpc_probe = Mock(), Mock(), Mock()
                 run.submit = Mock(side_effect=lambda nonce, port: str(nonce))
                 run.finality = Mock(return_value={"blockHash": "fixed"})
                 run.canonical_at = Mock(return_value={"blockHash": "fixed"})
@@ -373,7 +594,11 @@ class ScenarioRouting(unittest.TestCase):
                 run.two_of_four, run.same_db_recovery, run.wrong_pin = Mock(), Mock(), Mock()
                 run.run()
                 run.two_of_four.assert_called_once_with(nodes)
-                if candidate in ("rc2", "rc3"):
+                if candidate == "rc4":
+                    run.rc4_rpc_probe.assert_called_once_with(nodes[0])
+                else:
+                    run.rc4_rpc_probe.assert_not_called()
+                if candidate in ("rc2", "rc3", "rc4"):
                     run.same_db_recovery.assert_called_once_with(nodes, 5, 6)
                     run.wrong_pin.assert_called_once_with(nodes, nonce=7)
                 else:
@@ -392,6 +617,143 @@ class ScenarioRouting(unittest.TestCase):
         run.same_db_recovery.assert_called_once_with(nodes, 1, 2)
         run.two_of_four.assert_not_called()
         run.wrong_pin.assert_not_called()
+
+
+class RuntimeProfilesBoundary(unittest.TestCase):
+    def test_rpc_probe_keeps_raw_error_and_partial_failure_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run = runner.Acceptance.__new__(runner.Acceptance)
+            run.results, run.a, run.input_pins = {}, SimpleNamespace(), {}
+            run.fixture = {"fundedAddress": "0x" + "a" * 40}
+            run.e = h.Evidence(Path(directory))
+            response = {"jsonrpc": "2.0", "id": 1, "error": {"code": -32602, "message": "expected"}}
+
+            def probe(call, sender, record):
+                self.assertEqual(sender, run.fixture["fundedAddress"])
+                self.assertEqual(call("eth_call", [{"to": sender}, "latest"]), response)
+                record.update(outcome="INCOMPLETE", requestCount=1)
+                raise h.Failure("PROBE_FAILURE")
+
+            with patch.object(runner.fg, "assert_inputs_unchanged"), \
+                    patch.object(runner, "http", return_value=response), \
+                    patch("rc4_rpc_probe.run_probe", side_effect=probe):
+                with self.assertRaisesRegex(h.Failure, "PROBE_FAILURE"):
+                    run.rc4_rpc_probe({"port": 1})
+            self.assertEqual(run.results["rc4RpcProbe"], {"outcome": "INCOMPLETE", "requestCount": 1})
+            observed = h.document(run.e.logs / "rc4-rpc-001.json")
+            self.assertEqual(observed["response"], response)
+            self.assertEqual(observed["method"], "eth_call")
+
+    def test_rc4_pins_match_the_committed_assembly_evidence(self):
+        evidence = h.document(Path(__file__).resolve().parents[2] / "results/2026-11-15-rc4-runtime-assembly.json")
+        profile = rp.runtime_profile("rc4")
+        for key in ("archiveSha256", "archiveSizeBytes", "manifestSha256", "executorSha256",
+                    "executorSizeBytes", "inventorySha256"):
+            self.assertEqual(profile[key], evidence["package"][key])
+        self.assertEqual(profile["payloadFiles"], evidence["package"]["filesVerified"])
+        self.assertEqual(profile["payloadBytes"], evidence["package"]["bytesVerified"])
+        self.assertEqual(profile["executorRevision"], evidence["internalExecutor"]["revision"])
+        self.assertEqual(profile["engineLockSha256"], evidence["engine"]["lockSha256"])
+        self.assertEqual(profile["publicKeySha256"], evidence["package"]["externalPublicKeySha256"])
+        self.assertEqual(profile["resolvedSpecSha256"], evidence["selection"]["resolvedSpecSha256"])
+        self.assertEqual(profile["specTemplateSha256"], evidence["selection"]["packageSpecTemplateSha256"])
+        self.assertEqual(rp.runtime_profile()["candidate"], "rc3")
+        self.assertNotEqual(rp.runtime_profile()["archiveSha256"], profile["archiveSha256"])
+
+    def test_profile_and_manager_capability_fail_closed(self):
+        with self.assertRaisesRegex(h.Failure, "RUNTIME_PROFILE_NOT_SUPPORTED"):
+            rp.runtime_profile("rc5")
+        profile = rp.runtime_profile("rc4")
+        for version in (None, {}, {"capabilities": ["executor.rc3-legacy-v1"]},
+                        {"capabilities": "executor.rc4-v1"}):
+            with self.subTest(version=version):
+                with self.assertRaisesRegex(h.Failure, "MANAGER_RUNTIME_CAPABILITY_REQUIRED"):
+                    rp.require_manager_capability(version, profile)
+        self.assertEqual(rp.require_manager_capability({"capabilities": [profile["capability"]]}, profile),
+                         [profile["capability"]])
+        profile["pins"]["archive"] = "changed"
+        self.assertNotEqual(rp.runtime_profile("rc4")["pins"]["archive"], "changed")
+
+    def test_wrong_archive_is_rejected_without_executing_any_command(self):
+        with tempfile.TemporaryDirectory() as directory:
+            archive = Path(directory) / "archive"
+            archive.write_bytes(b"not the frozen runtime")
+            with patch.object(runner.subprocess, "run") as execute:
+                with self.assertRaisesRegex(h.Failure, "FIXED_RUNTIME_SUPPLY_PIN"):
+                    rp.verify_runtime_supply(archive, archive, archive, "rc4")
+            execute.assert_not_called()
+
+    def test_rc4_package_path_only_copies_and_verifies_existing_archive(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, public = root / "source", root / "public"
+            source.write_bytes(b"fixed archive fixture")
+            public.write_bytes(b"public verification key fixture")
+            run = runner.Acceptance.__new__(runner.Acceptance)
+            run.root, run.archive, run.public = root, root / "candidate", root / "verification-key"
+            run.a = SimpleNamespace(runtime_package=source, runtime_public_key=public)
+            run.candidate_name, run.candidate = "rc4", CANDIDATES["rc4"]
+            run.validate_fixed_runtime_inputs, run.fixed_runtime_unchanged = Mock(), Mock()
+            run.crypto = Mock(side_effect=AssertionError("Signing must never execute"))
+            profile = rp.runtime_profile("rc4")
+            run.command = Mock(return_value={"data": {
+                "authenticity": "verified-external-ed25519", "manifestSha256": profile["manifestSha256"],
+                "filesVerified": profile["payloadFiles"], "bytesVerified": profile["payloadBytes"]}})
+            run.results, run.e = {}, Mock()
+            run.package()
+            self.assertEqual(run.archive.read_bytes(), source.read_bytes())
+            self.assertEqual(run.command.call_args.args[1][:2], ["package", "verify"])
+            self.assertEqual(run.command.call_count, 1)
+            run.crypto.assert_not_called()
+            self.assertFalse(run.results["package"]["runtimeRebuilt"])
+            self.assertEqual(run.results["package"]["cliSha256"], profile["executorSha256"])
+            self.assertFalse((root / "payload").exists())
+            self.assertFalse((root / "test-package-private.pem").exists())
+
+    def test_rc4_reassembly_inputs_and_wrong_executor_revision_are_rejected(self):
+        run = runner.Acceptance.__new__(runner.Acceptance)
+        run.a = SimpleNamespace(runtime_package=Path("archive"), runtime_public_key=Path("key"),
+                                payload_source=Path("payload"))
+        with self.assertRaisesRegex(h.Failure, "RC4_REASSEMBLY_INPUTS_FORBIDDEN"):
+            run.validate_fixed_runtime_inputs()
+        run.a.payload_source, run.a.revision = None, "0" * 40
+        with self.assertRaisesRegex(h.Failure, "RC4_EXECUTOR_REVISION_PIN"):
+            run.validate_fixed_runtime_inputs()
+
+    def test_installed_payload_rejects_changed_mode_hash_and_extra_members(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            files = []
+            for relative in ("bin/bxdl", "engine/nigo-node.jar", "runtime/bin/java"):
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(relative.encode())
+                path.chmod(0o644)
+                files.append({"path": relative, "size": path.stat().st_size,
+                              "mode": 0o644, "sha256": h.sha(path)})
+            for name in ("manifest.sig", ".bxdl-install.json"):
+                (root / name).write_text("test fixture")
+            (root / "manifest.json").write_text(json.dumps({"files": files}))
+            inventory = (json.dumps(files, indent=2, sort_keys=True) + "\n").encode()
+            profile = {"manifestSha256": h.sha(root / "manifest.json"), "payloadFiles": 3,
+                       "inventorySha256": hashlib.sha256(inventory).hexdigest(),
+                       "payloadBytes": sum(item["size"] for item in files), "jreFiles": 1,
+                       "executorSha256": files[0]["sha256"], "executorSizeBytes": files[0]["size"],
+                       "jarSha256": files[1]["sha256"], "jarSizeBytes": files[1]["size"],
+                       "javaSha256": files[2]["sha256"]}
+            with patch.object(rp, "runtime_profile", return_value=profile):
+                self.assertEqual(rp.verify_installed_payload(root, "rc4")["files"], 3)
+                (root / "extra").write_text("unexpected")
+                with self.assertRaisesRegex(h.Failure, "RUNTIME_MEMBERSHIP"):
+                    rp.verify_installed_payload(root, "rc4")
+                (root / "extra").unlink()
+                (root / "bin/bxdl").chmod(0o755)
+                with self.assertRaisesRegex(h.Failure, "RUNTIME_FILE_CHANGED"):
+                    rp.verify_installed_payload(root, "rc4")
+                (root / "bin/bxdl").chmod(0o644)
+                (root / "bin/bxdl").write_bytes(b"changed!")
+                with self.assertRaisesRegex(h.Failure, "RUNTIME_FILE_CHANGED"):
+                    rp.verify_installed_payload(root, "rc4")
 
 
 if __name__ == "__main__":

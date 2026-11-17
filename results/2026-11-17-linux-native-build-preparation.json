@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "recordedDate": "2026-11-17",
+  "scope": "LINUX_NATIVE_BUILD_PREPARATION_ONLY",
+  "status": "INPUT_KIT_PREPARED_NATIVE_EXECUTION_PENDING",
+  "git": {
+    "branch": "codex/linux-native-foundation",
+    "lnx04Commit": "ba4d5af6b505ea880be034b73094ac8c92018d57",
+    "followingImplementationCommitted": false,
+    "pushPerformed": false,
+    "nigoChanges": false
+  },
+  "source": {
+    "archive": {
+      "path": "source/bxdl-source.tar.gz",
+      "sha256": "1dc1dee7bc85c81a9ad78582e40f50785838d83d83dbed8abc6910dcbbd56631",
+      "size": 1942576
+    },
+    "cargoLockSha256": "2bd2330a367d957e37b5536ede4c76cbe9365b7d2933f8ba2416cc62c55decfc",
+    "commit": "ba4d5af6b505ea880be034b73094ac8c92018d57",
+    "rustToolchainSha256": "110444165732cf0c2eb24f96f6ab9229d2f4d3ff99da0778385799d6c60dd7b1"
+  },
+  "toolchain": {
+    "rust": "1.86.0",
+    "target": "x86_64-unknown-linux-gnu"
+  },
+  "platform": {
+    "arch": "amd64",
+    "builderDistribution": "ubuntu",
+    "builderVersion": "24.04",
+    "declaredMinGlibc": "2.34",
+    "libc": "glibc",
+    "os": "linux"
+  },
+  "buildToolPins": [
+    {
+      "mode": 493,
+      "path": "tools/build-linux-candidate.py",
+      "sha256": "c964bb2400c6d5075de7c6e0f61cb157a1885abaed40898cf18bbd5608e89b49",
+      "size": 22135
+    },
+    {
+      "mode": 420,
+      "path": "tools/linux_build_contract.py",
+      "sha256": "e06531a2d19fabae5313edd6ac358e2d5e31ed7fb035263a691b8a5f24a75df3",
+      "size": 21839
+    }
+  ],
+  "supply": {
+    "engineLock": {
+      "path": "packaging/engine-lock.rc4-temurin-linux-development.json",
+      "sha256": "9817d950f19832c725bfd373829023d44a437ad93e9f6291feef6c3185e94675",
+      "size": 1339
+    },
+    "jar": {
+      "path": "supply/nigo-node.jar",
+      "sha256": "56887aa12f2386f7211b11d56506aa42ab392c09f46c40f1431893ce77f6fa0a",
+      "size": 164133636
+    },
+    "runtimeArchive": {
+      "path": "supply/jre.tar.gz",
+      "sha256": "a535a1df9c6284d9618872984e026ae0352d1f7e9e0605425c0e6114f47351dd",
+      "size": 52181297
+    },
+    "runtimeLock": {
+      "path": "packaging/runtime-lock.temurin-21-linux-amd64.json",
+      "sha256": "23eec871655dea8af8f79cb69f21c4add762226a9314df003edce1233e898f47",
+      "size": 48427
+    }
+  },
+  "kit": {
+    "archive": "dist/bxdl-linux-native-build-kit-20261117.tar.gz",
+    "sha256": "582a8cfb97933c5fb16280fffe8d7c49fd2eec97fe22095933c182da287b3ce3",
+    "size": 210702283,
+    "planSha256": "1491ffa33af8a9049af03cbe9700f1bc51699c778746d8ed5533cf69f8c57e29",
+    "planCopy": "packaging/linux-native-build-plan-20261117.json",
+    "filesExcludingPlan": 7,
+    "localPreparedPath": "/private/tmp/bxdl-linux-native-build-1jyvwnz3/kit"
+  },
+  "sourceBoundary": {
+    "includes": "LNX-04 ba4d5af committed product source",
+    "excludes": "Current follow-up setup exit/field guards and test-platform corrections; refresh the kit after a new product-source commit.",
+    "orchestrators": "Separately content-pinned scripts, not claimed to be part of ba4d5af"
+  },
+  "checks": {
+    "makeCheck": {
+      "status": "PASS",
+      "command": "RUST_TEST_THREADS=4 make check",
+      "exitCode": 0,
+      "rustPassed": 709,
+      "pythonTotal": 259,
+      "pythonPassed": 257,
+      "pythonSkipped": 2,
+      "pythonSkipScope": "Existing opt-in cases",
+      "fmt": "PASS",
+      "clippy": "PASS",
+      "host": "macOS arm64",
+      "linuxOnlyIntegrationTests": {
+        "count": 8,
+        "execution": "NOT_RUN_ON_MAC",
+        "typecheck": "PASS"
+      },
+      "log": "/private/tmp/bxdl-linux-native-make-check.log",
+      "logSha256": "ff8bd9a5f3462d37e400d5fcd991f17d2b7439c7ef2b3f075e9a30003c4f68c4"
+    },
+    "linuxTargetClippy": "PASS_TYPECHECK_ONLY",
+    "nativeHostGuard": {
+      "status": "PASS",
+      "exitCode": 3,
+      "reasonCode": "NATIVE_LINUX_X64_REQUIRED",
+      "outputCreated": false
+    },
+    "deliveryArchiveAudit": {
+      "outcome": "PASS",
+      "entries": 8,
+      "deliveryArchiveSha256": "582a8cfb97933c5fb16280fffe8d7c49fd2eec97fe22095933c182da287b3ce3",
+      "planSha256": "1491ffa33af8a9049af03cbe9700f1bc51699c778746d8ed5533cf69f8c57e29",
+      "executionsOfReceivedCode": 0
+    },
+    "linuxAllTargets": {
+      "status": "PASS_TYPECHECK_ONLY",
+      "command": "make check-linux",
+      "exitCode": 0,
+      "log": "/private/tmp/bxdl-linux-native-typecheck.log",
+      "logSha256": "4a7b94c0728285dcc30252fb03c7f546b49a0cc1f5aeba9d434f03c0396ab3f4"
+    },
+    "diffCheck": "PASS",
+    "sourceHashAudit": {
+      "status": "PASS",
+      "files": 14
+    }
+  },
+  "execution": {
+    "linuxNativeBuild": "NOT_RUN",
+    "runtimeArchive": "NOT_ASSEMBLED",
+    "managementArchive": "NOT_ASSEMBLED",
+    "javaCold": "NOT_RUN",
+    "engineInfo": "NOT_RUN",
+    "nativeRocksdb": "NOT_RUN",
+    "initialization": "NOT_RUN",
+    "systemd": "NOT_RUN",
+    "sshDisconnect": "NOT_RUN",
+    "sameDatabaseRestart": "NOT_RUN",
+    "managementSwitch": "NOT_RUN",
+    "executorProfile": "NOT_ADMITTED",
+    "sourceReproducibility": "NOT_TESTED",
+    "minimumOsAcceptance": "NOT_TESTED"
+  },
+  "reasonNotRun": "Current host is Mac arm64; no usable Linux builder or supplied remote execution target. Operator can run the pinned kit directly; SSH access disclosure is not required.",
+  "next": [
+    "Run pinned native build on Ubuntu 24.04 amd64 as a non-root user",
+    "Return runtime.tar.gz, management-cli.tar.gz, receipt.json and independently shared receipt SHA-256",
+    "Verify offline with separately trusted local CLI and record exact archive/manifest/A/C/Java/JAR hashes",
+    "Perform fixed-combination cold/native/RocksDB and installation/systemd/SSH-disconnect/DB-restart/CLI-switch acceptance"
+  ],
+  "sourceSha256": {
+    "src/cli/linux_service.rs": "8e7bb8c706a67b0c28ccdb0031f07f1b0a40ad5efd7b955838c53887a9504ff5",
+    "tests/prepare_cli.rs": "50909c1967bdf74ac33ca1acbe7d7e4cee24f74c4bb13d610d102be27119cf7c",
+    "tests/setup_commands.rs": "f17d3a24633ac64404eb380ee1188e8c32ec69ea20e049ba576485f425eaf9c2",
+    "tests/nodes_cli.rs": "72c1510699737f3645e3b19cdc2d35c686f095b287062bb179eb67399cae164d",
+    "tests/managed_cli.rs": "3faa123924de50164089cdeee69560aa39dbd680b4435805806dcd52e9e96084",
+    "tests/linux_setup_cli.rs": "b9f310174499f60aeb76b28f92f2bf56dffb9bf5bbbc048a86bc100f3948a7bd",
+    "tools/prepare-linux-build.py": "165476532a244d4af5099e01a6353425443c907fbf1d2eb86acf6445028eda7e",
+    "tools/build-linux-candidate.py": "c964bb2400c6d5075de7c6e0f61cb157a1885abaed40898cf18bbd5608e89b49",
+    "tools/receive-linux-candidate.py": "42bec6028aa9a0502e2a5d8017398c35b6f062d0f597974f48c96e8fa0469803",
+    "tools/linux_build_contract.py": "e06531a2d19fabae5313edd6ac358e2d5e31ed7fb035263a691b8a5f24a75df3",
+    "tests/acceptance/test_prepare_linux_build.py": "31900d9088cfaccca8230b2fb1c97ae80f5d173245e6cd0bb52c9b4d69d9cbcd",
+    "tests/acceptance/test_build_linux_candidate.py": "43b865ad74fddda9471408c6ef404709d41654ad32f7fd705aa4b9e327a16e9b",
+    "tests/acceptance/test_receive_linux_candidate.py": "46df5e240bd64b7dcee990158db3def3887256be9e205d04fd03956f93b736b9",
+    "tests/acceptance/test_linux_build_contract.py": "4949fcb493559ec8ed1f4f3d2d81e9eb3a8f1d21dda6b93d6d45f63c5e78cab6"
+  }
+}

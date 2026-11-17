@@ -1,10 +1,31 @@
 # BXDL
 
-NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구다. **Rust로 구현하며 macOS Apple Silicon에서 설치·운용 UX를 먼저 완성한다.** Linux 서버/systemd와 Docker/Compose는 후속 배포 대상으로 유지한다.
+테스터에게 전달하는 Linux 빌드 검증 과업과 결과·개선 의견 양식은 [UAT 안내](./UAT/README.md)를 따른다. 최신 전달본의 정확한 source commit과 해시는 머지 후 생성하는 `UAT/deliveries/<commit>/HANDOFF.json`에 기록한다.
 
-**2026-11-15: RC4-01 실제 원격 수신·전체 identity·선정 JRE의 `engine-info` 검증을 PASS했다. RC.4 제품 lock 선택은 NOT_SELECTED, runtime 조립·패키지·서비스 인수는 NOT_RUN이다.** [RC.4 수신 기록](./contracts/nigo/engine-rc4-2026-11-15/README.md)에 공급24파일·계약/Console 대조, 최초 engine-info1회와 검증기 수정 이력, JRE259파일·공급24파일 불변을 기록했다. 현재 지원하는 RC.3 lock/spec/runtime과 검증 이력은 유지한다. [RC.4 도입 계획](./design/2026-11-15-rc4-adoption-plan.md)에 따라 다음은 **RC4-02 계약·fixture 영향 확인**이며, 내부 실행기 고정과 새 runtime 조립 → 외부 관리 CLI의 정확한 RC.4 profile/harness → Mac 설치·서비스 → 새 DB·새 genesis의 동종 네트워크 → 정식 인수 회신 → CLI05-04 사용자 과업 순서로 진행한다. 과업 안내서 준비와 기존 RC.3 UX 시험은 병행할 수 있으나 RC.4 인수로 승계하지 않는다.
 
-개선 우선순위를 **직접 CLI 중심**으로 변경했다. `bxdl console`의 추가 개발은 중단하고 기존 구현은 보존한다. `bxdl nodes`와 `bxdl nodes add <이름> --instance <경로>`로 console 없이 목록 조회와 기존 노드 이름 연결을 제공한다. 이름 기반 운용을 연결하고 관리 CLI가 기존 RC.3 패키지 실행기에 작업을 위임하도록 분리했다. `setup new/resume`은 저장한 답을 재사용해 필요한 질문부터 순서대로 진행하며, `setup list/show/edit`으로 준비 목록·내용 조회와 제품 항목 하나 수정을 제공한다. `setup apply <이름>`은 별도 TTY 승인 뒤 설치·cold 검사·등록·이름 연결까지 수행한다. 준비와 설치 실행 기록은 나누어 조회하며 초기화·시작은 `init <이름> --confirm-initialize`, `start <이름>`로 별도 실행한다. CLI-04의 자동 검사와 기존 RC.3를 그대로 사용한 Mac 설치·초기화·시작·종료·재적용을 통과했다. [CLI-04 검증 기록](./results/2026-10-23-cli04-apply-and-lifecycle.md)에 실행별 범위를 구분했다. [CLI 작업 계획](./design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따르며, 다음 실행 순서는 위 RC.4 도입 계획을 우선한다. 순차 문답·조회·수정의 자동 검사와 실제 Mac 시험 범위는 [CLI-03 검증 결과](./results/2026-10-23-cli03-sequential-preparation.md)에 기록했다.
+**Linux 네이티브 빌드 준비 — 2026-11-17:** LNX-04를 `ba4d5af6b505ea880be034b73094ac8c92018d57`로 커밋하고, 이 source와 Linux JRE·RC.4 공급물의 빌드 kit 및 제작·수신 검증 도구를 **PREPARED** 상태로 준비했다. [네이티브 빌드 안내](./docs/linux-native-build.md)에서 source pin과 별도로 고정한 도구, 외부 checksum, 실제 Linux 제작·결과 회수 절차를 확인한다. 실제 Linux host가 아직 없어 native compile/link와 Linux CLI·runtime archive의 byte identity는 미생성이다. 설치·native/RocksDB·systemd는 **NOT_RUN**, executor profile은 **NOT_ADMITTED**다. 향후 unsigned 개발 archive 제작 성공도 설치·실행 인수를 뜻하지 않는다. 기존 LNX-02 전달본은 변경하지 않는다.
+
+**LNX-04 Linux 설치·운용 UX 연결 — 2026-11-17:** 일반 사용자 `setup new/resume/list/show/edit/apply`와 노드 이름 기반 운용을 개발용 systemd backend에 연결했다. 검토한 계획만 고정 root helper에 전달하며, 사용자 catalog는 일반 사용자 소유로 유지한다. 등록 후에는 root 공개 descriptor와 최초 worker hash를 대조해 고정 실행기에 위임한다. [Linux 운용 안내](./docs/linux-operations.md)를 따른다. **실제 Linux native build·JRE/엔진·systemd 인수, signed Linux runtime archive·exact executor profile과 사용자 과업은 NOT_RUN/후속**이다. 이번 사용자 journal·catalog 합성 검증을 실제 Linux 실행 결과로 계산하지 않는다. [자동 검증 결과](./results/2026-11-17-linux-operations-ux.md)에 전체 회귀와 최종 집중 검사를 기록했다.
+
+**LNX-03 당시 개발용 systemd 경로 — 2026-11-16:** root 제어 기록·전용 계정·일회성 시작 gate를 갖는 Linux 개발용 서비스 backend를 구현했다. `linux-service register`와 명시 `--instance` 운용을 사용한다. 당시 순차 설치·이름 기반 Linux 연결은 후속이었고 현재 LNX-04에서 개발 경로를 연결했다. 고정 Linux runtime archive/실행기 profile 및 실제 Linux 인수는 여전히 후속이다. [관리자 개발 경로](./docs/linux-service-development.md)에서 권한·명령·미검증 범위를 확인한다. [자동 검사 결과](./results/2026-11-16-linux-systemd-development.md)는 Rust659 PASS·Python205 PASS/2 SKIP·Linux 타입 검사 PASS이며, 기본 병렬 실행의 기존 시간 민감 실패2건과 재검증 이력을 포함한다.
+
+**LNX-02 수신·도구 준비 — 2026-11-16:** Linux Temurin21.0.13+9 full JRE와 RC.4 JAR의 별도 조합을 고정하고257파일의 오프라인 준비·Rust staging을 검증했다. 실제 Linux Java/native/RocksDB·서비스 인수는 NOT_RUN이다. [결과](./results/2026-11-16-linux-rc4-supply.md)와 [테스터 실행 안내](./docs/linux-validation.md)를 따른다. SSH 정보 공유 없이 테스터가 직접 실행한 정제 JSON을 회수할 수 있다.
+
+NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구다. **Rust로 구현하며 다음 개발·검증의 우선 대상은 실제 Linux 머신이다.** Mac 기능과 인수 이력은 유지하고, WSL2는 Linux 실물 검증 뒤에 확인한다. Docker/Compose는 별도 후속이다.
+
+2026-11-16 사용자 결정에 따라 [Linux 우선 구현 계획](./design/2026-11-16-linux-first-implementation-plan.md)을 시작했다. 사용자가 Ubuntu 24.04 LTS·x86_64·glibc·systemd와 sudo/SSH 가능을 기준으로 진행하도록 허용했다. 실제 호스트의 배포판·버전과 접속은 아직 관측하지 않았다. **LNX-01 플랫폼·배포·읽기 전용 host 검사 기반 구현과 자동 검사를 완료했다. Linux 노드 설치·systemd start/stop·실제 머신 인수는 아직 지원 완료가 아니다.** [LNX-01 결과](./results/2026-11-16-linux-foundation.md)에 Mac 회귀·Linux 타입 검사와 실제 Linux NOT_RUN을 구분했다. Linux 단일노드 기술 인수 후 작성자가 아닌 테스터의 사용자 과업을 진행한다.
+
+**2026-11-16: RC4-01~07을 완료했다. RC4-01~06에서 고정 RC.4 runtime의 Mac 서비스·동종4-validator·두 복구·선정 RPC·실행 중 관리 CLI 전환을 인수했다.** [RC4-05 단일노드 결과](./results/2026-11-15-rc4-macos-service.md)와 [RC4-06 네트워크 결과](./results/2026-11-16-rc4-macos-network.md)를 구분한다. 기존 R/A/JAR/JRE를 유지하고 독립 관리 CLI B(`65fe83f…`)와 C(`62f1389…`) 사이의 업데이트·복귀·재업데이트를 검증했다. 두 CLI는 같은 Rust 제품 구현을 가지며 실제 source revision·배포 identity가 다르다.
+
+RC4-05에서 준비 취소·trust부터 재개·한 항목 수정과 revision2 승인, 새 설치·등록·명시 init1회, 수동 시작·정상 stop 각2회와 같은 RC.4 DB 재시작을 확인했다. 최초 등록 뒤 이번 시험의 공급 사본3개를 옮긴 상태로 운용·재적용·조회했고 종료 전 복원했다. 초기화 보고서는 `0600`이며 logs/diagnose가 완전수집했다. list/show7쌍과 정지 후 reapply의 전후 snapshot, 설치 payload269파일·JRE259파일·worker2개의 불변성을 보존했다. **RC4-05는 단일노드의 `MANUAL_START_INITIALIZED` 로컬 준비 상태를 검증한 범위**다. 당시 네트워크·RPC·실행 중 CLI 전환 미실행은 후속 RC4-06과 구분하며 사람 과업은 계속 NOT_RUN이다. 독립 종료 감사도 PASS했으며 RC4-05 당시 `make check`는 Rust596 PASS, Python165개 중163 PASS·2기존 opt-in SKIP, fmt·Clippy PASS다. Rust 변경이 없어 Linux 타입 검사는 이번에 재실행하지 않았으며 RC4-04의 PASS 이력을 유지한다.
+
+RC4-04 당시 `make check`는 Rust596 PASS, Python153개 중151 PASS·2 SKIP, fmt·Clippy와 Linux 타입 검사 PASS였다. 당시 CLI-only 설치·전환과 입력 준비의 JVM·노드·서비스 호출0회 기록은 보존한다. 이번 서비스 결과를 앞선 기록에 소급하지 않는다.
+
+[RC4-06](./results/2026-11-16-rc4-macos-network.md)은 새 동종망에서 init5회·서비스 기동/정상 stop 각12회, 거래8개/제출9회와 실행 중 CLI 전환3회를 PASS했다. live 정족수 복구는 원 거래 무재제출, 같은 DB round-skew 재시작은 같은 거래의 명시 재제출1회로 구분했다. wrong-pin 격리와 선정 RPC21사례/52read도 통과했다. 종료 독립 감사도 PASS해 정상 stop 12회 뒤 기록된 PID 107개(하네스 포함)·job 12개·8개 포트의 잔존 부재와 기존 서비스 baseline 불변을 확인했다. 원 fixture67파일·실행 하네스9파일과 고정 runtime을 보존했다. RC4-06 실행 당시 제품 Rust·하네스 변경이 없어 그 실행의 `make check`는 재실행하지 않았고 RC4-05에서 검사한136파일과의 동일성을 확인했다. 정상 signed Type-4·성공 authorization simulation·Native 전체 recipe·실제 사용자 과업은 이번 subset 밖이다.
+
+RC4-07 정식 회신은 [NIGO PR #257](https://github.com/bwg-loonshots/nigo-protocol/pull/257)로 머지 완료했다. NIGO 작업자의 수신·동의 확인은 별도이며 BXDL 근거 공유 PR은 아직 미게시다. RC4-06 결과는 로컬 commit `9f460e6`에 보존했으며 원격 근거 PR은 아직 미게시다. [RC.4 도입 계획](./design/2026-11-15-rc4-adoption-plan.md)의 Mac **RC4-08/CLI05-04 사람 과업은 NOT_RUN·우선순위 이연**이다. 현재 실행 순서는 Linux 기반·실물 단일노드·Linux 사용자 과업을 우선한다. 기존 RC.3 지원·과거 결과와 선정 JRE를 유지하며 새 NIGO 기능/API/JAR 선행 요청은 없다. 정식 출시·전체 G1-M/J5는 별도다.
+
+개선 우선순위를 **직접 CLI 중심**으로 변경했다. `bxdl console`의 추가 개발은 중단하고 기존 구현은 보존한다. `bxdl nodes`와 `bxdl nodes add <이름> --instance <경로>`로 console 없이 목록 조회와 기존 노드 이름 연결을 제공한다. 이름 기반 운용을 연결하고 관리 CLI가 기존 RC.3 패키지 실행기에 작업을 위임하도록 분리했다. `setup new/resume`은 저장한 답을 재사용해 필요한 질문부터 순서대로 진행하며, `setup list/show/edit`으로 준비 목록·내용 조회와 제품 항목 하나 수정을 제공한다. `setup apply <이름>`은 별도 TTY 승인 뒤 설치·cold 검사·등록·이름 연결까지 수행한다. 준비와 설치 실행 기록은 나누어 조회하며 초기화·시작은 `init <이름> --confirm-initialize`, `start <이름>`로 별도 실행한다. CLI-04의 자동 검사와 기존 RC.3를 그대로 사용한 Mac 설치·초기화·시작·종료·재적용을 통과했다. [CLI-04 검증 기록](./results/2026-10-23-cli04-apply-and-lifecycle.md)에 실행별 범위를 구분했다. [CLI 작업 계획](./design/2026-10-22-integrated-operations-ux-implementation-plan.md)을 따르며, 다음 실행 순서는 Linux 우선 구현 계획을 따른다. 순차 문답·조회·수정의 자동 검사와 실제 Mac 시험 범위는 [CLI-03 검증 결과](./results/2026-10-23-cli03-sequential-preparation.md)에 기록했다.
 
 현재 구현은 개발용 패키지 조립·검증, **Mac의 새 폴더 설치**, 초안 모드와 **명시 설치·등록·초기화·시작을 연결한 setup 설치 도우미**, **제품·NIGO 설정의 결합 cold 검사**, **인스턴스 등록과 명시적 init/resume-init**, **Mac 사용자 LaunchAgent의 start/status/stop**, **오프라인 logs/diagnose**다. 새 setup CLI와 동일한 CLI를 담은 개발용 package로 취소·재개, 설치·초기화, 단일 노드 시작·정상 종료·같은 데이터 재시작을 확인했다. [검증 범위와 남은 인수](./results/2026-09-27-setup-install-flow.md)를 따르며 전체 G1-M은 후속이다. 엔진 JAR/JRE·고객 키·DB를 이 저장소에 동봉하지 않는다.
 
@@ -24,28 +45,32 @@ NIGO 기반 기업용 허가형 블록체인의 패키징·배포·운영 도구
 
 **offline Storage A7은 NOT_RUN**, 기존 설치 upgrade와 전체 G1-M은 후속이다. RC.2 원본 INCOMPLETE·경로 원인 미확정과 RC.3 수신/앞선 시험/NIGO 회신의 당시 미선택·NOT_RUN은 각 시점의 이력으로 보존한다.
 
-관리 CLI는 노드 패키지 밖에서 독립적으로 업데이트할 수 있다. 현재 지원 대상은 검증한 기존 RC.3 패키지이며 설치본의 CLI·NIGO JAR·JRE를 교체하지 않는다. 실행기 자체를 변경할 때는 새 패키지 인수가 필요하다. [분리 설계](./design/2026-10-23-independent-management-cli.md)와 [운용 가이드](./docs/management-cli.md)를 따른다. [독립 관리 CLI 인수](./results/2026-10-23-independent-management-cli.md)의 직접 운용16사례·설치 도우미 PTY8사례, payload/worker 불변과 정상 종료 독립 대조가 PASS다.
+관리 CLI는 노드 패키지 밖에서 독립적으로 업데이트할 수 있다. 고정 Mac RC.3·RC.4 package profile을 지원한다. 기존 RC.3 이력과 RC.4 단일노드·동종망 인수를 각각 기록하며, RC.4 실행 중 B→C→B→C 전환에서 노드·DB·worker를 보존했다. 설치본의 CLI·NIGO JAR·JRE를 교체하지 않는다. 실행기 자체를 변경할 때는 새 패키지 인수가 필요하다. [분리 설계](./design/2026-10-23-independent-management-cli.md)와 [운용 가이드](./docs/management-cli.md)를 따른다. [독립 관리 CLI 인수](./results/2026-10-23-independent-management-cli.md)의 직접 운용16사례·설치 도우미 PTY8사례, payload/worker 불변과 정상 종료 독립 대조가 PASS다.
 
 CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bxdl completion zsh`로 셸 스크립트를 출력하고 명령·옵션·저장한 이름을 Tab으로 완성한다. 적용 방법은 [자동완성 가이드](./docs/completion.md), 전체 검사와 최종 release의 실제 zsh 13시나리오·인용 경로 결과는 [검증 기록](./results/2026-10-23-cli05-zsh-completion.md)을 따른다. 독립 관리 CLI의 Mac 배포·업데이트(CLI05-02)도 [전용 설계](./design/2026-10-23-management-cli-distribution.md)에 따라 구현·검증했다. `bxdl cli install/update/info/rollback`으로 별도 사용자 root의 CLI와 자동완성을 함께 선택한다. [검증 기록](./results/2026-10-23-cli05-management-distribution.md)에 자동 검사와 개발 인수 배포본의 실제 Mac signed13/unsigned13사례를 구분했다. 후속 **CLI05-03의 지정 Mac 서비스·네트워크 조합 인수도 PASS**했다. 실제 설치한 관리 CLI로 서비스16사례와 네트워크12개 실행 시도·거래8개/제출9회, 실행 중 CLI 업데이트·복귀·재업데이트를 확인했다. [조합 인수 기록](./results/2026-10-23-cli05-runtime-acceptance.md)에 고정 RC.3 payload/worker·정상 정리와 진단의 partial 결과를 구분했다. 당시 진단 partial은 그대로 보존한다. 후속 [초기화 보고서 권한 개선](./design/2026-10-23-private-initialization-report.md)으로 새 관리 CLI가 실행하는 초기화 보고서를 `0600`으로 생성하며, 같은 RC.3에서 신규 보고서 수집을 [별도 재검증](./results/2026-10-23-private-initialization-report.md)했다. 기존 `0644` 보고서는 자동 복구하지 않아 계속 partial이며, 작성자가 아닌 사용자의 CLI05-04 과업은 NOT_RUN이다.
 
 ## 구현한 명령
+
+이름 기반 설치·운용은 Mac 경로와 Linux 개발 경로를 제공한다. Linux는 실제 대상 머신의 일반 사용자 터미널에서 진행하며 [설치·운용 안내](./docs/linux-operations.md)의 root helper·선정 JRE/RC.4 입력 조건을 따른다. `setup list/show --linux`는 Mac에서도 읽기 전용 조회 형식을 선택한다. Mac package archive와 Linux의 flat JRE/JAR/native 입력을 서로 바꾸어 쓰지 않는다.
 
 | 명령 | 실제 동작 |
 | --- | --- |
 | `bxdl nodes [--home <dir>] [--json]` | 저장한 노드 목록·이름·저장 당시 상태/시각 조회. 현재 실행 상태는 미조회 ([가이드](./docs/nodes.md)) |
 | `bxdl nodes add <이름> --instance <control> [--home <dir>] [--json]` | 기존 등록에 고유 이름 연결. 추가 문답 없이 목록만 저장하며 노드·DB·서비스는 변경하지 않음 |
 | `bxdl status/start/stop/logs <이름>`, `bxdl diagnose <이름> --output <새.json>` | 같은 관리 목록의 이름을 해석해 노드 운용. `--home` 지원, 기존 `--instance` 경로도 유지 |
-| `bxdl setup new <이름>` / `bxdl setup resume <이름>` | 공급 자료 → 내 노드 → 누락 제품·정책 → 검토의 순차 준비·재개. 명시 승인으로 immutable 설정 파일만 준비 ([가이드](./docs/preparation.md)) |
+| `bxdl setup new <이름>` / `bxdl setup resume <이름>` | 플랫폼별 순차 준비·재개. Mac은 archive/trust, Linux는 `--runtime <flat JRE> --jar <RC.4 JAR> --native-config <JSON>` 또는 문답 입력. 검토한 불변 계획만 저장 ([Mac](./docs/preparation.md), [Linux](./docs/linux-operations.md)) |
 | `bxdl setup list [--home <dir>] [--json]` / `bxdl setup show <이름> [--home <dir>] [--json]` | 준비 기록과 별도 설치 실행 기록을 읽기 전용 조회. show는 현재 자료·완료 근거 대조를 기록 상태와 분리하며 엔진은 실행하지 않음 |
-| `bxdl setup edit <이름> --field <제품필드> [--home <dir>]` | 제품 항목 하나만 문답·저장 후 종료. 다른 답과 기존 출력 보존, 새 준비 검토는 별도 |
+| `bxdl setup edit <이름> --field <필드> [--home <dir>]` | 한 항목 수정. Linux는 제품 필드와 `runtimeRoot/engineJar/nativeConfig`를 지원하며 이름·데이터 위치는 고정. 실제 변경은 이전 검토를 해제하고 새 검토를 요구 |
 | `bxdl setup apply <이름> [--home <dir>]` | TTY에서 y/yes로 설치·cold 검사·등록·이름 연결 승인. 완료 재호출은 검증·이름 복구만, init/start는 별도 |
 | `bxdl completion zsh` | zsh 자동완성 스크립트 출력. 셸 설정 자동 수정 없음. CLI05-01 구현·검증 완료 ([가이드](./docs/completion.md)) |
-| `bxdl cli install [--from <배포본>] ...` | Mac arm64 관리 CLI를 별도 사용자 root에 설치하고 실행 링크 연결. 최초 공개키 또는 명시 개발 정책 필요 ([가이드](./docs/management-cli.md)) |
+| `bxdl cli install [--from <배포본>] ...` | Mac arm64·Linux x86_64/glibc 관리 CLI의 별도 사용자 root 설치·실행 링크 연결. Linux 코드 경로는 추가했으며 실제 Linux 배포·설치 인수는 NOT_RUN. 최초 공개키 또는 명시 개발 정책 필요 ([가이드](./docs/management-cli.md)) |
 | `bxdl cli update --from <배포본> ...` / `bxdl cli rollback` | 검증한 CLI·자동완성으로 선택 전환 또는 이전 버전 복귀. 노드 package·DB·서비스는 변경하지 않음 |
 | `bxdl cli info [--root <dir>] [--json]` | 실제 호출 파일·현재/이전 선택·PATH·셸 적용 안내를 읽기 전용 조회. 설치가 없어도 폴더 생성 없음 |
 | `bxdl cli bundle build ...` / `bxdl cli bundle verify <배포본> ...` | CLI-only archive 제작 또는 고정 inventory/hash/외부 서명 검증. 기존 노드 package 형식과 별도 |
 | `bxdl console [--home <dir>] [--instance <control>]` | **추가 개발 중단·기존 구현 보존.** 홈·내 목록·기존 등록/세션의 저장 기록 조회. 승인한 목록 저장/갱신/숨기기와 새 설치 자료 준비 ([가이드](./docs/console.md)) |
-| `bxdl version --json` | Rust CLI identity·Mac 우선 target·구현 capability·엔진/서비스 미인수 상태 |
+| `bxdl version --json` | Rust CLI identity·실행 target·구현 capability·엔진/서비스 미인수 상태 |
+| `bxdl host check [--timeout-seconds <초>] [--json]` | 실제 Linux 기준의 OS/배포판·PID1/systemd 준비 상태를 읽기 전용 조회. WSL은 후속으로 구분하며 서비스 변경·엔진 실행 없음. host 성공은 Linux 노드 지원/인수 성공이 아님 |
+| `bxdl linux-service account/register ...` | Linux 개발용 전용 계정 이름 계산 또는 root 제어 영역 신규 등록. 초기화·시작 별도. LNX-03 저수준 개발 인터페이스이며 일반 Linux UX는 `setup` 경로, 실제 Linux 인수는 후속 |
 | `bxdl package build ...` | expected hash에 고정한 stage를 결정적인 development archive로 조립·선택 서명·자체 검증 |
 | `bxdl package verify <archive> ...` | 외부 신뢰 key의 Ed25519 서명, 모든 payload hash/size/mode, 경로·형식·한도 검증 |
 | `bxdl install <archive> --destination <new-dir> ...` | macOS arm64에서 검증한 payload를 새 폴더에 설치하고 완료 receipt 기록 |
@@ -54,7 +79,7 @@ CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bx
 | `bxdl config validate --file <json>` | 제품 설정 schema·경로 기준·명시 endpoint 규칙 검사 |
 | `bxdl preflight --config <json>` | 파일/디렉터리 metadata만 검사, 엔진·서비스 검사는 NOT_CHECKED |
 | `bxdl preflight --config <instance.json> --engine-config <node.json> ...` | 제품과 명시 QBFT 설정의 일치를 확인한 뒤 pinned 엔진 cold 검사 |
-| `bxdl setup [--workspace <dir>]` | 설정 입력·수정·저장·재개와 로컬 검사, 새 제품 JSON 내보내기 |
+| `bxdl setup [--workspace <dir>]` | 기존 설정 초안의 입력·수정·저장·재개와 로컬 검사, 새 제품 JSON 내보내기. Linux에서는 `--workspace` 명시 필요; 이름 기반 `setup new`의 관리 home과 구분 |
 | `bxdl config fingerprint --certificate <leaf.pem>` | 공개 인증서의 NIGO MTLS pin 계산 |
 | `bxdl setup --network --workspace <new-session> --from <instance.json> --network-file <network.json>` | RC.1~RC.3 공통 native 계약의 설정 준비 및 재개 |
 | `bxdl setup --install --workspace <new-session>` | Mac 터미널에서 자료·계획을 저장하고 설치/등록·초기화·시작을 각각 명시 선택. `--resume`으로 같은 세션 재검증 |
@@ -72,13 +97,13 @@ CLI-05 중 **zsh 자동완성(CLI05-01)의 구현·검증을 완료했다.** `bx
 
 `upgrade/uninstall`은 exit 4와 CAPABILITY_NOT_IMPLEMENTED를 반환한다. 기본 setup 저장 성공은 초안 저장이며 설치 모드의 `finish`도 현재 단계까지만 저장한다. init 성공은 실행 중 노드·서비스 준비 완료가 아니다. logs/diagnose는 raw 로그·비밀·경로·hash를 내보내지 않고 누락은 partial로 표시한다. 보고서 생성 성공을 노드 안전·정상 판정으로 해석하지 않는다. [사용법과 한도](./docs/cli.md#오프라인-기록과-지원-보고서)를 따른다.
 
-새 standalone CLI는 Unix 프로세스 진입 시 `umask 077`을 적용해 자식 실행기와 JVM에 상속한다. 호출한 셸의 설정은 바꾸지 않으며 기존 파일 권한도 바꾸지 않는다. 기존 패키지의 내장 CLI를 직접 실행하거나 라이브러리 API만 호출하는 경우에는 이 정책이 적용되지 않는다. 새 노드 archive의 외부 파일은 `0600`으로 생성되지만 archive 내부의 payload 권한·바이트와 설치 파일의 명시 권한은 유지한다. [관리 CLI의 파일 권한 범위](./docs/management-cli.md#파일-생성-권한과-초기화-보고서)를 따른다.
+새 standalone CLI는 Unix 프로세스 진입 시 `umask 077`을 적용해 자식 실행기와 JVM에 상속한다. 호출한 셸의 설정은 바꾸지 않으며 기존 파일 권한도 바꾸지 않는다. 기존 RC.3 패키지의 내장 CLI를 직접 실행하거나 라이브러리 API만 호출하는 경우에는 이 정책이 적용되지 않는다. 새 RC.4 내부 실행기 A에도 이 진입 정책이 포함됐다. RC4-05에서 caller umask022로 실행한 새 초기화 보고서의 `0600` 생성과 완전수집을 확인했다. 새 노드 archive의 외부 파일은 `0600`으로 생성되지만 archive 내부의 payload 권한·바이트와 설치 파일의 명시 권한은 유지한다. [관리 CLI의 파일 권한 범위](./docs/management-cli.md#파일-생성-권한과-초기화-보고서)를 따른다.
 
-지원하는 기존 RC.3는 외부 관리 CLI로 start를 호출하면 인증된 package의 고정 실행기에 위임한다. 다른 package는 기존 동일 bytes 조건을 적용한다. 관리 CLI는 설치본 밖에서 교체하며 package 내부 CLI는 덮어쓰지 않는다. 로그인된 Mac 사용자 세션에서 수동 시작하며 로그인 자동 시작·자동 재시작은 제공하지 않는다. 정상 종료가 검증된 뒤에만 다음 명시 start를 허용한다. 실패·UNKNOWN 복구와 보존된 snapshot/private 로그의 자동 정리는 후속이다.
+인증된 RC.3·RC.4 profile은 외부 관리 CLI로 start를 호출하면 package의 고정 실행기에 위임한다. RC4-05/06의 단일노드·동종망에서 고정 실행기 위임·같은 DB 재시작과 실행 중 CLI 전환을 확인했으며 미지원 package는 기존 동일 bytes 조건을 적용한다. 관리 CLI는 설치본 밖에서 교체하며 package 내부 CLI는 덮어쓰지 않는다. 로그인된 Mac 사용자 세션에서 수동 시작하며 로그인 자동 시작·자동 재시작은 제공하지 않는다. 정상 종료가 검증된 뒤에만 다음 명시 start를 허용한다. 실패·UNKNOWN 복구와 보존된 snapshot/private 로그의 자동 정리는 후속이다.
 
 ## 설치 도우미와 설정 준비
 
-Mac arm64에서 새 설치를 진행하려면 별도 설치 세션을 지정한다. 검증된 기존 RC.3는 독립 관리 CLI로 설치·운용할 수 있으며, 다른 package는 공급된 동일 CLI 조건을 적용한다. 부모 폴더는 미리 있어야 하며 자동 생성하지 않는다.
+Mac arm64에서 새 설치를 진행하려면 별도 설치 세션을 지정한다. 검증된 기존 RC.3는 독립 관리 CLI로 설치·운용할 수 있다. RC.4는 RC4-05에서 새 설치·초기화·수동 단일노드 운용을, RC4-06에서 동종망·복구·선정 RPC와 실행 중 CLI 전환을 인수했다. 미지원 package는 공급된 동일 CLI 조건을 적용한다. 부모 폴더는 미리 있어야 하며 자동 생성하지 않는다.
 
 ```bash
 bxdl setup --install --workspace /absolute/existing-parent/new-session
@@ -113,7 +138,9 @@ make build-macos
 
 `make check`는 fmt·Clippy·Rust 단위/통합 테스트와 Python 3 표준 라이브러리 기반의 오프라인 인수 도구 회귀다. `make test-acceptance`는 이 Python 검사만 실행하며 노드를 시작하지 않는다. 예시 설정은 파일 참조만 담고 실제 chain/key/DB를 제공하지 않으므로 preflight 실패가 정상이다. schema 통과는 엔진 기동 가능 여부가 아니다. macOS arm64 산출물은 `dist/bxdl-darwin-arm64`이며 `bin/bxdl`은 빌드 호스트의 실행파일이다.
 
-Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux target type-check는 `make check-linux`로 가능하지만 먼저 해당 Rust target이 필요하다. 실제 Linux linking에는 적절한 Linux linker/sysroot가 필요하며 type-check를 실행 인수로 취급하지 않는다. 의존성을 미리 확보했다면 `cargo ... --locked --offline`을 사용할 수 있다.
+고정 source·공급물을 전달해 Linux 후보를 제작하고 회수하려면 [네이티브 빌드 kit 안내](./docs/linux-native-build.md)를 따른다. 현재 kit의 제품 source는 `ba4d5af6b505ea880be034b73094ac8c92018d57`이며, 이번 후속 입력 오류 코드·플랫폼별 테스트 수정은 다음 source commit으로 kit를 갱신하기 전까지 포함하지 않는다. 빌드 도구의 별도 hash가 source commit을 대체하지 않는다.
+
+개별 개발 빌드에는 Linux builder에서 `make build-linux`를 사용한다. Mac에서 Linux target type-check는 `make check-linux`로 가능하지만 먼저 해당 Rust target이 필요하다. 실제 Linux linking에는 적절한 Linux linker/sysroot가 필요하며 type-check를 실행 인수로 취급하지 않는다. 의존성을 미리 확보했다면 `cargo ... --locked --offline`을 사용할 수 있다.
 
 ## 패키지 검증
 
@@ -140,6 +167,8 @@ Linux builder에서는 `make build-linux`를 사용한다. Mac에서 Linux targe
 - [RC.3 선택과 Mac 패키지 재인수](./design/2026-10-22-rc3-package-reacceptance.md)
 - [RC.3 전체14문답·취소/EOF·대기 중 HUP·재개 검증](./results/2026-10-22-macos-rc3-full-setup.md)
 - [현재 구현·검증 상태](./docs/implementation-status.md)
+- [Linux 네이티브 빌드 kit·후보 제작·수신](./docs/linux-native-build.md)
+- [Linux 설치·운용 개발 경로](./docs/linux-operations.md)
 - [이름 있는 순차 설치 준비·조회·항목 수정](./docs/preparation.md)
 - [설치 도우미·설정 초안 저장과 재개](./docs/setup.md)
 - [패키지 입력·서명·형식](./docs/package-format.md)

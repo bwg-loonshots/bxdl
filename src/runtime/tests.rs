@@ -52,6 +52,7 @@ impl Fixture {
                 os: "darwin".into(),
                 arch: "arm64".into(),
                 java_major: 21,
+                libc: None,
             },
             archive: archive.clone(),
             source_archive: archive,
@@ -293,4 +294,47 @@ fn rejects_special_files_and_lock_symlinks() {
     fs::rename(&fixture.options.lock, &original).unwrap();
     symlink(original, &fixture.options.lock).unwrap();
     fixture.rejected();
+}
+
+#[test]
+fn linux_glibc_inventory_stages_without_running_foreign_java() {
+    let mut fixture = Fixture::new();
+    fixture.lock.platform.os = "linux".into();
+    fixture.lock.platform.arch = "amd64".into();
+    fixture.lock.platform.libc = Some("glibc".into());
+    fixture.save();
+    let report = stage(&fixture.options).unwrap();
+    assert_eq!(report.platform.os, "linux");
+    assert_eq!(report.platform.arch, "amd64");
+    assert_eq!(report.platform.libc.as_deref(), Some("glibc"));
+    assert_eq!(report.runtime_execution, "NOT_PERFORMED");
+    assert_eq!(report.archive_verification, "NOT_PERFORMED");
+    assert_eq!(report.files_verified, fixture.lock.files.len());
+    assert_eq!(
+        fs::read(fixture.options.output.join("runtime/bin/java")).unwrap(),
+        fs::read(fixture.options.source.join("bin/java")).unwrap()
+    );
+}
+
+#[test]
+fn unsupported_runtime_platform_pairs_are_rejected_before_output() {
+    for (os, arch, libc) in [
+        ("linux", "amd64", None),
+        ("linux", "amd64", Some("musl")),
+        ("linux", "arm64", Some("glibc")),
+        ("windows", "amd64", None),
+        ("darwin", "amd64", None),
+        ("darwin", "arm64", Some("glibc")),
+    ] {
+        let mut fixture = Fixture::new();
+        fixture.lock.platform.os = os.into();
+        fixture.lock.platform.arch = arch.into();
+        fixture.lock.platform.libc = libc.map(str::to_owned);
+        fixture.save();
+        assert_eq!(
+            stage(&fixture.options).unwrap_err().code,
+            "RUNTIME_LOCK_INVALID"
+        );
+        assert!(!fixture.options.output.exists());
+    }
 }

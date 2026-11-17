@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a local Mac arm64 management CLI archive with an explicit identity.
+"""Build a native Mac arm64 or Linux x86_64/glibc management CLI archive.
 
 A normal build requires a clean checkout and embeds its exact Git commit.
 --development permits a dirty checkout only with explicit unsigned output;
@@ -19,6 +19,24 @@ import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
+TARGETS = {"darwin-arm64": "aarch64-apple-darwin", "linux-amd64": "x86_64-unknown-linux-gnu"}
+
+
+def native_target():
+    system, machine = platform.system(), platform.machine().lower()
+    if system == "Darwin" and machine in ("arm64", "aarch64"):
+        return "darwin-arm64"
+    if system == "Linux" and machine in ("x86_64", "amd64") and platform.libc_ver()[0] == "glibc":
+        return "linux-amd64"
+    fail("A native Mac arm64 or Linux x86_64/glibc builder is required.")
+
+
+def select_target(requested):
+    native = native_target()
+    if requested is not None and requested != native:
+        fail("The selected target must match the native builder; cross-compiled candidates are not executed or published.")
+    return native
+
 
 
 def git(*arguments):
@@ -36,9 +54,10 @@ def main():
     trust.add_argument("--signing-key", type=Path, help="external Ed25519 private PEM key")
     trust.add_argument("--allow-unsigned-development", action="store_true")
     parser.add_argument("--development", action="store_true", help="allow dirty sources; unsigned only; revision=development")
+    parser.add_argument("--target", choices=tuple(TARGETS), help="native distribution target; defaults to the current supported host")
     args = parser.parse_args()
-    if platform.system() != "Darwin" or platform.machine() not in ("arm64", "aarch64"):
-        fail("Management CLI distribution currently requires a Mac arm64 builder.")
+    target = select_target(args.target)
+    rust_target = TARGETS[target]
     if args.development and not args.allow_unsigned_development:
         fail("--development requires --allow-unsigned-development; dirty sources are never signed.")
     output = args.output.expanduser().absolute()
@@ -57,12 +76,14 @@ def main():
     version = match.group(1)
     environment = dict(os.environ, BXDL_REVISION=revision,
                        CARGO_TARGET_DIR=str(ROOT / "target" / "management-distribution"))
-    subprocess.run(["cargo", "build", "--locked", "--release", "--target", "aarch64-apple-darwin"],
+    subprocess.run(["cargo", "build", "--locked", "--release", "--target", rust_target],
                    cwd=ROOT, env=environment, check=True)
-    binary = Path(environment["CARGO_TARGET_DIR"]) / "aarch64-apple-darwin" / "release" / "bxdl"
+    binary = Path(environment["CARGO_TARGET_DIR"]) / rust_target / "release" / "bxdl"
     observed = json.loads(subprocess.check_output([str(binary), "version", "--json"], text=True))
-    if observed.get("data", {}).get("version") != version or observed["data"].get("revision") != revision:
-        fail("The built CLI does not report the selected version and revision.")
+    if (observed.get("data", {}).get("version") != version
+            or observed["data"].get("revision") != revision
+            or observed["data"].get("primaryTarget") != target):
+        fail("The built CLI does not report the selected version, revision and native target.")
     if not args.development and (git("rev-parse", "HEAD") != head or git("status", "--porcelain", "--untracked-files=all")):
         fail("Sources changed during the build; no archive was published.")
     # Stage only the explicit distribution inventory; customer material, keys,

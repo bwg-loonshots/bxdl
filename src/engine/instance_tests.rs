@@ -746,23 +746,37 @@ fn catalog_metadata_does_not_take_operation_lock_or_change_uncertain_record() {
 }
 
 #[test]
-fn catalog_cli_comparison_requires_exact_bytes_without_execution() {
+fn catalog_cli_comparison_requires_bounded_exact_bytes_without_execution() {
+    const MAX_CLI: u64 = 64 * 1024 * 1024;
     let f = Fixture::new();
+    let current = std::env::current_exe().unwrap();
+    // Linux debug test executables may exceed the product's fixed read limit.
+    // An oversized verifier is deliberately unavailable, never a byte match.
+    // Keep the bounded comparison case on every platform where it is eligible.
+    let current_is_bounded = fs::metadata(&current).unwrap().len() <= MAX_CLI;
     fs::create_dir_all(f.binding.package.join("bin")).unwrap();
     let cli = f.binding.package.join("bin/bxdl");
     put(&cli, b"must never execute these bytes");
     fs::set_permissions(&cli, fs::Permissions::from_mode(0o700)).unwrap();
     assert_eq!(
         catalog_record(f.control.path()).unwrap().cli_match,
-        Some(false)
+        current_is_bounded.then_some(false)
     );
-    fs::copy(std::env::current_exe().unwrap(), &cli).unwrap();
+    fs::copy(current, &cli).unwrap();
     fs::set_permissions(&cli, fs::Permissions::from_mode(0o700)).unwrap();
     assert_eq!(
         catalog_record(f.control.path()).unwrap().cli_match,
-        Some(true)
+        current_is_bounded.then_some(true)
     );
     fs::set_permissions(&cli, fs::Permissions::from_mode(0o600)).unwrap();
+    assert_eq!(catalog_record(f.control.path()).unwrap().cli_match, None);
+    fs::OpenOptions::new()
+        .write(true)
+        .open(&cli)
+        .unwrap()
+        .set_len(MAX_CLI + 1)
+        .unwrap();
+    fs::set_permissions(&cli, fs::Permissions::from_mode(0o700)).unwrap();
     assert_eq!(catalog_record(f.control.path()).unwrap().cli_match, None);
     assert!(!f.binding.data_directory.exists());
 }
@@ -905,8 +919,14 @@ fn cli_node_resolver_rechecks_catalog_revision_and_preserves_explicit_path_fallb
     );
     fs::write(home.join(".catalog.lock"), b"broken").unwrap();
     assert!(Catalog::open(&home).is_err());
-    let path = target::resolve_instance(Some(&home), None, Some(f.control.path())).unwrap();
-    assert_eq!(path.recheck().unwrap().path, f.control.path());
+    let path = target::resolve_instance(Some(&home), None, Some(f.control.path()));
+    if cfg!(target_os = "linux") {
+        // Explicit paths enter Linux's root-descriptor authority check. The
+        // foreign user-owned control remains invalid even without a catalog.
+        assert_eq!(path.err().unwrap().code, "LINUX_SERVICE_AUTHORITY_UNSAFE");
+    } else {
+        assert_eq!(path.unwrap().recheck().unwrap().path, f.control.path());
+    }
 }
 
 #[test]
@@ -946,7 +966,17 @@ fn cli_node_resolver_pins_binding_but_allows_initialization_state_progress() {
         catalog.refresh(&id, changed).unwrap_err().code,
         "NODE_TARGET_CHANGED"
     );
-    assert!(target::resolve_instance(None, None, Some(f.control.path())).is_ok());
+    let explicit = target::resolve_instance(None, None, Some(f.control.path()));
+    if cfg!(target_os = "linux") {
+        // Legacy catalog inspection does not authorize this Mac control as a
+        // Linux system instance when selected by its explicit filesystem path.
+        assert_eq!(
+            explicit.err().unwrap().code,
+            "LINUX_SERVICE_AUTHORITY_UNSAFE"
+        );
+    } else {
+        assert!(explicit.is_ok());
+    }
 }
 
 #[test]

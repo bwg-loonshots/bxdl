@@ -1,12 +1,18 @@
 //! Named preparation commands preserve journals and never run nodes.
+//! Mac Preparation-specific locking, schema and retry assertions remain Mac
+//! cases; Linux journal queries/edits have separate cases in linux_setup_cli.rs.
 #![cfg(unix)]
-use bxdl::{cli, setup::preparation::Preparation};
+use bxdl::cli;
+#[cfg(target_os = "macos")]
+use bxdl::setup::preparation::Preparation;
 use serde_json::Value;
+#[cfg(target_os = "macos")]
+use std::os::unix::fs::symlink;
 use std::{
     collections::BTreeMap,
     fs,
     io::{self, Cursor},
-    os::unix::fs::{MetadataExt, PermissionsExt, symlink},
+    os::unix::fs::{MetadataExt, PermissionsExt},
     path::{Path, PathBuf},
 };
 
@@ -83,6 +89,7 @@ impl Fixture {
     fn query(&self, words: &[&str]) -> Run {
         run(&self.args(words), &mut NoInput, false)
     }
+    #[cfg(target_os = "macos")]
     fn edit(&self, name: &str, field: &str, answer: &str) -> Run {
         run(
             &self.args(&["setup", "edit", name, "--field", field]),
@@ -141,14 +148,19 @@ fn empty_list_and_missing_show_are_read_only_without_input() {
     let before = snapshot(&f.root);
     let result = f.query(&["setup", "list", "--json"]);
     result.expect(0);
-    assert_eq!(result.json()["data"]["schemaVersion"], 1);
     assert_eq!(result.json()["data"]["entries"], serde_json::json!([]));
-    assert_eq!(result.json()["data"]["partial"], false);
+    if cfg!(target_os = "linux") {
+        assert_eq!(result.json()["data"]["platform"], "linux-amd64");
+    } else {
+        assert_eq!(result.json()["data"]["schemaVersion"], 1);
+        assert_eq!(result.json()["data"]["partial"], false);
+    }
     f.query(&["setup", "show", "local", "--json"]).expect(3);
     assert_eq!(before, snapshot(&f.root));
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn queries_do_not_lock_or_write_and_redact_reference_paths() {
     let f = Fixture::new();
     f.create("local");
@@ -185,6 +197,7 @@ fn queries_do_not_lock_or_write_and_redact_reference_paths() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn list_retains_corrupt_named_entries_without_following_links() {
     let f = Fixture::new();
     f.create("valid");
@@ -215,6 +228,7 @@ fn list_retains_corrupt_named_entries_without_following_links() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn edit_only_one_field_and_retry_invalid_without_echoing_input() {
     let f = Fixture::new();
     f.create("local");
@@ -254,6 +268,7 @@ fn edit_only_one_field_and_retry_invalid_without_echoing_input() {
 }
 
 #[test]
+#[cfg(target_os = "macos")]
 fn edit_cancel_eof_and_invalid_then_eof_keep_original_bytes() {
     let f = Fixture::new();
     f.create("local");
@@ -297,7 +312,10 @@ fn edit_json_nonterminal_invalid_forms_reject_before_input_and_creation() {
 fn edit_busy_session_does_not_read_answer() {
     let f = Fixture::new();
     f.create("local");
+    #[cfg(target_os = "macos")]
     let _session = Preparation::resume(&f.workspace("local")).unwrap();
+    #[cfg(target_os = "linux")]
+    let _session = bxdl::setup::linux::Preparation::open(&f.workspace("local")).unwrap();
     let before = snapshot(&f.root);
     let result = run(
         &f.args(&["setup", "edit", "local", "--field", "httpPort"]),

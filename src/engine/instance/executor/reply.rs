@@ -236,6 +236,7 @@ fn health(data: &Health) -> bool {
 }
 
 pub(super) fn parse(
+    profile: &profiles::Profile,
     request: &Request,
     instance: &str,
     exit: i32,
@@ -361,8 +362,8 @@ pub(super) fn parse(
                             || cold.status != "INCOMPLETE"
                             || cold.contract_status != "PROPOSED"
                             || cold.backend != "rocksdb"
-                    }) || engine.jar_sha256 != JAR
-                        || engine.java_sha256 != JAVA
+                    }) || engine.jar_sha256 != profile.jar
+                        || engine.java_sha256 != profile.java
                         || !engine.development_only
                         || engine.outcome != "INCOMPLETE"
                         || engine.engine_exit_code != 3
@@ -374,8 +375,7 @@ pub(super) fn parse(
                             .chain_file_sha256
                             .as_ref()
                             .is_none_or(|s| !crate::engine::hash(s))
-                        || engine.identity.source.commit
-                            != "7ec5abd8c98e1cf070763a16f815e9281b74a5c1"
+                        || !profile.matches_identity(&engine.identity)
                     {
                         return Err(response_invalid());
                     }

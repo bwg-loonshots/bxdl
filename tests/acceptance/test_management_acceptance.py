@@ -96,10 +96,11 @@ class ManagerRouting(unittest.TestCase):
         entry.symlink_to(a)
         obj = runner.ManagementAcceptance.__new__(runner.ManagementAcceptance)
         obj.a, obj.cli = SimpleNamespace(cli_root=cli_root), entry
+        obj.profile = runner.rp.runtime_profile("rc3")
         info = {"status": "READY", "executable": str(entry), "root": str(cli_root),
                 "invokedExecutable": str(entry), "current": {"releaseId": "release-a", "version": "dev",
                 "revision": "a" * 40, "manifestSha256": "f" * 64}}
-        version = {"version": "dev", "revision": "a" * 40}
+        version = {"version": "dev", "revision": "a" * 40, "capabilities": ["executor.rc3-legacy-v1"]}
         obj.command = Mock(side_effect=[{"data": info}, {"data": version}])
         self.assertEqual(obj.manager_identity("valid")["binarySha256"], h.sha(a))
         for changed in ({**info, "current": {**info["current"], "releaseId": "release-b"}},
@@ -113,7 +114,7 @@ class ManagerRouting(unittest.TestCase):
         package.mkdir()
         manifest = package / "manifest.json"
         manifest.write_text(json.dumps({"files": [{"path": "duplicate"}] * 270}))
-        with patch.object(runner, "MANIFEST_SHA", h.sha(manifest)), self.assertRaisesRegex(h.Failure, "MEMBER_COUNT"):
+        with patch.dict(runner.rp._PROFILES["rc3"], {"manifestSha256": h.sha(manifest)}), self.assertRaisesRegex(h.Failure, "MEMBER_COUNT"):
             runner.verify_payload(package)
 
     def test_payload_rejects_added_files(self):
@@ -122,8 +123,25 @@ class ManagerRouting(unittest.TestCase):
         manifest = package / "manifest.json"
         manifest.write_text(json.dumps({"files": [{"path": f"f{i}"} for i in range(270)]}))
         (package / "unexpected").write_text("added")
-        with patch.object(runner, "MANIFEST_SHA", h.sha(manifest)), self.assertRaisesRegex(h.Failure, "MEMBERSHIP"):
+        with patch.dict(runner.rp._PROFILES["rc3"], {"manifestSha256": h.sha(manifest)}), self.assertRaisesRegex(h.Failure, "MEMBERSHIP"):
             runner.verify_payload(package)
+
+
+    def test_unknown_runtime_is_rejected_before_path_reads_and_output_creation(self):
+        output = self.root / "not-created"
+        with patch.object(h, "command") as command, self.assertRaisesRegex(h.Failure, "RUNTIME_PROFILE_NOT_SUPPORTED"):
+            runner.ManagementAcceptance(SimpleNamespace(candidate="unknown", output=output))
+        command.assert_not_called()
+        self.assertFalse(output.exists())
+
+    def test_cli_candidate_default_and_explicit_rc4(self):
+        required = []
+        for name in ("manager-entry", "manager-home", "cli-root", "bundle-next", "archive",
+                     "public-key", "lock", "fixture", "output"):
+            required += ["--" + name, "/offline/" + name]
+        required += ["--revision", "1" * 40]
+        self.assertEqual(runner.parser().parse_args(required).candidate, "rc3")
+        self.assertEqual(runner.parser().parse_args(required + ["--candidate", "rc4"]).candidate, "rc4")
 
 
 class LiveContinuity(unittest.TestCase):
@@ -131,7 +149,9 @@ class LiveContinuity(unittest.TestCase):
         obj = runner.ManagementAcceptance.__new__(runner.ManagementAcceptance)
         obj.a = SimpleNamespace(cli_root=Path('/test/cli'), bundle_next=Path('/test/bundle'),
                                 revision="b" * 40, allow_unsigned_development=False)
-        obj.initial_manager = {"revision": "a" * 40, "binarySha256": "1" * 64}
+        obj.profile = runner.rp.runtime_profile("rc3")
+        obj.initial_manager = {"revision": "a" * 40, "binarySha256": "1" * 64,
+                               "capabilities": ["executor.rc3-legacy-v1"]}
         obj.next_manager = None
         obj.bundle_next_sha = "f" * 64
         obj.results = {"managerTransitions": []}
@@ -145,7 +165,7 @@ class LiveContinuity(unittest.TestCase):
         obj = self.object()
         obj.live_identity = Mock(side_effect=[self.identities(), self.identities()])
         obj.command = Mock(return_value={"data": {"status": "UPDATED", "changed": True}})
-        obj.manager_identity = Mock(return_value={"revision": "b" * 40, "binarySha256": "2" * 64})
+        obj.manager_identity = Mock(return_value={"revision": "b" * 40, "binarySha256": "2" * 64, "capabilities": ["executor.rc3-legacy-v1"]})
         with patch.object(h, "sha", return_value=obj.bundle_next_sha):
             obj.transition("update", [{"label": "n1"}], "update")
         self.assertEqual(len(obj.results["managerTransitions"]), 1)
@@ -157,7 +177,7 @@ class LiveContinuity(unittest.TestCase):
             obj = self.object()
             obj.live_identity = Mock(side_effect=[self.identities(), after])
             obj.command = Mock(return_value={"data": {"status": "UPDATED", "changed": True}})
-            obj.manager_identity = Mock(return_value={"revision": "b" * 40, "binarySha256": "2" * 64})
+            obj.manager_identity = Mock(return_value={"revision": "b" * 40, "binarySha256": "2" * 64, "capabilities": ["executor.rc3-legacy-v1"]})
             with patch.object(h, "sha", return_value=obj.bundle_next_sha), self.assertRaisesRegex(h.Failure, "RESTARTED_NODE"):
                 obj.transition("update", [{"label": "n1"}], "update")
             self.assertEqual(obj.results["managerTransitions"], [])
@@ -170,8 +190,8 @@ class LiveContinuity(unittest.TestCase):
             obj.transition("update", [], "update")
 
     def test_wrong_next_revision_or_same_binary_is_rejected(self):
-        for selected in ({"revision": "c" * 40, "binarySha256": "2" * 64},
-                         {"revision": "b" * 40, "binarySha256": "1" * 64}):
+        for selected in ({"revision": "c" * 40, "binarySha256": "2" * 64, "capabilities": ["executor.rc3-legacy-v1"]},
+                         {"revision": "b" * 40, "binarySha256": "1" * 64, "capabilities": ["executor.rc3-legacy-v1"]}):
             obj = self.object()
             obj.live_identity = Mock(return_value=self.identities())
             obj.command = Mock(return_value={"data": {"status": "UPDATED", "changed": True}})
@@ -192,7 +212,7 @@ class LiveContinuity(unittest.TestCase):
         obj.a.allow_unsigned_development = True
         obj.live_identity = Mock(return_value=self.identities())
         obj.command = Mock(return_value={"data": {"status": "UPDATED", "changed": True}})
-        obj.manager_identity = Mock(return_value={"revision": "b" * 40, "binarySha256": "2" * 64})
+        obj.manager_identity = Mock(return_value={"revision": "b" * 40, "binarySha256": "2" * 64, "capabilities": ["executor.rc3-legacy-v1"]})
         with patch.object(h, "sha", return_value=obj.bundle_next_sha):
             obj.transition("update", [], "update")
         self.assertIn("--allow-unsigned-development", obj.command.call_args.args[1])
@@ -203,6 +223,53 @@ class LiveContinuity(unittest.TestCase):
             obj.command = Mock(return_value={"data": data})
             with patch.object(h, "running", return_value=data), self.assertRaisesRegex(h.Failure, "LIVE_PID_REQUIRED"):
                 obj.live_identity([{"label": "n1", "control": Path('/test/control')}], "live")
+
+
+    def test_rc4_rollback_rejects_rc3_only_previous_manager_before_any_command(self):
+        obj = self.object()
+        obj.profile = runner.rp.runtime_profile("rc4")
+        obj.live_identity, obj.command = Mock(), Mock()
+        with self.assertRaisesRegex(h.Failure, "MANAGER_RUNTIME_CAPABILITY_REQUIRED"):
+            obj.transition("rollback", [], "rollback")
+        obj.live_identity.assert_not_called()
+        obj.command.assert_not_called()
+
+    def test_rc4_update_and_rollback_require_both_manager_capabilities(self):
+        obj = self.object()
+        obj.profile = runner.rp.runtime_profile("rc4")
+        caps = ["executor.rc3-legacy-v1", "executor.rc4-v1"]
+        obj.initial_manager["capabilities"] = caps
+        next_manager = {"revision": "b" * 40, "binarySha256": "2" * 64, "capabilities": caps}
+        obj.live_identity = Mock(return_value=self.identities())
+        obj.command = Mock(return_value={"data": {"status": "UPDATED", "changed": True}})
+        obj.manager_identity = Mock(return_value=next_manager)
+        with patch.object(h, "sha", return_value=obj.bundle_next_sha):
+            obj.transition("update", [], "update")
+        obj.command.return_value = {"data": {"status": "ROLLED_BACK", "changed": True}}
+        obj.manager_identity.return_value = obj.initial_manager
+        obj.transition("rollback", [], "rollback")
+        self.assertEqual([x["action"] for x in obj.results["managerTransitions"]], ["update", "rollback"])
+
+    def test_selected_rc3_only_cli_is_not_accepted_for_rc4(self):
+        obj = self.object()
+        obj.profile = runner.rp.runtime_profile("rc4")
+        obj.initial_manager["capabilities"].append("executor.rc4-v1")
+        obj.live_identity = Mock(return_value=self.identities())
+        obj.command = Mock(return_value={"data": {"status": "UPDATED", "changed": True}})
+        obj.manager_identity = Mock(return_value={"revision": "b" * 40, "binarySha256": "2" * 64,
+                                                  "capabilities": ["executor.rc3-legacy-v1"]})
+        with patch.object(h, "sha", return_value=obj.bundle_next_sha), \
+                self.assertRaisesRegex(h.Failure, "MANAGER_RUNTIME_CAPABILITY_REQUIRED"):
+            obj.transition("update", [], "update")
+        self.assertEqual(obj.results["managerTransitions"], [])
+
+    def test_unknown_transition_is_rejected_before_observation_or_command(self):
+        obj = self.object()
+        obj.live_identity, obj.command = Mock(), Mock()
+        with self.assertRaisesRegex(h.Failure, "MANAGER_TRANSITION_ACTION"):
+            obj.transition("unknown", [], "unknown")
+        obj.live_identity.assert_not_called()
+        obj.command.assert_not_called()
 
 
 class EvidenceBoundaries(unittest.TestCase):
@@ -268,7 +335,7 @@ class EvidenceBoundaries(unittest.TestCase):
         for path in (data / "engine-instance.json", node["product"], node["native"],
                      node["control"] / "binding.json", worker):
             path.write_bytes(b"original")
-        with patch.object(runner, "EXECUTOR_SHA", h.sha(worker)), patch.object(runner, "EXECUTOR_SIZE", 8):
+        with patch.dict(runner.rp._PROFILES["rc3"], {"executorSha256": h.sha(worker), "executorSizeBytes": 8}):
             before = runner.preserved_node_identity(node, "a1")
             self.assertEqual(set(before), {"dataDirectory", "engineIdentitySha256", "productSha256",
                                            "nativeSha256", "bindingSha256", "workerSha256", "initializationJournal"})
@@ -316,7 +383,7 @@ class EvidenceBoundaries(unittest.TestCase):
         obj.live_identity = Mock(side_effect=[{"n1": {**same, "dataDirectory": {"inode": 1}}},
                                               {"n1": {**same, "dataDirectory": {"inode": 2}}}])
         obj.command = Mock(return_value={"data": {"status": "UPDATED", "changed": True}})
-        obj.manager_identity = Mock(return_value={"revision": "b" * 40, "binarySha256": "2" * 64})
+        obj.manager_identity = Mock(return_value={"revision": "b" * 40, "binarySha256": "2" * 64, "capabilities": ["executor.rc3-legacy-v1"]})
         with patch.object(h, "sha", return_value=obj.bundle_next_sha), self.assertRaisesRegex(h.Failure, "RESTARTED_NODE"):
             obj.transition("update", [], "update")
 

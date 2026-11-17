@@ -35,8 +35,10 @@ impl Fixture {
         }
     }
     fn bundle(&self, name: &str, version: &str, revision: char, key: Option<&Path>) -> PathBuf {
-        let mut binary = vec![0xcf, 0xfa, 0xed, 0xfe, 0x0c, 0, 0, 1];
-        binary.resize(128, revision as u8);
+        let binary = crate::management::test_binary(
+            crate::management::host_target().unwrap(),
+            revision as u8,
+        );
         for (name, bytes, mode) in [
             ("bin/bxdl", binary, 0o755),
             (
@@ -573,6 +575,47 @@ fn an_unrelated_private_empty_directory_is_never_adopted_as_cli_root() {
     assert_eq!(
         install(&f.options(&a), false, permit).unwrap_err().code,
         "CLI_STORAGE_UNSAFE"
+    );
+    assert_eq!(snapshot(&f.base), before);
+}
+
+#[test]
+fn another_platform_is_rejected_before_installation_or_update_mutation() {
+    let f = Fixture::new();
+    let native = f.bundle("native.tar.gz", "0.1.0-dev.1", 'a', None);
+    let other = if crate::management::host_target() == Some("darwin-arm64") {
+        "linux-amd64"
+    } else {
+        "darwin-arm64"
+    };
+    stdfs::write(
+        f.stage.join("bin/bxdl"),
+        crate::management::test_binary(other, b'b'),
+    )
+    .unwrap();
+    let output = f.base.join("other.tar.gz");
+    bundle::build(&bundle::BuildOptions {
+        root: f.stage.clone(),
+        output: output.clone(),
+        version: "0.1.0-dev.2".into(),
+        revision: "b".repeat(40),
+        signing_key_path: None,
+        allow_unsigned_development: true,
+    })
+    .unwrap();
+    let before = snapshot(&f.base);
+    assert_eq!(
+        install(&f.options(&output), false, reject)
+            .unwrap_err()
+            .code,
+        "CLI_TARGET_MISMATCH"
+    );
+    assert_eq!(snapshot(&f.base), before);
+    install(&f.options(&native), false, permit).unwrap();
+    let before = snapshot(&f.base);
+    assert_eq!(
+        install(&f.options(&output), true, reject).unwrap_err().code,
+        "CLI_TARGET_MISMATCH"
     );
     assert_eq!(snapshot(&f.base), before);
 }

@@ -68,7 +68,7 @@ impl Record {
                 (None, None) => {}
                 (Some(alias), Some(binding))
                     if self.schema_version == 2
-                        && entry.target.kind == target::Kind::Instance
+                        && entry.target.kind.is_instance()
                         && valid_name(alias)
                         && valid_hash(binding)
                         && aliases.insert(alias) => {}
@@ -170,7 +170,7 @@ impl Catalog {
         if !valid_name(name) {
             return Err(invalid_name());
         }
-        if target.kind != target::Kind::Instance {
+        if !target.kind.is_instance() {
             return Err(error(
                 "NODE_TARGET_INVALID",
                 "노드 이름은 기존 등록된 control에만 연결할 수 있습니다.",
@@ -338,6 +338,12 @@ impl Catalog {
 pub(crate) fn check_target_location(home: &Path, target: &Snapshot) -> Result<()> {
     target.validate()?;
     if paths::overlaps(home, &target.path)? {
+        if target.kind == target::Kind::LinuxInstance {
+            return Err(error(
+                "CONSOLE_TARGET_OVERLAP",
+                "Linux 시스템 노드의 root 제어 영역과 사용자 관리 위치는 분리하세요.",
+            ));
+        }
         // The console may later create targets directly in these namespaces.
         // A marker-valid existing home is required; arbitrary descendants and
         // the inverse relationship (home inside a target) remain forbidden.

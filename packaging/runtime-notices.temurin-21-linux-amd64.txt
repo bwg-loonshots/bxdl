@@ -1,0 +1,25 @@
+BXDL development candidate — selected Linux Java runtime notices
+
+Eclipse Temurin 21.0.13+9-LTS full JRE for Linux x86_64/glibc is supplied
+by Eclipse Adoptium. No jlink minimization is performed. Internal legal file
+symlinks are materialized without changing content; modes normalize to0644/0755.
+
+The primary runtime license is GPLv2 with the Classpath Exception. Preserve
+and read the entire runtime/legal tree, including LICENSE,
+ADDITIONAL_LICENSE_INFO, ASSEMBLY_EXCEPTION and bundled third-party terms.
+Java/OpenJDK and Eclipse Temurin marks remain their respective owners' marks.
+
+The exact upstream archive and all257 materialized files are pinned in
+runtime-lock.temurin-21-linux-amd64.json. The supplier metadata/SBOM and
+source-supply record are in contracts/runtime/temurin-21.0.13-linux-amd64/.
+The supplier SBOM JRE archive hash matches this specific archive; this does not
+complete the BXDL/NIGO/native dependency SBOM. The BXDL-generated Linux BOM
+is runtime-only. Existing Mac records concern a separate version and archive.
+
+Matching OpenJDK source and Temurin build material are retained locally.
+Customer source delivery and complete product notices remain separate release
+work. Recording upstream URLs is not completed customer source delivery.
+
+This candidate records supply identities only. Linux Java/native/RocksDB and
+systemd execution, supplier detached signatures and customer release acceptance
+have not been completed by this supply preparation.

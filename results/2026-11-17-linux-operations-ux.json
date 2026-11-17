@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-17",
+  "stage": "LNX-04",
+  "outcome": "DEVELOPMENT_UX_AUTO_CHECKED",
+  "baseCommit": "b9ee89a46273037ecf832f928606bf86aa446f6f",
+  "workingTreeDirty": true,
+  "scope": "MACOS_REGRESSION_SYNTHETIC_LINUX_USER_UX_AND_LINUX_TYPE_CHECK_ONLY",
+  "automaticChecks": {
+    "command": "RUST_TEST_THREADS=4 make check",
+    "format": "PASS",
+    "clippy": "PASS",
+    "rust": {
+      "passed": 708,
+      "failed": 0,
+      "ignored": 0
+    },
+    "python": {
+      "total": 207,
+      "passed": 205,
+      "skipped": 2,
+      "failed": 0
+    },
+    "linuxAllTargetsTypeCheck": "PASS"
+  },
+  "finalFocusedChecks": {
+    "reason": "Full regression was running while final display/completion-only refinements were edited. All source editing and concurrent builds stopped before these follow-up checks.",
+    "changes": [
+      "Unresolved apply shows engine NOT_OBSERVED instead of NOT_RUN; adds assertion",
+      "Linux editable-field completion excludes fixed identity/data and keeps Mac fields unchanged"
+    ],
+    "command": "cargo fmt --all -- --check; cargo clippy --locked --all-targets -- -D warnings; cargo test --locked --lib linux -- --test-threads=4; cargo test --locked --test completion_cli -- --test-threads=4; cargo build --locked",
+    "outcome": "PASS",
+    "linuxFilteredTests": 80,
+    "completionIntegrationTests": 17,
+    "newCompletionTestBeyondFullSuite": 1
+  },
+  "initialFailure": {
+    "rustPassed": 535,
+    "rustFailed": 3,
+    "newTimeoutTest": "Observed empty marker between creation and completion; fixed by waiting for exact completion bytes within the existing deadline, preserving no-kill and timeout assertions.",
+    "macCliIdentityTests": "Two existing application tests failed CLI identity checks during concurrent cargo rebuilds. No Mac identity assertion was relaxed. The subsequent isolated full suite passed; concurrent executable replacement is the inferred cause."
+  },
+  "implemented": [
+    "SEQUENTIAL_LINUX_PREPARATION_AND_SINGLE_FIELD_EDIT",
+    "EXPLICIT_APPROVED_INSTALL_WITH_FIXED_ROOT_HELPER",
+    "ROOT_OWNED_SNAPSHOTS_AND_DURABLE_ACCOUNT_INSTALL_INTENTS",
+    "USER_CATALOG_WITH_PUBLIC_ROOT_DESCRIPTOR_BINDING",
+    "ORIGINAL_WORKER_PINNED_MANAGEMENT_PROTOCOL",
+    "LATEST_INIT_RUN_SANITIZED_DIAGNOSTICS_AND_USER_EXPORT",
+    "NULL_FREE_PRIVATE_STATE_AND_PREPARATION_RELOAD"
+  ],
+  "notRun": [
+    "NATIVE_LINUX_BUILD_AND_LINK",
+    "LINUX_JRE_NATIVE_ROCKSDB",
+    "ACTUAL_LINUX_INSTALL_AND_ACCOUNT_CREATION",
+    "SYSTEMD_LIFECYCLE_AND_UID_ISOLATION",
+    "SSH_DISCONNECT",
+    "SAME_DB_RESTART",
+    "LIVE_MANAGEMENT_CLI_SWITCH",
+    "SIGNED_LINUX_RUNTIME_ARCHIVE_AND_EXACT_EXECUTOR_PROFILE",
+    "LINUX_HUMAN_USABILITY_TASKS",
+    "WSL2"
+  ],
+  "linuxSystemMutations": 0,
+  "linuxRuntimePackageAcceptance": "NOT_ACCEPTED",
+  "macCliSmoke": {
+    "scope": "MACOS_READ_ONLY_AND_FOREIGN_HOST_GUARDS",
+    "cliSha256": "a159867355abd4d98945a2c1b92fd49c941634701b62fcfee54e8cf87bc9b63d",
+    "cases": [
+      {
+        "case": "version",
+        "exit": 0,
+        "reasonCode": "VERSION"
+      },
+      {
+        "case": "linux-setup-list",
+        "exit": 0,
+        "reasonCode": "LINUX_SETUP_RECORD_READ"
+      },
+      {
+        "case": "linux-setup-machine-refusal",
+        "exit": 2,
+        "reasonCode": "SETUP_INTERACTIVE_TERMINAL_REQUIRED"
+      },
+      {
+        "case": "linux-helper-foreign-host",
+        "exit": 3,
+        "reasonCode": "LINUX_SERVICE_PLATFORM_UNSUPPORTED"
+      },
+      {
+        "case": "linux-worker-foreign-host",
+        "exit": 3,
+        "reasonCode": "LINUX_SERVICE_PLATFORM_UNSUPPORTED"
+      },
+      {
+        "case": "host-check-macos",
+        "exit": 3,
+        "reasonCode": "HOST_PLATFORM_UNSUPPORTED"
+      },
+      {
+        "case": "linux-setup-help",
+        "exit": 0,
+        "reasonCode": "HELP"
+      }
+    ],
+    "linuxExecution": "NOT_RUN",
+    "linuxSystemMutations": 0,
+    "missingHomePreserved": true
+  },
+  "sourceSha256": {
+    "src/cli.rs": "650f4bbb2f22d0819f3290117f430db741c3867932e85bc97e95743dba4a57ae",
+    "src/cli/linux_service.rs": "d0abd1c355605e422a5bc23f950ca09328b052bc71ba41dc571ab0dfd3daed6c",
+    "src/engine/linux_service.rs": "5f584506faea9cae507892b60dbd1d5dd975945af9fcf03253ea1c0f6ce330bb",
+    "src/engine/linux_service/diagnostics.rs": "b599f513f49406be557a6d9bfc9a2d6192ab1d60cb549b55b9a0433270585959",
+    "src/engine/linux_service/install.rs": "7c618dec183ee93dd834f47c1e70f04fc4a6072d9e1f0551c5277eebb5bdfcfc",
+    "src/engine/linux_service/install/accounts.rs": "4fdaabb16f31cc3b1e3a284236c8a840394a8b69888ed59e80064b277e967777",
+    "src/engine/linux_service/install/source.rs": "d742813a124f910e2ae6c5b2a2e0feb25013072206de4f530ff51c5a554944de",
+    "src/engine/linux_service/install/tests.rs": "aebb3db217a8878ca6229333cdda9292273ab66ecb1a81026f10148015b39a10",
+    "src/engine/linux_service/management.rs": "5cbe6448af4f3c14e5226ad003163db323ac4ce2f1ab69e52b22bb7b0ced6001",
+    "src/operator/catalog.rs": "a830a7661a8758eb402fab092125650eb9bb5ae1716fec97785c05d38bbdd4e7",
+    "src/operator/catalog/tests.rs": "fbf4e3bda18ee895b87c1e213c3fb5728bf6813ae8fdfcb6b2972d859528790b",
+    "src/operator/completion.rs": "5dd3561a98464f7581eb872951dce143861888d4f4611751007d8d7e2cf96595",
+    "src/operator/console.rs": "c10a63f6ed363bb44dcc906105ad426c1413698928423f93a39823801dcf1cbd",
+    "src/operator/help.rs": "881983c70691751a7dbfefcf6cbc824c4f85f081672a04716acf108ef4c75212",
+    "src/operator/linux_setup.rs": "25f44d42a21ede31fbd77759684d7d981e5c35398b4cfaecb1043dfce0f1429a",
+    "src/operator/mod.rs": "b678276aa42735a5d04e8c7d4c1a26b30a41c549c95c95278dd5a9bdc4153591",
+    "src/operator/nodes.rs": "d6b82ad7f7a955ebe43bf9c419ff11b584dd7975aceb96c3c30e1b247a1f70b1",
+    "src/operator/target.rs": "2c287cd728a44a6577eb179f868340f684736a6be859e3aba190f0aee1db58a5",
+    "src/setup/linux.rs": "52a69a1ef953c833ce0878e4a02b7703dc9e800540c9aafbc6d774aea86c51fa",
+    "src/setup/linux/tests.rs": "a7677c3f3256b21ced82a8b9c284da8e59ac4e973ed506a17f84170bdbdfa039",
+    "src/setup/mod.rs": "dd83dec20706b111a174246d4d427ca9b66c0c66860629c7a2019b956433baa7",
+    "tests/completion_cli.rs": "4e7c7422b5f0de0333d537143da1feaea757ccbe493105d04ccbf8bdd7fe00dc"
+  },
+  "logs": {
+    "regression": {
+      "path": "/private/tmp/bxdl-lnx04-make-check.log",
+      "sha256": "afea7cbe65311dc19024a76b47e185e9c075d9d2f3d03e2768405902d54d8a30"
+    },
+    "linuxTypeCheck": {
+      "path": "/private/tmp/bxdl-lnx04-linux-check.log",
+      "sha256": "0324a266345fa50bb0d28600554ece1da91693d9eb7a5c1755c5a25c55ec66b7"
+    },
+    "finalFocused": {
+      "path": "/private/tmp/bxdl-lnx04-final-focused.log",
+      "sha256": "4e0b74824b7901ab867ef5688eccb9f426ec4a4a8a85f6094efbf4b6adf2e3c0"
+    },
+    "initialFailure": {
+      "path": "/private/tmp/bxdl-lnx04-initial-check.log",
+      "sha256": "67dee010bc5aa7aa166d208ab522f27c1b9641a3c0236643ccdfc97bf539ea4b"
+    }
+  }
+}

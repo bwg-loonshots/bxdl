@@ -61,11 +61,21 @@ pub(crate) struct Home {
 }
 
 pub(crate) fn default_home() -> Result<PathBuf> {
-    #[cfg(target_os = "macos")]
-    if let Some(home) = std::env::var_os("HOME") {
-        let home = PathBuf::from(home);
+    default_home_for(std::env::var_os("HOME").as_deref(), std::env::consts::OS)
+}
+
+// Location selection performs no I/O. Opening/creation retains the same private
+// namespace checks below, and XDG variables do not select a different catalog.
+fn default_home_for(home: Option<&std::ffi::OsStr>, os: &str) -> Result<PathBuf> {
+    let suffix = match os {
+        "macos" => Some("Library/Application Support/BXDL"),
+        "linux" => Some(".local/share/BXDL"),
+        _ => None,
+    };
+    if let (Some(home), Some(suffix)) = (home, suffix) {
+        let home = Path::new(home);
         if home.is_absolute() {
-            return crate::setup::absolute(&home.join("Library/Application Support/BXDL"));
+            return crate::setup::absolute(&home.join(suffix));
         }
     }
     Err(error(
@@ -601,5 +611,42 @@ pub(crate) fn store_error(error_value: BxdlError) -> BxdlError {
         ),
         "SETUP_LIMIT" => limit(),
         _ => io_error(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn platform_catalog_locations_are_separate_from_cli_installations() {
+        let home = std::ffi::OsStr::new("/home/operator with spaces");
+        for (os, suffix) in [
+            ("macos", "Library/Application Support/BXDL"),
+            ("linux", ".local/share/BXDL"),
+        ] {
+            assert_eq!(
+                default_home_for(Some(home), os).unwrap(),
+                Path::new(home).join(suffix)
+            );
+        }
+    }
+
+    #[test]
+    fn missing_or_relative_home_never_falls_back_to_working_directory() {
+        for os in ["macos", "linux", "unsupported"] {
+            for home in [None, Some(std::ffi::OsStr::new("relative-home"))] {
+                assert_eq!(
+                    default_home_for(home, os).unwrap_err().code,
+                    "CONSOLE_HOME_REQUIRED"
+                );
+            }
+        }
+        assert_eq!(
+            default_home_for(Some(std::ffi::OsStr::new("/home/operator")), "unsupported")
+                .unwrap_err()
+                .code,
+            "CONSOLE_HOME_REQUIRED"
+        );
     }
 }

@@ -1,4 +1,4 @@
-"""Opt-in Mac CLI distribution acceptance; never starts an engine or service.
+"""Opt-in native Mac/Linux CLI distribution acceptance; never starts a node.
 
 Provide two independently identified CLI bundles and a trusted test bootstrap
 binary. This checks the actual installed executable and fresh interactive zsh,
@@ -23,6 +23,16 @@ _REQUIRED = ("BXDL_MANAGEMENT_BINARY", "BXDL_MANAGEMENT_BUNDLE_A", "BXDL_MANAGEM
 _PAYLOADS = {"bin/bxdl", "share/zsh/site-functions/_bxdl", "docs/management-cli.md", "docs/completion.md"}
 _METADATA = {"manifest.json", "manifest.sig"}
 _CANARY = "PRIVATE-CLI-DISTRIBUTION-CANARY"
+
+
+def supported_native_target():
+    if platform.system() == "Darwin" and platform.machine() in ("arm64", "aarch64"):
+        return "darwin-arm64"
+    if (platform.system() == "Linux" and platform.machine().lower() in ("x86_64", "amd64")
+            and platform.libc_ver()[0] == "glibc" and "microsoft" not in platform.release().lower()):
+        return "linux-amd64"
+    return None
+
 
 
 def digest(path):
@@ -119,12 +129,13 @@ def seed_management_home(home, root):
 
 
 @unittest.skipUnless(
-    platform.system() == "Darwin" and platform.machine() == "arm64" and ZSH
+    supported_native_target() and ZSH
     and all(os.environ.get(name) for name in _REQUIRED),
-    "set BXDL_MANAGEMENT_BINARY/BUNDLE_A/BUNDLE_B on Mac arm64 for actual distribution acceptance",
+    "set BXDL_MANAGEMENT_BINARY/BUNDLE_A/BUNDLE_B on native Mac arm64 or Linux x86_64/glibc with zsh; WSL acceptance is deferred",
 )
 class ManagementDistribution(unittest.TestCase):
     def test_install_update_rollback_and_preservation(self):
+        target = supported_native_target()
         bootstrap = Path(os.environ["BXDL_MANAGEMENT_BINARY"]).resolve(strict=True)
         sources = [Path(os.environ[name]).resolve(strict=True)
                    for name in ("BXDL_MANAGEMENT_BUNDLE_A", "BXDL_MANAGEMENT_BUNDLE_B")]
@@ -142,13 +153,15 @@ class ManagementDistribution(unittest.TestCase):
             environment = dict(os.environ, HOME=str(root), ZDOTDIR=str(root))
             bundle_a, bundle_b = root / "bundle A", root / "bundle B"
             manifests = [unpack_fixture(sources[0], bundle_a), unpack_fixture(sources[1], bundle_b)]
+            for manifest in manifests:
+                self.assertEqual(manifest["target"], target, "supply must match the native acceptance host")
             identities = [{key: manifest[key] for key in ("version", "revision")} for manifest in manifests]
             self.assertNotEqual(identities[0], identities[1], "two different CLI identities are required")
             evidence["bundles"] = [{"identity": identity, "manifestSha256": digest(directory / "manifest.json"),
                                      "binarySha256": digest(directory / "bin/bxdl"),
                                      "archiveSha256": digest(source) if source.is_file() else None}
                                     for identity, directory, source in zip(identities, (bundle_a, bundle_b), sources)]
-            home = root / "Library/Application Support/BXDL"
+            home = root / ("Library/Application Support/BXDL" if target == "darwin-arm64" else ".local/share/BXDL")
             seed_management_home(home, root)
             protected = root / "protected"
             for name in ("control", "data", "runtime-package"):
@@ -156,7 +169,7 @@ class ManagementDistribution(unittest.TestCase):
                 path.mkdir(mode=0o700, parents=True)
                 (path / "private-preserved").write_text(_CANARY)
             preserved = (snapshot(home), snapshot(protected))
-            cli_root = root / "Library/Application Support/BXDL-CLI"
+            cli_root = root / ("Library/Application Support/BXDL-CLI" if target == "darwin-arm64" else ".local/share/BXDL-CLI")
             bin_dir = root / ".local/bin"
             entry = bin_dir / "bxdl"
 
