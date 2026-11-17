@@ -497,6 +497,9 @@ fn preparation_candidates_are_named_private_directories_without_loading_or_locki
     private_directory(&operations);
     private_directory(&operations.join("orphan"));
     private_directory(&operations.join("alpha"));
+    #[cfg(target_os = "linux")]
+    let held = bxdl::setup::linux::Preparation::open(&sessions.join("alpha")).unwrap();
+    #[cfg(not(target_os = "linux"))]
     let held = bxdl::setup::preparation::Preparation::resume(&sessions.join("alpha")).unwrap();
     let before = snapshot(&f.root);
     for action in ["resume", "edit", "apply"] {

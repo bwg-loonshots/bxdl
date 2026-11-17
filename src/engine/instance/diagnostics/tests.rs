@@ -320,6 +320,7 @@ fn bounded_reads_and_expired_budget_report_omissions() {
     assert_eq!(c.report.sources[0].reason, "TIME_BUDGET_EXCEEDED");
 }
 #[test]
+#[cfg(target_os = "macos")]
 fn cli_success_and_partial_exit_codes_are_collection_results() {
     let mut f = Fixture::new();
     for expected in [0, 5] {
@@ -345,6 +346,40 @@ fn cli_success_and_partial_exit_codes_are_collection_results() {
         let value: Value = serde_json::from_slice(&out).unwrap();
         assert_eq!(value["data"]["partial"], expected == 5);
         assert!(!String::from_utf8(out).unwrap().contains("CANARY"));
+    }
+}
+
+#[test]
+#[cfg(target_os = "linux")]
+fn linux_diagnostic_cli_rejects_foreign_user_control_without_export() {
+    let f = Fixture::new();
+    let binding_before = fs::read(f.root.path().join("binding.json")).unwrap();
+    let journal_before = f.journal.read().unwrap();
+    let output = f.base.join("must-not-create.json");
+    for command in ["logs", "diagnose"] {
+        let mut args = vec![
+            command.to_owned(),
+            "--instance".into(),
+            f.root.path().to_str().unwrap().into(),
+            "--json".into(),
+        ];
+        if command == "diagnose" {
+            args.extend(["--output".into(), output.to_str().unwrap().into()]);
+        }
+        let (mut out, mut err) = (Vec::new(), Vec::new());
+        assert_eq!(crate::cli::run(&args, &mut out, &mut err), 3);
+        assert!(err.is_empty());
+        let value: Value = serde_json::from_slice(&out).unwrap();
+        assert_eq!(value["reasonCode"], "LINUX_SERVICE_AUTHORITY_UNSAFE");
+        assert!(!String::from_utf8(out).unwrap().contains("CANARY"));
+        assert!(!output.exists());
+        assert!(!f.binding.package.exists());
+        assert!(!f.binding.data_directory.exists());
+        assert_eq!(
+            fs::read(f.root.path().join("binding.json")).unwrap(),
+            binding_before
+        );
+        assert_eq!(f.journal.read().unwrap(), journal_before);
     }
 }
 

@@ -320,7 +320,17 @@ fn early_cli_check_requires_exact_current_executable_size_and_bytes() {
         .unwrap();
     entry.size = raw.len() as u64;
     entry.sha256 = files::digest(&raw);
-    check_cli(&f.package).unwrap();
+    // This uses the test executable as the exact-byte fixture. Debug symbols
+    // can make that executable exceed the production worker's 64 MiB bound
+    // (notably on Linux); matching bytes must not bypass that bound.
+    if raw.len() as u64 <= 64 * 1024 * 1024 {
+        check_cli(&f.package).unwrap();
+    } else {
+        assert_eq!(
+            check_cli(&f.package).unwrap_err().code,
+            "SETUP_CLI_MISMATCH"
+        );
+    }
     f.package
         .manifest
         .files
@@ -328,6 +338,32 @@ fn early_cli_check_requires_exact_current_executable_size_and_bytes() {
         .find(|entry| entry.path == "bin/bxdl")
         .unwrap()
         .size += 1;
+    assert_eq!(
+        check_cli(&f.package).unwrap_err().code,
+        "SETUP_CLI_MISMATCH"
+    );
+    let entry = f
+        .package
+        .manifest
+        .files
+        .iter_mut()
+        .find(|entry| entry.path == "bin/bxdl")
+        .unwrap();
+    entry.size = raw.len() as u64;
+    entry.sha256 = files::digest(b"different executable bytes");
+    assert_eq!(
+        check_cli(&f.package).unwrap_err().code,
+        "SETUP_CLI_MISMATCH"
+    );
+    let entry = f
+        .package
+        .manifest
+        .files
+        .iter_mut()
+        .find(|entry| entry.path == "bin/bxdl")
+        .unwrap();
+    entry.size = 64 * 1024 * 1024 + 1;
+    entry.sha256 = files::digest(&raw);
     assert_eq!(
         check_cli(&f.package).unwrap_err().code,
         "SETUP_CLI_MISMATCH"
