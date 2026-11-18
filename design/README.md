@@ -16,6 +16,7 @@ BXDL은 NIGO 엔진의 패키징·설치·초기화·서비스 운용을 담당�
 
 | 문서 | 읽을 내용 |
 | --- | --- |
+| [NIGO 포함 Linux 공개 시험판](./2026-11-18-linux-release-channel.md) | GitHub Releases, 서명된 CLI·런타임, curl 설치, draft 인수와 공개 절차 |
 | [Linux 우선 구현·인수 계획](./2026-11-16-linux-first-implementation-plan.md) | Linux 공급물·systemd·설치 UX·비공개 단일노드 시험·서버/네트워크·WSL2 후속 순서 |
 | [직접 CLI 간소화 설계](./2026-10-22-cli-simplification.md) | 이름 기반 명령, 순차 준비·조회·수정, 기존 CLI/JSON과의 호환 |
 | [CLI 구현 계획](./2026-10-22-integrated-operations-ux-implementation-plan.md) | CLI-01~05의 범위와 기존 UX 계획에서 이어진 기능 |

@@ -30,6 +30,19 @@ jobs:
           CARGO_PROFILE_TEST_DEBUG: "0"
         run: make check
       - name: Build host CLI
+        env:
+          BXDL_REVISION: ${{ github.sha }}
         run: make build
+      - name: Exercise signed Linux download installation with fixture payloads
+        if: matrix.os == 'ubuntu-24.04'
+        run: |
+          # Use the same protected path layout as the release builder.
+          umask 022
+          work=$(mktemp -d /tmp/bxdl-release-test.XXXXXXXX)
+          git archive HEAD | tar -x -C "$work"
+          install -m 0755 bin/bxdl "$work/bxdl"
+          cd "$work"
+          BXDL_TEST_RELEASE_CLI="$work/bxdl" python3 -B -m unittest discover -s tests/acceptance -p test_linux_release_smoke.py
+          BXDL_TEST_LINUX_RELEASE_HELPER=1 python3 -B -m unittest discover -s tests/acceptance -p test_release_helper.py
       - name: Exercise CLI only (not engine or service acceptance)
         run: ./bin/bxdl version --json

@@ -1,4 +1,4 @@
-//! First-install extraction for a development macOS arm64 package. The caller
+//! First-install extraction of development packages for supported native hosts. The caller
 //! chooses a new directory; this module never initializes an engine, opens data,
 //! starts a service, or downloads anything. A failed reserved directory remains
 //! incomplete and requires explicit inspection/removal; it is never resumed.
@@ -72,7 +72,47 @@ pub fn install(
     destination: &Path,
     options: &VerifyOptions,
 ) -> Result<InstallReport> {
-    install_owned(archive, destination, options, |_| Ok(()))
+    require_install_policy(options)?;
+    extract(archive, destination, options, |_| Ok(()))
+}
+
+/// Re-read a user installation against a separately authenticated source archive.
+/// Neither a local receipt nor a previous invocation establishes integrity.
+pub fn verify_existing(
+    archive: &Path,
+    destination: &Path,
+    options: &VerifyOptions,
+) -> Result<Report> {
+    require_install_policy(options)?;
+    let expected = artifact::verify(archive, options)?;
+    let key = options
+        .public_key_path
+        .as_deref()
+        .map(artifact::load_public_key)
+        .transpose()?;
+    installed::verify_observed_owned(destination, &expected, None, key.as_ref(), || {})?;
+    Ok(expected)
+}
+
+fn require_install_policy(options: &VerifyOptions) -> Result<()> {
+    match crate::management::host_target() {
+        Some("linux-amd64")
+            if options.public_key_path.is_none() || options.allow_unsigned_development =>
+        {
+            return Err(error(
+                "INSTALL_SIGNATURE_REQUIRED",
+                "Linux installation requires an external trusted signing key",
+            ));
+        }
+        Some("linux-amd64" | "darwin-arm64") => {}
+        _ => {
+            return Err(error(
+                "INSTALL_PLATFORM_UNSUPPORTED",
+                "Unsupported native package installation target",
+            ));
+        }
+    }
+    Ok(())
 }
 
 /// Invoke `on_reserved` exactly once after exclusively creating and syncing the
@@ -82,14 +122,23 @@ pub fn install_owned(
     archive: &Path,
     destination: &Path,
     options: &VerifyOptions,
-    mut on_reserved: impl FnMut(RootIdentity) -> Result<()>,
+    on_reserved: impl FnMut(RootIdentity) -> Result<()>,
 ) -> Result<InstallReport> {
     if !cfg!(all(target_os = "macos", target_arch = "aarch64")) {
         return Err(error(
             "INSTALL_PLATFORM_UNSUPPORTED",
-            "Installation currently requires a macOS arm64 host",
+            "This installation workflow requires a macOS arm64 host",
         ));
     }
+    extract(archive, destination, options, on_reserved)
+}
+
+fn extract(
+    archive: &Path,
+    destination: &Path,
+    options: &VerifyOptions,
+    mut on_reserved: impl FnMut(RootIdentity) -> Result<()>,
+) -> Result<InstallReport> {
     let mut sink = Installer::new(destination, &mut on_reserved)?;
     let verified = artifact::verify_to_sink(archive, options, &mut sink)?;
     sink.commit(verified)
@@ -371,6 +420,23 @@ impl<'a> Installer<'a> {
         Ok(report)
     }
 }
+fn require_native_manifest(manifest: &Manifest) -> Result<()> {
+    if !matches!(
+        (
+            crate::management::host_target(),
+            manifest.platform.os.as_str(),
+            manifest.platform.arch.as_str()
+        ),
+        (Some("darwin-arm64"), "darwin", "arm64") | (Some("linux-amd64"), "linux", "amd64")
+    ) {
+        return Err(error(
+            "INSTALL_PLATFORM_UNSUPPORTED",
+            "Package target does not match the native host",
+        ));
+    }
+    Ok(())
+}
+
 impl PayloadSink for Installer<'_> {
     fn begin(
         &mut self,
@@ -378,12 +444,7 @@ impl PayloadSink for Installer<'_> {
         manifest_bytes: &[u8],
         signature: Option<&[u8]>,
     ) -> Result<()> {
-        if manifest.platform.os != "darwin" || manifest.platform.arch != "arm64" {
-            return Err(error(
-                "INSTALL_PLATFORM_UNSUPPORTED",
-                "Package target must be darwin arm64 for this installer",
-            ));
-        }
+        require_native_manifest(manifest)?;
         reject_inventory_aliases(manifest)?;
         self.manifest_bytes = manifest_bytes.to_vec();
         self.signature = signature.map(<[u8]>::to_vec);

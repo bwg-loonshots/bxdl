@@ -58,7 +58,7 @@ pub fn verify_installed_owned(
     expected: &Report,
     owned: &RootIdentity,
 ) -> Result<()> {
-    verify_observed_owned(destination, expected, Some(owned), || {})
+    verify_observed_owned(destination, expected, Some(owned), None, || {})
 }
 
 fn verify_observed(
@@ -66,26 +66,26 @@ fn verify_observed(
     expected: &Report,
     after_hashing: impl FnOnce(),
 ) -> Result<()> {
-    verify_observed_owned(destination, expected, None, after_hashing)
+    verify_observed_owned(destination, expected, None, None, after_hashing)
 }
 
-fn verify_observed_owned(
+pub(super) fn verify_observed_owned(
     destination: &Path,
     expected: &Report,
     owned: Option<&RootIdentity>,
+    signature_key: Option<&ed25519_dalek::VerifyingKey>,
     after_hashing: impl FnOnce(),
 ) -> Result<()> {
-    if !cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+    if crate::management::host_target().is_none() {
         return Err(BxdlError::new(
             "INSTALL_PLATFORM_UNSUPPORTED",
-            "Installed package verification currently requires a macOS arm64 host",
+            "Unsupported native package verification target",
         ));
     }
     artifact::validate_manifest(&expected.manifest, true).map_err(|_| mismatch())?;
     reject_inventory_aliases(&expected.manifest).map_err(|_| mismatch())?;
-    if expected.manifest.platform.os != "darwin"
-        || expected.manifest.platform.arch != "arm64"
-        || expected.files_verified != expected.manifest.files.len()
+    super::require_native_manifest(&expected.manifest)?;
+    if expected.files_verified != expected.manifest.files.len()
         || expected.bytes_verified != expected.manifest.files.iter().map(|f| f.size).sum::<u64>()
         || !valid_hash(&expected.archive_sha256)
         || !valid_hash(&expected.manifest_sha256)
@@ -174,8 +174,10 @@ fn verify_observed_owned(
         let signature = read_small(&root, "manifest.sig", 0o644, 128)?;
         let encoded = std::str::from_utf8(&signature).map_err(|_| mismatch())?;
         let decoded = STANDARD.decode(encoded.trim()).map_err(|_| mismatch())?;
-        if decoded.len() != 64 {
-            return Err(mismatch());
+        let sig = ed25519_dalek::Signature::from_slice(&decoded).map_err(|_| mismatch())?;
+        if let Some(key) = signature_key {
+            key.verify_strict(&manifest_raw, &sig)
+                .map_err(|_| mismatch())?;
         }
         inventory.insert(
             "manifest.sig".into(),

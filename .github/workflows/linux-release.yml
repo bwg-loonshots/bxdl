@@ -1,0 +1,187 @@
+name: BXDL Linux release
+
+# Dispatch against the reviewed, protected release tag.
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'draft는 새 후보를 제작하고 publish는 검증한 draft를 공개합니다.'
+        required: true
+        type: choice
+        options: [draft, publish]
+      accepted_sums_sha256:
+        description: 'publish 전 실제 장비에서 인수한 SHA256SUMS 파일의 SHA-256'
+        type: string
+        required: false
+
+permissions: {}
+concurrency:
+  group: linux-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'bwg-loonshots/bxdl' && github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    environment: bxdl-linux-release
+    permissions:
+      contents: write
+    env:
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+      POLICY_ROOT: packaging/public-releases
+      OPERATION: ${{ inputs.operation }}
+      ACCEPTED_SUMS: ${{ inputs.accepted_sums_sha256 }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Prepare private build and installation directories
+        run: |
+          # The release builder checks ancestor ownership and write permissions.
+          umask 022
+          work=$(mktemp -d /tmp/bxdl-release.XXXXXXXX)
+          git init --quiet "$work/src"
+          git -C "$work/src" fetch --quiet --depth=1 "file://$GITHUB_WORKSPACE" HEAD
+          git -C "$work/src" checkout --quiet --detach FETCH_HEAD
+          test "$(git -C "$work/src" rev-parse HEAD)" = "$GITHUB_SHA"
+          mkdir -m 700 "$work/operator"
+          echo "BXDL_RELEASE_WORK=$work" >> "$GITHUB_ENV"
+      - name: Check release tag and distribution inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUBLIC_ENGINE_SHA256: ${{ vars.BXDL_PUBLIC_ENGINE_SHA256 }}
+        run: |
+          cd "$BXDL_RELEASE_WORK/src"
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9]+([.-][A-Za-z0-9]+)*)?$ ]]
+          [[ "$OPERATION" == draft || "$OPERATION" == publish ]]
+          if [[ "$OPERATION" == publish ]]; then [[ "$ACCEPTED_SUMS" =~ ^[a-f0-9]{64}$ ]]; fi
+          test "$(gh api "repos/$GITHUB_REPOSITORY/commits/$TAG" --jq .sha)" = "$(git rev-parse HEAD)"
+          test "$PUBLIC_ENGINE_SHA256" = "$(jq -er .jarSha256 packaging/engine-lock.rc4-temurin-linux-development.json)"
+          for file in release-public.pem THIRD_PARTY_NOTICES SBOM.json RELEASE.md; do
+            test -s "$POLICY_ROOT/$TAG/$file"
+            test ! -L "$POLICY_ROOT/$TAG/$file"
+          done
+          mkdir -m 700 "$BXDL_RELEASE_WORK/bxdl-input"
+      - name: Build native CLI and run regressions
+        if: inputs.operation == 'draft'
+        env:
+          CARGO_PROFILE_TEST_DEBUG: '0'
+        run: |
+          cd "$BXDL_RELEASE_WORK/src"
+          rustup toolchain install 1.86.0 --profile minimal --component rustfmt --component clippy
+          make check
+          BXDL_REVISION="$(git rev-parse HEAD)" make build
+      - name: Receive pinned engine and JRE
+        if: inputs.operation == 'draft'
+        env:
+          GH_TOKEN: ${{ secrets.NIGO_RELEASE_READ_TOKEN }}
+        run: |
+          cd "$BXDL_RELEASE_WORK/src"
+          work="$BXDL_RELEASE_WORK/bxdl-input"
+          archive=nigo-engine-v0.1.0-rc.4-56887aa12f23.tar.gz
+          gh release download nigo-engine-v0.1.0-rc.4 --repo bwg-loonshots/nigo-protocol --pattern "$archive" --dir "$work"
+          receipt=contracts/nigo/engine-rc4-2026-11-15/consumer-receipt.json
+          printf '%s  %s\n' "$(jq -er .archiveSha256 "$receipt")" "$work/$archive" | sha256sum --check --status
+          # Read only the JAR member of the hash-pinned supplier archive.
+          member=$(tar -tzf "$work/$archive" | awk '/(^|\/)nigo-node-0\.0\.1-SNAPSHOT\.jar$/')
+          [[ -n "$member" && "$member" != *$'\n'* ]]
+          tar -xOzf "$work/$archive" -- "$member" > "$work/nigo.jar"
+          lock=packaging/runtime-lock.temurin-21-linux-amd64.json
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' \
+            --output "$work/jre.tar.gz" "$(jq -er .archive.url "$lock")"
+          printf '%s  %s\n' "$(jq -er .archive.sha256 "$lock")" "$work/jre.tar.gz" | sha256sum --check --status
+      - name: Sign release assets
+        if: inputs.operation == 'draft'
+        env:
+          SIGNING_KEY: ${{ secrets.BXDL_RELEASE_SIGNING_KEY_PEM }}
+        run: |
+          cd "$BXDL_RELEASE_WORK/src"
+          umask 077
+          key=$(mktemp "$BXDL_RELEASE_WORK/bxdl-key.XXXXXX")
+          trap 'rm -f -- "$key"' EXIT
+          printf '%s\n' "$SIGNING_KEY" > "$key"
+          unset SIGNING_KEY
+          inputs="$BXDL_RELEASE_WORK/bxdl-input"
+          policy="$POLICY_ROOT/$TAG"
+          python3 -B tools/build-linux-release.py --tag "$TAG" --cli "$PWD/bin/bxdl" \
+            --jar "$inputs/nigo.jar" --jre-archive "$inputs/jre.tar.gz" --signing-key "$key" \
+            --notices "$policy/THIRD_PARTY_NOTICES" --sbom "$policy/SBOM.json" --output "$BXDL_RELEASE_WORK/bxdl-assets"
+      - name: Download accepted draft
+        if: inputs.operation == 'publish'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd "$BXDL_RELEASE_WORK/src"
+          test "$(gh release view "$TAG" --json isDraft --jq .isDraft)" = true
+          gh release download "$TAG" --dir "$BXDL_RELEASE_WORK/bxdl-assets"
+      - name: Check exact asset set, tag and download installation
+        run: |
+          cd "$BXDL_RELEASE_WORK/src"
+          assets="$BXDL_RELEASE_WORK/bxdl-assets"
+          trusted="$PWD/$POLICY_ROOT/$TAG/release-public.pem"
+          diff -u <(printf '%s\n' SHA256SUMS SHA256SUMS.sig bxdl-cli-linux-amd64.tar.gz bxdl-linux-amd64 \
+            bxdl-runtime-linux-amd64.tar.gz install-bxdl.sh install-linux-helper.sh release-public.pem release.json | LC_ALL=C sort) \
+            <(find "$assets" -mindepth 1 -maxdepth 1 -printf '%f\n' | LC_ALL=C sort)
+          if [[ "$OPERATION" == publish ]]; then
+            printf '%s  %s\n' "$ACCEPTED_SUMS" "$assets/SHA256SUMS" | sha256sum --check --status
+          fi
+          cmp "$trusted" "$assets/release-public.pem"
+          cmp scripts/install-bxdl.sh "$assets/install-bxdl.sh"
+          cmp scripts/install-linux-helper.sh "$assets/install-linux-helper.sh"
+          openssl pkeyutl -verify -pubin -inkey "$trusted" -rawin -in "$assets/SHA256SUMS" -sigfile "$assets/SHA256SUMS.sig"
+          test "$(jq -er .sourceCommit "$assets/release.json")" = "$(git rev-parse HEAD)"
+          HOME="$BXDL_RELEASE_WORK/operator" sh scripts/install-bxdl.sh --version "$TAG" --public-key "$trusted" --from-dir "$assets"
+          HOME="$BXDL_RELEASE_WORK/operator" "$BXDL_RELEASE_WORK/operator/.local/bin/bxdl" cli info --json
+          BXDL_TEST_LINUX_RELEASE_HELPER=1 python3 -B -m unittest discover -s tests/acceptance -p test_release_helper.py
+          sha256sum "$assets/SHA256SUMS" >> "$GITHUB_STEP_SUMMARY"
+      - name: Create draft or publish verified files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd "$BXDL_RELEASE_WORK/src"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/commits/$TAG" --jq .sha)" = "$(git rev-parse HEAD)"
+          notes="$BXDL_RELEASE_WORK/bxdl-notes.md"
+          cp "$POLICY_ROOT/$TAG/RELEASE.md" "$notes"
+          installer_sha=$(sha256sum scripts/install-bxdl.sh | cut -d' ' -f1)
+          cat >> "$notes" <<INSTALL
+
+          ## Ubuntu 24.04 x86_64 설치
+
+          조직이 별도로 제공한 서명 공개키 경로를 BXDL_TRUST_KEY에 설정하고 새 디렉터리에서 실행하세요.
+
+          \`\`\`sh
+          curl -fsSL --proto '=https' --proto-redir '=https' 'https://github.com/bwg-loonshots/bxdl/releases/download/$TAG/install-bxdl.sh' -o install-bxdl.sh &&
+          printf '%s  %s\n' '$installer_sha' install-bxdl.sh | sha256sum -c - &&
+          sh ./install-bxdl.sh --version '$TAG' --public-key "\${BXDL_TRUST_KEY:?set trusted public key path}"
+          \`\`\`
+          INSTALL
+          if [[ "$OPERATION" == draft ]]; then
+            gh release create "$TAG" "$BXDL_RELEASE_WORK/bxdl-assets/"* --verify-tag --draft --prerelease --latest=false \
+              --title "BXDL Linux $TAG" --notes-file "$notes"
+          else
+            # Verify the remote asset digests again immediately before publishing.
+            rid=$(gh release view "$TAG" --json isDraft,databaseId --jq 'select(.isDraft) | .databaseId')
+            test -n "$rid"
+            gh api "repos/$GITHUB_REPOSITORY/releases/$rid/assets?per_page=100" > "$BXDL_RELEASE_WORK/bxdl-remote.json"
+            jq -e 'length == 9' "$BXDL_RELEASE_WORK/bxdl-remote.json" >/dev/null
+            for file in "$BXDL_RELEASE_WORK/bxdl-assets/"*; do
+              digest=$(sha256sum "$file" | cut -d' ' -f1)
+              jq -e --arg name "${file##*/}" --arg hash "sha256:$digest" \
+                '[.[] | select(.name == $name and .digest == $hash)] | length == 1' "$BXDL_RELEASE_WORK/bxdl-remote.json" >/dev/null
+            done
+            gh release edit "$TAG" --verify-tag --draft=false --prerelease --latest=false --notes-file "$notes"
+          fi
+      - name: Verify anonymous curl download from the published URL
+        if: inputs.operation == 'publish'
+        run: |
+          cd "$BXDL_RELEASE_WORK/src"
+          url="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/install-bxdl.sh"
+          downloaded="$BXDL_RELEASE_WORK/install-bxdl.sh"
+          curl --disable -fsSL --retry 3 --retry-all-errors --proto '=https' --proto-redir '=https' "$url" -o "$downloaded"
+          cmp scripts/install-bxdl.sh "$downloaded"
+          sh "$downloaded" --version "$TAG" --public-key "$PWD/$POLICY_ROOT/$TAG/release-public.pem" --verify-only

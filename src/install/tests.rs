@@ -26,7 +26,10 @@ fn inventory_aliases_include_unicode_and_file_directory_conflicts() {
     }
 }
 
-#[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
+#[cfg(not(any(
+    all(target_os = "macos", target_arch = "aarch64"),
+    all(target_os = "linux", target_arch = "x86_64", target_env = "gnu")
+)))]
 #[test]
 fn unsupported_host_fails_before_creating_any_directory() {
     let temporary = tempfile::tempdir().unwrap();
@@ -44,8 +47,11 @@ fn unsupported_host_fails_before_creating_any_directory() {
     assert!(!destination.exists());
 }
 
-#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-mod mac {
+#[cfg(any(
+    all(target_os = "macos", target_arch = "aarch64"),
+    all(target_os = "linux", target_arch = "x86_64", target_env = "gnu")
+))]
+mod native {
     use super::*;
     use base64::{Engine as _, engine::general_purpose::STANDARD};
     use ed25519_dalek::{
@@ -82,9 +88,12 @@ mod mac {
             .into_iter()
             .map(|(p, b)| (p.into(), b.to_vec()))
             .collect();
-            let mut manifest: Manifest =
-                serde_json::from_str(include_str!("../../packaging/package-spec.example.json"))
-                    .unwrap();
+            let spec = if cfg!(target_os = "linux") {
+                include_str!("../../packaging/package-spec.linux.example.json")
+            } else {
+                include_str!("../../packaging/package-spec.example.json")
+            };
+            let mut manifest: Manifest = serde_json::from_str(spec).unwrap();
             manifest.engine.revision = "a".repeat(40);
             manifest.engine.contract_revision = "test-fixture-v1".into();
             manifest.runtime.vendor = "test-fixture".into();
@@ -185,6 +194,37 @@ mod mac {
     fn octal(destination: &mut [u8], value: u64) {
         let text = format!("{value:0width$o}\0", width = destination.len() - 1);
         destination.copy_from_slice(text.as_bytes());
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn linux_install_refuses_unsigned_policy_before_reserving() {
+        let mut fixture = Fixture::new();
+        fixture.options.public_key_path = None;
+        fixture.options.allow_unsigned_development = true;
+        assert_eq!(
+            fixture.install().unwrap_err().code,
+            "INSTALL_SIGNATURE_REQUIRED"
+        );
+        assert!(!fixture.destination.exists());
+    }
+
+    #[test]
+    fn verify_existing_detects_modified_files_without_touching_installation() {
+        let f = Fixture::new();
+        let report = f.install().unwrap();
+        let verified = verify_existing(&f.archive, &f.destination, &f.options).unwrap();
+        assert_eq!(report.archive_sha256, verified.archive_sha256);
+        let signature_path = f.destination.join("manifest.sig");
+        let signature = fs::read(&signature_path).unwrap();
+        fs::write(&signature_path, STANDARD.encode([0u8; 64])).unwrap();
+        assert!(verify_existing(&f.archive, &f.destination, &f.options).is_err());
+        fs::write(&signature_path, signature).unwrap();
+        let file = f.destination.join("runtime/bin/java");
+        fs::write(&file, b"changed").unwrap();
+        assert!(verify_existing(&f.archive, &f.destination, &f.options).is_err());
+        assert_eq!(fs::read(&file).unwrap(), b"changed");
+        assert!(f.destination.join(RECEIPT).exists());
     }
 
     #[test]
@@ -306,10 +346,12 @@ mod mac {
                 .unwrap(),
         )
         .unwrap();
-        fixture.manifest.platform.os = "linux".into();
-        fixture.manifest.platform.arch = "amd64".into();
-        fixture.manifest.platform.libc = "glibc".into();
-        fixture.manifest.platform.min_glibc = "2.34".into();
+        let foreign = if cfg!(target_os = "linux") {
+            include_str!("../../packaging/package-spec.example.json")
+        } else {
+            include_str!("../../packaging/package-spec.linux.example.json")
+        };
+        fixture.manifest.platform = serde_json::from_str::<Manifest>(foreign).unwrap().platform;
         fixture.write_archive();
         assert_eq!(
             fixture.install().unwrap_err().code,
@@ -484,6 +526,7 @@ mod mac {
             }
         }
     }
+    #[cfg(target_os = "macos")]
     #[test]
     fn ownership_is_observed_before_payload_and_callback_failure_leaves_empty_root() {
         let f = Fixture::new();
@@ -509,6 +552,7 @@ mod mac {
         );
     }
 
+    #[cfg(target_os = "macos")]
     #[test]
     fn completed_owned_install_reconciles_but_matching_replacement_does_not() {
         let f = Fixture::new();
@@ -535,6 +579,7 @@ mod mac {
         );
     }
 
+    #[cfg(target_os = "macos")]
     #[test]
     fn replacing_reserved_root_inside_callback_never_receives_payload() {
         let f = Fixture::new();

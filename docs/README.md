@@ -6,6 +6,7 @@
 
 | 목적 | 문서 |
 | --- | --- |
+| Linux 공개 패키지 다운로드·서명 검증·설치 | [GitHub Releases에서 curl로 설치](./linux-release.md) |
 | Linux 노드 설치·초기화·systemd 운용 | [Linux 설치·운용](./linux-operations.md) |
 | 관리 CLI 설치·업데이트·복귀 | [독립 관리 CLI](./management-cli.md) |
 | 순차 설치 준비·중단/재개·수정 | [설치 준비](./preparation.md), Linux는 [플랫폼 가이드](./linux-operations.md) |

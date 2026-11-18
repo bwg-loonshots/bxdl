@@ -370,7 +370,7 @@ fn print_host_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> 
     }
     writeln!(
         out,
-        "  Linux 서비스: 개발용 관리자 경로 구현 / 일반 설치 UX: 후속 / 엔진 실물 인수: 미수행"
+        "  Linux 노드 설치는 setup new/apply로 준비합니다. 엔진·서비스 실물 인수는 별도입니다."
     )?;
     writeln!(
         out,
@@ -1721,6 +1721,7 @@ fn capabilities_for(target: Option<&str>) -> Vec<&'static str> {
             "stop.macos-launchagent",
         ]),
         Some("linux-amd64") => capabilities.extend([
+            "install.linux.signed",
             "management.install.linux",
             "management.update.linux",
             "management.rollback.linux",
@@ -2097,6 +2098,7 @@ fn dispatch_install(args: &[String]) -> (ResultEnvelope, i32) {
         args,
         &[
             ("destination", true),
+            ("verify-existing", false),
             ("public-key", true),
             ("allow-unsigned-development", false),
         ],
@@ -2113,11 +2115,22 @@ fn dispatch_install(args: &[String]) -> (ResultEnvelope, i32) {
         public_key_path: flags.get("public-key").map(PathBuf::from),
         allow_unsigned_development: flags.contains_key("allow-unsigned-development"),
     };
-    match install::install(
-        Path::new(&positions[0]),
-        Path::new(&flags["destination"]),
-        &options,
-    ) {
+    let archive = Path::new(&positions[0]);
+    let destination = Path::new(&flags["destination"]);
+    if flags.contains_key("verify-existing") {
+        return match install::verify_existing(archive, destination, &options) {
+            Ok(value) => report(
+                "install",
+                "SUCCEEDED",
+                "INSTALLED_PACKAGE_VERIFIED",
+                "배포 파일과 설치된 패키지의 내용을 확인했습니다.",
+                value,
+                0,
+            ),
+            Err(error) => failure("install", error, 3),
+        };
+    }
+    match install::install(archive, destination, &options) {
         Ok(value) => report(
             "install",
             "SUCCEEDED",

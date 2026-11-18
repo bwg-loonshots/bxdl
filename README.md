@@ -32,7 +32,8 @@ Intel Mac·Linux ARM64·Windows native·musl은 현재 지원 대상이 아닙�
 
 운영체제에 맞는 관리 CLI와 노드 공급물을 준비한 뒤 해당 가이드를 따릅니다. 설치 입력과 권한 준비 방식이 다르므로 다른 OS의 패키지를 섞어 사용하지 않습니다.
 
-- **Linux:** [설치·운용 가이드](./docs/linux-operations.md). 일반 사용자로 준비하고, 고정된 관리자 실행기를 통해 승인한 시스템 설치를 수행합니다. 비공개 시험 패키지를 받았다면 동봉된 `START-HERE.md`와 `HANDOFF.json`부터 확인합니다.
+- **Linux 다운로드:** [GitHub Releases](https://github.com/bwg-loonshots/bxdl/releases)가 공식 다운로드 위치입니다. 첫 공개 시험판은 준비 중이며, 게시된 태그별 설치 명령과 필요한 공개키는 [curl 설치 안내](./docs/linux-release.md)에서 확인할 수 있습니다.
+- **Linux 노드 운용:** [설치·운용 가이드](./docs/linux-operations.md). 일반 사용자로 준비하고, 고정된 관리자 실행기를 통해 승인한 시스템 설치를 수행합니다. 비공개 시험 패키지를 받았다면 동봉된 `START-HERE.md`와 `HANDOFF.json`부터 확인합니다.
 - **macOS:** [순차 설치 준비](./docs/preparation.md)와 [관리 CLI 설치](./docs/management-cli.md). 노드는 로그인한 사용자의 LaunchAgent로 운용합니다.
 
 기본 흐름은 **설치 준비 → 설치 승인 → 초기화 → 서비스 시작 → 상태·진단 → 정상 종료**입니다. 각 단계의 결과를 확인하고 다음 단계로 진행합니다.
