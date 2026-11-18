@@ -49,7 +49,7 @@ bxdl package build --root ./stage --spec ./package-spec.json \
 3. manifest inventory와 정확히 일치하는 payload regular entries. Builder는 경로를 정렬한다.
 4. 두 개의 zero EOF block. 추가 tar padding은 제한된 zero bytes만 허용한다.
 
-Manifest 자체와 signature는 payload inventory에 포함하지 않는다. 각 payload의 path/size/SHA-256/mode를 manifest가 묶는다. gzip CRC·추가 member·EOF 이후 데이터까지 검사한다. `package verify`는 스트리밍 읽기만 수행한다. Mac의 `install`은 같은 검증 parser의 payload bytes를 새 폴더에 쓰며 최종 gzip 검증 후에만 완료 receipt를 공개한다. 두 명령은 JVM·서비스·네트워크를 실행하지 않는다.
+Manifest 자체와 signature는 payload inventory에 포함하지 않는다. 각 payload의 path/size/SHA-256/mode를 manifest가 묶는다. gzip CRC·추가 member·EOF 이후 데이터까지 검사한다. `package verify`는 스트리밍 읽기만 수행한다. Mac과 Linux의 `install`은 같은 검증 parser의 payload bytes를 새 폴더에 쓰며 최종 gzip 검증 후에만 완료 receipt를 공개한다. 두 명령은 JVM·서비스·네트워크를 실행하지 않는다.
 
 허용 root는 `bin`, `engine`, `runtime`, `deploy`, `schemas`, `docs`, `licenses`다. 경로는 상대경로·정규형이어야 하며 절대경로·`..`·backslash·control character·중복 path·file/directory 충돌을 거부한다. 알려진 secret/data/developer 경로와 파일 확장자를 거부하지만 일반적인 모든 내용 유출을 탐지하는 DLP는 아니다. source·키·DB가 없는 staging은 별도 검토한다.
 

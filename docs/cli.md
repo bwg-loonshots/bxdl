@@ -149,7 +149,7 @@ bxdl preflight --config <instance.json> --engine-config <node.json>
 
 ## 파일 설치와 엔진 cold 검사
 
-`install`은 macOS arm64에서 명시한 새 폴더에만 runtime archive를 설치한다. Linux 노드 설치는 `setup new/apply`와 [Linux 공급물 준비](./linux-native-build.md) 경로를 사용한다. 외부 신뢰 key 또는 서명 없는 개발 자료 opt-in이 필요하다. `engine inspect`/`engine preflight`는 `--jar`, `--java`, `--lock`, `--allow-development`가 필수다. preflight에는 NIGO `--config`도 필요하다. 선택 `--timeout-seconds`는 1~120, 기본 30이며 각 JVM 호출에 적용한다. [설치](./install.md)와 [엔진](./engine.md) 가이드의 신뢰·실패 경계를 따른다.
+`install`은 지원 플랫폼의 새 폴더에 runtime archive를 설치한다. Linux amd64는 외부 신뢰 공개키로 서명된 archive를 요구하며 `--verify-existing`으로 기존 설치 파일을 재검증한다. 이후 노드 등록은 `setup new/apply`로 진행한다. [Linux 다운로드 설치](./linux-release.md)를 따른다. Mac arm64는 외부 공개키 또는 서명 없는 개발 자료 opt-in을 사용한다. `engine inspect`/`engine preflight`는 `--jar`, `--java`, `--lock`, `--allow-development`가 필수다. preflight에는 NIGO `--config`도 필요하다. 선택 `--timeout-seconds`는 1~120, 기본 30이며 각 JVM 호출에 적용한다. [설치](./install.md)와 [엔진](./engine.md) 가이드의 신뢰·실패 경계를 따른다.
 
 ## Mac 인스턴스 등록과 명시 초기화
 

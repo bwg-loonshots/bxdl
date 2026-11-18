@@ -1,6 +1,6 @@
 # Mac runtime 패키지 설치
 
-Linux 노드 설치는 [Linux 설치·운용](./linux-operations.md)을 따른다. 이 문서의 `install`은 macOS Apple Silicon에서 검증된 패키지 파일을 **새 폴더**에 설치한다. 폴더는 사용자 범위로 명시하고 부모는 미리 존재해야 한다. 기본 `setup`의 설정 초안과 독립된 명령이며, 터미널에서 단계별 안내를 받으려면 [설치 도우미](./setup.md)의 `setup --install`을 사용한다. `bxdl install --help`와 `bxdl setup --install --help`로 각 진입점의 사용법을 확인한다.
+Linux의 서명된 runtime archive는 [curl 설치 안내](./linux-release.md)를, 노드 설정·등록은 [Linux 설치·운용](./linux-operations.md)을 따른다. 이 문서의 `install`은 macOS Apple Silicon에서 검증된 패키지 파일을 **새 폴더**에 설치한다. 폴더는 사용자 범위로 명시하고 부모는 미리 존재해야 한다. 기본 `setup`의 설정 초안과 독립된 명령이며, 터미널에서 단계별 안내를 받으려면 [설치 도우미](./setup.md)의 `setup --install`을 사용한다. `bxdl install --help`와 `bxdl setup --install --help`로 각 진입점의 사용법을 확인한다.
 
 ```bash
 bxdl install ./bxdl-development.tar.gz \
@@ -8,7 +8,7 @@ bxdl install ./bxdl-development.tar.gz \
   --public-key ./trusted-release-public.pem --json
 ```
 
-서명 없는 개발 시험 자료에만 `--public-key` 대신 `--allow-unsigned-development`를 쓴다. 서명 자료에는 외부 신뢰 key가 반드시 필요하다. root/sudo를 요구하지 않는다. 설치 대상의 OS/CPU와 실제 host가 Mac arm64여야 하며 이 archive 설치 명령의 Linux 지원은 후속이다. Linux 개발용 노드 설치는 별도 `setup apply`로 제공한다.
+서명 없는 개발 시험 자료에만 `--public-key` 대신 `--allow-unsigned-development`를 쓴다. 서명 자료에는 외부 신뢰 key가 반드시 필요하다. root/sudo를 요구하지 않는다. 이 Mac 예시의 설치 대상과 host는 Mac arm64여야 한다. Linux용 서명 archive는 Linux amd64에서 설치한 후 별도 `setup apply`로 노드를 등록한다.
 
 설치 전에 manifest·서명·platform·Mac 경로 별칭/파일-디렉터리 충돌을 검사한다. 새 대상 폴더를 0700으로 독점 생성하고, 기존 verifier가 읽는 동일 payload bytes를 파일에 쓴다. 파일은 검사 중 0600이며 전체 hash·inventory·tar EOF·gzip CRC/trailing 검증이 끝난 뒤 manifest mode를 적용한다. 원본 manifest.json과 존재하는 manifest.sig도 설치 폴더에 남긴다.
 

@@ -1,5 +1,7 @@
 # Linux 설치와 운용
 
+서명된 사전 빌드 패키지는 [다운로드 설치 가이드](./linux-release.md)를 따른다. 비공개 키트 사용자는 전달본에 동봉한 안내로 공급물을 준비한다. 두 경로 모두 아래의 이름 기반 setup과 명시적 init/start로 이어진다.
+
 일반 사용자 CLI에서 설치를 준비하고, 관리자 승인으로 시스템 노드를 설치한 뒤 이름으로 초기화·운용하는 개발용 경로다. Ubuntu CI의 native CLI 빌드·자동 검사는 통과했으며, 선정 JRE/RC.4의 실제 설치·RocksDB·systemd·SSH 단절·DB 재시작 인수는 아직 NOT_RUN이다. 정식 signed Linux runtime/exact executor profile 인수도 별도다. 비공개 시험에서는 빌드를 사전 준비로 두고 아래 설치·초기화·운용까지 직접 검증한다.
 
 [Linux 네이티브 빌드 안내](./linux-native-build.md)의 도구로 고정 후보를 만들고 `prepare-linux-operations.py`로 archive를 설치용 flat JRE/JAR·worker·독립 CLI로 연결한다. `prepare-linux-test-inputs.py`는 새 시험용 credential과 단일 노드 설정을 장비 안에서 만든다. source·도구·공급물 identity는 각 전달본의 `HANDOFF.json`을 따른다. 문서의 과거 검증 기록을 최신 전달본의 source로 자동 간주하지 않는다.

@@ -1,8 +1,10 @@
-use super::*;
-
-#[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
+#[cfg(not(any(
+    all(target_os = "macos", target_arch = "aarch64"),
+    all(target_os = "linux", target_arch = "x86_64", target_env = "gnu")
+)))]
 #[test]
 fn unsupported_host_does_not_read_an_installation() {
+    use super::*;
     let manifest: Manifest =
         serde_json::from_str(include_str!("../../packaging/package-spec.example.json")).unwrap();
     let expected = Report {
@@ -23,7 +25,7 @@ fn unsupported_host_does_not_read_an_installation() {
 
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 mod mac {
-    use super::*;
+    use super::super::*;
     use crate::artifact::{BuildOptions, VerifyOptions};
     use ed25519_dalek::{
         SigningKey,

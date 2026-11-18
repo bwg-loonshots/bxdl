@@ -60,7 +60,7 @@ python3 -B "$KIT/tools/build-linux-candidate.py" \
 
 `PASS`와 종료 코드 0일 때만 조립 성공이다. 도구는 source commit·모든 입력·도구 자체를 대조하고 새 target에서 native release를 빌드한다. 생성한 실행 파일은 ELF64 little-endian x86_64·glibc 요구 버전을 검사한 뒤 `version`, package/CLI bundle build·verify에만 실행한다. `runtime/bin/java`와 전체 JRE의 ELF도 요구 버전을 검사하지만 Java·노드를 실행하지 않는다.
 
-현재 manifest의 `minGlibc`는 2.34다. ELF의 `VERSION_NEEDS`에서 더 높은 요구가 나오면 `GLIBC_REQUIREMENT_EXCEEDS_DECLARATION`으로 중단한다. 이 검사를 건너뛰거나 숫자만 바꾸지 않고 빌더/sysroot와 지원 정책을 다시 결정한다. 이 검사를 통과해도 모든 native dependency 또는 Ubuntu 이전 버전의 실행 호환성을 인수한 것은 아니다. JAR 내부 RocksDB native는 후속 실행 검증 대상이다.
+공개 릴리스와 해당 설치 CI는 [공통 빌드 스크립트](../tools/build-linux-release-cli.sh)로 Linux amd64용 CLI를 고정 Rust 1.86.0·glibc 2.31 이미지에서 링크한다. 노드 설치와 systemd 운용 대상은 Ubuntu 24.04다. 현재 manifest의 `minGlibc`는 2.34다. ELF의 `VERSION_NEEDS`에서 더 높은 요구가 나오면 `GLIBC_REQUIREMENT_EXCEEDS_DECLARATION`으로 중단한다. 이 검사를 건너뛰거나 숫자만 바꾸지 않고 빌더/sysroot와 지원 정책을 다시 결정한다. 이 검사를 통과해도 모든 native dependency 또는 Ubuntu 이전 버전의 실행 호환성을 인수한 것은 아니다. JAR 내부 RocksDB native는 후속 실행 검증 대상이다.
 
 성공 시 다음 세 파일을 반환한다.
 
@@ -117,6 +117,6 @@ python3 -B tools/prepare-linux-test-inputs.py \
 
 ## 6. 패키지 고정 후 실제 시험
 
-현재 Linux `setup`은 flat JRE/JAR 경로를 입력받고 관리자 helper를 고정 worker로 snapshot한다. generic `bxdl install`의 runtime archive 설치 경로는 아직 Mac 전용이다. 이 빌드 도구로 R-L archive를 만들었다고 Linux 일반 설치·profile 인수가 완료되는 것은 아니다. 다음 Linux 설치 시험의 root helper는 수신 검증한 실행기 A bytes에서 배치하고 해시를 확인해야 한다. 자세한 권한·수동 bootstrap은 [Linux 설치·운용](./linux-operations.md)을 따른다.
+현재 Linux `setup`은 flat JRE/JAR 경로를 입력받고 관리자 helper를 고정 worker로 snapshot한다. [공개 다운로드 경로](./linux-release.md)의 Linux `bxdl install`은 외부 서명이 있는 runtime archive를 받는다. 이 도구로 만든 unsigned 후보는 비공개 키트의 추출 절차를 사용한다. 이 빌드 도구로 R-L archive를 만들었다고 Linux 일반 설치·profile 인수가 완료되는 것은 아니다. 다음 Linux 설치 시험의 root helper는 수신 검증한 실행기 A bytes에서 배치하고 해시를 확인해야 한다. 자세한 권한·수동 bootstrap은 [Linux 설치·운용](./linux-operations.md)을 따른다.
 
 비공개 시험은 빌드·후보 검증을 사전 단계로 두고 새 Linux 설치 → 명시 init → systemd 수동 시작·로컬 READY·진단 → SSH 단절 유지 → 정상 종료·동일 DB 재시작까지 진행한다. 선정 JRE/엔진의 cold·native/RocksDB와 서비스 관측은 실제 실행의 근거로 구분한다. 별도 CLI 버전 전환·다중 노드·재부팅/자동 복구는 후속이다. 각 결과를 확보한 뒤에만 exact executor profile을 인수한다. 비공개 테스터 전달본은 기술 검증과 사용성 관측을 함께 진행하되 판정을 분리한다. 현재 새로운 NIGO 선행 구현 요청은 없다. Linux 실행에서 엔진/native 문제가 발견되면 고정된 RC.4 조합과 재현 자료로 별도 요청한다.

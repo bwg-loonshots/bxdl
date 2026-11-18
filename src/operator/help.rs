@@ -132,8 +132,8 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
             "기본은 로컬 정적 검사입니다. 엔진 옵션을 모두 지정하거나 등록 인스턴스를 지정하면 cold 검사를 수행합니다.\n알려진 cold INCOMPLETE는 DB·서비스·runtime 검사가 남았다는 뜻이며 로컬 READY가 아닙니다. 초기화·시작은 하지 않습니다.",
         ),
         ["install"] => (
-            "bxdl install <tar.gz> --destination <new-dir> (--public-key <trusted.pem> | --allow-unsigned-development) [--json]",
-            "macOS arm64의 새 폴더에 검증한 package 파일만 설치합니다. 부모 폴더는 미리 준비하세요.\n신뢰키는 패키지 밖의 독립적으로 신뢰한 경로에서 제공합니다. 등록·초기화·서비스 시작은 하지 않습니다.\n이름 있는 준비 자료의 설치는 bxdl setup apply --help, 기존 설치 문답은 bxdl setup --install --help를 확인하세요.",
+            "bxdl install <tar.gz> --destination <dir> (--public-key <trusted.pem> | --allow-unsigned-development) [--verify-existing] [--json]",
+            "macOS arm64 또는 Linux x86_64/glibc의 새 폴더에 package 파일을 설치합니다. Linux에는 --public-key가 필요합니다. 부모 폴더는 미리 준비하세요. --verify-existing은 기존 설치 파일을 배포본과 다시 대조합니다.\n신뢰키는 패키지 밖의 독립적으로 신뢰한 경로에서 제공합니다. 등록·초기화·서비스 시작은 하지 않습니다.\n이름 있는 준비 자료의 설치는 bxdl setup apply --help, 기존 설치 문답은 bxdl setup --install --help를 확인하세요.",
         ),
         ["instance", "register"] => (
             "bxdl instance register --instance <new-dir> --package <installed-dir> --archive <tar.gz> (--public-key <trusted.pem> | --allow-unsigned-development) --config <instance.json> --engine-config <node.json> --lock <json> --allow-development [--timeout-seconds <1..120>] [--json]",

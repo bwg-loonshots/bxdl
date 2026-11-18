@@ -223,6 +223,7 @@ fn spec(command: &str) -> Option<Spec> {
             File,
             &[
                 ("--destination", D),
+                ("--verify-existing", B),
                 ("--public-key", F),
                 ("--allow-unsigned-development", B),
             ],

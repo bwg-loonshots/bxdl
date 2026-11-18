@@ -1,5 +1,9 @@
 # 실제 Linux 우선 구현·인수 계획
 
+## 공개 다운로드와 설치
+
+[Linux 공개 시험판 구현 계획](./2026-11-18-linux-release-channel.md)에 서명된 사전 빌드 패키지 제작, GitHub Releases와 curl 설치 흐름을 추가했다. LNX-04/05는 전달 당시의 비공개 키트로 진행한다. 공개 태그의 실제 파일로 설치·재실행·노드 운용을 확인한 후 해당 draft를 공개한다.
+
 ## 현재 기준
 
 Linux 기반·고정 공급물·개발용 systemd backend·이름 기반 설치/운용 UX와 비공개 시험 준비 도구를 구현했다. [PR #24](https://github.com/bwg-loonshots/bxdl/pull/24)의 main `00451dee657013b3ba3a793ddbf864ec66800f58` 기준 Ubuntu 24.04 CI에서 **native CLI 빌드·version 실행, Rust605 PASS, Python287개 중275 PASS·12 SKIP**를 확인했다. 이 근거는 CLI와 자동 회귀 범위이며 **선정 Linux JRE/RC.4의 실제 실행·고정 runtime 후보 제작/수신·노드 설치·초기화·systemd·사용자 과업은 아직 NOT_RUN**, 정식 실행기 profile은 **NOT_ADMITTED**다.
