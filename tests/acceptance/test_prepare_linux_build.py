@@ -55,9 +55,9 @@ class PrepareLinuxBuildTests(unittest.TestCase):
             return self.committed[name]
         raise AssertionError("unexpected Git read " + repr(args))
 
-    def prepare(self):
+    def prepare(self, linker_archive=None):
         with mock.patch.object(P, "ROOT", self.repo), mock.patch.object(P, "git", side_effect=self.git):
-            return P.prepare(fixtures.COMMIT, self.runtime, self.jar, self.output)
+            return P.prepare(fixtures.COMMIT, self.runtime, self.jar, self.output, linker_archive)
 
     def test_preparation_pins_committed_source_not_dirty_checkout(self):
         with mock.patch.object(P.subprocess, "Popen", side_effect=AssertionError("no child execution")):
@@ -78,6 +78,27 @@ class PrepareLinuxBuildTests(unittest.TestCase):
         self.jar.write_bytes(b"replacement jar")
         with self.assertRaisesRegex(P.contract.Failure, "SUPPLY_PIN_MISMATCH"):
             self.prepare()
+        self.assertFalse(self.output.exists())
+
+    def test_original_linker_archive_is_bound_to_plan_and_packaged_as_received(self):
+        raw = b"fixture linker archive"
+        archive = self.fixture.write("linker.tar.xz", raw)
+        expected = dict(P.contract.GLIBC_LINKER, sha256=fixtures.sha(raw), size=len(raw))
+        with mock.patch.object(P.contract, "GLIBC_LINKER", expected):
+            result = self.prepare(archive)
+            plan = P.contract.load_plan(self.output, result["planSha256"])
+        self.assertEqual(8, result["kitFiles"])
+        self.assertEqual(expected, plan["toolchain"]["linker"])
+        self.assertEqual(raw, (self.output / expected["path"]).read_bytes())
+        distribution = self.root / "distribution.tar.gz"
+        P.archive_kit(self.output, distribution)
+        with tarfile.open(distribution, "r:gz") as bundle:
+            self.assertEqual(raw, bundle.extractfile("bxdl-linux-build/" + expected["path"]).read())
+
+    def test_invalid_linker_is_rejected_before_creating_kit(self):
+        linker = self.fixture.write("linker.tar.xz", b"wrong archive")
+        with self.assertRaisesRegex(P.contract.Failure, "SUPPLY_PIN_MISMATCH"):
+            self.prepare(linker)
         self.assertFalse(self.output.exists())
 
     def test_git_symlink_source_is_not_exported(self):

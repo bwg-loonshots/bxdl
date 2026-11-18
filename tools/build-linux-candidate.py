@@ -8,17 +8,20 @@ observed bytes, not source reproducibility or an accepted executor profile.
 import argparse
 from datetime import datetime, timezone
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import platform
 import re
 import selectors
+import shlex
 import shutil
 import signal
 import stat
 import subprocess
 import sys
+import tarfile
 import time
 
 sys.dont_write_bytecode = True
@@ -156,6 +159,69 @@ def pin(path):
     return {'sha256': value['sha256'], 'size': value['size']}
 
 
+CARGO_ARTIFACT = Path(TARGET) / 'release/bxdl'
+
+
+def stage_cargo_binary(work):
+    """Snapshot only Cargo's private output. External inputs still require one link."""
+    source = contract._absolute(work / 'cargo-target' / CARGO_ARTIFACT)
+    before = source.lstat()
+    require(stat.S_ISREG(before.st_mode), 'CARGO_OUTPUT_NOT_REGULAR')
+    require(before.st_uid == os.geteuid(), 'CARGO_OUTPUT_OWNER_UNSAFE')
+    require(not before.st_mode & 0o7022 and before.st_mode & 0o100, 'CARGO_OUTPUT_MODE_UNSAFE')
+    require(0 < before.st_size <= contract.MAX_FILE, 'CARGO_OUTPUT_SIZE_INVALID')
+    if before.st_nlink > 1:
+        # Cargo links the final name to its hashed executable under release/deps.
+        # Account for every alias before accepting a multi-link input.
+        deps = source.parent / 'deps'
+        require(deps.is_dir() and not deps.is_symlink(), 'CARGO_OUTPUT_LINKS_UNEXPECTED')
+        contract._directory(deps)
+        with os.scandir(deps) as entries:
+            aliases = sum(1 for entry in entries if re.fullmatch(r'bxdl-[0-9a-f]{16}', entry.name)
+                          and os.path.samestat(before, entry.stat(follow_symlinks=False)))
+        require(aliases + 1 == before.st_nlink, 'CARGO_OUTPUT_LINKS_UNEXPECTED')
+
+    # Keep the historical CLI path used by receipt verification and operations.
+    # Never chmod the Cargo inode: its aliases would change permissions too.
+    target = work / 'target' / CARGO_ARTIFACT
+    target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    contract._absolute(target)
+    stamp = contract._stamp(before)
+    digest = hashlib.sha256()
+    size = 0
+    fd = os.open(source, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(fd, 'rb') as incoming:
+        require(contract._stamp(os.fstat(fd)) == stamp, 'CARGO_OUTPUT_CHANGED')
+        with target.open('xb') as out:
+            while chunk := incoming.read(contract.CHUNK):
+                size += len(chunk)
+                require(size <= before.st_size, 'CARGO_OUTPUT_CHANGED')
+                digest.update(chunk)
+                out.write(chunk)
+            require(size == before.st_size and contract._stamp(os.fstat(fd)) == stamp
+                    and contract._stamp(source.lstat()) == stamp, 'CARGO_OUTPUT_CHANGED')
+            out.flush()
+            os.fchmod(out.fileno(), 0o755)
+            os.fsync(out.fileno())
+    worker = pin(target)
+    require(worker == {'sha256': digest.hexdigest(), 'size': size}, 'CARGO_COPY_MISMATCH')
+    return target, worker
+
+
+CARGO_CHECK_MESSAGES = {
+    'CARGO_OUTPUT_NOT_REGULAR': '일반 파일만 허용합니다. 심볼릭 링크와 특수 파일은 사용할 수 없습니다.',
+    'CARGO_OUTPUT_OWNER_UNSAFE': '빌드를 실행한 계정이 소유해야 합니다.',
+    'CARGO_OUTPUT_MODE_UNSAFE': '소유자 실행 권한이 필요하며 그룹·기타 쓰기 및 특수 권한은 허용하지 않습니다.',
+    'CARGO_OUTPUT_SIZE_INVALID': '실행 파일 크기가 허용 범위를 벗어났습니다.',
+    'CARGO_OUTPUT_LINKS_UNEXPECTED': '하드링크는 같은 release/deps의 Cargo 실행 파일과만 공유할 수 있습니다.',
+    'CARGO_OUTPUT_CHANGED': '복사하는 동안 원본 파일의 크기 또는 메타데이터가 변경되었습니다.',
+    'CARGO_COPY_MISMATCH': '독립 복사본의 SHA-256 또는 크기가 원본과 다릅니다.',
+    'CARGO_OUTPUT_IO_FAILED': '원본을 읽거나 새 복사본을 쓸 수 없습니다. 빌드 결과와 작업 디렉터리 권한을 확인하세요.',
+    'PATH_MODE_UNSAFE': '상위 디렉터리에 허용되지 않는 쓰기 권한이 있습니다.',
+    'PATH_OWNER_UNSAFE': '상위 디렉터리의 종류 또는 소유자가 검증 조건과 다릅니다.',
+}
+
+
 def copied(source, target, mode):
     before = pin(source)
     target.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
@@ -188,11 +254,45 @@ def versions(value):
     return parts+(0,)*(max(3,len(parts))-len(parts))
 
 
+def configure_linker(kit, plan, work, build_env, compiler):
+    """Use only the original linker archive authenticated by this kit's plan."""
+    spec = plan['toolchain'].get('linker')
+    if spec is None:
+        return
+    require(spec == contract.GLIBC_LINKER, 'PLAN_TOOLCHAIN_INVALID')
+    raw = contract._read(kit / spec['path'], spec['size'])
+    require(len(raw) == spec['size'] and hashlib.sha256(raw).hexdigest() == spec['sha256'],
+            'LINKER_ARCHIVE_PIN_MISMATCH')
+    directory = work / 'linker'
+    directory.mkdir(mode=0o700)
+    # All members of this hash-pinned upstream archive are files and directories.
+    # Extract the exact authenticated bytes, even if the input path is replaced.
+    with tarfile.open(fileobj=io.BytesIO(raw), mode='r|xz') as archive:
+        archive.extractall(directory, filter='data')
+    zig = directory / 'zig-x86_64-linux-0.14.1/zig'
+    target = 'x86_64-linux-gnu.' + plan['platform']['declaredMinGlibc']
+    wrapper = directory / 'link-gnu'
+    write_bytes(wrapper, ('#!/bin/sh\nexec ' + shlex.quote(str(zig)) + ' cc -target ' + target + ' "$@"\n').encode())
+    wrapper.chmod(0o700)
+    build_env.update(CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=str(wrapper),
+                     ZIG_GLOBAL_CACHE_DIR=str(directory / 'global-cache'),
+                     ZIG_LOCAL_CACHE_DIR=str(directory / 'local-cache'))
+    compiler.update(linker='zig cc', linkerVersion='0.14.1', linkerTarget=target,
+                    linkerArchiveSha256=spec['sha256'])
+
+
+class GlibcMismatch(Failure):
+    def __init__(self, path, maximum, declared):
+        super().__init__('GLIBC_REQUIREMENT_EXCEEDS_DECLARATION')
+        self.message = f'{path.name} 실행 파일에 GLIBC_{maximum}가 필요합니다. 패키지에서 허용하는 상한은 GLIBC_{declared}입니다.'
+
+
 def elf_check(path, declared):
     elf = inspect_elf(path)
     glibc = glibc_requirements(path)
     maximum = glibc.get('maximumRequired')
-    require(maximum is None or versions(maximum) <= versions(declared), 'GLIBC_REQUIREMENT_EXCEEDS_DECLARATION')
+    if maximum is not None and versions(maximum) > versions(declared):
+        raise GlibcMismatch(path, maximum, declared)
     return {'elf': elf, 'glibc': glibc}
 
 
@@ -297,13 +397,21 @@ def build(args):
         initial_source = tree(source)
         for ancestor in (source,*source.parents):
             require(not any((ancestor/'.cargo'/n).exists() or (ancestor/'.cargo'/n).is_symlink() for n in ('config','config.toml')), 'SOURCE_CARGO_CONFIG_UNSUPPORTED')
-        build_env = dict(env, BXDL_REVISION=plan['source']['commit'], CARGO_TARGET_DIR=str(work / 'target'), RUSTC=rustc, RUSTUP_TOOLCHAIN='1.86.0')
-        run([cargo, '+1.86.0', 'build', '--locked', '--release', '--target', TARGET], source,
-            build_env, 'cargo-build', evidence, timeout=1800)
-        binary = work / 'target' / TARGET / 'release/bxdl'
-        fingerprint(binary)  # refuse links/special files before permission normalization
-        binary.chmod(0o755)
-        worker = pin(binary)
+        build_env = dict(env, BXDL_REVISION=plan['source']['commit'], CARGO_TARGET_DIR=str(work / 'cargo-target'), RUSTC=rustc, RUSTUP_TOOLCHAIN='1.86.0')
+        configure_linker(kit, plan, work, build_env, compiler)
+        try:
+            run([cargo, '+1.86.0', 'build', '--locked', '--release', '--target', TARGET], source,
+                build_env, 'cargo-build', evidence, timeout=1800)
+        except Failure:
+            receipt['message'] = 'Cargo 컴파일 또는 링크가 실패했습니다. candidate/work/evidence/cargo-build.stderr를 확인하세요.'
+            raise
+        try:
+            binary, worker = stage_cargo_binary(work)
+        except (Failure, OSError) as error:
+            code = str(error) if isinstance(error, Failure) else 'CARGO_OUTPUT_IO_FAILED'
+            condition = CARGO_CHECK_MESSAGES.get(code, '독립 복사본 검증에 실패했습니다.')
+            receipt['message'] = f'Cargo 산출물 work/cargo-target/{CARGO_ARTIFACT} — {condition}'
+            raise Failure(code) from error
         worker_elf = elf_check(binary, plan['platform']['declaredMinGlibc'])
         product_version = version(binary, source, plan['source']['commit'], env, evidence)
         require(pin(binary) == worker, 'BUILD_INPUT_CHANGED')
@@ -371,6 +479,8 @@ def build(args):
                        supply={'runtimeLockSha256': plan['supply']['runtimeLock']['sha256'], 'engineLockSha256': plan['supply']['engineLock']['sha256']},
                        legalCoverage='SELECTED_JRE_ONLY_PRODUCT_LICENSE_SBOM_GATE_OPEN')
     except Exception as error:
+        if isinstance(error, GlibcMismatch):
+            receipt['message'] = error.message
         receipt['reasonCode'] = str(error) if isinstance(error, Failure) else 'NATIVE_BUILD_FAILED'
     receipt['completedAt'] = datetime.now(timezone.utc).isoformat()
     document(output / 'receipt.json', receipt)
@@ -390,7 +500,11 @@ def main(argv=None):
                   'reasonCode': str(error) if isinstance(error, Failure) else 'NATIVE_BUILD_INPUT_FAILED',
                   'serviceMutations': 0}
     # Full receipt is a file; stdout never dumps host-private tool output or paths.
-    print(json.dumps({k: result[k] for k in ('schemaVersion', 'scope', 'outcome', 'reasonCode', 'serviceMutations')}, sort_keys=True))
+    summary = {k: result[k] for k in ('schemaVersion', 'scope', 'outcome', 'reasonCode', 'serviceMutations')}
+    if 'message' in result:
+        summary['message'] = result['message']
+        print(result['message'], file=sys.stderr)
+    print(json.dumps(summary, ensure_ascii=False, sort_keys=True))
     return 0 if result['outcome'] == 'PASS' else 3
 
 

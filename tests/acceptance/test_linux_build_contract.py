@@ -252,6 +252,18 @@ class ContractTests(unittest.TestCase):
                 external = self.save_plan(changed)
                 self.rejects(code, lambda: C.load_plan(kit, external))
 
+    def test_linker_pin_requires_matching_file_and_explicit_toolchain(self):
+        kit, plan, _ = self.kit()
+        plan["toolchain"]["linker"] = C.GLIBC_LINKER
+        self.rejects("PLAN_REFERENCE_MISMATCH", lambda: C.load_plan(kit, self.save_plan(plan)))
+        fake = self.write("kit/" + C.GLIBC_LINKER["path"], b"unapproved linker")
+        plan["files"].append({"path": C.GLIBC_LINKER["path"], **C.fingerprint(fake)})
+        self.rejects("PLAN_REFERENCE_MISMATCH", lambda: C.load_plan(kit, self.save_plan(plan)))
+        plan["toolchain"]["linker"] = {k: plan["files"][-1][k] for k in ("path", "size", "sha256")}
+        self.rejects("PLAN_TOOLCHAIN_INVALID", lambda: C.load_plan(kit, self.save_plan(plan)))
+        del plan["toolchain"]["linker"]
+        self.rejects("PLAN_TOOLCHAIN_INVALID", lambda: C.load_plan(kit, self.save_plan(plan)))
+
     def test_supply_pin_mismatch_rejected(self):
         def changed(runtime):
             runtime["archive"]["sha256"] = "0" * 64

@@ -1,6 +1,6 @@
 # 현재 구현·검증 상태
 
-비공개 Linux 시험 키트의 기준 소스는 [PR #24](https://github.com/bwg-loonshots/bxdl/pull/24)가 머지된 main `00451dee657013b3ba3a793ddbf864ec66800f58`다. 이 문서는 현재 구현과 확인된 실행 범위를 요약하며, 과거 작업별 기록은 [구현·검증 변경 이력](./implementation-history.md)에 분리한다. 비공개 키트의 정확한 소스·공급물·도구 해시는 그 전달본의 `HANDOFF.json`을 따른다.
+최초 비공개 Linux 시험 키트의 기준 소스는 [PR #24](https://github.com/bwg-loonshots/bxdl/pull/24)가 머지된 main `00451dee657013b3ba3a793ddbf864ec66800f58`다. 이 문서는 현재 구현과 확인된 실행 범위를 요약하며, 과거 작업별 기록은 [구현·검증 변경 이력](./implementation-history.md)에 분리한다. 키트별 기준 소스·공급물·도구 해시는 해당 전달본의 `HANDOFF.json`을 따른다. 최초 전달본은 Ubuntu에서 Cargo 컴파일 후 하드링크 검사로 준비가 중단됐다. [테스터 보고 #27](https://github.com/bwg-loonshots/bxdl/issues/27)
 
 BXDL은 Rust 기반 개발 제품이며 **실제 Linux 설치·운용 검증과 직접 CLI의 사용성 평가를 우선**한다. macOS 지정 조합의 검증 결과는 유지한다. `console`은 기존 구현만 보존하고 추가 개발하지 않는다.
 

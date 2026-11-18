@@ -31,6 +31,12 @@ PREFIX = "bxdl-source"
 RUNTIME_PATH = "packaging/runtime-lock.temurin-21-linux-amd64.json"
 ENGINE_PATH = "packaging/engine-lock.rc4-temurin-linux-development.json"
 SOURCE_CAPTURE = {"Cargo.lock", "rust-toolchain.toml", RUNTIME_PATH, ENGINE_PATH}
+# Zig 0.14.1 x86_64-linux, as published in https://ziglang.org/download/index.json
+GLIBC_LINKER = {
+    "path": "toolchain/zig-x86_64-linux-0.14.1.tar.xz",
+    "sha256": "24aeeec8af16c381934a6cd7d95c807a8cb2cf7df9fa40d359aa884195c4716c",
+    "size": 49086504,
+}
 
 
 class Failure(Exception):
@@ -283,7 +289,8 @@ def load_plan(kit, expected_sha):
     _fields(plan, ("schemaVersion", "kind", "source", "toolchain", "platform", "supply", "files"))
     require(type(plan["schemaVersion"]) is int and plan["schemaVersion"] == 1
             and plan["kind"] == "bxdl-linux-native-build-plan", "PLAN_KIND_INVALID")
-    require(plan["toolchain"] == {"rust": "1.86.0", "target": "x86_64-unknown-linux-gnu"}, "PLAN_TOOLCHAIN_INVALID")
+    native = {"rust": "1.86.0", "target": "x86_64-unknown-linux-gnu"}
+    require(plan["toolchain"] in (native, dict(native, linker=GLIBC_LINKER)), "PLAN_TOOLCHAIN_INVALID")
     require(plan["platform"] == {"os": "linux", "arch": "amd64", "libc": "glibc",
             "builderDistribution": "ubuntu", "builderVersion": "24.04", "declaredMinGlibc": "2.34"}, "PLAN_PLATFORM_INVALID")
     _fields(plan["source"], ("commit", "archive", "cargoLockSha256", "rustToolchainSha256"))
@@ -311,6 +318,12 @@ def load_plan(kit, expected_sha):
             require(stat.S_ISREG(path.lstat().st_mode), "KIT_FILE_UNSAFE")
             actual.add(path.relative_to(kit).as_posix())
     require(actual == set(entries) | {"build-plan.json"} and dirs == expected_dirs, "KIT_INVENTORY_MISMATCH")
+    linker_files = {name for name in entries if name.startswith("toolchain/")}
+    if "linker" in plan["toolchain"]:
+        _ref(plan["toolchain"]["linker"], GLIBC_LINKER["path"], entries)
+        require(linker_files == {GLIBC_LINKER["path"]}, "PLAN_TOOLCHAIN_INVALID")
+    else:
+        require(not linker_files, "PLAN_TOOLCHAIN_INVALID")
     _ref(plan["source"]["archive"], "source/bxdl-source.tar.gz", entries)
     _fields(plan["supply"], ("runtimeArchive", "jar", "runtimeLock", "engineLock"))
     for field, path in (("runtimeArchive", "supply/jre.tar.gz"), ("jar", "supply/nigo-node.jar"),
