@@ -60,7 +60,7 @@ python3 -B "$KIT/tools/build-linux-candidate.py" \
 
 `PASS`와 종료 코드 0일 때만 조립 성공이다. 도구는 source commit·모든 입력·도구 자체를 대조하고 새 target에서 native release를 빌드한다. 생성한 실행 파일은 ELF64 little-endian x86_64·glibc 요구 버전을 검사한 뒤 `version`, package/CLI bundle build·verify에만 실행한다. `runtime/bin/java`와 전체 JRE의 ELF도 요구 버전을 검사하지만 Java·노드를 실행하지 않는다.
 
-현재 manifest의 `minGlibc`는 2.34다. ELF의 `VERSION_NEEDS`에서 더 높은 요구가 나오면 `GLIBC_REQUIREMENT_EXCEEDS_DECLARATION`으로 중단한다. 이 검사를 건너뛰거나 숫자만 바꾸지 않고 빌더/sysroot와 지원 정책을 다시 결정한다. 이 검사를 통과해도 모든 native dependency 또는 Ubuntu 이전 버전의 실행 호환성을 인수한 것은 아니다. JAR 내부 RocksDB native는 후속 실행 검증 대상이다.
+공개 릴리스와 해당 설치 CI는 [공통 빌드 스크립트](../tools/build-linux-release-cli.sh)로 Linux amd64용 CLI를 고정 Rust 1.86.0·glibc 2.31 이미지에서 링크한다. 노드 설치와 systemd 운용 대상은 Ubuntu 24.04다. 현재 manifest의 `minGlibc`는 2.34다. ELF의 `VERSION_NEEDS`에서 더 높은 요구가 나오면 `GLIBC_REQUIREMENT_EXCEEDS_DECLARATION`으로 중단한다. 이 검사를 건너뛰거나 숫자만 바꾸지 않고 빌더/sysroot와 지원 정책을 다시 결정한다. 이 검사를 통과해도 모든 native dependency 또는 Ubuntu 이전 버전의 실행 호환성을 인수한 것은 아니다. JAR 내부 RocksDB native는 후속 실행 검증 대상이다.
 
 성공 시 다음 세 파일을 반환한다.
 

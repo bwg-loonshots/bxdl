@@ -75,7 +75,7 @@ jobs:
           cd "$BXDL_RELEASE_WORK/src"
           rustup toolchain install 1.86.0 --profile minimal --component rustfmt --component clippy
           make check
-          BXDL_REVISION="$(git rev-parse HEAD)" make build
+          sh tools/build-linux-release-cli.sh
       - name: Receive pinned engine and JRE
         if: inputs.operation == 'draft'
         env:
