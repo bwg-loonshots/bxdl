@@ -1,8 +1,10 @@
 """Synthetic native-build orchestration. Never compiles or runs Linux candidates."""
 import argparse
 import copy
+from contextlib import redirect_stderr, redirect_stdout
 import hashlib
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -77,12 +79,14 @@ class Fixture:
         self.plan={'source':{'commit':COMMIT,'archive':ref('source/source.tar.gz'),
                              'cargoLockSha256':hashlib.sha256(self.source_files['Cargo.lock']).hexdigest(),
                              'rustToolchainSha256':hashlib.sha256(self.source_files['rust-toolchain.toml']).hexdigest()},
+                   'toolchain':{'rust':'1.86.0','target':builder.TARGET},
                    'platform':{'declaredMinGlibc':'2.34'},
                    'supply':{'runtimeArchive':ref('supply/jre.tar.gz'),'jar':ref('supply/nigo-node.jar'),
                              'runtimeLock':ref('packaging/runtime-lock.temurin-21-linux-amd64.json'),
                              'engineLock':ref('packaging/engine-lock.rc4-temurin-linux-development.json')}}
         self.calls=[]
         self.stages={}
+        self.unexpected_cargo_link=False
         self.bad_revision=False
         self.change_source=False
         self.change_payload=False
@@ -99,7 +103,12 @@ class Fixture:
     def command(self, argv, cwd, env, label, evidence=None, timeout=60):
         self.calls.append((label,list(map(str,argv)),dict(env)))
         if label=='cargo-build':
-            save(Path(env['CARGO_TARGET_DIR'])/builder.TARGET/'release/bxdl',elf(),0o755)
+            binary = Path(env['CARGO_TARGET_DIR']) / builder.TARGET / 'release/bxdl'
+            alias = binary.parent / 'deps/bxdl-794e3e638fd5246d'
+            save(alias, elf(), 0o700)
+            os.link(alias, binary)
+            if self.unexpected_cargo_link:
+                os.link(binary, self.root / 'unexpected-extra-link')
             if self.change_source:save(cwd/'Cargo.lock',b'changed source')
             return b'',b''
         if label=='cli-version':
@@ -196,6 +205,53 @@ class NativeBuilderTests(unittest.TestCase):
         argv=[str(a) for _,args,_ in self.fixture.calls for a in args]
         self.assertNotIn('sudo',argv);self.assertNotIn('systemctl',argv)
         self.assertFalse(any(a.endswith('/bin/java') for a in argv))
+
+    def test_cargo_hardlink_preserves_alias_and_exports_single_link(self):
+        value = self.build()
+        self.assertEqual(value['outcome'], 'PASS', value)
+        work = self.fixture.output / 'work'
+        cargo = work / 'cargo-target' / builder.CARGO_ARTIFACT
+        staged = work / 'target' / builder.CARGO_ARTIFACT
+        self.assertEqual(cargo.stat().st_nlink, 2)
+        self.assertEqual(cargo.stat().st_mode & 0o777, 0o700)
+        self.assertEqual(staged.stat().st_nlink, 1)
+        self.assertEqual(staged.stat().st_mode & 0o777, 0o755)
+        self.assertFalse(cargo.samefile(staged))
+        self.assertEqual(cargo.read_bytes(), staged.read_bytes())
+        self.assertEqual(builder.pin(staged), value['binaries']['executor'])
+        with self.assertRaisesRegex(builder.Failure, 'INPUT_FILE_UNSAFE'):
+            builder.pin(cargo)
+
+    def test_unexpected_alias_reports_safe_artifact_name_and_condition(self):
+        self.fixture.unexpected_cargo_link = True
+        receipt = self.build()
+        self.assertEqual(receipt['outcome'], 'FAILED')
+        self.assertEqual(receipt['reasonCode'], 'CARGO_OUTPUT_LINKS_UNEXPECTED')
+        self.assertIn(str(builder.CARGO_ARTIFACT), receipt['message'])
+        self.assertIn('release/deps', receipt['message'])
+        self.assertNotIn(str(self.root), receipt['message'])
+        self.assertEqual([c[0] for c in self.fixture.calls], ['cargo-build'])
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with patch.object(builder, 'build', return_value=receipt), redirect_stdout(stdout), redirect_stderr(stderr):
+            self.assertEqual(builder.main(['--kit', 'kit', '--output', 'output', '--plan-sha256', 'a'*64]), 3)
+        self.assertEqual(json.loads(stdout.getvalue())['message'], receipt['message'])
+        self.assertIn(receipt['message'], stderr.getvalue())
+
+    def test_cargo_snapshot_checks_type_permissions_and_never_overwrites(self):
+        cargo = self.root / 'cargo-target' / builder.CARGO_ARTIFACT
+        cargo.parent.mkdir(parents=True)
+        cargo.symlink_to(self.root / 'private')
+        with self.assertRaisesRegex(builder.Failure, 'CARGO_OUTPUT_NOT_REGULAR'):
+            builder.stage_cargo_binary(self.root)
+        cargo.unlink()
+        save(cargo, b'fixture', 0o777)
+        with self.assertRaisesRegex(builder.Failure, 'CARGO_OUTPUT_MODE_UNSAFE'):
+            builder.stage_cargo_binary(self.root)
+        cargo.chmod(0o700)
+        staged, _ = builder.stage_cargo_binary(self.root)
+        self.assertEqual(staged.read_bytes(), b'fixture')
+        with self.assertRaises(FileExistsError):
+            builder.stage_cargo_binary(self.root)
 
     def test_wrong_revision_and_elf_stop_before_materializing_runtime(self):
         self.fixture.bad_revision=True

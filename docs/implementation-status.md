@@ -1,6 +1,6 @@
 # 현재 구현·검증 상태
 
-비공개 Linux 시험 키트의 기준 소스는 [PR #24](https://github.com/bwg-loonshots/bxdl/pull/24)가 머지된 main `00451dee657013b3ba3a793ddbf864ec66800f58`다. 이 문서는 현재 구현과 확인된 실행 범위를 요약하며, 과거 작업별 기록은 [구현·검증 변경 이력](./implementation-history.md)에 분리한다. 비공개 키트의 정확한 소스·공급물·도구 해시는 그 전달본의 `HANDOFF.json`을 따른다.
+최초 비공개 Linux 시험 키트의 기준 소스는 [PR #24](https://github.com/bwg-loonshots/bxdl/pull/24)가 머지된 main `00451dee657013b3ba3a793ddbf864ec66800f58`다. 이 문서는 현재 구현과 확인된 실행 범위를 요약하며, 과거 작업별 기록은 [구현·검증 변경 이력](./implementation-history.md)에 분리한다. 키트별 기준 소스·공급물·도구 해시는 해당 전달본의 `HANDOFF.json`을 따른다. 최초 전달본은 Ubuntu에서 Cargo 컴파일 후 하드링크 검사로 준비가 중단됐다. [테스터 보고 #27](https://github.com/bwg-loonshots/bxdl/issues/27)
 
 BXDL은 Rust 기반 개발 제품이며 **실제 Linux 설치·운용 검증과 직접 CLI의 사용성 평가를 우선**한다. macOS 지정 조합의 검증 결과는 유지한다. `console`은 기존 구현만 보존하고 추가 개발하지 않는다.
 
@@ -16,8 +16,8 @@ BXDL은 Rust 기반 개발 제품이며 **실제 Linux 설치·운용 검증과 
 | macOS 노드 운용 | 지정 조합 인수 | 사용자 LaunchAgent, 초기화·시작·관측·진단·정상 종료·동일 DB 재시작. 전체 macOS lifecycle·최소 OS·정식 운영 인수는 남음 |
 | macOS 네트워크 | 지정 조합 인수 | RC.4 동종 4-validator, 두 복구 경로, wrong-pin, 선정 RPC·거래·관리 CLI 전환. 전체 엔진 기능 인수를 뜻하지 않음 |
 | Linux 서비스·권한 | 개발 경로 구현 | systemd, 노드별 비root UID, root 보호 제어 기록, 고정 worker 위임. 실제 노드·계정 격리·서비스 인수는 NOT_RUN |
-| Linux 빌드·시험 입력 전달 | 준비 도구 구현 | 고정 source kit·후보 제작/수신·설치 입력 추출·장비 내 fresh 시험 키 생성. 실제 선정 JRE/RC.4 런타임 archive 및 노드 실행은 테스터 과업 |
-| 사용자 편의성 평가 | 비공개 과업 준비 | Linux 설치부터 초기화·서비스 운용까지 안내서·결과/개선 양식 동봉. 실제 사용자 관측은 NOT_RUN |
+| Linux 빌드·시험 입력 전달 | 준비 도구 구현 | 이슈 #27 수정 키트의 고정 RC.4·JRE로 Ubuntu 24.04.5 x86_64 VM에서 두 archive 제작·설치 입력 추출·시험 키 생성을 확인했다(`PREPARED`). 노드 실행은 테스터 과업 |
+| 사용자 편의성 평가 | 비공개 과업 준비 | 첫 준비 단계의 실패와 진단 메시지에 대한 피드백을 이슈 #27에서 수신했다. 수정 키트의 노드 설치·초기화·서비스 운용 사용자 관측은 대기 |
 | WSL2·Docker/Compose | 후속 | Linux 실물 기준 조합 검증 뒤 별도 구현·인수 |
 
 공개 다운로드용 Linux 설치는 릴리스 서명 확인 → `bxdl install <archive> --public-key <키>` → `setup new/apply`로 연결한다. [설치 안내](./linux-release.md)와 [릴리스 계획](../design/2026-11-18-linux-release-channel.md)에 제작·게시·첫 공개 인수 조건이 있다. 비공개 unsigned 후보는 전달본의 준비 도구로 추출한다. Linux의 root 공개 descriptor·고정 worker 위임 구현과 Mac의 승인된 exact runtime profile을 같은 인수 상태로 취급하지 않는다. 자세한 지원 조합은 [지원 범위](./support-matrix.md)를 따른다.

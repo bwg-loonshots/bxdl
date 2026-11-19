@@ -83,7 +83,7 @@ def copy_pinned(source, destination, expected):
                      and contract.fingerprint(source) == before, "SUPPLY_CHANGED")
 
 
-def prepare(source_commit, runtime_archive, jar, output):
+def prepare(source_commit, runtime_archive, jar, output, linker_archive=None):
     contract.require(re.fullmatch(r"[0-9a-f]{40}", source_commit) is not None, "SOURCE_COMMIT_INVALID")
     actual = git("rev-parse", "--verify", source_commit + "^{commit}").decode().strip()
     contract.require(actual == source_commit, "SOURCE_COMMIT_INVALID")
@@ -114,11 +114,15 @@ def prepare(source_commit, runtime_archive, jar, output):
     }
     for key in LOCKS:
         supply[key] = {"path": LOCKS[key], "sha256": sha(raw_locks[key]), "size": len(raw_locks[key])}
-    # Reject invalid sources before reserving any output. Never bless observed
-    # JAR/JRE bytes by replacing the expected values from committed locks.
-    for name, path in [("runtimeArchive", runtime_archive), ("jar", jar)]:
+    toolchain = {"rust": "1.86.0", "target": "x86_64-unknown-linux-gnu"}
+    inputs = [(runtime_archive, supply["runtimeArchive"]), (jar, supply["jar"])]
+    if linker_archive is not None:
+        toolchain["linker"] = contract.GLIBC_LINKER
+        inputs.append((linker_archive, toolchain["linker"]))
+    # Check independently pinned bytes before reserving any output.
+    for path, expected in inputs:
         observed = contract.fingerprint(path)
-        contract.require(all(observed[key] == supply[name][key] for key in ("sha256", "size")), "SUPPLY_PIN_MISMATCH")
+        contract.require(all(observed[key] == expected[key] for key in ("sha256", "size")), "SUPPLY_PIN_MISMATCH")
     scripts = {}
     for name in SCRIPTS:
         before = contract.fingerprint(ROOT / name)
@@ -132,8 +136,8 @@ def prepare(source_commit, runtime_archive, jar, output):
         create_file(output / name, raw_locks[key])
     for name, (raw, _) in scripts.items():
         create_file(output / name, raw, 0o755 if name.endswith("candidate.py") else 0o644)
-    copy_pinned(runtime_archive, output / supply["runtimeArchive"]["path"], supply["runtimeArchive"])
-    copy_pinned(jar, output / supply["jar"]["path"], supply["jar"])
+    for path, expected in inputs:
+        copy_pinned(path, output / expected["path"], expected)
     files = []
     for path in sorted(output.rglob("*")):
         if path.is_file():
@@ -142,7 +146,7 @@ def prepare(source_commit, runtime_archive, jar, output):
         "schemaVersion": 1, "kind": "bxdl-linux-native-build-plan",
         "source": {"commit": source_commit, "archive": {"path": "source/bxdl-source.tar.gz", "sha256": sha(source_gzip), "size": len(source_gzip)},
                    "cargoLockSha256": sha(committed("Cargo.lock")), "rustToolchainSha256": sha(committed("rust-toolchain.toml"))},
-        "toolchain": {"rust": "1.86.0", "target": "x86_64-unknown-linux-gnu"},
+        "toolchain": toolchain,
         "platform": {"os": "linux", "arch": "amd64", "libc": "glibc", "builderDistribution": "ubuntu", "builderVersion": "24.04", "declaredMinGlibc": "2.34"},
         "supply": supply, "files": files,
     }
@@ -180,6 +184,7 @@ def main():
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--runtime-archive", required=True, type=Path)
     parser.add_argument("--jar", required=True, type=Path)
+    parser.add_argument("--linker-archive", type=Path, help="Pinned Zig 0.14.1 x86_64 Linux archive for glibc 2.34 linking")
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--archive-output", type=Path)
     parser.add_argument("--allow-unsigned-development", action="store_true", required=True)
@@ -189,7 +194,8 @@ def main():
         archive_path = safe_parent(args.archive_output)
         output_path = Path(os.path.abspath(args.output))
         contract.require(not archive_path.is_relative_to(output_path), "OUTPUT_OVERLAP")
-    value = prepare(args.source_commit, Path(os.path.abspath(args.runtime_archive)), Path(os.path.abspath(args.jar)), args.output)
+    value = prepare(args.source_commit, Path(os.path.abspath(args.runtime_archive)), Path(os.path.abspath(args.jar)), args.output,
+                    linker_archive=args.linker_archive)
     if args.archive_output:
         value["kitArchive"] = archive_kit(Path(os.path.abspath(args.output)), args.archive_output)
     print(json.dumps(value, sort_keys=True))
