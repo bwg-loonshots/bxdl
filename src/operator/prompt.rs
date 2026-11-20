@@ -97,6 +97,13 @@ pub(crate) fn safe_default(value: &str) -> String {
     value.chars().filter(|ch| !ch.is_control()).collect()
 }
 
+pub(crate) fn shell_quote(path: &std::path::Path) -> String {
+    format!(
+        "'{}'",
+        safe_default(&path.to_string_lossy()).replace('\'', "'\\''")
+    )
+}
+
 pub(crate) fn help(out: &mut dyn Write, context: &str) -> Result<()> {
     say(
         out,

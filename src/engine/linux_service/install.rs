@@ -85,7 +85,7 @@ fn install_error(code: &str) -> BxdlError {
                 "전용 계정 이름이나 UID/GID가 충돌합니다. 다른 계정을 임의 변경하지 않았습니다."
             }
             "LINUX_INSTALL_HELPER_REQUIRED" => {
-                "관리자가 root 소유 Linux 설치 helper를 먼저 준비해야 합니다."
+                "관리자에게 /usr/local/libexec/bxdl/bxdl의 배치와 소유권을 확인해 달라고 요청하세요. 이 실행기는 승인한 노드의 전용 계정과 시스템 파일을 설치합니다. 준비가 끝나면 일반 사용자로 같은 setup apply를 다시 실행하세요."
             }
             "LINUX_INSTALL_UNKNOWN" => {
                 "설치 결과를 확정하지 못했습니다. 시도 기록을 보존하고 같은 준비로 결과를 다시 확인하세요."

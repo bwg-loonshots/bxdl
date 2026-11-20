@@ -150,6 +150,9 @@ fn require_target(target: &str) -> Result<()> {
 fn error(code: &str, message: &str) -> BxdlError {
     BxdlError::new(code, message)
 }
+fn shell_path(p: &Path) -> String {
+    format!("'{}'", p.to_string_lossy().replace('\'', "'\\''"))
+}
 fn report(
     l: &Locations,
     action: &str,
@@ -178,20 +181,19 @@ fn report(
         }
         Some(_) => "SHADOWED",
     };
-    let quote = |p: &Path| format!("'{}'", p.to_string_lossy().replace('\'', "'\\''"));
     let shell_setup = if host_target() == Some("linux-amd64") {
         vec![
-            format!("export PATH={}:\"$PATH\"", quote(&l.bin_dir)),
+            format!("export PATH={}:\"$PATH\"", shell_path(&l.bin_dir)),
             "hash -r".into(),
             "command -v bxdl".into(),
             "bxdl version --json".into(),
         ]
     } else {
         vec![
-            format!("export PATH={}:\"$PATH\"", quote(&l.bin_dir)),
+            format!("export PATH={}:\"$PATH\"", shell_path(&l.bin_dir)),
             format!(
                 "fpath=({} $fpath)",
-                quote(&l.root.join("current/share/zsh/site-functions"))
+                shell_path(&l.root.join("current/share/zsh/site-functions"))
             ),
             "autoload -Uz compinit".into(),
             "compinit".into(),

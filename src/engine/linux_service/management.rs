@@ -14,6 +14,7 @@ use std::{
 };
 
 pub const PROTOCOL: &str = "BXDL_LINUX_DEVELOPMENT_EXECUTOR_V1";
+pub const LOG_EVENT_TIMES: &str = "linux-executor.logs.event-times.v1";
 const DESCRIPTOR: &str = "management.json";
 const SUDO: &str = "/usr/bin/sudo";
 const MAX_REPLY: usize = 262_144;
@@ -163,6 +164,8 @@ pub enum Request {
         tail: usize,
         max_bytes: u64,
         timeout_seconds: u64,
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        event_times: bool,
     },
 }
 impl Request {
@@ -225,12 +228,14 @@ impl Request {
             tail,
             max_bytes,
             timeout_seconds,
+            event_times,
         } = self
         {
             diagnostics::Options {
                 tail: *tail,
                 max_bytes: *max_bytes,
                 timeout: Duration::from_secs(*timeout_seconds),
+                event_times: *event_times,
             }
             .validate()?;
         }
@@ -435,6 +440,36 @@ fn invocation(control: &Path, privileged: bool) -> Command {
         .current_dir("/");
     command
 }
+// Older V1 peers reject unknown request and response fields. Only ask for
+// event times when the pinned worker advertises them through its public version.
+fn worker_has_event_times(control: &Path) -> Result<bool> {
+    let mut command = Command::new(control.join("worker"));
+    command
+        .args(["version", "--json"])
+        .env_clear()
+        .current_dir("/");
+    let output = transport(command, None, Duration::from_secs(5))?;
+    if output.exit != 0 || !output.stderr.is_empty() {
+        return Err(protocol_error());
+    }
+    let version: Value = json::decode(&output.stdout).map_err(|_| protocol_error())?;
+    if version["schemaVersion"] != 1
+        || version["command"] != "version"
+        || version["outcome"] != "SUCCEEDED"
+        || version["reasonCode"] != "VERSION"
+        || version["data"]["product"] != "BXDL"
+        || version["data"]["primaryTarget"] != "linux-amd64"
+    {
+        return Err(protocol_error());
+    }
+    let capabilities = version["data"]["capabilities"]
+        .as_array()
+        .ok_or_else(protocol_error)?;
+    Ok(capabilities
+        .iter()
+        .any(|capability| capability == LOG_EVENT_TIMES))
+}
+
 /// The user manager never interprets private journals or performs engine work.
 pub fn execute(control: &Path, request: &Request) -> Result<Response> {
     host()?;
@@ -445,6 +480,11 @@ pub fn execute(control: &Path, request: &Request) -> Result<Response> {
         return Err(protocol_error());
     }
     let descriptor = inspect(control)?;
+    let mut effective_request = request.clone();
+    if let Request::Logs { event_times, .. } = &mut effective_request {
+        *event_times = *event_times && worker_has_event_times(control)?;
+    }
+    let request = &effective_request;
     let request_raw = prepare_request(&descriptor, request)?;
     if uid != 0 {
         trusted_sudo()?;
@@ -558,6 +598,7 @@ fn dispatch_local(control: &Path, request: &Request) -> Result<(String, String, 
         tail,
         max_bytes,
         timeout_seconds,
+        event_times,
     } = request
     {
         let report = diagnostics::collect(
@@ -566,6 +607,7 @@ fn dispatch_local(control: &Path, request: &Request) -> Result<(String, String, 
                 tail: *tail,
                 max_bytes: *max_bytes,
                 timeout: Duration::from_secs(*timeout_seconds),
+                event_times: *event_times,
             },
         )?;
         let partial = report.partial;
@@ -721,6 +763,7 @@ fn parse_reply(
                 tail,
                 max_bytes,
                 timeout_seconds,
+                event_times,
             } = request
             {
                 let data: diagnostics::Report =
@@ -729,6 +772,7 @@ fn parse_reply(
                     tail: *tail,
                     max_bytes: *max_bytes,
                     timeout: Duration::from_secs(*timeout_seconds),
+                    event_times: *event_times,
                 })?;
                 if data.partial != (reply.outcome == "INCOMPLETE") {
                     return Err(protocol_error());
@@ -957,6 +1001,36 @@ mod tests {
         assert!(changed.validate(&changed.control_directory).is_err());
     }
     #[test]
+    fn logs_request_negotiates_times_with_old_and_new_workers() {
+        use std::os::unix::fs::PermissionsExt;
+        let directory = tempfile::tempdir().unwrap();
+        let worker = directory.path().join("worker");
+        for (caps, expected) in [
+            (serde_json::json!(["linux-executor.development.v1"]), false),
+            (
+                serde_json::json!(["linux-executor.development.v1", LOG_EVENT_TIMES]),
+                true,
+            ),
+        ] {
+            let version = serde_json::json!({"schemaVersion":1,"command":"version",
+                "outcome":"SUCCEEDED","reasonCode":"VERSION","data":{
+                "product":"BXDL","primaryTarget":"linux-amd64","capabilities":caps}});
+            fs::write(&worker, format!("#!/bin/sh\n[ \"$1 $2\" = 'version --json' ] || exit 1\nprintf '%s\\n' '{version}'\n")).unwrap();
+            fs::set_permissions(&worker, fs::Permissions::from_mode(0o700)).unwrap();
+            let event_times = worker_has_event_times(directory.path()).unwrap();
+            assert_eq!(event_times, expected);
+            let request = Request::Logs {
+                tail: 1,
+                max_bytes: 4096,
+                timeout_seconds: 1,
+                event_times,
+            };
+            let wire = serde_json::to_value(&request).unwrap();
+            assert_eq!(wire.get("eventTimes").is_some(), expected);
+            assert_eq!(serde_json::from_value::<Request>(wire).unwrap(), request);
+        }
+    }
+    #[test]
     fn request_whitelist_refuses_arbitrary_programs_and_unbounded_options() {
         assert!(json::decode::<Request>(br#"{"action":"SHELL","program":"/bin/sh"}"#).is_err());
         assert!(
@@ -980,7 +1054,8 @@ mod tests {
             Request::Logs {
                 tail: 201,
                 max_bytes: 4096,
-                timeout_seconds: 1
+                timeout_seconds: 1,
+                event_times: false,
             }
             .validate()
             .is_err()

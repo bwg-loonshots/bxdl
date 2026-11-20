@@ -82,7 +82,7 @@ pub const HELP: &str = r#"BXDL — 패키징·운영 CLI (development, Rust)
 
 Linux amd64/glibc의 관리 CLI 설치·환경 확인과 macOS arm64를 지원합니다.
 Linux는 setup new/apply 뒤 이름으로 init/start/status/stop을 사용합니다. 최초 root 설치기 준비가 필요합니다.
-Linux systemd는 개발용이며 실제 머신 인수 전입니다. Mac은 사용자 LaunchAgent를 사용합니다.
+Linux systemd는 Ubuntu 24.04 x86_64에서 검증한 단일 노드 개발용 서비스입니다. Mac은 사용자 LaunchAgent를 사용합니다.
 console은 기존 구현을 보존하며 추가 개발은 중단했습니다. bxdl console --help로 확인할 수 있습니다.
 "#;
 
@@ -97,6 +97,8 @@ pub struct ResultEnvelope {
     pub observed_at: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<Value>,
+    #[serde(skip)]
+    local_hint: Option<String>,
 }
 
 fn result(
@@ -113,6 +115,7 @@ fn result(
         reason_code: code.into(),
         message: message.into(),
         observed_at: String::new(),
+        local_hint: None,
         data,
     }
 }
@@ -129,10 +132,9 @@ fn invalid(command: &str) -> (ResultEnvelope, i32) {
     )
 }
 fn failure(command: &str, error: BxdlError, exit: i32) -> (ResultEnvelope, i32) {
-    (
-        result(command, "FAILED", &error.code, &error.message, None),
-        exit,
-    )
+    let mut response = result(command, "FAILED", &error.code, &error.message, None);
+    response.local_hint = error.local_hint;
+    (response, exit)
 }
 fn report<T: Serialize>(
     command: &str,
@@ -191,7 +193,7 @@ pub fn run_with_input<'a>(
             }
         }
     }
-    let (mut response, exit) = if let Some(usage) = help {
+    let (response, exit) = if let Some(usage) = help {
         (
             result(
                 "help",
@@ -221,6 +223,16 @@ pub fn run_with_input<'a>(
     } else {
         dispatch(&args)
     };
+    write_response(response, exit, json_mode, stdout, stderr)
+}
+
+fn write_response<'a>(
+    mut response: ResultEnvelope,
+    exit: i32,
+    json_mode: bool,
+    stdout: &'a mut dyn Write,
+    stderr: &'a mut dyn Write,
+) -> i32 {
     if response.observed_at.is_empty() {
         response.observed_at = match OffsetDateTime::now_utc().format(&Rfc3339) {
             Ok(time) => time,
@@ -252,6 +264,15 @@ pub fn run_with_input<'a>(
     if writeln!(out, "{} [{}]", response.message, response.reason_code).is_err() {
         return 7;
     }
+    let write_hint = |out: &mut dyn Write| -> std::io::Result<()> {
+        if let Some(hint) = &response.local_hint {
+            writeln!(out, "{hint}")?;
+        }
+        Ok(())
+    };
+    if response.data.is_none() && write_hint(out).is_err() {
+        return 7;
+    }
     if response.command == "cli" || response.command.starts_with("cli ") {
         if print_management_guidance(out, &response).is_err() {
             return 7;
@@ -267,7 +288,10 @@ pub fn run_with_input<'a>(
     }
     if let Some(data) = response.data {
         if response.command.starts_with("setup ") && data["platform"] == "linux-amd64" {
-            return if linux_service::print_setup(out, &data).is_ok() {
+            return if linux_service::print_setup(out, &data)
+                .and_then(|_| write_hint(out))
+                .is_ok()
+            {
                 exit
             } else {
                 7
@@ -321,15 +345,23 @@ pub fn run_with_input<'a>(
                 7
             };
         }
+        if matches!(response.command.as_str(), "init" | "resume-init")
+            && data["serviceProfile"] == "LINUX_DEVELOPMENT_SYSTEM_SERVICE"
+        {
+            return if write_hint(out).is_ok() { exit } else { 7 };
+        }
         if matches!(response.command.as_str(), "start" | "status" | "stop") {
-            return if print_service_summary(out, &data).is_ok() {
+            return if print_service_summary(out, &data)
+                .and_then(|_| write_hint(out))
+                .is_ok()
+            {
                 exit
             } else {
                 7
             };
         }
         if matches!(response.command.as_str(), "logs" | "diagnose") {
-            return if print_diagnostic_summary(out, &data).is_ok() {
+            return if print_diagnostic_summary(out, &response.command, &data).is_ok() {
                 exit
             } else {
                 7
@@ -699,7 +731,23 @@ fn print_network_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<(
 
 /// Only the collector's fixed projections are displayed, never arbitrary fields
 /// or a fallback dump of private input. JSON mode returns before this formatter.
-fn print_diagnostic_summary(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
+fn print_diagnostic_summary(
+    out: &mut dyn Write,
+    command: &str,
+    data: &Value,
+) -> std::io::Result<()> {
+    let linux = data["scope"] == "LATEST_LINUX_INITIALIZATION_AND_SERVICE_ATTEMPTS";
+    if linux && command == "logs" {
+        return print_linux_event_log(out, data);
+    }
+    if linux {
+        let collection = if data["partial"] == true {
+            "부분 수집"
+        } else {
+            "완전 수집"
+        };
+        writeln!(out, "진단 결과: {collection} (최근 초기화·실행 기록)")?;
+    }
     let text = |value: &Value| value.as_str().unwrap_or("UNAVAILABLE").to_owned();
     writeln!(
         out,
@@ -716,20 +764,23 @@ fn print_diagnostic_summary(out: &mut dyn Write, data: &Value) -> std::io::Resul
         events.len(),
         data["eventsOmitted"].as_u64().unwrap_or(0)
     )?;
-    for event in events {
-        writeln!(
-            out,
-            "  [{} #{}] {}: {} ({})",
-            text(&event["source"]),
-            event["sequence"].as_u64().unwrap_or(0),
-            text(&event["command"]),
-            text(&event["status"]),
-            text(&event["reason"])
-        )?;
+    if !linux {
+        for event in events {
+            writeln!(
+                out,
+                "  [{} #{}] {}: {} ({})",
+                text(&event["source"]),
+                event["sequence"].as_u64().unwrap_or(0),
+                text(&event["command"]),
+                text(&event["status"]),
+                text(&event["reason"])
+            )?;
+        }
     }
     if let Some(sources) = data["sources"].as_array() {
         for source in sources {
             let label = match source["result"].as_str() {
+                Some("COLLECTED") if linux => "수집",
                 Some("COLLECTED") => continue,
                 Some("WITHHELD") => "제외",
                 Some("UNAVAILABLE") => "누락",
@@ -752,6 +803,66 @@ fn print_diagnostic_summary(out: &mut dyn Write, data: &Value) -> std::io::Resul
         for action in actions.iter().filter_map(Value::as_str) {
             writeln!(out, "다음 조치: {action}")?;
         }
+    }
+    Ok(())
+}
+
+fn print_linux_event_log(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
+    let events = data["events"].as_array().map(Vec::as_slice).unwrap_or(&[]);
+    let omitted = data["eventsOmitted"].as_u64().unwrap_or(0);
+    writeln!(
+        out,
+        "최근 초기화·실행 사건 {}개 / 생략 {omitted}개",
+        events.len()
+    )?;
+    if events.is_empty() {
+        writeln!(out, "표시할 사건이 없습니다.")?;
+    }
+    // Sequence is authoritative if the host clock stepped back.
+    let mut previous = None;
+    let mut clock_reversed = false;
+    for event in events {
+        let millis = event["observedAtEpochMillis"].as_i64();
+        let timestamp = millis
+            .and_then(|ms| {
+                OffsetDateTime::from_unix_timestamp_nanos(i128::from(ms) * 1_000_000).ok()
+            })
+            .and_then(|time| time.format(&Rfc3339).ok());
+        if let Some(ms) = millis {
+            clock_reversed |= previous.is_some_and(|before| ms < before);
+            previous = Some(ms);
+        }
+        let reason = event["reason"].as_str().unwrap_or("UNKNOWN");
+        let description = match reason {
+            "VALIDATING_CONFIGURATION" => "설정 확인",
+            "OPENING_MANAGED_STORAGE" => "저장소 여는 중",
+            "STORAGE_CLOSED" => "초기화 완료",
+            "LOCAL_STARTUP_COMPLETED" => "로컬 기동 완료",
+            "SHUTDOWN_REQUESTED" => "종료 요청",
+            "STORAGE_AND_CONSENSUS_CLOSED" => "종료 완료",
+            "STARTUP_OR_INITIALIZATION_FAILED" => "기동 또는 초기화 실패",
+            _ => "결과 확인 필요",
+        };
+        writeln!(
+            out,
+            "  {}  {} #{}  {description} ({} · {reason})",
+            timestamp.as_deref().unwrap_or("시각 미제공"),
+            event["command"].as_str().unwrap_or("UNKNOWN"),
+            event["sequence"].as_u64().unwrap_or(0),
+            event["status"].as_str().unwrap_or("UNKNOWN")
+        )?;
+    }
+    if clock_reversed {
+        writeln!(
+            out,
+            "호스트 시계가 뒤로 이동했습니다. 사건은 초기화·실행 보고서의 기록 순서로 표시했습니다."
+        )?;
+    }
+    if data["partial"] == true {
+        writeln!(
+            out,
+            "부분 수집입니다. bxdl diagnose로 누락 사유를 확인하세요."
+        )?;
     }
     Ok(())
 }
@@ -815,20 +926,7 @@ pub(crate) fn print_service_summary(out: &mut dyn Write, data: &Value) -> std::i
     }
     print_startup_summary(out, data)?;
     if data["serviceProfile"] == "LINUX_DEVELOPMENT_SYSTEM_SERVICE" {
-        writeln!(
-            out,
-            "운용 대상: Linux systemd 개발 경로 (관리자 권한과 --instance 경로 사용)"
-        )?;
-        let next = if data["reason"] == "LINUX_SERVICE_STOPPED_VERIFIED"
-            && data["outcome"] == "SUCCEEDED"
-        {
-            "다시 시작하려면 bxdl start --instance <등록 경로>를 실행하세요."
-        } else if data["outcome"] == "SUCCEEDED" && data["runtimeReadiness"] == "READY" {
-            "종료하려면 bxdl stop --instance <등록 경로>를 실행하세요."
-        } else {
-            "status --instance <등록 경로>로 다시 관측하고, 불명 기록과 데이터를 보존하세요."
-        };
-        writeln!(out, "다음 조치: {next}")?;
+        writeln!(out, "운용 대상: Linux systemd 개발용 서비스")?;
     } else {
         print_guidance(out, &operator::view::service(data))?;
     }
@@ -1728,6 +1826,7 @@ fn capabilities_for(target: Option<&str>) -> Vec<&'static str> {
             "linux-service.development.register",
             "linux-setup.development",
             "linux-executor.development.v1",
+            engine::linux_service::management::LOG_EVENT_TIMES,
             "linux-service.development.init",
             "linux-service.development.start",
             "linux-service.development.status",
@@ -2481,6 +2580,7 @@ fn delegated(
                 reason_code: response.reason_code,
                 message: response.message,
                 observed_at: response.observed_at,
+                local_hint: None,
                 data: response.data,
             },
             response.exit,
@@ -2828,6 +2928,7 @@ fn dispatch_diagnostics(command: &str, args: &[String]) -> (ResultEnvelope, i32)
                 tail,
                 max_bytes,
                 timeout_seconds: timeout.as_secs(),
+                event_times: command == "logs",
             },
             flags.get("output").map(PathBuf::from).as_deref(),
         );
@@ -3056,7 +3157,7 @@ mod diagnostic_summary_tests {
             "privatePath": "PRIVATE-CANARY"
         });
         let mut output = Vec::new();
-        print_diagnostic_summary(&mut output, &report).unwrap();
+        print_diagnostic_summary(&mut output, "diagnose", &report).unwrap();
         let text = String::from_utf8(output).unwrap();
         for expected in [
             "저장 상태: 초기화 INITIALIZED / 서비스 GATE_CONSUMED",
@@ -3073,6 +3174,55 @@ mod diagnostic_summary_tests {
         assert!(!text.contains("PRIVATE-CANARY"));
         assert!(!text.contains("PRIVATE_SNAPSHOT"));
         assert!(!text.starts_with('{'));
+    }
+
+    #[test]
+    fn linux_logs_show_utc_events_while_diagnose_identifies_partial_sources() {
+        let report = json!({
+            "scope": "LATEST_LINUX_INITIALIZATION_AND_SERVICE_ATTEMPTS", "partial": true,
+            "events": [
+                {"source":"initializationReport", "sequence":1, "command":"init", "status":"CHECKING",
+                 "reason":"VALIDATING_CONFIGURATION", "observedAtEpochMillis":1_700_000_000_123_i64,
+                 "details":"PRIVATE-CANARY"},
+                {"source":"serviceReport", "sequence":1, "command":"run", "status":"STARTING",
+                 "reason":"OPENING_MANAGED_STORAGE", "observedAtEpochMillis":1_700_000_000_000_i64}
+            ],
+            "eventsOmitted":1, "sources":[
+                {"name":"rootJournal","result":"COLLECTED","reason":"ROOT_JOURNAL_VERIFIED"},
+                {"name":"serviceReport","result":"UNAVAILABLE","reason":"TIME_BUDGET_EXCEEDED"}
+            ], "outputCreated":true
+        });
+        let render = |command, report: &Value| {
+            let mut out = Vec::new();
+            print_diagnostic_summary(&mut out, command, report).unwrap();
+            String::from_utf8(out).unwrap()
+        };
+        let logs = render("logs", &report);
+        assert!(logs.contains("2023-11-14T22:13:20.123Z  init #1"));
+        assert!(logs.contains("호스트 시계가 뒤로"));
+        assert!(logs.contains("부분 수집"));
+        assert!(!logs.contains("PRIVATE-CANARY"));
+        assert!(!logs.contains("rootJournal"));
+        let diagnosis = render("diagnose", &report);
+        for expected in [
+            "진단 결과: 부분 수집",
+            "자료 수집: rootJournal",
+            "자료 누락: serviceReport",
+            "지원 보고서:",
+        ] {
+            assert!(diagnosis.contains(expected));
+        }
+        assert!(!diagnosis.contains("VALIDATING_CONFIGURATION"));
+        let mut legacy = report;
+        for event in legacy["events"].as_array_mut().unwrap() {
+            event
+                .as_object_mut()
+                .unwrap()
+                .remove("observedAtEpochMillis");
+        }
+        legacy["partial"] = false.into();
+        assert_eq!(render("logs", &legacy).matches("시각 미제공").count(), 2);
+        assert!(render("diagnose", &legacy).contains("진단 결과: 완전 수집"));
     }
 }
 

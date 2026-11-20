@@ -53,17 +53,58 @@ pub(super) fn options() -> OpenOptions {
     o.custom_flags((OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC).bits() as i32);
     o
 }
-fn directory(m: &Metadata, private: bool) -> Result<()> {
-    if !m.is_dir()
-        || m.is_symlink()
-        || (private && (m.uid() != uid() || m.mode() & 0o7777 != 0o700))
-        || (!private
-            && (![0, uid()].contains(&m.uid())
-                || (m.mode() & 0o022 != 0 && m.mode() & 0o1000 == 0)))
-    {
+fn directory(m: &Metadata, private: bool, path: Option<&Path>) -> Result<()> {
+    if !m.is_dir() || m.is_symlink() {
         return Err(unsafe_path());
     }
+    if ![0, uid()].contains(&m.uid()) || (private && m.uid() != uid()) {
+        return Err(directory_error(
+            m,
+            path,
+            "허용되지 않는 소유자입니다.",
+            None,
+        ));
+    }
+    if private && m.mode() & 0o7777 != 0o700 {
+        return Err(directory_error(
+            m,
+            path,
+            "관리 CLI 전용 디렉터리에는 0700 권한이 필요합니다.",
+            Some("700"),
+        ));
+    }
+    if !private && m.mode() & 0o022 != 0 && m.mode() & 0o1000 == 0 {
+        return Err(directory_error(
+            m,
+            path,
+            "그룹 또는 다른 사용자에게 쓰기 권한이 있습니다.",
+            Some("go-w"),
+        ));
+    }
     Ok(())
+}
+pub(super) fn directory_error(
+    m: &Metadata,
+    path: Option<&Path>,
+    reason: &str,
+    chmod: Option<&str>,
+) -> crate::error::BxdlError {
+    let mut error = crate::error::BxdlError::new(
+        "CLI_STORAGE_UNSAFE",
+        format!("관리 CLI 디렉터리 권한 {:04o}. {reason}", m.mode() & 0o7777),
+    );
+    if let Some(path) = path {
+        let quoted = super::shell_path(path);
+        let mut hint = format!("확인할 경로 {quoted}. ");
+        if let Some(change) = chmod.filter(|_| m.uid() == uid() && path.parent().is_some()) {
+            hint.push_str(&format!(
+                "본인 전용 디렉터리라면 chmod -- {change} {quoted} 후 같은 명령을 다시 실행하세요. "
+            ));
+        }
+        hint.push_str("공유 경로는 소유자와 확인하세요. 최초 설치 시에는 이 경로 밖에 사용자 소유 위치를 지정할 수 있습니다(실행 진입점 --bin-dir, 관리 저장소 --root).");
+        error.local_hint = Some(hint);
+    }
+    error
 }
 pub(super) fn private_file(m: &Metadata) -> Result<()> {
     if !m.is_file()
@@ -101,11 +142,17 @@ pub(super) fn open(path: &Path, create: bool, private: bool) -> Result<Option<Di
         return Err(unsafe_path());
     }
     let mut dir = Dir::open_ambient_dir("/", ambient_authority()).map_err(|_| io())?;
-    directory(&dir.dir_metadata().map_err(|_| io())?, false)?;
+    let mut current_path = PathBuf::from("/");
+    directory(
+        &dir.dir_metadata().map_err(|_| io())?,
+        false,
+        Some(&current_path),
+    )?;
     for (index, name) in names.iter().enumerate() {
         if create {
             reject_product_root(&dir)?;
         }
+        current_path.push(name);
         let last = index + 1 == names.len();
         let before = match dir.symlink_metadata(name) {
             Ok(m) => m,
@@ -118,7 +165,7 @@ pub(super) fn open(path: &Path, create: bool, private: bool) -> Result<Option<Di
             }
             Err(_) => return Err(unsafe_path()),
         };
-        directory(&before, last && private)?;
+        directory(&before, last && private, Some(&current_path))?;
         let mut o = options();
         o.read(true).custom_flags(
             (OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC).bits()
@@ -131,8 +178,8 @@ pub(super) fn open(path: &Path, create: bool, private: bool) -> Result<Option<Di
         );
         let opened = next.dir_metadata().map_err(|_| io())?;
         let visible = dir.symlink_metadata(name).map_err(|_| io())?;
-        directory(&opened, last && private)?;
-        directory(&visible, last && private)?;
+        directory(&opened, last && private, Some(&current_path))?;
+        directory(&visible, last && private, Some(&current_path))?;
         if Identity::of(&before) != Identity::of(&opened)
             || Identity::of(&before) != Identity::of(&visible)
         {
@@ -193,7 +240,7 @@ pub(super) fn mkdir(parent: &Dir, name: &str) -> Result<Dir> {
 }
 pub(super) fn child(parent: &Dir, name: &str) -> Result<Dir> {
     let before = parent.symlink_metadata(name).map_err(|_| unsafe_path())?;
-    directory(&before, true)?;
+    directory(&before, true, None)?;
     let mut o = options();
     o.read(true).custom_flags(
         (OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC).bits() as i32,

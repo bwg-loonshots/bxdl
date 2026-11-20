@@ -25,7 +25,7 @@ Linux 사용자 목록·설치 준비 자료의 기본 경로는 `~/.local/share
 
 Ubuntu 24.04·systemd 255 이상·manager running이면 `SUCCEEDED/HOST_BASELINE_OBSERVED`와 exit 0을 반환한다. 이는 기준 환경 관측 결과이며 엔진이나 서비스 인수 성공이 아니다. Mac/미지원 target, 다른 배포판, systemd 조건 미충족 또는 WSL은 `INCOMPLETE`와 exit 3을 반환하고 WSL의 reasonCode는 `HOST_WSL_DEFERRED`다. 조회 실패도 exit 3이며 인자 오류는 exit 2다.
 
-JSON에는 `scope=READ_ONLY_HOST_BASELINE`, `linuxServiceControl=DEVELOPMENT_BACKEND_IMPLEMENTED`, `engineAcceptance=NOT_RUN`, `serviceMutations=0`을 구분해 기록한다. Linux 관리 CLI 설치·업데이트와 개발용 노드 설치·초기화·systemd start/status/stop이 구현되어 있다. Ubuntu CI의 CLI 빌드·자동 검사는 통과했으며, 실제 선정 JRE/RC.4 조합의 노드·서비스 인수는 비공개 Linux 시험 대상으로 남아 있다. [Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따른다.
+JSON에는 `scope=READ_ONLY_HOST_BASELINE`, `linuxServiceControl=DEVELOPMENT_BACKEND_IMPLEMENTED`, `engineAcceptance=NOT_RUN`, `serviceMutations=0`을 구분해 기록한다. Linux 관리 CLI 설치·업데이트와 개발용 노드 설치·초기화·systemd start/status/stop이 구현되어 있다. Ubuntu CI의 CLI 빌드·자동 검사는 통과했으며, Ubuntu 24.04.4 실기에서 지정 RC.4 개발 후보의 단일 노드 설치·서비스 운용을 확인했다. [Linux 우선 계획](../design/2026-11-16-linux-first-implementation-plan.md)을 따른다.
 
 ## 명령별 도움말과 대화형 입력
 

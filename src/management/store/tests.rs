@@ -322,6 +322,13 @@ fn entry_conflicts_and_unsafe_root_permissions_preserve_existing_files() {
     let f = Fixture::new();
     let a = f.bundle("first.tar.gz", "0.1.0-dev.1", 'a', None);
     stdfs::create_dir(&f.locations.bin_dir).unwrap();
+    stdfs::set_permissions(&f.locations.bin_dir, stdfs::Permissions::from_mode(0o775)).unwrap();
+    let before = snapshot(&f.base);
+    let error = install(&f.options(&a), false, permit).unwrap_err();
+    assert_eq!(error.code, "CLI_STORAGE_UNSAFE");
+    assert!(error.local_hint.unwrap().contains("--bin-dir"));
+    assert_eq!(snapshot(&f.base), before);
+    stdfs::set_permissions(&f.locations.bin_dir, stdfs::Permissions::from_mode(0o755)).unwrap();
     let entry = f.locations.bin_dir.join("bxdl");
     stdfs::write(&entry, b"existing user executable").unwrap();
     let before = snapshot(&f.base);

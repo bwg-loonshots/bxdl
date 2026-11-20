@@ -125,7 +125,7 @@ pub(super) fn response(
                 command,
                 &outcome,
                 &reason,
-                "Linux 개발용 시스템 서비스의 관측 결과입니다. 실제 Linux 인수·전역 합의는 별도 검증 대상입니다.",
+                "Linux 개발용 시스템 서비스의 관측 결과입니다. 전역 합의는 별도 검증 대상입니다.",
                 value,
                 exit,
             )
@@ -290,6 +290,11 @@ pub(super) fn managed(
     request: &service::management::Request,
     output: Option<&Path>,
 ) -> (ResultEnvelope, i32) {
+    let display_target = match (&target.name, &target.instance) {
+        (Some(name), _) => operator::home::named_arguments(name, target.home.as_deref()),
+        (_, Some(path)) => format!("--instance {}", operator::prompt::shell_quote(path)),
+        _ => return invalid(command),
+    };
     let operation = (|| -> crate::error::Result<service::management::Response> {
         let target = target.resolve()?;
         target.recheck()?;
@@ -318,19 +323,39 @@ pub(super) fn managed(
                 service::diagnostics::write_export(target.path(), output, &raw)?;
             }
         }
+        if matches!(response.exit, 0 | 5)
+            && matches!(request, service::management::Request::Logs { .. })
+        {
+            response.message = if output.is_some() {
+                "진단 자료를 수집해 지원 보고서를 저장했습니다."
+            } else {
+                "최근 초기화·서비스 실행의 사건 기록입니다."
+            }
+            .into();
+        }
         Ok(response)
     })();
     match operation {
-        Ok(value) => (
-            result(
+        Ok(value) => {
+            let mut reply = result(
                 command,
                 &value.outcome,
                 &value.reason_code,
                 &value.message,
                 value.data,
-            ),
-            value.exit,
-        ),
+            );
+            if matches!(
+                request,
+                service::management::Request::Initialize { .. }
+                    | service::management::Request::Service { .. }
+            ) {
+                reply.local_hint = reply
+                    .data
+                    .as_ref()
+                    .map(|data| service_guidance(data, &display_target));
+            }
+            (reply, value.exit)
+        }
         Err(error) => service_failure(command, error),
     }
 }
@@ -450,7 +475,14 @@ pub(super) fn setup(
         _ => return invalid(&command),
     };
     match value {
-        Ok(v) => report(&command, v.outcome, v.code, v.message, v.data, v.exit),
+        Ok(v) => {
+            let mut reply = report(&command, v.outcome, v.code, v.message, v.data, v.exit);
+            if let Some(action) = v.next {
+                let target = operator::home::named_arguments(&pos[0], Some(&home));
+                reply.0.local_hint = Some(next_command(action, &target));
+            }
+            reply
+        }
         Err(e)
             if matches!(
                 e.code.as_str(),
@@ -462,6 +494,88 @@ pub(super) fn setup(
         Err(e) => service_failure(&command, e),
     }
 }
+fn next_command(action: &str, target: &str) -> String {
+    let confirm = if action == "init" {
+        " --confirm-initialize"
+    } else {
+        ""
+    };
+    format!("다음 명령: bxdl {action} {target}{confirm}")
+}
+
+/// A catalog entry alone cannot justify suggesting initialization. Select a
+/// command from the signed-in operator's verified worker response.
+fn service_guidance(data: &Value, target: &str) -> String {
+    let idle = data["operationBusy"] == false;
+    let first_start_pending =
+        idle && data["serviceState"] == "NOT_STARTED" && data["runtimeReadiness"] == "NOT_CHECKED";
+    let (description, action) = match (data["reason"].as_str(), data["outcome"].as_str()) {
+        (Some("LINUX_SERVICE_REGISTERED"), Some("INCOMPLETE"))
+            if first_start_pending
+                && data["engineState"] == "NOT_STARTED"
+                && data["initialization"] == "NOT_STARTED"
+                && data["attemptId"].is_null() =>
+        {
+            (
+                "시스템 노드를 등록했습니다. 저장소 초기화를 기다리고 있습니다.",
+                "init",
+            )
+        }
+        (Some("LINUX_SERVICE_INITIALIZED"), Some("SUCCEEDED" | "INCOMPLETE"))
+            if first_start_pending
+                && data["engineState"] == "INITIALIZED"
+                && data["initialization"] == "INITIALIZED" =>
+        {
+            (
+                "저장소 초기화 완료 (INITIALIZED). 첫 서비스 시작을 기다리고 있습니다.",
+                "start",
+            )
+        }
+        (Some("LINUX_SERVICE_STOPPED_VERIFIED"), Some("SUCCEEDED"))
+            if idle
+                && data["serviceState"] == "INACTIVE"
+                && data["engineState"] == "STOPPED"
+                && data["initialization"] == "INITIALIZED"
+                && data["runtimeReadiness"] == "STOPPED" =>
+        {
+            (
+                "서비스가 정상적으로 종료됐습니다. 같은 데이터로 다시 시작할 수 있습니다.",
+                "start",
+            )
+        }
+        (_, Some("SUCCEEDED"))
+            if data["serviceState"] == "RUNNING"
+                && data["engineState"] == "RUNNING"
+                && data["runtimeReadiness"] == "READY"
+                && data["operationBusy"] == true =>
+        {
+            let mut ready = String::new();
+            if data["reason"] == "MANUAL_START_INITIALIZED"
+                && data["health"]["running"] == false
+                && data["health"]["lifecycleRunning"] == false
+            {
+                ready.push_str("합의: 수동 시작 대기 (MANUAL_START). 서비스가 실행 중이며 로컬 초기화가 완료됐습니다.\n");
+                if data["health"]["readiness"]["syncStatus"] == "UNKNOWN" {
+                    ready.push_str("동기화: 현재 상태 미확인 (UNKNOWN)\n");
+                }
+            }
+            return format!(
+                "{ready}운용을 마치면 서비스를 종료할 수 있습니다.\n{}",
+                next_command("stop", target)
+            );
+        }
+        (_, Some("FAILED")) => (
+            "실패가 관측됐습니다. 최근 사건 기록에서 원인을 확인하세요.",
+            "logs",
+        ),
+        _ => (
+            "기존 기록을 보존하고 현재 상태를 다시 확인하세요.",
+            "status",
+        ),
+    };
+    format!("{description}\n{}", next_command(action, target))
+}
+
 pub(super) fn print_setup(out: &mut dyn Write, data: &Value) -> std::io::Result<()> {
     if let Some(entries) = data["entries"].as_array() {
         if entries.is_empty() {
@@ -532,6 +646,106 @@ mod ux_tests {
     fn args(words: &[&str]) -> Vec<String> {
         words.iter().map(|s| s.to_string()).collect()
     }
+    fn render_service(
+        command: &str,
+        data: Value,
+        target: &str,
+        json_mode: bool,
+        exit: i32,
+    ) -> String {
+        let mut reply = result(
+            command,
+            data["outcome"].as_str().unwrap(),
+            data["reason"].as_str().unwrap(),
+            "고정 실행기 응답",
+            None,
+        );
+        reply.local_hint = Some(service_guidance(&data, target));
+        reply.data = Some(data);
+        let (mut out, mut err) = (Vec::new(), Vec::new());
+        assert_eq!(
+            write_response(reply, exit, json_mode, &mut out, &mut err),
+            exit
+        );
+        if json_mode || exit == 0 {
+            assert!(err.is_empty());
+            String::from_utf8(out).unwrap()
+        } else {
+            assert!(out.is_empty());
+            String::from_utf8(err).unwrap()
+        }
+    }
+
+    #[test]
+    fn registered_status_and_completed_init_offer_one_command_for_the_selected_target() {
+        let mut data = json!({"serviceProfile":"LINUX_DEVELOPMENT_SYSTEM_SERVICE","reason":"LINUX_SERVICE_REGISTERED",
+            "outcome":"INCOMPLETE","serviceState":"NOT_STARTED","engineState":"NOT_STARTED","initialization":"NOT_STARTED","runtimeReadiness":"NOT_CHECKED","operationBusy":false});
+        let status = render_service("status", data.clone(), "local", false, 5);
+        assert!(status.ends_with("다음 명령: bxdl init local --confirm-initialize\n"));
+        assert!(!status.contains("불명 기록"));
+        for (key, value) in [
+            ("operationBusy", json!(true)),
+            ("attemptId", json!("attempt-a")),
+            ("reason", json!("LINUX_SERVICE_PROCESS_UNKNOWN")),
+            ("initialization", json!("UNKNOWN")),
+        ] {
+            let mut uncertain = data.clone();
+            uncertain[key] = value;
+            let text = render_service("status", uncertain, "local", false, 5);
+            assert!(text.ends_with("다음 명령: bxdl status local\n"), "{text}");
+            assert!(!text.contains("--confirm-initialize"));
+        }
+        data["outcome"] = json!("SUCCEEDED");
+        data["reason"] = json!("LINUX_SERVICE_INITIALIZED");
+        data["initialization"] = json!("INITIALIZED");
+        data["engineState"] = json!("INITIALIZED");
+        let explicit = "--instance '/var/lib/bxdl/instances/test'";
+        let initialized = render_service("init", data.clone(), explicit, false, 0);
+        assert!(initialized.contains("저장소 초기화 완료 (INITIALIZED)"));
+        assert!(initialized.ends_with(&format!("다음 명령: bxdl start {explicit}\n")));
+        assert!(!initialized.contains("{"));
+        let machine: Value =
+            serde_json::from_str(&render_service("init", data.clone(), explicit, true, 0)).unwrap();
+        assert_eq!(machine["data"], data);
+        assert!(!machine.to_string().contains(explicit));
+        assert!(machine.get("localHint").is_none());
+    }
+
+    #[test]
+    fn failed_run_offers_recent_events_without_required_export_options() {
+        let data = json!({"serviceProfile":"LINUX_DEVELOPMENT_SYSTEM_SERVICE","reason":"LINUX_SERVICE_ENGINE_FAILED","outcome":"FAILED","serviceState":"INACTIVE","engineState":"FAILED"});
+        let text = render_service("start", data, "alias", false, 4);
+        assert!(text.ends_with("다음 명령: bxdl logs alias\n"));
+    }
+
+    #[test]
+    fn manual_ready_explains_consensus_and_sync_without_disclosing_health_payloads() {
+        let value = json!({"serviceProfile":"LINUX_DEVELOPMENT_SYSTEM_SERVICE","reason":"MANUAL_START_INITIALIZED",
+            "outcome":"SUCCEEDED","serviceState":"RUNNING","engineState":"RUNNING","initialization":"INITIALIZED","runtimeReadiness":"READY","operationBusy":true,
+            "health":{"running":false,"lifecycleRunning":false,"readiness":{"syncStatus":"UNKNOWN"},"private":"PRIVATE_CANARY"}});
+        let text = render_service("status", value, "alias", false, 0);
+        assert!(text.contains("합의: 수동 시작 대기"));
+        assert!(text.contains("동기화: 현재 상태 미확인 (UNKNOWN)"));
+        assert!(!text.contains("PRIVATE_CANARY"));
+        assert!(text.ends_with("다음 명령: bxdl stop alias\n"));
+    }
+
+    #[test]
+    fn default_catalog_needs_only_the_name_and_custom_catalog_is_shell_quoted() {
+        let default = operator::home::default_home().unwrap();
+        assert_eq!(operator::home::named_arguments("node", None), "node");
+        assert_eq!(
+            operator::home::named_arguments("node", Some(&default)),
+            "node"
+        );
+        let custom = Path::new("/tmp/an operator's ($dir)");
+        let selector = operator::home::named_arguments("alias", Some(custom));
+        assert_eq!(
+            next_command("setup apply", &selector),
+            r"다음 명령: bxdl setup apply alias --home '/tmp/an operator'\''s ($dir)'"
+        );
+    }
+
     #[test]
     fn machine_or_nonterminal_setup_never_reads_input_or_creates_home() {
         let temp = tempfile::tempdir().unwrap();

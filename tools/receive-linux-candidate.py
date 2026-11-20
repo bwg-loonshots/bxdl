@@ -165,6 +165,7 @@ if __name__ == "__main__":
     try:
         main()
     except (contract.Failure, OSError, ValueError, KeyError, TypeError, AttributeError, tarfile.TarError, subprocess.SubprocessError) as error:
+        contract.print_operator_hint(error)
         code = getattr(error, "code", None) or (str(error) if isinstance(error, contract.Failure) else "LINUX_CANDIDATE_RECEIVE_FAILED")
         print(json.dumps({"schemaVersion": 1, "outcome": "FAILED", "reasonCode": code, "receivedCodeExecutions": 0}))
         raise SystemExit(3)

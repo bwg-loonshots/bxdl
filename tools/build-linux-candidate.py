@@ -411,6 +411,8 @@ def build(args):
             code = str(error) if isinstance(error, Failure) else 'CARGO_OUTPUT_IO_FAILED'
             condition = CARGO_CHECK_MESSAGES.get(code, '독립 복사본 검증에 실패했습니다.')
             receipt['message'] = f'Cargo 산출물 work/cargo-target/{CARGO_ARTIFACT} — {condition}'
+            if isinstance(error, Failure):
+                raise
             raise Failure(code) from error
         worker_elf = elf_check(binary, plan['platform']['declaredMinGlibc'])
         product_version = version(binary, source, plan['source']['commit'], env, evidence)
@@ -479,6 +481,7 @@ def build(args):
                        supply={'runtimeLockSha256': plan['supply']['runtimeLock']['sha256'], 'engineLockSha256': plan['supply']['engineLock']['sha256']},
                        legalCoverage='SELECTED_JRE_ONLY_PRODUCT_LICENSE_SBOM_GATE_OPEN')
     except Exception as error:
+        contract.print_operator_hint(error)
         if isinstance(error, GlibcMismatch):
             receipt['message'] = error.message
         receipt['reasonCode'] = str(error) if isinstance(error, Failure) else 'NATIVE_BUILD_FAILED'
@@ -496,6 +499,7 @@ def main(argv=None):
     try:
         result = build(parser.parse_args(argv))
     except Exception as error:
+        contract.print_operator_hint(error)
         result = {'schemaVersion': 1, 'scope': SCOPE, 'outcome': 'FAILED',
                   'reasonCode': str(error) if isinstance(error, Failure) else 'NATIVE_BUILD_INPUT_FAILED',
                   'serviceMutations': 0}

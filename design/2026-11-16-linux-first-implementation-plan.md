@@ -6,9 +6,11 @@
 
 ## 현재 기준
 
-Linux 기반·고정 공급물·개발용 systemd backend·이름 기반 설치/운용 UX와 비공개 시험 준비 도구를 구현했다. [PR #24](https://github.com/bwg-loonshots/bxdl/pull/24)의 main `00451dee657013b3ba3a793ddbf864ec66800f58` 기준 Ubuntu 24.04 CI에서 **native CLI 빌드·version 실행, Rust605 PASS, Python287개 중275 PASS·12 SKIP**를 확인했다. 이 근거는 CLI와 자동 회귀 범위이며 **선정 Linux JRE/RC.4의 실제 실행·고정 runtime 후보 제작/수신·노드 설치·초기화·systemd·사용자 과업은 아직 NOT_RUN**, 정식 실행기 profile은 **NOT_ADMITTED**다.
+Linux 기반·고정 공급물·개발용 systemd backend·이름 기반 설치/운용 UX와 비공개 시험 준비 도구를 구현했다. [PR #24](https://github.com/bwg-loonshots/bxdl/pull/24)의 main `00451dee657013b3ba3a793ddbf864ec66800f58` 기준 Ubuntu 24.04 CI에서 **native CLI 빌드·version 실행, Rust605 PASS, Python287개 중275 PASS·12 SKIP**를 확인했다. 11월 19일에는 Ubuntu 24.04.4 실기에서 RC.4 개발 후보의 빌드, 설치·init, 단일 노드 READY, SSH 단절 시 실행 유지, 재초기화 없는 재기동과 정상 종료를 확인했다. 권한 오류에서 도움을 받았고 설치 문답의 기본값은 미경험이다. 다음 키트에는 권한 복구, 상황별 다음 명령, 사건 목록과 진단 요약, helper 역할과 정리 안내를 함께 넣어 사용성을 한 번에 재검증한다. 정식 실행기 profile은 **NOT_ADMITTED**다.
 
 실제 전달본은 해당 `HANDOFF.json`의 제품 source commit·지원 도구·공급물·plan/archive 해시로 식별한다. 과거 `ba4d5af` kit와 날짜별 검증 결과는 당시 이력으로 보존하고 최신 전달본의 source로 자동 사용하지 않는다. 현재 사용법과 지원 범위는 [Linux 설치·운용](../docs/linux-operations.md), [네이티브 빌드·후보 준비](../docs/linux-native-build.md), [지원 범위](../docs/support-matrix.md)를 따른다.
+
+아래 단계별 상태는 각 단계 작성 시점의 기록이다. 최신 인수 범위는 위 기준과 [구현 상태](../docs/implementation-status.md)를 따른다.
 
 ## 2026-11-17 비공개 시험 범위 조정
 

@@ -7,6 +7,7 @@ import importlib.util
 import io
 import json
 import os
+import shlex
 from pathlib import Path
 import shutil
 import sys
@@ -166,6 +167,21 @@ class NativeBuilderTests(unittest.TestCase):
              patch.object(builder.os,'getuid',return_value=1000),patch.object(builder.os,'geteuid',return_value=1000), \
              patch.object(Path,'read_text',return_value='6.6-microsoft-standard-WSL2'):
             with self.assertRaisesRegex(builder.Failure,'WSL_DEFERRED'):builder.native_host()
+
+    def test_group_writable_ancestor_is_identified_only_on_local_stderr(self):
+        shared = self.root / "user's shared folder"
+        shared.mkdir()
+        shared.chmod(0o775)
+        args = ['--kit', str(shared / 'kit'), '--plan-sha256', 'a' * 64,
+                '--output', str(self.fixture.output), '--allow-unsigned-development']
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with patch.object(builder, 'native_host', return_value=HOST), redirect_stdout(stdout), redirect_stderr(stderr):
+            self.assertEqual(builder.main(args), 3)
+        self.assertEqual(json.loads(stdout.getvalue())['reasonCode'], 'PATH_MODE_UNSAFE')
+        self.assertNotIn(str(self.root), stdout.getvalue())
+        self.assertIn('0775', stderr.getvalue())
+        self.assertIn('chmod -- go-w ' + shlex.quote(str(shared)), stderr.getvalue())
+        self.assertFalse(self.fixture.output.exists())
 
     def test_external_plan_and_toolchain_failure_preserve_absent_output(self):
         with patch.object(builder,'native_host',return_value=HOST),patch.object(builder,'load_plan',side_effect=builder.Failure('PLAN_PIN_MISMATCH')),patch.object(builder,'run') as run:

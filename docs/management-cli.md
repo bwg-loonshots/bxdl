@@ -210,3 +210,7 @@ Mac 관리 CLI의 설치·업데이트·복귀 probe는 `executor.rc3-legacy-v1`
 Linux 관리 CLI probe는 Linux 관리 기능과 zsh completion capability를 확인하며 Mac exact runtime capability를 요구하지 않는다. 이 차이는 Linux runtime profile을 자동 승인한다는 뜻이 아니다.
 
 Mac 지정 RC.4 조합의 단일노드·동종망·실행 중 CLI 전환 근거는 [서비스 결과](../results/2026-11-15-rc4-macos-service.md)와 [네트워크 결과](../results/2026-11-16-rc4-macos-network.md)를 따른다. 다른 기능 변경 CLI나 Linux 조합에 그 결과를 승계하지 않는다. `cli update/rollback`은 노드 엔진·JRE·DB의 업그레이드·복구 명령이 아니다.
+
+### Linux에서 기존 진입점 디렉터리의 권한 확인
+
+일반 사용자로 `bxdl cli install`을 실행할 때 기존 `~/.local/bin`이나 상위 디렉터리에 그룹 쓰기 권한이 있으면 설치가 중단될 수 있다. 터미널의 경로와 권한값을 확인한다. 본인이 소유하고 개인용으로 사용하는 폴더만 표시된 명령으로 조정한다. 예를 들어 `~/.local/bin`의 `0775`는 `chmod -- go-w "$HOME/.local/bin"`으로 `0755`가 된다. 공유 디렉터리라면 최초 설치에서 안전한 개인 경로를 `--bin-dir`로 지정하고 그 경로를 PATH에 추가한다. 배포 저장소 경로를 따로 정할 때는 `--root`를 사용한다.

@@ -121,11 +121,11 @@ pub(crate) fn for_args(args: &[String]) -> Option<String> {
         ),
         ["logs"] => (
             "bxdl logs <이름> [--home <관리-루트>] [기존 옵션]\n  bxdl logs --instance <control-dir> [--tail <1..200>] [--max-bytes <4096..1048576>] [--timeout-seconds <1..30>] [--json]",
-            "최신 초기화·서비스 시도의 정제한 저장 기록을 읽습니다. live 상태 확인·raw 출력·follow는 제공하지 않습니다.\n기본 한도: tail 50개, 262144 bytes, 5초. 누락·한도 초과는 partial로 표시합니다.",
+            "최근 초기화·실행 시도의 사건을 기록 순서로 읽습니다. Linux에서는 지원하는 실행기가 기록한 시각을 UTC로 표시합니다.\n기본 한도: tail 50개, 262144 bytes, 5초. 누락·한도 초과는 partial로 표시합니다. 현재 실행 상태는 bxdl status로 확인하세요.",
         ),
         ["diagnose"] => (
             "bxdl diagnose <이름> [--home <관리-루트>] --output <new.json> [기존 옵션]\n  bxdl diagnose --instance <control-dir> --output <new.json> [--tail <1..200>] [--max-bytes <4096..1048576>] [--timeout-seconds <1..30>] [--json]",
-            "정제한 저장 기록을 새 JSON 지원 보고서에 저장합니다. 기존 파일을 덮어쓰거나 자동 전송하지 않습니다.\nJVM·네트워크·서비스 호출 없이 수집하므로 현재 실행 상태를 검증한 보고서가 아닙니다.",
+            "저장된 초기화·서비스 상태, 수집한 자료, 누락·제외 사유를 확인하고 새 JSON 지원 보고서에 저장합니다. 기존 파일을 덮어쓰거나 자동 전송하지 않습니다.\n사건 흐름은 bxdl logs, 현재 실행 상태는 bxdl status로 확인하세요.",
         ),
         ["preflight"] => (
             "bxdl preflight --config <instance.json> [--json]\n  bxdl preflight --config <instance.json> --engine-config <node.json> --jar <jar> --java <java> --lock <json> --allow-development [--timeout-seconds <1..120>] [--json]\n  bxdl preflight --instance <control-dir> [--timeout-seconds <1..120>] [--json]",
@@ -225,6 +225,6 @@ fn linux_guide(topic: &[&str]) -> Option<String> {
         _ => return None,
     };
     Some(format!(
-        "BXDL Linux 명령 안내\n\n사용법:\n  {usage}\n\n{note}\n\n대상: 실제 Linux GNU x86_64·Ubuntu 24.04 systemd. 개발용 경로이며 실제 Linux 인수 전입니다. 비대화형 운용은 미리 sudo -v로 인증하세요. WSL2는 후속 검증입니다.\n"
+        "BXDL Linux 명령 안내\n\n사용법:\n  {usage}\n\n{note}\n\n대상: 실제 Linux GNU x86_64·Ubuntu 24.04 systemd. 단일 노드 개발용 설치·운용 경로입니다. 비대화형 운용은 미리 sudo -v로 인증하세요. WSL2는 후속 검증입니다.\n"
     ))
 }

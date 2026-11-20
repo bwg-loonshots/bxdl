@@ -11,10 +11,12 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import selectors
+import shlex
 import signal
 import stat
 import struct
 import subprocess
+import sys
 import tarfile
 import time
 import zlib
@@ -40,7 +42,17 @@ GLIBC_LINKER = {
 
 
 class Failure(Exception):
-    """Only a stable public failure code; no raw child output or input values."""
+    """str(error) is always the shareable reason code."""
+
+    def __init__(self, code, *, operator_hint=None):
+        super().__init__(code)
+        self.operator_hint = operator_hint
+
+
+def print_operator_hint(error):
+    """Keep machine-readable summaries and receipts free of local paths."""
+    if isinstance(error, Failure) and error.operator_hint:
+        print(error.operator_hint, file=sys.stderr)
 
 
 def require(condition, code):
@@ -56,7 +68,18 @@ def _stamp(m):
 def _directory(path):
     m = path.lstat()
     require(stat.S_ISDIR(m.st_mode) and m.st_uid in (0, os.geteuid()), "PATH_OWNER_UNSAFE")
-    require(not m.st_mode & 0o022 or bool(m.st_mode & stat.S_ISVTX), "PATH_MODE_UNSAFE")
+    if m.st_mode & 0o022 and not m.st_mode & stat.S_ISVTX:
+        # os.walk also supplies names outside the plan. Never render controls
+        # from such names in terminals or offer a command for an ambiguous path.
+        if not str(path).isprintable():
+            raise Failure("PATH_MODE_UNSAFE")
+        quoted = shlex.quote(str(path))
+        hint = (f"디렉터리 {quoted} (권한 {stat.S_IMODE(m.st_mode):04o})에 그룹 또는 다른 "
+                "사용자의 쓰기 권한이 있습니다. ")
+        if m.st_uid == os.geteuid() and path.parent != path:
+            hint += f"본인 전용 디렉터리라면 chmod -- go-w {quoted} 후 다시 실행하세요. "
+        hint += "공유 경로라면 그 밖의 사용자 전용 디렉터리에 키트를 풀고 새 작업 경로를 지정하세요."
+        raise Failure("PATH_MODE_UNSAFE", operator_hint=hint)
     return m
 
 

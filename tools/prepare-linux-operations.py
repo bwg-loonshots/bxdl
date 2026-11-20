@@ -227,6 +227,7 @@ def main(argv=None):
         result["reasonCode"] = "LINUX_OPERATION_INPUTS_PREPARED"
         exit_code = 0
     except (contract.Failure, OSError, ValueError, KeyError, TypeError, AttributeError, tarfile.TarError) as error:
+        contract.print_operator_hint(error)
         result = {"schemaVersion": 1, "outcome": "FAILED", "reasonCode": str(error) if isinstance(error, contract.Failure)
                   else "LINUX_OPERATION_PREPARATION_FAILED", "serviceMutations": 0}
         exit_code = 3
