@@ -15,6 +15,7 @@ pub struct Options {
     pub tail: usize,
     pub max_bytes: u64,
     pub timeout: Duration,
+    pub event_times: bool,
 }
 impl Default for Options {
     fn default() -> Self {
@@ -22,6 +23,7 @@ impl Default for Options {
             tail: 50,
             max_bytes: 262144,
             timeout: Duration::from_secs(5),
+            event_times: false,
         }
     }
 }
@@ -63,6 +65,12 @@ pub struct Report {
 pub struct Event {
     pub source: String,
     pub sequence: u64,
+    #[serde(
+        rename = "observedAtEpochMillis",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub observed_at_ms: Option<i64>,
     pub command: String,
     pub status: String,
     pub reason: String,
@@ -106,6 +114,7 @@ struct Collector {
     report: Report,
     remaining: u64,
     deadline: Instant,
+    event_times: bool,
 }
 impl Collector {
     fn new(options: &Options) -> Result<Self> {
@@ -113,6 +122,7 @@ impl Collector {
         Ok(Self {
             remaining: options.max_bytes,
             deadline: Instant::now() + options.timeout,
+            event_times: options.event_times,
             report: Report {
                 schema_version: 1,
                 partial: false,
@@ -189,15 +199,17 @@ impl Collector {
         let projected = diagnostic_events::project(raw, command, attempt);
         self.report.partial |= projected.partial;
         self.report.events_omitted += projected.omitted;
-        self.report
-            .events
-            .extend(projected.events.into_iter().map(|e| Event {
+        self.report.events.extend(
+            projected.events.into_iter().map(|e| Event {
                 source: name.into(),
                 sequence: e.sequence,
+                observed_at_ms: (self.event_times && valid_event_time(e.observed_at_ms))
+                    .then_some(e.observed_at_ms),
                 command: e.command.into(),
                 status: e.status.into(),
                 reason: e.reason.into(),
-            }));
+            }),
+        );
         if projected.partial {
             self.source(name, "WITHHELD", "UNKNOWN_OR_PARTIAL_ROWS", None);
         }
@@ -478,6 +490,9 @@ impl Report {
                 "initializationReport" | "serviceReport"
             ) || !matches!(event.command.as_str(), "init" | "resume-init" | "run")
                 || !(1..=16).contains(&event.sequence)
+                || event
+                    .observed_at_ms
+                    .is_some_and(|ms| !options.event_times || !valid_event_time(ms))
                 || (event.source == "serviceReport") != (event.command == "run")
                 || !allowed_event(event)
             {
@@ -525,6 +540,10 @@ impl Report {
         Ok(())
     }
 }
+// Unix epoch through 9999-12-31T23:59:59.999Z, representable as RFC 3339.
+fn valid_event_time(ms: i64) -> bool {
+    (0..=253_402_300_799_999).contains(&ms)
+}
 fn allowed_event(event: &Event) -> bool {
     match (event.status.as_str(), event.reason.as_str()) {
         ("CHECKING", "VALIDATING_CONFIGURATION")
@@ -557,7 +576,8 @@ mod tests {
                 Options {
                     tail,
                     max_bytes: bytes,
-                    timeout: Duration::from_secs(seconds)
+                    timeout: Duration::from_secs(seconds),
+                    event_times: false,
                 }
                 .validate()
                 .is_err()
@@ -605,6 +625,7 @@ mod tests {
             c.report.events.push(Event {
                 source: "serviceReport".into(),
                 sequence,
+                observed_at_ms: None,
                 command: "run".into(),
                 status: "CHECKING".into(),
                 reason: "VALIDATING_CONFIGURATION".into(),
@@ -678,6 +699,33 @@ mod tests {
         assert!(report.partial);
         assert!(report.events.is_empty());
         assert_eq!(report.events_omitted, 2);
+    }
+    #[test]
+    fn event_times_are_bounded_and_negotiated_without_changing_legacy_reports() {
+        let timed = Options {
+            event_times: true,
+            ..Options::default()
+        };
+        let mut collector = Collector::new(&timed).unwrap();
+        let mut row: Value = serde_json::from_slice(&event_rows("run", "bound", false)).unwrap();
+        row["observedAt"] = Value::from(1_700_000_000_123_i64);
+        let row_bytes = |e: &Value| {
+            let mut bytes = serde_json::to_vec(&e).unwrap();
+            bytes.push(b'\n');
+            bytes
+        };
+        collector.projected("serviceReport", &row_bytes(&row), "run", "bound");
+        let report = collector.finish(&timed).unwrap();
+        assert_eq!(report.events[0].observed_at_ms, Some(1_700_000_000_123));
+        assert!(report.validate(&Options::default()).is_err());
+        for invalid in [i64::MIN, -1, 253_402_300_800_000, i64::MAX] {
+            let mut collector = Collector::new(&timed).unwrap();
+            row["observedAt"] = invalid.into();
+            collector.projected("serviceReport", &row_bytes(&row), "run", "bound");
+            let report = collector.finish(&timed).unwrap();
+            assert_eq!(report.events[0].observed_at_ms, None);
+            assert!(!report.partial);
+        }
     }
     #[test]
     fn export_is_user_owned_exclusive_and_rejects_control_overlap() {

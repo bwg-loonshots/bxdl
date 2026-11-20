@@ -64,6 +64,17 @@ pub(crate) fn default_home() -> Result<PathBuf> {
     default_home_for(std::env::var_os("HOME").as_deref(), std::env::consts::OS)
 }
 
+/// A copyable target for name-based CLI commands. Only a nondefault catalog
+/// needs an explicit --home to select the same node on the next invocation.
+pub(crate) fn named_arguments(name: &str, home: Option<&Path>) -> String {
+    match home {
+        Some(path) if default_home().ok().as_deref() != Some(path) => {
+            format!("{name} --home {}", super::prompt::shell_quote(path))
+        }
+        _ => name.to_owned(),
+    }
+}
+
 // Location selection performs no I/O. Opening/creation retains the same private
 // namespace checks below, and XDG variables do not select a different catalog.
 fn default_home_for(home: Option<&std::ffi::OsStr>, os: &str) -> Result<PathBuf> {

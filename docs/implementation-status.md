@@ -15,9 +15,9 @@ BXDL은 Rust 기반 개발 제품이며 **실제 Linux 설치·운용 검증과 
 | 순차 준비·조회·수정·설치 | 구현 | Mac archive 기반, Linux flat JRE/JAR/native 설정 기반. 설치 승인과 init/start는 분리 |
 | macOS 노드 운용 | 지정 조합 인수 | 사용자 LaunchAgent, 초기화·시작·관측·진단·정상 종료·동일 DB 재시작. 전체 macOS lifecycle·최소 OS·정식 운영 인수는 남음 |
 | macOS 네트워크 | 지정 조합 인수 | RC.4 동종 4-validator, 두 복구 경로, wrong-pin, 선정 RPC·거래·관리 CLI 전환. 전체 엔진 기능 인수를 뜻하지 않음 |
-| Linux 서비스·권한 | 개발 경로 구현 | systemd, 노드별 비root UID, root 보호 제어 기록, 고정 worker 위임. 실제 노드·계정 격리·서비스 인수는 NOT_RUN |
-| Linux 빌드·시험 입력 전달 | 준비 도구 구현 | 이슈 #27 수정 키트의 고정 RC.4·JRE로 Ubuntu 24.04.5 x86_64 VM에서 두 archive 제작·설치 입력 추출·시험 키 생성을 확인했다(`PREPARED`). 노드 실행은 테스터 과업 |
-| 사용자 편의성 평가 | 비공개 과업 준비 | 첫 준비 단계의 실패와 진단 메시지에 대한 피드백을 이슈 #27에서 수신했다. 수정 키트의 노드 설치·초기화·서비스 운용 사용자 관측은 대기 |
+| Linux 서비스·권한 | 개발 경로 구현 | systemd, 노드별 비root UID, root 보호 제어 기록, 고정 worker 위임. Ubuntu 24.04.4 단일 노드 설치·초기화·SSH 단절 유지·정상 종료·재기동 확인. 계정 간 격리와 장애 인수는 후속 |
+| Linux 빌드·시험 입력 전달 | 준비 도구 구현 | 이슈 #27 수정 키트의 고정 RC.4·JRE로 Ubuntu 24.04.5 x86_64 VM에서 두 archive 제작·설치 입력 추출·시험 키 생성을 확인했다(`PREPARED`). 후속 실기에서도 두 archive 제작과 PREPARED 확인 |
+| 사용자 편의성 평가 | 비공개 실기 1차 결과 수신 | 권한 조치에 도움을 받아 설치·운용 완료. 순차 설치 문답의 기본값, 취소 종료 코드와 개선된 CLI의 독립 사용성을 다음 통합 회차에서 검증 |
 | WSL2·Docker/Compose | 후속 | Linux 실물 기준 조합 검증 뒤 별도 구현·인수 |
 
 공개 다운로드용 Linux 설치는 릴리스 서명 확인 → `bxdl install <archive> --public-key <키>` → `setup new/apply`로 연결한다. [설치 안내](./linux-release.md)와 [릴리스 계획](../design/2026-11-18-linux-release-channel.md)에 제작·게시·첫 공개 인수 조건이 있다. 비공개 unsigned 후보는 전달본의 준비 도구로 추출한다. Linux의 root 공개 descriptor·고정 worker 위임 구현과 Mac의 승인된 exact runtime profile을 같은 인수 상태로 취급하지 않는다. 자세한 지원 조합은 [지원 범위](./support-matrix.md)를 따른다.
@@ -50,7 +50,7 @@ BXDL은 Rust 기반 개발 제품이며 **실제 Linux 설치·운용 검증과 
 
 ## 남은 작업과 우선순위
 
-1. **Linux 실물 시험과 CLI 사용성 개선:** 위 과업을 실행하고 실패·막힘을 수정한다. 선정 JRE/RC.4의 native/RocksDB, 계정 격리, 정상 종료·DB 재시작과 SSH 단절 근거를 확보한다.
+1. **Linux 실물 시험과 CLI 사용성 개선:** 권한 오류 복구, 설치·초기화 뒤의 다음 명령, 로그·진단 구분, helper 역할과 시험 후 정리를 한 키트로 재검증한다. 순차 문답·기본값과 취소 종료 코드도 확인한다.
 2. **Linux 조합 고정과 서버 인수:** 실제 runtime/worker/관리 CLI 바이트를 확정하고 독립 CLI 전환, 장애·재부팅 정책, 동종망·다중 host를 별도로 검증한다. 자동 재시작·부팅 enable은 아직 제공하지 않는다.
 3. **공통 운영 기능:** 엔진/DB migration, 안전한 제거, backup/restore·offline Storage A7, UNKNOWN 복구 정책, 전체 시도 조회와 로그 보존·용량 정리.
 4. **제품 릴리스 요건:** 전체 dependency NOTICE/SBOM·대응 소스·서명 출처·지원 최소 OS·실패 경계·릴리스 pipeline과 정식 공급 채널을 확정한다.

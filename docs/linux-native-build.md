@@ -1,6 +1,6 @@
 # Linux 네이티브 빌드와 개발 패키지 고정
 
-고정 source·Linux JRE·RC.4 JAR로 개발용 runtime과 독립 관리 CLI를 제작하고 검증하는 절차다. Ubuntu CI의 native CLI 빌드·자동 검사는 통과했다. 이슈 #27 수정 키트(소스 `954a98423b2d`)는 Ubuntu 24.04.5 x86_64 VM에서 고정된 NIGO RC.4·Temurin JRE로 두 패키지를 만들고 시험 입력 생성까지 `PREPARED`를 확인했다. CLI의 최대 요구 심볼은 `GLIBC_2.34`였다. 실제 장비에서의 노드 설치·초기화·systemd 운용은 테스터 과업으로 남아 있다. Ubuntu 장비 사용자가 직접 진행하므로 개발자에게 SSH 접속 정보를 제공할 필요는 없다.
+고정 source·Linux JRE·RC.4 JAR로 개발용 runtime과 독립 관리 CLI를 제작하고 검증하는 절차다. Ubuntu CI의 native CLI 빌드·자동 검사는 통과했다. 이슈 #27 수정 키트(소스 `954a98423b2d`)는 Ubuntu 24.04.5 x86_64 VM에서 고정된 NIGO RC.4·Temurin JRE로 두 패키지를 만들고 시험 입력 생성까지 `PREPARED`를 확인했다. CLI의 최대 요구 심볼은 `GLIBC_2.34`였다. 후속 Ubuntu 24.04.4 실기에서 같은 개발 후보의 노드 설치·초기화·systemd 운용·SSH 재접속과 재기동까지 확인했다. Ubuntu 장비 사용자가 직접 진행하므로 개발자에게 SSH 접속 정보를 제공할 필요는 없다.
 
 테스터 검증은 Git 저장소와 분리한 비공개 전달 패키지로 진행한다. 안내서·빈 결과/개선 의견 양식·개별 실행 기록은 저장소에 보관하지 않는다. 전달본의 `HANDOFF.json`에 제품 source commit과 지원 도구·공급물 해시를 기록하며, 빌드는 사전 준비이고 본 과업은 노드 설치·초기화·서비스 운용 검증이다.
 

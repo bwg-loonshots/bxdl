@@ -6,7 +6,7 @@ BXDL은 개발용 패키지와 설치·운용 CLI를 제공한다. 현재 개발
 
 | 환경 | 제공 기능 | 확인한 범위와 남은 검증 |
 | --- | --- | --- |
-| Ubuntu 24.04 LTS · x86_64 · glibc · systemd | 독립 관리 CLI, 고정 후보 제작·검증, 순차 setup·설치 승인, 전용 서비스 계정, init/start/status/stop, logs/diagnose | Ubuntu CI의 Rust/Python 검사·native CLI 빌드·version 실행 통과. 선정 JRE/RC.4 runtime 조립과 실제 설치·RocksDB·systemd·SSH 단절·DB 재시작은 비공개 시험 대상이며 아직 NOT_RUN |
+| Ubuntu 24.04 LTS · x86_64 · glibc · systemd | 독립 관리 CLI, 고정 후보 제작·검증, 순차 setup·설치 승인, 전용 서비스 계정, init/start/status/stop, logs/diagnose | Ubuntu CI의 Rust/Python 검사·native CLI 빌드·version 실행 통과. Ubuntu 24.04.4 실기의 지정 RC.4 개발 후보에서 설치·init 1회·로컬 READY, SSH 단절 유지, 정상 종료 2회와 재초기화 없는 재기동 확인. 계정 간 격리·재부팅·다중 노드는 후속 |
 | macOS · Apple Silicon arm64 · 사용자 LaunchAgent | 독립 관리 CLI, 패키지 설치, 순차 setup, 초기화·서비스 운용·진단 | 지정 RC.3/RC.4 개발 패키지의 설치·서비스·같은 DB 재시작·4-validator 네트워크와 관리 CLI 전환 인수 결과 보유. 최소 OS 버전·로그아웃/sleep·안전 제거·장기 운영 등 전체 출시 인수는 미완료 |
 | WSL2 | 후속 검증 대상 | 현재 Linux 준비 도구는 WSL을 거절하며 실제 Linux 서버 결과를 승계하지 않음 |
 | Docker/Compose | 설계상 후속 배포 대상 | 이미지·volume·network·종료/재생성 인수 미구현·미수행 |

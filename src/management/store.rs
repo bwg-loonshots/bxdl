@@ -153,8 +153,21 @@ fn identity(d: &Dir) -> Result<Identity> {
 }
 fn owned_bin(d: &Directory) -> Result<()> {
     let m = d.dir.dir_metadata().map_err(|_| fs::io())?;
-    if m.uid() != rustix::process::geteuid().as_raw() || m.mode() & 0o022 != 0 {
-        return Err(fs::unsafe_path());
+    if m.uid() != rustix::process::geteuid().as_raw() {
+        return Err(fs::directory_error(
+            &m,
+            Some(&d.path),
+            "실행 진입점은 현재 사용자가 소유해야 합니다.",
+            None,
+        ));
+    }
+    if m.mode() & 0o022 != 0 {
+        return Err(fs::directory_error(
+            &m,
+            Some(&d.path),
+            "실행 진입점에 그룹 또는 다른 사용자의 쓰기 권한이 있습니다.",
+            Some("go-w"),
+        ));
     }
     Ok(())
 }

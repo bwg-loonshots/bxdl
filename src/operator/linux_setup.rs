@@ -23,6 +23,7 @@ pub(crate) struct Finish {
     pub message: &'static str,
     pub data: Value,
     pub exit: i32,
+    pub next: Option<&'static str>,
 }
 pub(crate) struct Options<'a> {
     pub home: &'a Path,
@@ -52,12 +53,6 @@ const PUBLIC_FIELDS: &[(&str, &str)] = &[
     ("p2pAddress", "P2P 주소"),
     ("p2pPort", "P2P 포트"),
 ];
-fn next(home: &Path, verb: &str, name: &str) -> String {
-    format!(
-        "bxdl {verb} {name} --home '{}'",
-        home.to_string_lossy().replace('\'', "'\"'\"'")
-    )
-}
 fn public(s: &Preparation) -> Result<Value> {
     let mut value = serde_json::to_value(s.summary()?).map_err(|_| invalid())?;
     value["fields"] = json!(
@@ -69,6 +64,13 @@ fn public(s: &Preparation) -> Result<Value> {
     Ok(value)
 }
 fn saved(s: &Preparation, paused: bool) -> Result<Finish> {
+    let data = public(s)?;
+    let next = match (data["installation"].as_str(), data["preparation"].as_str()) {
+        (Some("REGISTERED"), _) => "status",
+        (Some("UNRESOLVED"), _) => "setup show",
+        (_, Some("REVIEWED")) => "setup apply",
+        _ => "setup resume",
+    };
     Ok(Finish {
         outcome: if paused { "INCOMPLETE" } else { "SUCCEEDED" },
         code: if paused {
@@ -77,11 +79,12 @@ fn saved(s: &Preparation, paused: bool) -> Result<Finish> {
             "LINUX_SETUP_SAVED"
         },
         message: if paused {
-            "준비 내용을 보존했습니다. setup resume으로 이어가세요."
+            "준비 내용을 보존했습니다."
         } else {
-            "Linux 설치 준비를 저장했습니다. setup apply로 별도 승인하세요."
+            "Linux 설치 준비를 저장했습니다."
         },
-        data: public(s)?,
+        data,
+        next: Some(next),
         exit: if paused { 5 } else { 0 },
     })
 }
@@ -92,6 +95,7 @@ fn paused() -> Finish {
         message: "준비를 만들지 않았습니다.",
         data: json!({"platform":"linux-amd64","installation":"NOT_STARTED"}),
         exit: 5,
+        next: None,
     }
 }
 fn home(path: &Path, create: bool) -> Result<Option<Home>> {
@@ -151,7 +155,7 @@ fn say_review(s: &Preparation, out: &mut dyn Write) -> Result<()> {
     }
     prompt::say(
         out,
-        "고정 Linux JRE·RC.4 JAR를 검증해 보관합니다. 원본 설정은 바꾸지 않습니다.\n개발용 공급물이며 실제 Linux 인수·정식 runtime package 승인은 별도입니다.\n",
+        "고정 Linux JRE·RC.4 JAR를 검증해 보관합니다. 원본 설정은 바꾸지 않습니다.\nUbuntu 단일 노드 개발용 공급물입니다.\n",
     )
 }
 pub(crate) fn run(
@@ -333,13 +337,6 @@ pub(crate) fn run(
     }
     session.prepare()?;
     owner.recheck()?;
-    prompt::say(
-        out,
-        &format!(
-            "다음: {}\n",
-            next(options.home, "setup apply", options.name)
-        ),
-    )?;
     saved(&session, false)
 }
 pub(crate) fn list(home_path: &Path) -> Result<Value> {
@@ -450,6 +447,7 @@ pub(crate) fn apply(
             message: "설치 기록을 확인하고 노드 이름을 연결했습니다. 엔진을 다시 실행하지 않았습니다.",
             data: public(&session)?,
             exit: 0,
+            next: Some("status"),
         });
     }
     let recovering = session.summary()?.installation == "UNRESOLVED";
@@ -491,19 +489,12 @@ pub(crate) fn apply(
     session.mark_installed(receipt.descriptor)?;
     owner.recheck()?;
     super::nodes::add(home_path, name, &control)?;
-    prompt::say(
-        out,
-        &format!(
-            "설치 완료. 다음: {} --confirm-initialize\n서비스 시작: {}\n",
-            next(home_path, "init", name),
-            next(home_path, "start", name)
-        ),
-    )?;
     Ok(Finish {
         outcome: "SUCCEEDED",
         code: "LINUX_SETUP_INSTALLED",
         message: "Linux 시스템 등록과 노드 이름 연결을 완료했습니다. 초기화·시작은 별도입니다.",
         data: public(&session)?,
         exit: 0,
+        next: Some(if recovering { "status" } else { "init" }),
     })
 }

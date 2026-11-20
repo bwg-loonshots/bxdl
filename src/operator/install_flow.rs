@@ -4,7 +4,7 @@ mod sequential;
 use super::{
     catalog::Catalog,
     home::Home,
-    prompt::{self, Confirmation, Input, Policy, Selection},
+    prompt::{self, Confirmation, Input, Policy, Selection, shell_quote},
 };
 use crate::{
     config::network::{NetworkMode, RuntimeOptions, StoreType},
@@ -790,10 +790,4 @@ fn option_default(options: &RuntimeOptions, index: usize) -> &'static str {
             }
         }
     }
-}
-fn shell_quote(path: &Path) -> String {
-    format!(
-        "'{}'",
-        prompt::safe_default(&path.to_string_lossy()).replace('\'', "'\\''")
-    )
 }

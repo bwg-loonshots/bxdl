@@ -26,6 +26,10 @@ pub(super) struct Projection {
 #[derive(Debug, Serialize)]
 pub(super) struct Event {
     pub sequence: u64,
+    // Only negotiated Linux log views may publish the engine's wall clock.
+    // All other projections keep their original timestamp-free wire format.
+    #[serde(skip)]
+    pub observed_at_ms: i64,
     pub command: &'static str,
     pub status: &'static str,
     pub reason: &'static str,
@@ -100,7 +104,6 @@ pub(super) fn project(raw: &[u8], command: &str, attempt: &str) -> Projection {
             result.partial = true;
             continue;
         };
-        let _wall_clock = row.observed_at;
         if row.command != command
             || row.attempt_id != attempt
             || row.sequence != count as u64
@@ -117,6 +120,7 @@ pub(super) fn project(raw: &[u8], command: &str, attempt: &str) -> Projection {
         match allowed(&row, command) {
             Some((status, reason)) => result.events.push(Event {
                 sequence: row.sequence,
+                observed_at_ms: row.observed_at,
                 command,
                 status,
                 reason,

@@ -148,6 +148,7 @@ class ContractTests(unittest.TestCase):
         path.parent.chmod(0o777)
         self.rejects("PATH_MODE_UNSAFE", lambda: C.digest(path))
         path.parent.chmod(0o755)
+        self.assertEqual(sha(b"safe"), C.digest(path))
 
     def test_valid_source_extracts_without_prefix_and_preserves_modes(self):
         source = self.write("source.tar.gz", archive({"Cargo.toml": b"source", "src/main.rs": b"fn main() {}"}))

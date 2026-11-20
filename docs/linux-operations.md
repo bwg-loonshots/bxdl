@@ -2,7 +2,7 @@
 
 서명된 사전 빌드 패키지는 [다운로드 설치 가이드](./linux-release.md)를 따른다. 비공개 키트 사용자는 전달본에 동봉한 안내로 공급물을 준비한다. 두 경로 모두 아래의 이름 기반 setup과 명시적 init/start로 이어진다.
 
-일반 사용자 CLI에서 설치를 준비하고, 관리자 승인으로 시스템 노드를 설치한 뒤 이름으로 초기화·운용하는 개발용 경로다. Ubuntu CI의 native CLI 빌드·자동 검사는 통과했으며, 선정 JRE/RC.4의 실제 설치·RocksDB·systemd·SSH 단절·DB 재시작 인수는 아직 NOT_RUN이다. 정식 signed Linux runtime/exact executor profile 인수도 별도다. 비공개 시험에서는 빌드를 사전 준비로 두고 아래 설치·초기화·운용까지 직접 검증한다.
+일반 사용자 CLI에서 설치를 준비하고, 관리자 승인으로 시스템 노드를 설치한 뒤 이름으로 초기화·운용하는 개발용 경로다. Ubuntu 24.04.4 x86_64 실기에서 선정 JRE/RC.4 개발 후보의 설치·초기화·수동 기동, SSH 재접속 후 실행 유지, 같은 인스턴스의 재초기화 없는 재기동과 두 차례 정상 종료를 확인했다. 정식 서명 패키지와 Linux 실행기 조합의 승인은 별도로 진행한다.
 
 [Linux 네이티브 빌드 안내](./linux-native-build.md)의 도구로 고정 후보를 만들고 `prepare-linux-operations.py`로 archive를 설치용 flat JRE/JAR·worker·독립 CLI로 연결한다. `prepare-linux-test-inputs.py`는 새 시험용 credential과 단일 노드 설정을 장비 안에서 만든다. source·도구·공급물 identity는 각 전달본의 `HANDOFF.json`을 따른다. 문서의 과거 검증 기록을 최신 전달본의 source로 자동 간주하지 않는다.
 
@@ -35,6 +35,8 @@ BXDL_BIN="$PWD/target/x86_64-unknown-linux-gnu/release/bxdl"
 각 명령이 성공했는지 확인한 뒤 다음 단계로 진행한다. `host check` 성공은 JRE/native·엔진·서비스 인수 성공이 아니다. 이 문서의 이후 `bxdl`은 이 검토한 Linux 실행 파일 또는 같은 후보로 설치한 관리 CLI 진입점을 뜻한다. CLI-only 배포·사용자 설치는 [관리 CLI 안내](./management-cli.md)를 따른다.
 
 ## 2. 관리자 최초 준비
+
+일상 명령인 `bxdl status <이름>` 등은 일반 사용자 CLI에서 실행한다. 사용자 CLI는 준비한 노드 이름을 찾아 요청을 전달한다. 관리자가 배치하는 helper는 승인된 시스템 설치와 전용 계정 생성을 맡는다. 노드를 등록하면 그 노드는 등록 때 보관한 실행기를 사용한다. 사용자 CLI와 공용 helper는 여러 노드가 함께 사용할 수 있다.
 
 시스템 설치 helper의 경로는 **`/usr/local/libexec/bxdl/bxdl`**로 고정한다. 관리자는 검토한 Linux executable을 이 위치에 사전 배치해야 한다. 실행 파일은 root 소유 정규파일·실행 가능·hardlink 없음이어야 하고, 모든 상위 경로는 root 소유이며 group/other 쓰기와 symlink가 없어야 하고 일반 사용자가 통과할 수 있어야 한다. 권장 실행 파일 mode는 `0755`다.
 
@@ -144,9 +146,16 @@ bxdl stop local
 
 일반 관리 CLI는 공개 `management.json`의 root 소유·control device/inode·protocol과 최초 worker hash/size를 확인한다. 이름 목록의 descriptor digest와도 대조한 뒤 **등록 때 보관한 고정 worker**에 정해진 요청만 전달한다. 관리 CLI 업데이트가 기존 worker/JAR/JRE·DB를 바꾸지 않는다. 이 개발용 프로토콜의 분리 구현은 정식 Linux exact profile이나 실제 CLI 전환 인수 완료를 뜻하지 않는다.
 
-설치 직후 서비스 NOT_STARTED는 exit 5일 수 있다. init 성공은 INITIALIZED, start/status의 목표는 로컬 READY, 정상 stop은 INACTIVE/STOPPED와 `LINUX_SERVICE_STOPPED_VERIFIED`다. `start` 응답·systemd active와 노드의 로컬 READY, 네트워크 정족수·거래 확정은 별개다. 종료는 해당 시도의 엔진 closure·OS 종료·process/cgroup 부재·DB lock 근거를 대조한다. SSH 연결 해제 뒤 계속 동작하는지와 실제 계정 격리는 Linux 실물 인수에서 확인해야 한다. 자동 재시작·부팅 enable·재부팅 복구를 이번 구현의 완료 기능으로 계산하지 않는다.
+설치 직후 아직 초기화하지 않은 노드의 `NOT_STARTED`는 exit 5일 수 있다. 이름 기반 상태 화면의 다음 명령으로 init을 승인하고, 초기화 완료 화면에서 start로 이어간다. 수동 시험의 `READY / MANUAL_START_INITIALIZED`는 로컬 준비 완료를 뜻한다. 합의를 수동으로 둔 상태에서 `health.running=false`와 동기화 `UNKNOWN`이 함께 표시될 수 있다. init 성공은 INITIALIZED, start/status의 목표는 로컬 READY, 정상 stop은 INACTIVE/STOPPED와 `LINUX_SERVICE_STOPPED_VERIFIED`다. `start` 응답·systemd active와 노드의 로컬 READY, 네트워크 정족수·거래 확정은 별개다. 종료는 해당 시도의 엔진 closure·OS 종료·process/cgroup 부재·DB lock 근거를 대조한다. 수동 단일 노드 시험에서 SSH 재접속 전후의 시도·PID·노드 실행 ID가 일치했다. 서로 다른 서비스 계정 간 격리와 장애 시 동작은 추가 검증 대상이다. 자동 재시작·부팅 enable·재부팅 복구를 이번 구현의 완료 기능으로 계산하지 않는다.
 
-`logs/diagnose`는 제한된 저장 기록·초기화/실행 보고서를 정제한다. raw stdout/stderr·system journal·비밀을 그대로 내보내지 않고, 누락·변조·예산 초과는 `partial`/`INCOMPLETE`로 남긴다. 현재 상태를 확인하려고 새 HTTP/systemctl/JVM을 실행하는 검사는 아니다. diagnose는 control 밖의 **기존에 없는** 출력 파일을 호출 사용자 `0600`으로 생성한다. 파일 생성 성공이 노드 정상 운용 판정은 아니다.
+`logs`는 가장 최근 초기화와 실행 시도의 정제된 사건을 보여 준다. 사건 시각을 지원하는 실행기에서는 UTC 시각을 볼 수 있고 기존 실행기에서는 원래 순번을 확인할 수 있다. `diagnose`는 같은 범위의 수집 상태·누락 사유·다음 조치를 요약한다. raw stdout/stderr·system journal·비밀을 그대로 내보내지 않고, 누락·변조·예산 초과는 `partial`/`INCOMPLETE`로 남긴다. 현재 상태를 확인하려고 새 HTTP/systemctl/JVM을 실행하는 검사는 아니다. diagnose는 control 밖의 **기존에 없는** 출력 파일을 호출 사용자 `0600`으로 생성한다. 파일 생성 성공이 노드 정상 운용 판정은 아니다.
+
+### 시험 종료 후 정리
+
+1. `bxdl status <이름> --json`으로 종료를 확인한다. 실행 중이면 `bxdl stop <이름>` 후 다시 확인한다. `LINUX_SERVICE_STOPPED_VERIFIED`와 `INACTIVE / STOPPED`가 나오면 해당 노드의 시험을 종료할 수 있다. 상태가 불명이면 해당 이름의 `logs`와 `diagnose`를 먼저 확보한다.
+2. `bxdl setup show <이름> --json`에서 `control`, `dataDirectory`, `serviceAccount`를 확인한다. 해당 노드의 DB·키·시스템 설치 기록과 전용 계정은 함께 관리한다. 반환용 요약에는 개인 경로·키를 제외한다. 다음 시험은 새 이름과 작업 경로를 사용한다.
+3. 공유 서버에서는 정지 상태로 보존하고 관리자에게 **노드 이름, 정지 확인 결과, 데이터 보존 기간과 회수 대상**을 인계한다. 관리자는 해당 계정·시스템 경로와 다른 사용자의 노드도 확인한다. `bxdl nodes`의 목록은 호출 사용자의 등록 범위다. 공용 helper와 사용자 CLI는 재사용하는 자산이다.
+4. 전용 시험 VM에 시험 전 스냅샷이 있으면 결과를 외부에 보관하고 수신을 확인한 뒤 해당 VM을 스냅샷으로 복원할 수 있다. 공유 장비에서 노드·DB·전용 계정을 선택적으로 제거하는 `bxdl uninstall`은 아직 제공하지 않는다. 사용자 준비 기록만 먼저 지우면 관리할 이름을 잃을 수 있다.
 
 ## 6. 실제 검증과 기존 등록의 호환
 

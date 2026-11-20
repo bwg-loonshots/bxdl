@@ -4,12 +4,15 @@ use std::fmt;
 pub struct BxdlError {
     pub code: String,
     pub message: String,
+    /// Local operator guidance; never serialize paths into shared error reports.
+    pub(crate) local_hint: Option<String>,
 }
 impl BxdlError {
     pub fn new(code: impl Into<String>, message: impl Into<String>) -> Self {
         Self {
             code: code.into(),
             message: message.into(),
+            local_hint: None,
         }
     }
 }

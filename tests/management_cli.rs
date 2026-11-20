@@ -121,6 +121,47 @@ fn exact_help_forms_cover_management_and_bundle_commands_without_input() {
 }
 
 #[test]
+fn cli_install_identifies_the_writable_ancestor_on_the_terminal() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let temp = tempfile::tempdir().unwrap();
+    let base = temp.path().canonicalize().unwrap();
+    let root = base.join("cli-root");
+    let ancestor = base.join("Alice's shared directory");
+    fs::create_dir(&ancestor).unwrap();
+    fs::set_permissions(&ancestor, fs::Permissions::from_mode(0o775)).unwrap();
+    let bin = ancestor.join("bin");
+    let mut args = vec![
+        "cli",
+        "install",
+        "--root",
+        root.to_str().unwrap(),
+        "--bin-dir",
+        bin.to_str().unwrap(),
+        "--allow-unsigned-development",
+    ];
+    let before = snapshot(&base);
+    let human = invoke(&args, false);
+    assert_eq!(human.code, 3);
+    assert!(human.stderr.contains("CLI_STORAGE_UNSAFE"));
+    assert!(human.stderr.contains("0775"));
+    let quoted = format!(
+        "'{}'",
+        ancestor.display().to_string().replace('\'', "'\\''")
+    );
+    assert!(human.stderr.contains(&format!("chmod -- go-w {quoted}")));
+    assert!(human.stderr.contains("--bin-dir"));
+    assert!(!human.stderr.contains(bin.to_str().unwrap()));
+
+    args.push("--json");
+    let machine = invoke(&args, false);
+    assert_eq!(machine.code, 3);
+    assert_eq!(machine.json()["reasonCode"], "CLI_STORAGE_UNSAFE");
+    assert!(!machine.stdout.contains("Alice"));
+    assert_eq!(snapshot(&base), before);
+}
+
+#[test]
 fn invalid_management_arguments_do_not_read_input_or_create_storage() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path().canonicalize().unwrap();

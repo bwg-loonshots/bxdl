@@ -22,7 +22,7 @@ BXDL은 **NIGO Protocol 기반 기업용 허가형 블록체인 노드를 패키
 
 | 환경 | 서비스 방식 | 현재 제공 범위 |
 | --- | --- | --- |
-| Linux x86_64 / glibc | systemd 시스템 서비스, 노드별 전용 계정 | Ubuntu 24.04 LTS 기준 개발용 설치·초기화·운용 구현. CLI 빌드·자동 검사 통과, 실제 노드·서비스 시험 대기 |
+| Linux x86_64 / glibc | systemd 시스템 서비스, 노드별 전용 계정 | Ubuntu 24.04.4 실기에서 RC.4 개발 후보의 단일 노드 설치·초기화, SSH 재접속 후 실행 유지, 정상 종료·재기동 확인 |
 | macOS Apple Silicon | 사용자 LaunchAgent | 지정 RC.3·RC.4 패키지의 설치·운용과 관리 CLI 분리 지원. 지정 조합의 실물 검증 완료 |
 | WSL2·Docker/Compose | 별도 후속 대상 | 현재 배포·운용 인수 범위에 포함되지 않음 |
 
